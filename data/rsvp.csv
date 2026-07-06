@@ -1,0 +1,5 @@
+id,apellido,nombre,asistencia,alimentacion,acompanante
+0b887224,Rezinovsky,Alfredo,si,general|celiaco,
+06f1d872,Muzarel,Cecilia,si,vegetariano,0b887224
+2228df5a,Muzaber,Celia,si,vegetariano,
+3c092dee,Alfredo,Rezinovsky,si,general|vegetariano,2228df5a
