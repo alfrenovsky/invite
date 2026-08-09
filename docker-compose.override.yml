@@ -1,0 +1,13 @@
+services:
+  web:
+    ports:
+      - 80:80
+
+#    networks:
+#      - default
+#      - proxy
+
+#networks:
+#  proxy:
+#    name: proxynet
+#    external: true
