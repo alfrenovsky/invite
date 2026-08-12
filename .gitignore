@@ -10,3 +10,7 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Docker overrides
+docker-compose.override.yml
+
+
