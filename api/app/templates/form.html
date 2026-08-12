@@ -3,24 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confirmación de asistencia</title>
+<title>Confirmación de asistencia - Celia y Alfredo</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; color: #333; }
-  h1 { font-size: 1.4em; }
+  h1 { font-size: 1.6em; text-align: center; color: #2c3e50; }
   fieldset { margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; }
   legend { font-weight: bold; padding: 0 6px; }
-  label { display: block; margin: 6px 0; }
-  input[type="text"] { width: 100%; padding: 6px; box-sizing: border-box; margin-top: 2px; }
-  .persona { border: 1px dashed #aaa; border-radius: 6px; padding: 10px; margin-bottom: 12px; position: relative; }
-  .persona button.quitar { position: absolute; top: 6px; right: 6px; background: #c0392b; color: white; border: none; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+  label { display: block; margin: 8px 0; }
+  input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
+  .persona { border: 1px dashed #aaa; border-radius: 6px; padding: 12px; margin-bottom: 12px; position: relative; }
+  .persona button.quitar { position: absolute; top: 8px; right: 8px; background: #c0392b; color: white; border: none; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
   #agregarBtn, button[type="submit"] { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; }
   #agregarBtn { background: #2980b9; color: white; margin-bottom: 20px; }
-  button[type="submit"] { background: #27ae60; color: white; font-size: 1em; }
+  button[type="submit"] { background: #27ae60; color: white; font-size: 1em; width: 100%; }
   #adicionalesWrap { display: none; }
-  #resultado { margin-top: 20px; font-weight: bold; }
+  #resultado { margin-top: 20px; font-weight: bold; text-align: center; }
+  .back-link { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #2980b9; }
 </style>
 </head>
 <body>
+
+<a href="/" class="back-link">← Volver al inicio</a>
 
 <h1>Confirmación de asistencia</h1>
 
@@ -28,23 +31,23 @@
 
   <fieldset>
     <legend>¿Asistirás?</legend>
-    <label><input type="radio" name="asistencia" value="si" required> Sí, asistiré</label>
-    <label><input type="radio" name="asistencia" value="no" required> No podré asistir</label>
+    <label><input type="radio" name="asistencia" value="si" {% if guest and guest.confirmacion == 'si' %}checked{% endif %} required> Sí, asistiré</label>
+    <label><input type="radio" name="asistencia" value="no" {% if guest and guest.confirmacion == 'no' %}checked{% endif %} required> No podré asistir</label>
   </fieldset>
 
   <fieldset>
     <legend>Tus datos</legend>
     <label>Apellido
-      <input type="text" id="p_apellido">
+      <input type="text" id="p_apellido" value="{{ guest.apellido if guest else '' }}">
     </label>
     <label>Nombre
-      <input type="text" id="p_nombre">
+      <input type="text" id="p_nombre" value="{{ guest.nombre if guest else '' }}">
     </label>
     <label>Alimentación (podés marcar más de una)</label>
-    <label><input type="checkbox" class="p_alim" value="general"> General</label>
-    <label><input type="checkbox" class="p_alim" value="vegetariano"> Vegetariano</label>
-    <label><input type="checkbox" class="p_alim" value="vegano"> Vegano</label>
-    <label><input type="checkbox" class="p_alim" value="celiaco"> Celíaco</label>
+    <label><input type="checkbox" class="p_alim" value="general" {% if guest and guest.pa_general == 'si' %}checked{% endif %}> General</label>
+    <label><input type="checkbox" class="p_alim" value="vegetariano" {% if guest and guest.pa_vegetariano == 'si' %}checked{% endif %}> Vegetariano</label>
+    <label><input type="checkbox" class="p_alim" value="vegano" {% if guest and guest.pa_vegano == 'si' %}checked{% endif %}> Vegano</label>
+    <label><input type="checkbox" class="p_alim" value="celiaco" {% if guest and guest.pa_celiaco == 'si' %}checked{% endif %}> Celíaco</label>
   </fieldset>
 
   <div id="adicionalesWrap">
@@ -84,11 +87,16 @@ const agregarBtn = document.getElementById('agregarBtn');
 const template = document.getElementById('personaTemplate');
 const resultado = document.getElementById('resultado');
 
+function toggleAdicionales() {
+  const radioSi = form.querySelector('input[name="asistencia"][value="si"]');
+  adicionalesWrap.style.display = (radioSi && radioSi.checked) ? 'block' : 'none';
+}
+
 form.querySelectorAll('input[name="asistencia"]').forEach(r => {
-  r.addEventListener('change', () => {
-    adicionalesWrap.style.display = (r.value === 'si' && r.checked) ? 'block' : 'none';
-  });
+  r.addEventListener('change', toggleAdicionales);
 });
+
+toggleAdicionales();
 
 agregarBtn.addEventListener('click', () => {
   const clone = template.content.cloneNode(true);
@@ -102,7 +110,9 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   resultado.textContent = '';
 
-  const asistencia = form.querySelector('input[name="asistencia"]:checked').value;
+  const asistenciaRadio = form.querySelector('input[name="asistencia"]:checked');
+  if (!asistenciaRadio) return;
+  const asistencia = asistenciaRadio.value;
 
   const records = [];
 

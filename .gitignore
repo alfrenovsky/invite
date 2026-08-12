@@ -3,3 +3,10 @@ secrets
 project.env
 html/whatsapp.thumb.jpg
 logs.txt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+

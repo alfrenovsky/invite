@@ -3,6 +3,10 @@ services:
     ports:
       - 80:80
 
+  api:
+    volumes:
+      - ./api/app:/app
+
 #    networks:
 #      - default
 #      - proxy

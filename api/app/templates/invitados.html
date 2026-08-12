@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Invitados - Celia y Alfredo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto 30px auto;
+        }
+        h1 { margin: 0; color: #2c3e50; font-weight: 400; }
+        .back-link {
+            text-decoration: none;
+            color: #2980b9;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .guest-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .guest-table th, .guest-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .guest-table th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        .guest-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .badge-si { background-color: #d4edda; color: #155724; }
+        .badge-no { background-color: #f8d7da; color: #721c24; }
+        .badge-pending { background-color: #fff3cd; color: #856404; }
+        .tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-right: 4px;
+        }
+        .id-code {
+            font-family: monospace;
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <h1>📋 Lista de Invitados ({{ count }})</h1>
+        <a href="/" class="back-link">← Volver al inicio</a>
+    </div>
+
+    <div class="container">
+        <table class="guest-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre y Apellido</th>
+                    <th>Confirmación</th>
+                    <th>Teléfono</th>
+                    <th>Preferencias Alimentarias</th>
+                    <th>Última Actualización</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for guest in invitados %}
+                <tr>
+                    <td><span class="id-code">{{ guest.id }}</span></td>
+                    <td><strong>{{ guest.nombre }} {{ guest.apellido }}</strong></td>
+                    <td>
+                        {% if guest.confirmacion == 'si' %}
+                            <span class="badge badge-si">Confirmado</span>
+                        {% elif guest.confirmacion == 'no' %}
+                            <span class="badge badge-no">No asiste</span>
+                        {% else %}
+                            <span class="badge badge-pending">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ guest.telefono or '-' }}</td>
+                    <td>
+                        {% if guest.pa_general == 'si' %}<span class="tag">General</span>{% endif %}
+                        {% if guest.pa_vegetariano == 'si' %}<span class="tag">Vegetariano</span>{% endif %}
+                        {% if guest.pa_vegano == 'si' %}<span class="tag">Vegano</span>{% endif %}
+                        {% if guest.pa_celiaco == 'si' %}<span class="tag">Celíaco</span>{% endif %}
+                    </td>
+                    <td><small style="color: #888;">{{ guest.updated_at or '-' }}</small></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #888;">No hay invitados registrados todavía.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

@@ -1,95 +1,110 @@
-import os
-import uuid
-import threading
-from datetime import datetime
-
-import gspread
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+from sheets import GoogleSheetsTable
 
 app = Flask(__name__)
-
-FIELDNAMES = ["id", "apellido", "nombre", "asistencia", "alimentacion", "acompanante", "fecha_hora"]
-
-GOOGLE_CREDENTIALS_PATH = os.environ.get("GOOGLE_CREDENTIALS_PATH", "/secrets/credentials.json")
-GOOGLE_SHEET_ID = os.environ["GOOGLE_SHEET_ID"]
-WORKSHEET_NAME = os.environ.get("WORKSHEET_NAME", "Respuestas")
-
-lock = threading.Lock()
-
-_gc = gspread.service_account(filename=GOOGLE_CREDENTIALS_PATH)
-_sh = _gc.open_by_key(GOOGLE_SHEET_ID)
-
-try:
-    _ws = _sh.worksheet(WORKSHEET_NAME)
-except gspread.exceptions.WorksheetNotFound:
-    _ws = _sh.add_worksheet(title=WORKSHEET_NAME, rows=1000, cols=len(FIELDNAMES))
+table = GoogleSheetsTable()
 
 
-def ensure_header():
-    valores = _ws.row_values(1)
-    if valores != FIELDNAMES:
-        _ws.update("A1", [FIELDNAMES])
+@app.get("/")
+def index_page():
+    try:
+        invitados = table.get_all()
+        count = len(invitados)
+        confirmados = sum(1 for g in invitados if g.get("confirmacion") == "si")
+        rechazados = sum(1 for g in invitados if g.get("confirmacion") == "no")
+        return render_template("index.html", invitados=invitados, count=count, confirmados=confirmados, rechazados=rechazados)
+    except Exception as e:
+        return render_template("index.html", invitados=[], count=0, confirmados=0, rechazados=0)
 
 
-ensure_header()
+@app.get("/form")
+def form_page():
+    guest_id = request.args.get("id")
+    guest = None
+    if guest_id:
+        res = table.get_by_id(guest_id)
+        if res:
+            guest = res["data"]
+    return render_template("form.html", guest=guest)
 
 
-def nueva_persona(apellido, nombre, asistencia, alimentacion, acompanante=""):
-    return {
-        "id": uuid.uuid4().hex[:8],
-        "apellido": apellido,
-        "nombre": nombre,
-        "asistencia": asistencia,
-        "alimentacion": "|".join(alimentacion or []),
-        "acompanante": acompanante,
-        "fecha_hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
+@app.get("/invitados-view")
+def invitados_view_page():
+    try:
+        invitados = table.get_all()
+        return render_template("invitados.html", invitados=invitados, count=len(invitados))
+    except Exception as e:
+        return render_template("invitados.html", invitados=[], count=0)
 
 
-@app.post("/submit")
-def submit():
+
+@app.get("/invitados")
+def list_invitados():
+    try:
+        invitados = table.get_all()
+        return jsonify({"ok": True, "data": invitados, "count": len(invitados)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.post("/invitados/ensure-ids")
+def ensure_invitados_ids():
+    try:
+        records, updated_count = table.ensure_ids()
+        return jsonify({"ok": True, "data": records, "updated_count": updated_count})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.get("/invitados/<record_id>")
+def get_invitado(record_id):
+    try:
+        res = table.get_by_id(record_id)
+        if not res:
+            return jsonify({"ok": False, "error": "Invitado no encontrado"}), 404
+        return jsonify({"ok": True, "data": res["data"]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.post("/invitados")
+def create_invitado():
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "JSON inválido"}), 400
+    if data is None:
+        return jsonify({"ok": False, "error": "JSON inválido"}), 400
 
-    asistencia = data.get("asistencia")
-    principal = data.get("principal") or {}
-    acompanantes = data.get("acompanantes") or []
+    try:
+        created = table.add_records([data] if isinstance(data, dict) else data)
+        return jsonify({"ok": True, "data": created if isinstance(data, list) else created[0]}), 201
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
-    if asistencia not in ("si", "no"):
-        return jsonify({"error": "asistencia debe ser 'si' o 'no'"}), 400
-    if not principal.get("apellido") or not principal.get("nombre"):
-        return jsonify({"error": "faltan apellido/nombre del invitado principal"}), 400
 
-    filas = []
-    principal_row = nueva_persona(
-        principal.get("apellido"),
-        principal.get("nombre"),
-        asistencia,
-        principal.get("alimentacion"),
-    )
-    filas.append(principal_row)
+@app.put("/invitados/<record_id>")
+@app.patch("/invitados/<record_id>")
+def update_invitado(record_id):
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"ok": False, "error": "JSON inválido"}), 400
 
-    if asistencia == "si":
-        for a in acompanantes:
-            if not a.get("apellido") or not a.get("nombre"):
-                continue
-            filas.append(
-                nueva_persona(
-                    a.get("apellido"),
-                    a.get("nombre"),
-                    "si",
-                    a.get("alimentacion"),
-                    acompanante=principal_row["id"],
-                )
-            )
+    try:
+        updated = table.update_record(record_id, data)
+        if not updated:
+            return jsonify({"ok": False, "error": "Invitado no encontrado"}), 404
+        return jsonify({"ok": True, "data": updated})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
-    filas_valores = [[fila[c] for c in FIELDNAMES] for fila in filas]
 
-    with lock:
-        _ws.append_rows(filas_valores, value_input_option="USER_ENTERED")
-
-    return jsonify({"ok": True, "id": principal_row["id"], "total_personas": len(filas)})
+@app.delete("/invitados/<record_id>")
+def delete_invitado(record_id):
+    try:
+        success = table.delete_record(record_id)
+        if not success:
+            return jsonify({"ok": False, "error": "Invitado no encontrado"}), 404
+        return jsonify({"ok": True, "message": "Invitado eliminado correctamente"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app.get("/health")
