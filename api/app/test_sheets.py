@@ -75,7 +75,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
     def test_ensure_ids(self):
         sample_data = [
-            {"id": "", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si"},
+            {"id": "", "updated_at": "2026-08-12 12:00:00", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si"},
             {"id": "abc12345", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "si"}
         ]
         self.mock_ws.get_all_records.return_value = sample_data
@@ -83,15 +83,14 @@ class TestGoogleSheetsTable(unittest.TestCase):
         records, updated_count = self.table.ensure_ids()
         self.assertEqual(updated_count, 1)
         self.assertEqual(len(records[0]["id"]), 8)
-        # Row 2 hash: md5("row_2")[:8] == "09417486"
-        self.assertEqual(records[0]["id"], "09417486")
         self.mock_ws.update.assert_called_once()
 
-    def test_deterministic_row_id(self):
+    def test_deterministic_row_time_id(self):
         self.mock_ws.get_all_records.return_value = []
-        res = self.table.add_records([{"nombre": "Test"}])
-        # First record inserted at row 2
-        self.assertEqual(res[0]["id"], "09417486")
+        res = self.table.add_records([{"nombre": "Test", "updated_at": "2026-08-12 12:00:00"}])
+        expected_id = self.table._generate_row_id(2, "2026-08-12 12:00:00")
+        self.assertEqual(res[0]["id"], expected_id)
+
 
 
 

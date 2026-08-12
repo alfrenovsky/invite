@@ -37,8 +37,9 @@ class GoogleSheetsTable:
         if valores != FIELDNAMES:
             ws.update("A1", [FIELDNAMES])
 
-    def _generate_row_id(self, row_idx):
-        return hashlib.md5(f"row_{row_idx}".encode("utf-8")).hexdigest()[:8]
+    def _generate_row_id(self, row_idx, timestamp_str=None):
+        ts = timestamp_str or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return hashlib.md5(f"row_{row_idx}_{ts}".encode("utf-8")).hexdigest()[:8]
 
     def _extract_start_row(self, updated_range):
         if not isinstance(updated_range, str):
@@ -89,15 +90,17 @@ class GoogleSheetsTable:
             alim_list = []
 
         item = dict(rec)
+        updated_at = str(rec.get("updated_at") or rec.get("fecha_hora") or now_str)
+
         if not item.get("id"):
             if row_idx is not None:
-                item["id"] = self._generate_row_id(row_idx)
+                item["id"] = self._generate_row_id(row_idx, updated_at)
             else:
                 item["id"] = uuid.uuid4().hex[:8]
         else:
             item["id"] = str(item["id"])
 
-        item["updated_at"] = str(rec.get("updated_at") or rec.get("fecha_hora") or now_str)
+        item["updated_at"] = updated_at
         item["apellido"] = str(rec.get("apellido", ""))
         item["nombre"] = str(rec.get("nombre", ""))
         item["telefono"] = str(rec.get("telefono", ""))
@@ -148,7 +151,7 @@ class GoogleSheetsTable:
                     for i, item in enumerate(processed_records):
                         if not records[i].get("id"):
                             row_idx = start_row + i
-                            item["id"] = self._generate_row_id(row_idx)
+                            item["id"] = self._generate_row_id(row_idx, item["updated_at"])
                         id_values.append([item["id"]])
 
                     end_row = start_row + len(processed_records) - 1
