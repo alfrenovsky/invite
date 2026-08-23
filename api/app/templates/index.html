@@ -637,8 +637,9 @@
                     </div>
 
                     <div class="header-actions">
-                        <button class="header-btn" id="btnPause" title="Pausar / Reanudar">⏸</button>
+                        <button class="header-btn" id="btnPause" title="Iniciar avance automático">▶</button>
                     </div>
+
                 </div>
             </div>
 
@@ -905,7 +906,7 @@
         const toast = document.getElementById('toast');
 
         let currentIndex = 0;
-        let isPaused = false;
+        let isAutoplay = false; // Autoplay disabled by default
         let slideStartTime = 0;
         let elapsedTimeOnSlide = 0;
         let animationFrameId = null;
@@ -955,7 +956,7 @@
             const slide = slides[currentIndex];
             const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
 
-            if (duration <= 0) {
+            if (!isAutoplay || duration <= 0) {
                 updateProgressDisplay(100);
                 return;
             }
@@ -963,9 +964,8 @@
             slideStartTime = performance.now() - elapsedTimeOnSlide;
 
             function tick(now) {
-                if (isPaused) {
-                    slideStartTime = now - elapsedTimeOnSlide;
-                    animationFrameId = requestAnimationFrame(tick);
+                if (!isAutoplay) {
+                    updateProgressDisplay(100);
                     return;
                 }
 
@@ -1016,9 +1016,16 @@
             }
         }
 
-        function togglePause() {
-            isPaused = !isPaused;
-            btnPause.textContent = isPaused ? '▶' : '⏸';
+        function togglePlayPause() {
+            isAutoplay = !isAutoplay;
+            btnPause.textContent = isAutoplay ? '⏸' : '▶';
+            btnPause.title = isAutoplay ? 'Pausar avance automático' : 'Iniciar avance automático';
+            if (isAutoplay) {
+                startSlideTimer();
+            } else {
+                clearTimers();
+                updateProgressDisplay(100);
+            }
         }
 
         // Tap & Navigation Handlers
@@ -1028,8 +1035,9 @@
         btnDesktopNext.addEventListener('click', nextSlide);
         btnPause.addEventListener('click', (e) => {
             e.stopPropagation();
-            togglePause();
+            togglePlayPause();
         });
+
 
         // Press & Hold to pause
         let holdTimeout = null;
