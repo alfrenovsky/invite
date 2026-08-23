@@ -968,18 +968,20 @@
                     s.style.cursor = 'pointer';
 
 
+                    const opacityVal = Math.max(0.35, 0.85 - (absOffset - 1) * 0.15).toString();
+                    s.style.opacity = opacityVal;
+
                     if (offset < 0) {
                         // Already seen (left side): ALWAYS FOCUSED
                         s.classList.add('side-slide', 'prev-slide');
                         s.style.filter = 'blur(0px) brightness(0.95)';
-                        s.style.opacity = Math.max(0.35, 0.85 - (absOffset - 1) * 0.15).toString();
                     } else {
                         // Upcoming (right side): BLURRED / UNREADABLE
                         s.classList.add('side-slide', 'next-slide');
                         s.style.filter = 'blur(10px) brightness(0.55)';
-                        s.style.opacity = Math.max(0.15, 0.65 - (absOffset - 1) * 0.15).toString();
                     }
                 } else {
+
 
                     s.classList.add('hidden-slide');
                     s.style.transform = 'scale(0.97)';
