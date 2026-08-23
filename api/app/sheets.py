@@ -101,10 +101,10 @@ class GoogleSheetsTable:
             return []
         with self.lock:
             records = self.get_all()
-            target = str(invitacion_id).strip().lower()
+            target = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
             matched = [
                 rec for rec in records
-                if str(rec.get("invitacion", "")).strip().lower() == target
+                if str(rec.get("invitacion", "")).strip().lower().replace(" ", "_").replace("-", "_") == target
             ]
             if not matched:
                 matched = [
@@ -112,7 +112,6 @@ class GoogleSheetsTable:
                     if str(rec.get("id", "")).strip().lower() == target
                 ]
             return matched
-
 
     def _map_record_to_row(self, rec, now_str, row_idx=None):
         alim = rec.get("alimentacion", [])
@@ -138,8 +137,9 @@ class GoogleSheetsTable:
         item["apellido"] = str(rec.get("apellido", ""))
         item["nombre"] = str(rec.get("nombre", ""))
         item["telefono"] = str(rec.get("telefono", ""))
-        item["invitacion"] = str(rec.get("invitacion", ""))
+        item["invitacion"] = str(rec.get("invitacion", "")).strip().replace(" ", "_")
         item["confirmacion"] = str(rec.get("confirmacion") or rec.get("asistencia", ""))
+
 
         # Dietary preference mapping
         item["pa_general"] = str(rec.get("pa_general", "si" if "general" in alim_list else ""))

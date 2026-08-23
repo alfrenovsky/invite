@@ -93,15 +93,25 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
     def test_get_by_invitacion(self):
         sample_data = [
-            {"id": "id1", "apellido": "Perez", "nombre": "Juan", "invitacion": "familia-perez"},
-            {"id": "id2", "apellido": "Perez", "nombre": "Maria", "invitacion": "familia-perez"},
-            {"id": "id3", "apellido": "Gomez", "nombre": "Carlos", "invitacion": "amigos-facu"}
+            {"id": "id1", "apellido": "Perez", "nombre": "Juan", "invitacion": "Familia Perez"},
+            {"id": "id2", "apellido": "Perez", "nombre": "Maria", "invitacion": "Familia Perez"},
+            {"id": "id3", "apellido": "Gomez", "nombre": "Carlos", "invitacion": "amigos_facu"}
         ]
         self.mock_ws.get_all_records.return_value = sample_data
-        group = self.table.get_by_invitacion("familia-perez")
-        self.assertEqual(len(group), 2)
-        self.assertEqual(group[0]["nombre"], "Juan")
-        self.assertEqual(group[1]["nombre"], "Maria")
+        
+        # Matches with underscore
+        group1 = self.table.get_by_invitacion("familia_perez")
+        self.assertEqual(len(group1), 2)
+        self.assertEqual(group1[0]["nombre"], "Juan")
+
+        # Matches with spaces directly
+        group2 = self.table.get_by_invitacion("Familia Perez")
+        self.assertEqual(len(group2), 2)
+
+        # Matches with dashes
+        group3 = self.table.get_by_invitacion("familia-perez")
+        self.assertEqual(len(group3), 2)
+
 
 
 
