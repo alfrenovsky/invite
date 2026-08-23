@@ -3,6 +3,7 @@ import uuid
 import hashlib
 import re
 import threading
+import urllib.parse
 from datetime import datetime
 import gspread
 from gspread.utils import rowcol_to_a1
@@ -24,6 +25,7 @@ FIELDNAMES = [
     "pa_vegano",
     "pa_celiaco",
     "url",
+    "whatsapp",
 ]
 
 
@@ -49,7 +51,24 @@ def generate_invitation_url(invitacion_id: str, base_url: str = None, salt: str 
     return f"{base_url}/i/{normalized_id}_{code}"
 
 
+def clean_phone_number(phone: str) -> str:
+    if not phone:
+        return ""
+    return re.sub(r"[^\d]", "", str(phone))
+
+
+def generate_whatsapp_url(phone: str, url: str) -> str:
+    if not phone or not url:
+        return ""
+    clean_phone = clean_phone_number(phone)
+    if not clean_phone:
+        return ""
+    encoded_text = urllib.parse.quote_plus(url)
+    return f"https://wa.me/{clean_phone}?text={encoded_text}"
+
+
 def parse_and_validate_token(token: str, salt: str = None):
+
     if not token:
         return None
     token = str(token).strip()
@@ -112,12 +131,14 @@ class GoogleSheetsTable:
             for idx, rec in enumerate(records, start=2):  # Header is row 1
                 needs_id = not rec.get("id")
                 needs_url = not rec.get("url") and bool(rec.get("invitacion_id") or rec.get("invitacion"))
-                if needs_id or needs_url:
+                needs_wa = not rec.get("whatsapp") and bool(rec.get("telefono") and (rec.get("invitacion_id") or rec.get("invitacion") or rec.get("url")))
+                if needs_id or needs_url or needs_wa:
                     item, row = self._map_record_to_row(rec, now_str, row_idx=idx)
                     range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                     ws.update(range_name, [row])
                     rec["id"] = item["id"]
                     rec["url"] = item["url"]
+                    rec["whatsapp"] = item["whatsapp"]
                     updated_count += 1
 
             return records, updated_count
@@ -175,15 +196,15 @@ class GoogleSheetsTable:
             item["id"] = str(item["id"])
 
         inv_val = str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().replace(" ", "_")
+        phone_val = str(rec.get("telefono", "")).strip()
+
         item["updated_at"] = updated_at
-        item["apellido"] = str(rec.get("apellido", ""))
         item["nombre"] = str(rec.get("nombre", ""))
-        item["telefono"] = str(rec.get("telefono", ""))
+        item["apellido"] = str(rec.get("apellido", ""))
+        item["telefono"] = phone_val
         item["invitacion_id"] = inv_val
         item["invitacion"] = inv_val
         item["confirmacion"] = str(rec.get("confirmacion") or rec.get("asistencia", ""))
-
-
 
         # Dietary preference mapping
         item["pa_general"] = str(rec.get("pa_general", "si" if "general" in alim_list else ""))
@@ -196,9 +217,14 @@ class GoogleSheetsTable:
         else:
             item["url"] = str(item.get("url", ""))
 
-        # Build row according to FIELDNAMES
+        if not item.get("whatsapp") and phone_val and item.get("url"):
+            item["whatsapp"] = generate_whatsapp_url(phone_val, item["url"])
+        else:
+            item["whatsapp"] = str(item.get("whatsapp", ""))
 
+        # Build row according to FIELDNAMES
         row = []
+
         for col in FIELDNAMES:
             row.append(str(item.get(col, "")))
 

@@ -1,6 +1,14 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from sheets import GoogleSheetsTable, FIELDNAMES, compute_check_code, generate_invitation_url, parse_and_validate_token
+from sheets import (
+    GoogleSheetsTable,
+    FIELDNAMES,
+    compute_check_code,
+    generate_invitation_url,
+    parse_and_validate_token,
+    clean_phone_number,
+    generate_whatsapp_url,
+)
 
 
 class TestGoogleSheetsTable(unittest.TestCase):
@@ -44,13 +52,14 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(found["data"]["nombre"], "Maria")
 
     def test_add_records(self):
-        new_record = {"apellido": "Lopez", "nombre": "Carlos", "asistencia": "si", "alimentacion": ["celiaco"], "invitacion_id": "amigos"}
+        new_record = {"apellido": "Lopez", "nombre": "Carlos", "telefono": "+54 9 11 1234-5678", "asistencia": "si", "alimentacion": ["celiaco"], "invitacion_id": "amigos"}
         res = self.table.add_records([new_record])
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0]["apellido"], "Lopez")
         self.assertEqual(res[0]["pa_celiaco"], "si")
         self.assertEqual(len(res[0]["id"]), 8)  # random 8 digit hex
         self.assertTrue(res[0]["url"].startswith("http://nos.vamos.acas.ar/i/amigos_"))
+        self.assertTrue(res[0]["whatsapp"].startswith("https://wa.me/5491112345678?text="))
         self.mock_ws.append_rows.assert_called_once()
 
     def test_update_record(self):
@@ -74,10 +83,10 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertTrue(deleted)
         self.mock_ws.delete_rows.assert_called_with(2)
 
-    def test_ensure_ids_and_urls(self):
+    def test_ensure_ids_and_urls_and_whatsapp(self):
         sample_data = [
-            {"id": "", "url": "", "updated_at": "2026-08-12 12:00:00", "apellido": "Perez", "nombre": "Juan", "invitacion_id": "familia_perez"},
-            {"id": "abc12345", "url": "http://nos.vamos.acas.ar/i/test_123456", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "si"}
+            {"id": "", "url": "", "whatsapp": "", "updated_at": "2026-08-12 12:00:00", "apellido": "Perez", "nombre": "Juan", "telefono": "+54 9 11 9876-5432", "invitacion_id": "familia_perez"},
+            {"id": "abc12345", "url": "http://nos.vamos.acas.ar/i/test_123456", "whatsapp": "https://wa.me/5491111111111?text=test", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "si"}
         ]
         self.mock_ws.get_all_records.return_value = sample_data
 
@@ -85,6 +94,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(updated_count, 1)
         self.assertEqual(len(records[0]["id"]), 8)
         self.assertTrue(records[0]["url"].startswith("http://nos.vamos.acas.ar/i/familia_perez_"))
+        self.assertTrue(records[0]["whatsapp"].startswith("https://wa.me/5491198765432?text="))
         self.mock_ws.update.assert_called_once()
 
     def test_deterministic_row_time_id(self):
@@ -134,9 +144,22 @@ class TestGoogleSheetsTable(unittest.TestCase):
         no_code_slug = parse_and_validate_token("familia_rodriguez")
         self.assertIsNone(no_code_slug)
 
+    def test_whatsapp_url_generation(self):
+        phone = "+54 9 (11) 2345-6789"
+        url = "http://nos.vamos.acas.ar/i/test_123456"
+        clean = clean_phone_number(phone)
+        self.assertEqual(clean, "5491123456789")
+
+        wa_url = generate_whatsapp_url(phone, url)
+        self.assertEqual(wa_url, "https://wa.me/5491123456789?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ftest_123456")
+
+        # Empty phone
+        self.assertEqual(generate_whatsapp_url("", url), "")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

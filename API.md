@@ -54,6 +54,8 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 | N | `pa_vegano` | `string` | Vegan diet flag | `"si"` |
 | O | `pa_celiaco` | `string` | Celiac diet flag | `"si"` |
 | P | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/i/familia_perez_a1b2c3"` |
+| Q | `whatsapp` | `string` | Direct WhatsApp invitation link (`wa.me`) | `"https://wa.me/5491112345678?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ffamilia_perez_a1b2c3"` |
+
 
 
 > **Note**: There are **no mandatory fields**. Any payload field is optional. If an `id` is not specified on insert, a random 8-digit hex string is automatically generated.
