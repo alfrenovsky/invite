@@ -239,51 +239,10 @@
         }
 
         @media (min-width: 768px) {
-            .story-slide.active {
-                opacity: 1;
-                pointer-events: auto;
-                transform: translateX(0) scale(1);
-                filter: blur(0) brightness(1);
-                z-index: 25;
-            }
-
-            .story-slide.prev-slide {
-                opacity: 0.6;
-                pointer-events: auto;
-                cursor: pointer;
-                transform: translateX(calc(-100% - 24px)) scale(0.85);
-                filter: blur(12px) brightness(0.5);
-                z-index: 10;
-            }
-
-            .story-slide.prev-slide:hover {
-                opacity: 0.9;
-                filter: blur(9px) brightness(0.7);
-                transform: translateX(calc(-100% - 24px)) scale(0.88);
-            }
-
-            .story-slide.next-slide {
-                opacity: 0.6;
-                pointer-events: auto;
-                cursor: pointer;
-                transform: translateX(calc(100% + 24px)) scale(0.85);
-                filter: blur(12px) brightness(0.5);
-                z-index: 10;
-            }
-
-            .story-slide.next-slide:hover {
-                opacity: 0.9;
-                filter: blur(9px) brightness(0.7);
-                transform: translateX(calc(100% + 24px)) scale(0.88);
-            }
-
-
-
-            .story-slide.hidden-slide {
-                opacity: 0;
-                pointer-events: none;
-                transform: scale(0.7);
-                z-index: 1;
+            .story-slide.side-slide:hover {
+                opacity: 0.95 !important;
+                filter: blur(6px) brightness(0.8) !important;
+                transform: var(--slide-hover-transform) !important;
             }
         }
 
@@ -292,25 +251,8 @@
                 border-radius: 0;
                 box-shadow: none;
             }
-
-            .story-slide.active {
-                opacity: 1;
-                pointer-events: auto;
-                transform: scale(1);
-                filter: none;
-                z-index: 10;
-            }
-
-            .story-slide.prev-slide,
-            .story-slide.next-slide,
-            .story-slide.hidden-slide {
-                opacity: 0;
-                pointer-events: none;
-                transform: scale(0.97);
-                filter: none;
-                z-index: 1;
-            }
         }
+
 
         /* Interactive Click Zones */
         .tap-zone {
@@ -989,32 +931,60 @@
         }
 
         function showSlide(index) {
+            const isDesktop = window.innerWidth >= 768;
+
             slides.forEach((s, idx) => {
-                s.classList.remove('active', 'prev-slide', 'next-slide', 'hidden-slide');
-                if (idx === index) {
+                const offset = idx - index;
+                s.classList.remove('active', 'side-slide', 'hidden-slide');
+
+                if (offset === 0) {
                     s.classList.add('active');
-                } else if (idx === index - 1) {
-                    s.classList.add('prev-slide');
-                } else if (idx === index + 1) {
-                    s.classList.add('next-slide');
+                    s.style.transform = isDesktop ? 'translateX(0) scale(1)' : 'scale(1)';
+                    s.style.opacity = '1';
+                    s.style.filter = 'blur(0px) brightness(1)';
+                    s.style.zIndex = '50';
+                    s.style.pointerEvents = 'auto';
+                    s.style.cursor = 'default';
+                } else if (isDesktop) {
+                    s.classList.add('side-slide');
+                    const sign = offset > 0 ? 1 : -1;
+                    const absOffset = Math.abs(offset);
+                    // 40% scaled card has effective width ~168px; step offset by 185px
+                    const shiftPx = sign * (300 + (absOffset - 1) * 185);
+                    const opacityVal = Math.max(0.15, 0.65 - (absOffset - 1) * 0.15);
+
+                    s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
+                    s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
+                    s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
+                    s.style.opacity = opacityVal.toString();
+                    s.style.filter = 'blur(10px) brightness(0.55)';
+                    s.style.zIndex = (50 - absOffset).toString();
+                    s.style.pointerEvents = 'auto';
+                    s.style.cursor = 'pointer';
                 } else {
                     s.classList.add('hidden-slide');
+                    s.style.transform = 'scale(0.97)';
+                    s.style.opacity = '0';
+                    s.style.filter = 'none';
+                    s.style.zIndex = '1';
+                    s.style.pointerEvents = 'none';
+                    s.style.cursor = 'default';
                 }
             });
         }
 
-        // Allow clicking on side preview cards to navigate
-        slides.forEach((s) => {
+        // Allow clicking on any side preview card to navigate directly to it
+        slides.forEach((s, idx) => {
             s.addEventListener('click', (e) => {
-                if (s.classList.contains('prev-slide')) {
+                if (idx !== currentIndex) {
                     e.stopPropagation();
-                    prevSlide();
-                } else if (s.classList.contains('next-slide')) {
-                    e.stopPropagation();
-                    nextSlide();
+                    goToSlide(idx);
                 }
             });
         });
+
+        window.addEventListener('resize', () => showSlide(currentIndex));
+
 
 
         function startSlideTimer() {
