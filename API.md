@@ -38,18 +38,23 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 
 | Column Index | Field Name | Type | Description | Example |
 |---|---|---|---|---|
-| A | `id` | `string` | Unique identifier (Random 8-digit HEX if not supplied) | `"a1b2c3d4"` |
+| A | `id` | `string` | Unique identifier (Deterministic 8-digit HEX) | `"a1b2c3d4"` |
 | B | `updated_at` | `string` | Timestamp of insertion/last update | `"2026-08-11 18:30:00"` |
-| C | `apellido` | `string` | Last name | `"Pérez"` |
-| D | `nombre` | `string` | First name | `"Juan"` |
+| C | `nombre` | `string` | First name | `"Juan"` |
+| D | `apellido` | `string` | Last name | `"Pérez"` |
 | E | `telefono` | `string` | Phone number | `"+5491112345678"` |
-| F | `invitacion` | `string` | Invitation note / code | `"VIP"` |
-| G | `confirmacion` | `string` | Attendance confirmation | `"si"`, `"no"` |
-| H | `pa_general` | `string` | Standard diet flag | `"si"` |
-| I | `pa_vegetariano` | `string` | Vegetarian diet flag | `"si"` |
-| J | `pa_vegano` | `string` | Vegan diet flag | `"si"` |
-| K | `pa_celiaco` | `string` | Celiac diet flag | `"si"` |
-| L | `""` | `string` | Extra column | `""` |
+| F | `invitacion_id` | `string` | Invitation note / group code | `"familia_perez"` |
+| G | `cenaobaile` | `string` | Event type / pass | `"cena"` |
+| H | `invitaoreserva` | `string` | Host or reserved | `"invitado"` |
+| I | `precio` | `string` | Ticket price | `""` |
+| J | `pago` | `string` | Payment status | `""` |
+| K | `confirmacion` | `string` | Attendance confirmation (`"si"`, `"no"`, `""`) | `"si"` |
+| L | `pa_general` | `string` | Standard diet flag | `"si"` |
+| M | `pa_vegetariano` | `string` | Vegetarian diet flag | `"si"` |
+| N | `pa_vegano` | `string` | Vegan diet flag | `"si"` |
+| O | `pa_celiaco` | `string` | Celiac diet flag | `"si"` |
+| P | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/i/familia_perez_a1b2c3"` |
+
 
 > **Note**: There are **no mandatory fields**. Any payload field is optional. If an `id` is not specified on insert, a random 8-digit hex string is automatically generated.
 

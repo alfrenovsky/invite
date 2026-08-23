@@ -10,8 +10,8 @@ from gspread.utils import rowcol_to_a1
 FIELDNAMES = [
     "id",
     "updated_at",
-    "apellido",
     "nombre",
+    "apellido",
     "telefono",
     "invitacion_id",
     "cenaobaile",
@@ -25,6 +25,7 @@ FIELDNAMES = [
     "pa_celiaco",
     "url",
 ]
+
 
 INVITATION_SALT = os.environ.get("INVITATION_SALT", "boda_celia_y_alfredo_2027_secret_salt")
 BASE_URL = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
