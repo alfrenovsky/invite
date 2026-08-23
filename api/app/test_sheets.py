@@ -91,6 +91,19 @@ class TestGoogleSheetsTable(unittest.TestCase):
         expected_id = self.table._generate_row_id(2, "2026-08-12 12:00:00")
         self.assertEqual(res[0]["id"], expected_id)
 
+    def test_get_by_invitacion(self):
+        sample_data = [
+            {"id": "id1", "apellido": "Perez", "nombre": "Juan", "invitacion": "familia-perez"},
+            {"id": "id2", "apellido": "Perez", "nombre": "Maria", "invitacion": "familia-perez"},
+            {"id": "id3", "apellido": "Gomez", "nombre": "Carlos", "invitacion": "amigos-facu"}
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+        group = self.table.get_by_invitacion("familia-perez")
+        self.assertEqual(len(group), 2)
+        self.assertEqual(group[0]["nombre"], "Juan")
+        self.assertEqual(group[1]["nombre"], "Maria")
+
+
 
 
 

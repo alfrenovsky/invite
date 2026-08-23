@@ -96,6 +96,24 @@ class GoogleSheetsTable:
                     return {"row_index": idx, "data": rec}
             return None
 
+    def get_by_invitacion(self, invitacion_id):
+        if not invitacion_id:
+            return []
+        with self.lock:
+            records = self.get_all()
+            target = str(invitacion_id).strip().lower()
+            matched = [
+                rec for rec in records
+                if str(rec.get("invitacion", "")).strip().lower() == target
+            ]
+            if not matched:
+                matched = [
+                    rec for rec in records
+                    if str(rec.get("id", "")).strip().lower() == target
+                ]
+            return matched
+
+
     def _map_record_to_row(self, rec, now_str, row_idx=None):
         alim = rec.get("alimentacion", [])
         if isinstance(alim, str):

@@ -8,15 +8,54 @@ table = GoogleSheetsTable()
 
 
 @app.get("/")
-def index_page():
-    try:
-        invitados = table.get_all()
-        count = len(invitados)
-        confirmados = sum(1 for g in invitados if g.get("confirmacion") == "si")
-        rechazados = sum(1 for g in invitados if g.get("confirmacion") == "no")
-        return render_template("index.html", invitados=invitados, count=count, confirmados=confirmados, rechazados=rechazados)
-    except Exception as e:
-        return render_template("index.html", invitados=[], count=0, confirmados=0, rechazados=0)
+@app.get("/i/<invitacion_id>")
+@app.get("/invitacion/<invitacion_id>")
+def index_page(invitacion_id=None):
+    if not invitacion_id:
+        invitacion_id = request.args.get("invitacion_id") or request.args.get("invitacion") or request.args.get("id")
+
+    guests = []
+    group_names = ""
+    all_confirmed = False
+    any_confirmed = False
+    pending_count = 0
+    confirmed_count = 0
+    rejected_count = 0
+
+    if invitacion_id:
+        try:
+            guests = table.get_by_invitacion(invitacion_id)
+            if guests:
+                names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
+                if len(names) == 1:
+                    group_names = names[0]
+                elif len(names) == 2:
+                    group_names = f"{names[0]} y {names[1]}"
+                elif len(names) > 2:
+                    group_names = f"{', '.join(names[:-1])} y {names[-1]}"
+                else:
+                    group_names = "Familia / Pareja"
+
+                confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
+                rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
+                pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
+                all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
+                any_confirmed = (confirmed_count > 0)
+        except Exception as e:
+            pass
+
+    return render_template(
+        "index.html",
+        invitacion_id=invitacion_id or "",
+        guests=guests,
+        group_names=group_names,
+        confirmed_count=confirmed_count,
+        rejected_count=rejected_count,
+        pending_count=pending_count,
+        all_confirmed=all_confirmed,
+        any_confirmed=any_confirmed,
+    )
+
 
 
 @app.get("/form")
