@@ -558,35 +558,41 @@
             width: auto;
         }
 
+        /* Scrollbar Suppression */
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        * {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
         /* RSVP Slide Form & Accordion */
         .rsvp-form-container {
-            max-height: 64vh;
+            max-height: 68vh;
             overflow-y: auto;
-            padding-right: 2px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-right: 0;
             text-align: left;
             position: relative;
             z-index: 400;
             pointer-events: auto;
         }
 
-        .group-quick-actions {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            justify-content: center;
-        }
-
         .rsvp-card {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 14px;
-            margin-bottom: 8px;
+            margin-bottom: 7px;
             overflow: hidden;
             transition: all 0.25s ease;
         }
 
         .rsvp-card-header {
-            padding: 12px 14px;
+            padding: 10px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -610,7 +616,7 @@
 
         .guest-name {
             font-weight: 600;
-            font-size: 0.95em;
+            font-size: 0.92em;
             color: #ffffff;
             white-space: nowrap;
             overflow: hidden;
@@ -618,8 +624,8 @@
         }
 
         .guest-badge {
-            font-size: 0.72em;
-            padding: 2px 8px;
+            font-size: 0.70em;
+            padding: 2px 7px;
             border-radius: 12px;
             font-weight: 600;
             white-space: nowrap;
@@ -638,16 +644,16 @@
         }
 
         .guest-badge.badge-pending {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-muted);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(212, 175, 55, 0.18);
+            color: var(--accent-light);
+            border: 1px solid rgba(212, 175, 55, 0.35);
         }
 
         .chevron-icon {
-            font-size: 0.75em;
+            font-size: 0.72em;
             color: var(--accent);
             transition: transform 0.25s ease;
-            margin-left: 8px;
+            margin-left: 6px;
         }
 
         .rsvp-card.expanded .chevron-icon {
@@ -665,32 +671,33 @@
             opacity: 0;
             overflow: hidden;
             transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.25s ease;
-            padding: 0 14px;
+            padding: 0 12px;
         }
 
         .rsvp-card.expanded .rsvp-card-body {
             max-height: 320px;
             opacity: 1;
-            padding: 10px 14px 14px 14px;
+            padding: 8px 12px 12px 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .radio-group {
             display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 6px;
+            margin-bottom: 8px;
         }
 
         .radio-label {
             flex: 1;
-            padding: 9px;
-            border-radius: 10px;
+            padding: 8px 4px;
+            border-radius: 9px;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            font-size: 0.88em;
+            font-size: 0.82em;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .radio-label input {
@@ -698,24 +705,31 @@
         }
 
         .radio-label.selected-si {
-            background: rgba(46, 204, 113, 0.2);
+            background: rgba(46, 204, 113, 0.22);
             border-color: var(--success);
             color: #2ecc71;
             font-weight: 600;
         }
 
         .radio-label.selected-no {
-            background: rgba(231, 76, 60, 0.2);
+            background: rgba(231, 76, 60, 0.22);
             border-color: var(--danger);
             color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .radio-label.selected-pending {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--accent);
+            color: var(--accent-light);
             font-weight: 600;
         }
 
         .checkbox-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            font-size: 0.82em;
+            gap: 5px;
+            font-size: 0.80em;
             color: var(--text-muted);
         }
 
@@ -725,6 +739,7 @@
             gap: 5px;
             cursor: pointer;
         }
+
 
         /* Toast notification */
 
@@ -975,13 +990,6 @@
                         </p>
 
                         <div class="interactive-content rsvp-form-container">
-                            {% if guests %}
-                            <div class="group-quick-actions">
-                                <button type="button" class="action-btn secondary small" id="btnAllYes">✓ Todos Asisten</button>
-                                <button type="button" class="action-btn secondary small" id="btnAllNo">✗ Nadie Asiste</button>
-                            </div>
-                            {% endif %}
-
                             <form id="storyRsvpForm">
                                 <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
                                 
@@ -1008,9 +1016,13 @@
                                                     <input type="radio" name="asistencia_{{ guest.id }}" value="no" {% if guest.confirmacion == 'no' %}checked{% endif %}>
                                                     ✗ No asiste
                                                 </label>
+                                                <label class="radio-label {% if not guest.confirmacion or guest.confirmacion not in ['si', 'no'] %}selected-pending{% endif %}">
+                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="" {% if not guest.confirmacion or guest.confirmacion not in ['si', 'no'] %}checked{% endif %}>
+                                                    ⏳ Pendiente
+                                                </label>
                                             </div>
 
-                                            <div class="diet-section" style="{% if guest.confirmacion == 'no' %}display: none;{% endif %}">
+                                            <div class="diet-section" style="{% if guest.confirmacion != 'si' %}display: none;{% endif %}">
                                                 <div style="font-size: 0.78em; color: var(--text-muted); margin-bottom: 5px;">Menú / Preferencia:</div>
                                                 <div class="checkbox-grid">
                                                     <label class="checkbox-label"><input type="checkbox" class="diet-check" value="general" {% if guest.pa_general == 'si' %}checked{% endif %}> General</label>
@@ -1023,6 +1035,7 @@
                                     </div>
                                     {% endfor %}
                                 </div>
+
 
 
                                 <button type="submit" class="action-btn" id="btnSubmitRsvp">
@@ -1372,7 +1385,7 @@
                 radios.forEach(radio => {
                     radio.onchange = () => {
                         card.querySelectorAll('.radio-label').forEach(lbl => {
-                            lbl.classList.remove('selected-si', 'selected-no');
+                            lbl.classList.remove('selected-si', 'selected-no', 'selected-pending');
                         });
                         const parentLabel = radio.closest('.radio-label');
                         if (radio.value === 'si') {
@@ -1382,12 +1395,19 @@
                                 badge.className = 'guest-badge badge-si';
                                 badge.textContent = '✓ Asiste';
                             }
-                        } else {
+                        } else if (radio.value === 'no') {
                             parentLabel.classList.add('selected-no');
                             if (dietSection) dietSection.style.display = 'none';
                             if (badge) {
                                 badge.className = 'guest-badge badge-no';
                                 badge.textContent = '✗ No asiste';
+                            }
+                        } else {
+                            parentLabel.classList.add('selected-pending');
+                            if (dietSection) dietSection.style.display = 'none';
+                            if (badge) {
+                                badge.className = 'guest-badge badge-pending';
+                                badge.textContent = '⏳ Pendiente';
                             }
                         }
 
@@ -1406,37 +1426,6 @@
 
         bindRadioEvents(document);
 
-        // Group Quick Action Buttons (All Yes / All No)
-        const btnAllYes = document.getElementById('btnAllYes');
-        const btnAllNo = document.getElementById('btnAllNo');
-
-        if (btnAllYes) {
-            btnAllYes.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('.rsvp-card').forEach(card => {
-                    const yesRadio = card.querySelector('input[type="radio"][value="si"]');
-                    if (yesRadio) {
-                        yesRadio.checked = true;
-                        yesRadio.dispatchEvent(new Event('change'));
-                    }
-                });
-                showToast('✓ Todo el grupo marcado como Asiste');
-            });
-        }
-
-        if (btnAllNo) {
-            btnAllNo.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('.rsvp-card').forEach(card => {
-                    const noRadio = card.querySelector('input[type="radio"][value="no"]');
-                    if (noRadio) {
-                        noRadio.checked = true;
-                        noRadio.dispatchEvent(new Event('change'));
-                    }
-                });
-                showToast('✗ Todo el grupo marcado como No asiste');
-            });
-        }
 
 
         // RSVP Form Submit for all guests in group
