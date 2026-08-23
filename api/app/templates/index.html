@@ -447,12 +447,59 @@
             font-size: 0.95em;
         }
 
-        .timeline-title {
-            font-size: 0.88em;
-            color: #ffffff;
+        /* Countdown Timer Styling */
+        .countdown-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 18px;
+            padding: 14px 10px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            margin: 12px auto 16px auto;
+            max-width: 350px;
+            width: 100%;
+        }
+
+        .countdown-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 48px;
+        }
+
+        .countdown-num {
+            font-size: 1.7em;
+            font-weight: 700;
+            color: var(--accent-light);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+        }
+
+        .countdown-label {
+            font-size: 0.62em;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .countdown-sep {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: -10px;
+            opacity: 0.6;
         }
 
         /* Buttons & Actions */
+
         .action-btn {
             display: inline-flex;
             align-items: center;
@@ -713,27 +760,46 @@
                     </div>
                 </div>
 
-                <!-- SLIDE 2: Fecha y Hora -->
-                <div class="story-slide" data-duration="6000">
+                <!-- SLIDE 2: Fecha, Hora y Cuenta Regresiva -->
+                <div class="story-slide" data-duration="7000">
                     <div class="slide-body">
                         <span class="slide-tag">CUÁNDO</span>
-                        <h2 class="slide-title">19 de <strong>Marzo</strong></h2>
-                        <p class="slide-desc">Guardá la fecha en tu calendario para no perderte ningún momento.</p>
+                        <h2 class="slide-title">19 de <strong>Marzo de 2027</strong></h2>
+                        <div style="font-size: 1.25em; font-weight: 700; color: var(--accent-light); margin-bottom: 6px;">18:00 HS</div>
+                        <p class="slide-desc" style="margin-bottom: 12px;">Recepción & Ceremonia</p>
 
-                        <div style="font-size: 3.5em; margin: 15px 0;">📅</div>
-
-                        <div style="background: rgba(255,255,255,0.04); padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
-                            <div style="font-size: 1.3em; font-weight: 700; color: var(--accent-light);">18:30 HS</div>
-                            <div style="font-size: 0.9em; color: var(--text-muted);">Recepción & Cocktail de bienvenida</div>
+                        <!-- Live Countdown Timer -->
+                        <div class="countdown-container interactive-content">
+                            <div class="countdown-box">
+                                <span class="countdown-num" id="cdDays">--</span>
+                                <span class="countdown-label">DÍAS</span>
+                            </div>
+                            <div class="countdown-sep">:</div>
+                            <div class="countdown-box">
+                                <span class="countdown-num" id="cdHours">--</span>
+                                <span class="countdown-label">HS</span>
+                            </div>
+                            <div class="countdown-sep">:</div>
+                            <div class="countdown-box">
+                                <span class="countdown-num" id="cdMins">--</span>
+                                <span class="countdown-label">MIN</span>
+                            </div>
+                            <div class="countdown-sep">:</div>
+                            <div class="countdown-box">
+                                <span class="countdown-num" id="cdSecs">--</span>
+                                <span class="countdown-label">SEG</span>
+                            </div>
                         </div>
 
-                        <div class="interactive-content">
-                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Boda+Celia+y+Alfredo&dates=20270319T213000Z/20270320T080000Z&details=Casamiento+Celia+y+Alfredo" target="_blank" class="action-btn">
-                                🗓️ Agendar en Google Calendar
+                        <div class="interactive-content" style="margin-top: 14px;">
+                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Boda+Celia+y+Alfredo&dates=20270319T210000Z/20270320T070000Z&details=Casamiento+Celia+y+Alfredo+-+19+de+Marzo+2027+18:00+HS" target="_blank" class="action-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                Agendar en Google Calendar
                             </a>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- SLIDE 3: Lugar y Ubicación -->
                 <div class="story-slide" data-duration="6500">
@@ -1148,6 +1214,43 @@
             toast.classList.add('show');
             setTimeout(() => { toast.classList.remove('show'); }, 2500);
         }
+
+        // Live Countdown to March 19, 2027 18:00 (UTC-3)
+        const TARGET_DATE = new Date('2027-03-19T18:00:00-03:00').getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = TARGET_DATE - now;
+
+            const elDays = document.getElementById('cdDays');
+            const elHours = document.getElementById('cdHours');
+            const elMins = document.getElementById('cdMins');
+            const elSecs = document.getElementById('cdSecs');
+
+            if (!elDays || !elHours || !elMins || !elSecs) return;
+
+            if (distance <= 0) {
+                elDays.textContent = '00';
+                elHours.textContent = '00';
+                elMins.textContent = '00';
+                elSecs.textContent = '00';
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            elDays.textContent = String(days).padStart(2, '0');
+            elHours.textContent = String(hours).padStart(2, '0');
+            elMins.textContent = String(minutes).padStart(2, '0');
+            elSecs.textContent = String(seconds).padStart(2, '0');
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
 
         // Radio button dynamic styling binding
         function bindRadioEvents(scope) {
