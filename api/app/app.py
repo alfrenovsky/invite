@@ -14,39 +14,36 @@ def index_page(invitacion_id=None):
     if not invitacion_id:
         invitacion_id = request.args.get("invitacion_id") or request.args.get("invitacion") or request.args.get("id")
 
-    guests = []
-    group_names = ""
-    all_confirmed = False
-    any_confirmed = False
-    pending_count = 0
-    confirmed_count = 0
-    rejected_count = 0
+    if not invitacion_id:
+        return render_template("blank.html")
 
-    if invitacion_id:
-        try:
-            guests = table.get_by_invitacion(invitacion_id)
-            if guests:
-                names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
-                if len(names) == 1:
-                    group_names = names[0]
-                elif len(names) == 2:
-                    group_names = f"{names[0]} y {names[1]}"
-                elif len(names) > 2:
-                    group_names = f"{', '.join(names[:-1])} y {names[-1]}"
-                else:
-                    group_names = "Familia / Pareja"
+    try:
+        guests = table.get_by_invitacion(invitacion_id)
+    except Exception:
+        guests = []
 
-                confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
-                rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
-                pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
-                all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
-                any_confirmed = (confirmed_count > 0)
-        except Exception as e:
-            pass
+    if not guests:
+        return render_template("blank.html")
+
+    names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
+    if len(names) == 1:
+        group_names = names[0]
+    elif len(names) == 2:
+        group_names = f"{names[0]} y {names[1]}"
+    elif len(names) > 2:
+        group_names = f"{', '.join(names[:-1])} y {names[-1]}"
+    else:
+        group_names = "Familia / Pareja"
+
+    confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
+    rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
+    pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
+    all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
+    any_confirmed = (confirmed_count > 0)
 
     return render_template(
         "index.html",
-        invitacion_id=invitacion_id or "",
+        invitacion_id=invitacion_id,
         guests=guests,
         group_names=group_names,
         confirmed_count=confirmed_count,
@@ -55,6 +52,7 @@ def index_page(invitacion_id=None):
         all_confirmed=all_confirmed,
         any_confirmed=any_confirmed,
     )
+
 
 
 

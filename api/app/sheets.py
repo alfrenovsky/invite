@@ -104,7 +104,7 @@ class GoogleSheetsTable:
             target = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
             matched = [
                 rec for rec in records
-                if str(rec.get("invitacion", "")).strip().lower().replace(" ", "_").replace("-", "_") == target
+                if str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().lower().replace(" ", "_").replace("-", "_") == target
             ]
             if not matched:
                 matched = [
@@ -133,12 +133,15 @@ class GoogleSheetsTable:
         else:
             item["id"] = str(item["id"])
 
+        inv_val = str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().replace(" ", "_")
         item["updated_at"] = updated_at
         item["apellido"] = str(rec.get("apellido", ""))
         item["nombre"] = str(rec.get("nombre", ""))
         item["telefono"] = str(rec.get("telefono", ""))
-        item["invitacion"] = str(rec.get("invitacion", "")).strip().replace(" ", "_")
+        item["invitacion_id"] = inv_val
+        item["invitacion"] = inv_val
         item["confirmacion"] = str(rec.get("confirmacion") or rec.get("asistencia", ""))
+
 
 
         # Dietary preference mapping

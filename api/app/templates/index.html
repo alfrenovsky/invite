@@ -672,12 +672,8 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        {% elif invitacion_id %}
-                        <div class="guest-greeting-box interactive-content">
-                            <h3>Invitación: {{ invitacion_id }}</h3>
-                            <p style="font-size: 0.88em; color: var(--text-muted);">¡Bienvenidos a nuestra celebración!</p>
-                        </div>
                         {% endif %}
+
 
                         <div class="tap-hint">Tocá a la derecha para continuar 👉</div>
                     </div>
@@ -816,71 +812,40 @@
                                 <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
                                 
                                 <div id="rsvpCardsContainer">
-                                    {% if guests %}
-                                        {% for guest in guests %}
-                                        <div class="rsvp-card" data-guest-id="{{ guest.id }}">
-                                            <h4>👤 {{ guest.nombre }} {{ guest.apellido }}</h4>
-                                            <div class="radio-group">
-                                                <label class="radio-label {% if guest.confirmacion == 'si' %}selected-si{% endif %}">
-                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="si" {% if guest.confirmacion == 'si' %}checked{% endif %}>
-                                                    ✓ Asiste
-                                                </label>
-                                                <label class="radio-label {% if guest.confirmacion == 'no' %}selected-no{% endif %}">
-                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="no" {% if guest.confirmacion == 'no' %}checked{% endif %}>
-                                                    ✗ No asiste
-                                                </label>
-                                            </div>
+                                    {% for guest in guests %}
+                                    <div class="rsvp-card" data-guest-id="{{ guest.id }}">
+                                        <h4>👤 {{ guest.nombre }} {{ guest.apellido }}</h4>
+                                        <div class="radio-group">
+                                            <label class="radio-label {% if guest.confirmacion == 'si' %}selected-si{% endif %}">
+                                                <input type="radio" name="asistencia_{{ guest.id }}" value="si" {% if guest.confirmacion == 'si' %}checked{% endif %}>
+                                                ✓ Asiste
+                                            </label>
+                                            <label class="radio-label {% if guest.confirmacion == 'no' %}selected-no{% endif %}">
+                                                <input type="radio" name="asistencia_{{ guest.id }}" value="no" {% if guest.confirmacion == 'no' %}checked{% endif %}>
+                                                ✗ No asiste
+                                            </label>
+                                        </div>
 
-                                            <div class="diet-section" style="{% if guest.confirmacion == 'no' %}display: none;{% endif %}">
-                                                <div style="font-size: 0.78em; color: var(--text-muted); margin-bottom: 5px;">Menú:</div>
-                                                <div class="checkbox-grid">
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="general" {% if guest.pa_general == 'si' %}checked{% endif %}> General</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}> Vegetariano</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}> Vegano</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="celiaco" {% if guest.pa_celiaco == 'si' %}checked{% endif %}> Celíaco</label>
-                                                </div>
+                                        <div class="diet-section" style="{% if guest.confirmacion == 'no' %}display: none;{% endif %}">
+                                            <div style="font-size: 0.78em; color: var(--text-muted); margin-bottom: 5px;">Menú:</div>
+                                            <div class="checkbox-grid">
+                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="general" {% if guest.pa_general == 'si' %}checked{% endif %}> General</label>
+                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}> Vegetariano</label>
+                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}> Vegano</label>
+                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="celiaco" {% if guest.pa_celiaco == 'si' %}checked{% endif %}> Celíaco</label>
                                             </div>
                                         </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <!-- Initial card if opening without pre-assigned group -->
-                                        <div class="rsvp-card new-companion-card">
-                                            <label style="display: block; font-size: 0.82em; color: var(--text-muted); margin-bottom: 3px;">Nombre y Apellido</label>
-                                            <input type="text" class="comp_nombre" placeholder="Ej: Carlos Gómez" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px;">
-
-                                            <div class="radio-group">
-                                                <label class="radio-label selected-si">
-                                                    <input type="radio" name="comp_asistencia_0" value="si" checked> ✓ Asiste
-                                                </label>
-                                                <label class="radio-label">
-                                                    <input type="radio" name="comp_asistencia_0" value="no"> ✗ No asiste
-                                                </label>
-                                            </div>
-
-                                            <div class="diet-section">
-                                                <div class="checkbox-grid">
-                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="general" checked> General</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegetariano"> Vegetariano</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegano"> Vegano</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="celiaco"> Celíaco</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
+                                    </div>
+                                    {% endfor %}
                                 </div>
 
-                                {% if invitacion_id %}
-                                <button type="button" class="btn-add-companion" id="btnAddCompanion">
-                                    + Agregar acompañante a esta invitación
-                                </button>
-                                {% endif %}
-
                                 <button type="submit" class="action-btn" id="btnSubmitRsvp">
-                                    ✉️ Guardar Todas las Confirmaciones
+                                    ✉️ Guardar Confirmaciones
                                 </button>
                                 <div id="rsvpFeedback" style="margin-top: 10px; font-weight: bold; font-size: 0.9em; text-align: center;"></div>
                             </form>
                         </div>
+
                     </div>
                 </div>
 
@@ -1146,55 +1111,6 @@
             });
         }
 
-        // Add Extra Companion under same invitacion_id
-        const btnAddCompanion = document.getElementById('btnAddCompanion');
-        const rsvpCardsContainer = document.getElementById('rsvpCardsContainer');
-        let newCompanionCounter = 1;
-
-        if (btnAddCompanion) {
-            btnAddCompanion.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const card = document.createElement('div');
-                card.className = 'rsvp-card new-companion-card';
-                card.innerHTML = `
-                    <h4>
-                        <span>👤 Nuevo Acompañante</span>
-                        <button type="button" class="btn-remove-companion" title="Quitar">×</button>
-                    </h4>
-                    <label style="display: block; font-size: 0.82em; color: var(--text-muted); margin-bottom: 3px;">Nombre y Apellido</label>
-                    <input type="text" class="comp_nombre" placeholder="Ej: María Gómez" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px;">
-
-                    <div class="radio-group">
-                        <label class="radio-label selected-si">
-                            <input type="radio" name="new_comp_asistencia_${newCompanionCounter}" value="si" checked> ✓ Asiste
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="new_comp_asistencia_${newCompanionCounter}" value="no"> ✗ No asiste
-                        </label>
-                    </div>
-
-                    <div class="diet-section">
-                        <div class="checkbox-grid">
-                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="general" checked> General</label>
-                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegetariano"> Vegetariano</label>
-                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegano"> Vegano</label>
-                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="celiaco"> Celíaco</label>
-                        </div>
-                    </div>
-                `;
-
-                card.querySelector('.btn-remove-companion').addEventListener('click', (ev) => {
-                    ev.stopPropagation();
-                    card.remove();
-                });
-
-                rsvpCardsContainer.appendChild(card);
-                bindRadioEvents(card);
-                newCompanionCounter++;
-                card.scrollIntoView({ behavior: 'smooth' });
-            });
-        }
-
         // RSVP Form Submit for all guests in group
         const rsvpForm = document.getElementById('storyRsvpForm');
         const rsvpFeedback = document.getElementById('rsvpFeedback');
@@ -1205,15 +1121,13 @@
                 e.preventDefault();
                 e.stopPropagation();
                 btnSubmit.disabled = true;
-                btnSubmit.textContent = 'Guardando grupo...';
+                btnSubmit.textContent = 'Guardando confirmaciones...';
                 rsvpFeedback.textContent = '';
 
-                const invitacionId = document.getElementById('form_invitacion_id').value;
                 const existingGuestCards = Array.from(document.querySelectorAll('.rsvp-card[data-guest-id]'));
-                const newCompanionCards = Array.from(document.querySelectorAll('.rsvp-card.new-companion-card'));
                 const updates = [];
 
-                // 1. Update all existing group guests
+                // Update all existing group guests
                 for (const card of existingGuestCards) {
                     const guestId = card.getAttribute('data-guest-id');
                     const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
@@ -1246,53 +1160,20 @@
                     }
                 }
 
-                // 2. Insert any newly added companions with the same invitacion_id
-                for (const card of newCompanionCards) {
-                    const nombre = card.querySelector('.comp_nombre').value.trim();
-                    if (!nombre) continue; // Skip empty companion names
-
-                    const radioChecked = card.querySelector('input[type="radio"]:checked');
-                    const asistencia = radioChecked ? radioChecked.value : 'si';
-                    const diets = Array.from(card.querySelectorAll('.comp_diet:checked')).map(c => c.value);
-
-                    const payload = {
-                        invitacion: invitacionId,
-                        nombre: nombre,
-                        confirmacion: asistencia,
-                        pa_general: diets.includes('general') ? 'si' : '',
-                        pa_vegetariano: diets.includes('vegetariano') ? 'si' : '',
-                        pa_vegano: diets.includes('vegano') ? 'si' : '',
-                        pa_celiaco: diets.includes('celiaco') ? 'si' : ''
-                    };
-
-                    try {
-                        const res = await fetch('/invitados', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        updates.push(res.ok);
-                    } catch (err) {
-                        updates.push(false);
-                    }
-                }
-
                 btnSubmit.disabled = false;
-                btnSubmit.textContent = '✓ ¡Confirmación del Grupo Guardada!';
+                btnSubmit.textContent = '✓ ¡Confirmación Guardada!';
 
                 if (updates.every(Boolean) && updates.length > 0) {
                     rsvpFeedback.style.color = '#2ecc71';
-                    rsvpFeedback.textContent = '✨ ¡Excelente! Las confirmaciones de todo el grupo fueron registradas con éxito.';
-                    showToast('✓ ¡Todo el grupo confirmado con éxito!');
-                } else if (updates.length === 0) {
-                    rsvpFeedback.style.color = '#f39c12';
-                    rsvpFeedback.textContent = 'Por favor completá los nombres de los acompañantes.';
+                    rsvpFeedback.textContent = '✨ ¡Excelente! Las respuestas fueron registradas con éxito.';
+                    showToast('✓ ¡Confirmaciones guardadas con éxito!');
                 } else {
                     rsvpFeedback.style.color = '#f39c12';
                     rsvpFeedback.textContent = 'Se guardaron algunos registros con éxito.';
                 }
             });
         }
+
 
         // Initialize First Slide
         goToSlide(0);
