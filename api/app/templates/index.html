@@ -115,10 +115,12 @@
             top: 0;
             left: 0;
             right: 0;
-            z-index: 50;
+            z-index: 1000;
             padding: 12px 14px 8px 14px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: auto;
         }
+
 
         .progress-bars {
             display: flex;
@@ -263,9 +265,9 @@
         /* Interactive Click Zones */
         .tap-zone {
             position: absolute;
-            top: 60px;
+            top: 75px;
             bottom: 0;
-            z-index: 20;
+            z-index: 200;
             cursor: pointer;
         }
 
@@ -282,7 +284,7 @@
         /* Interactive content wrapper to prevent tap-through */
         .interactive-content {
             position: relative;
-            z-index: 30;
+            z-index: 300;
             user-select: text;
         }
 
@@ -304,8 +306,9 @@
             cursor: pointer;
             backdrop-filter: blur(10px);
             transition: all 0.2s ease;
-            z-index: 100;
+            z-index: 500;
         }
+
 
         .desktop-arrow:hover {
             background: var(--accent);
@@ -948,7 +951,7 @@
                     s.style.transform = isDesktop ? 'translateX(0) scale(1)' : 'scale(1)';
                     s.style.opacity = '1';
                     s.style.filter = 'blur(0px) brightness(1)';
-                    s.style.zIndex = '50';
+                    s.style.zIndex = '30';
                     s.style.pointerEvents = 'auto';
                     s.style.cursor = 'default';
                 } else if (isDesktop) {
@@ -959,9 +962,10 @@
                     s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
                     s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
                     s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
-                    s.style.zIndex = (50 - absOffset).toString();
+                    s.style.zIndex = (20 - absOffset).toString();
                     s.style.pointerEvents = 'auto';
                     s.style.cursor = 'pointer';
+
 
                     if (offset < 0) {
                         // Already seen (left side): ALWAYS FOCUSED
