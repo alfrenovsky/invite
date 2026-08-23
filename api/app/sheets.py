@@ -23,8 +23,44 @@ FIELDNAMES = [
     "pa_vegetariano",
     "pa_vegano",
     "pa_celiaco",
-    "",
+    "url",
 ]
+
+INVITATION_SALT = os.environ.get("INVITATION_SALT", "boda_celia_y_alfredo_2027_secret_salt")
+BASE_URL = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
+
+
+def compute_check_code(invitacion_id: str, salt: str = None) -> str:
+    if not invitacion_id:
+        return ""
+    salt = salt or INVITATION_SALT
+    normalized_id = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
+    raw = f"{normalized_id}:{salt}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()[:6]
+
+
+def generate_invitation_url(invitacion_id: str, base_url: str = None, salt: str = None) -> str:
+    if not invitacion_id:
+        return ""
+    base_url = (base_url or BASE_URL).rstrip("/")
+    code = compute_check_code(invitacion_id, salt)
+    normalized_id = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
+    return f"{base_url}/i/{normalized_id}_{code}"
+
+
+def parse_and_validate_token(token: str, salt: str = None):
+    if not token:
+        return None
+    token = str(token).strip()
+    if "_" in token:
+        parts = token.rsplit("_", 1)
+        slug = parts[0]
+        provided_code = parts[1]
+        expected_code = compute_check_code(slug, salt)
+        if provided_code.lower() == expected_code.lower():
+            return slug
+    return None
+
 
 class GoogleSheetsTable:
     def __init__(self, credentials_path=None, sheet_id=None, worksheet_name=None):
@@ -73,14 +109,18 @@ class GoogleSheetsTable:
             updated_count = 0
 
             for idx, rec in enumerate(records, start=2):  # Header is row 1
-                if not rec.get("id"):
+                needs_id = not rec.get("id")
+                needs_url = not rec.get("url") and bool(rec.get("invitacion_id") or rec.get("invitacion"))
+                if needs_id or needs_url:
                     item, row = self._map_record_to_row(rec, now_str, row_idx=idx)
                     range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                     ws.update(range_name, [row])
                     rec["id"] = item["id"]
+                    rec["url"] = item["url"]
                     updated_count += 1
 
             return records, updated_count
+
 
     def get_all(self):
         with self.lock:
@@ -150,7 +190,13 @@ class GoogleSheetsTable:
         item["pa_vegano"] = str(rec.get("pa_vegano", "si" if "vegano" in alim_list else ""))
         item["pa_celiaco"] = str(rec.get("pa_celiaco", "si" if "celiaco" in alim_list else ""))
 
+        if not item.get("url") and inv_val:
+            item["url"] = generate_invitation_url(inv_val)
+        else:
+            item["url"] = str(item.get("url", ""))
+
         # Build row according to FIELDNAMES
+
         row = []
         for col in FIELDNAMES:
             row.append(str(item.get(col, "")))

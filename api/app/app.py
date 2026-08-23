@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request, jsonify, render_template
-from sheets import GoogleSheetsTable
+from sheets import GoogleSheetsTable, parse_and_validate_token
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -19,17 +19,21 @@ def add_cache_headers(response):
 
 
 @app.get("/")
-@app.get("/i/<invitacion_id>")
-@app.get("/invitacion/<invitacion_id>")
-def index_page(invitacion_id=None):
-    if not invitacion_id:
-        invitacion_id = request.args.get("invitacion_id") or request.args.get("invitacion") or request.args.get("id")
+@app.get("/i/<token>")
+@app.get("/invitacion/<token>")
+def index_page(token=None):
+    if not token:
+        token = request.args.get("invitacion_id") or request.args.get("invitacion") or request.args.get("id") or request.args.get("token")
 
-    if not invitacion_id:
+    if not token:
+        return render_template("blank.html")
+
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
         return render_template("blank.html")
 
     try:
-        guests = table.get_by_invitacion(invitacion_id)
+        guests = table.get_by_invitacion(validated_slug)
     except Exception:
         guests = []
 
@@ -54,7 +58,7 @@ def index_page(invitacion_id=None):
 
     return render_template(
         "index.html",
-        invitacion_id=invitacion_id,
+        invitacion_id=validated_slug,
         guests=guests,
         group_names=group_names,
         confirmed_count=confirmed_count,
@@ -63,6 +67,7 @@ def index_page(invitacion_id=None):
         all_confirmed=all_confirmed,
         any_confirmed=any_confirmed,
     )
+
 
 
 

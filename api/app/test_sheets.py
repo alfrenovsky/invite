@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from sheets import GoogleSheetsTable, FIELDNAMES
+from sheets import GoogleSheetsTable, FIELDNAMES, compute_check_code, generate_invitation_url, parse_and_validate_token
 
 
 class TestGoogleSheetsTable(unittest.TestCase):
@@ -44,12 +44,13 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(found["data"]["nombre"], "Maria")
 
     def test_add_records(self):
-        new_record = {"apellido": "Lopez", "nombre": "Carlos", "asistencia": "si", "alimentacion": ["celiaco"]}
+        new_record = {"apellido": "Lopez", "nombre": "Carlos", "asistencia": "si", "alimentacion": ["celiaco"], "invitacion_id": "amigos"}
         res = self.table.add_records([new_record])
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0]["apellido"], "Lopez")
         self.assertEqual(res[0]["pa_celiaco"], "si")
         self.assertEqual(len(res[0]["id"]), 8)  # random 8 digit hex
+        self.assertTrue(res[0]["url"].startswith("http://nos.vamos.acas.ar/i/amigos_"))
         self.mock_ws.append_rows.assert_called_once()
 
     def test_update_record(self):
@@ -73,16 +74,17 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertTrue(deleted)
         self.mock_ws.delete_rows.assert_called_with(2)
 
-    def test_ensure_ids(self):
+    def test_ensure_ids_and_urls(self):
         sample_data = [
-            {"id": "", "updated_at": "2026-08-12 12:00:00", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si"},
-            {"id": "abc12345", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "si"}
+            {"id": "", "url": "", "updated_at": "2026-08-12 12:00:00", "apellido": "Perez", "nombre": "Juan", "invitacion_id": "familia_perez"},
+            {"id": "abc12345", "url": "http://nos.vamos.acas.ar/i/test_123456", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "si"}
         ]
         self.mock_ws.get_all_records.return_value = sample_data
 
         records, updated_count = self.table.ensure_ids()
         self.assertEqual(updated_count, 1)
         self.assertEqual(len(records[0]["id"]), 8)
+        self.assertTrue(records[0]["url"].startswith("http://nos.vamos.acas.ar/i/familia_perez_"))
         self.mock_ws.update.assert_called_once()
 
     def test_deterministic_row_time_id(self):
@@ -111,6 +113,31 @@ class TestGoogleSheetsTable(unittest.TestCase):
         # Matches with dashes
         group3 = self.table.get_by_invitacion("familia-perez")
         self.assertEqual(len(group3), 2)
+
+    def test_check_code_and_token_validation(self):
+        inv_id = "familia_rodriguez"
+        code = compute_check_code(inv_id)
+        self.assertEqual(len(code), 6)
+
+        url = generate_invitation_url(inv_id)
+        self.assertEqual(url, f"http://nos.vamos.acas.ar/i/familia_rodriguez_{code}")
+
+        # Valid token validation
+        valid_slug = parse_and_validate_token(f"familia_rodriguez_{code}")
+        self.assertEqual(valid_slug, "familia_rodriguez")
+
+        # Invalid token validation (forged check code)
+        invalid_slug = parse_and_validate_token("familia_rodriguez_ffffff")
+        self.assertIsNone(invalid_slug)
+
+        # Token without check code
+        no_code_slug = parse_and_validate_token("familia_rodriguez")
+        self.assertIsNone(no_code_slug)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
 
 
 
