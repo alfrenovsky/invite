@@ -121,6 +121,7 @@
             border-radius: 3px;
             overflow: hidden;
             position: relative;
+            cursor: pointer;
         }
 
         .progress-bar-fill {
@@ -211,7 +212,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            padding: 85px 24px 30px 24px;
+            padding: 80px 22px 25px 22px;
             opacity: 0;
             pointer-events: none;
             display: flex;
@@ -307,15 +308,15 @@
             letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--accent);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-weight: 600;
         }
 
         .slide-title {
-            font-size: 2.2em;
+            font-size: 2.1em;
             font-weight: 300;
             line-height: 1.2;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
             color: #ffffff;
         }
 
@@ -325,10 +326,10 @@
         }
 
         .slide-desc {
-            font-size: 1.05em;
+            font-size: 1.02em;
             color: var(--text-muted);
             line-height: 1.5;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         /* Slide Specific Elements */
@@ -336,14 +337,14 @@
             background: rgba(212, 175, 55, 0.08);
             border: 1px solid rgba(212, 175, 55, 0.25);
             border-radius: 18px;
-            padding: 18px;
-            margin: 20px 0;
+            padding: 16px;
+            margin: 15px 0;
         }
 
         .guest-greeting-box h3 {
             color: var(--accent-light);
-            font-size: 1.35em;
-            margin-bottom: 8px;
+            font-size: 1.3em;
+            margin-bottom: 6px;
             font-weight: 500;
         }
 
@@ -352,7 +353,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 8px;
-            margin-top: 12px;
+            margin-top: 10px;
         }
 
         .chip {
@@ -380,25 +381,25 @@
         .timeline {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
             text-align: left;
-            margin: 15px 0;
+            margin: 12px 0;
         }
 
         .timeline-item {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 12px 16px;
+            padding: 12px 14px;
             border-radius: 14px;
         }
 
         .timeline-icon {
-            font-size: 1.6em;
-            width: 40px;
-            height: 40px;
+            font-size: 1.5em;
+            width: 38px;
+            height: 38px;
             border-radius: 10px;
             background: rgba(212, 175, 55, 0.15);
             display: flex;
@@ -413,7 +414,7 @@
         }
 
         .timeline-title {
-            font-size: 0.9em;
+            font-size: 0.88em;
             color: #ffffff;
         }
 
@@ -424,18 +425,18 @@
             justify-content: center;
             gap: 8px;
             width: 100%;
-            padding: 14px 20px;
+            padding: 13px 20px;
             background: linear-gradient(135deg, var(--accent), var(--accent-dark));
             color: #1a252f;
             border: none;
             border-radius: 14px;
             font-weight: 700;
-            font-size: 1em;
+            font-size: 0.98em;
             text-decoration: none;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         .action-btn:hover {
@@ -450,42 +451,69 @@
             box-shadow: none;
         }
 
+        .action-btn.small {
+            padding: 8px 12px;
+            font-size: 0.85em;
+            border-radius: 10px;
+            width: auto;
+        }
+
         /* RSVP Slide Form */
         .rsvp-form-container {
-            max-height: 60vh;
+            max-height: 62vh;
             overflow-y: auto;
             padding-right: 4px;
             text-align: left;
+        }
+
+        .group-quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            justify-content: center;
         }
 
         .rsvp-card {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+            position: relative;
         }
 
         .rsvp-card h4 {
-            font-size: 1.1em;
+            font-size: 1.05em;
             color: var(--accent-light);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-remove-companion {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 2px 6px;
         }
 
         .radio-group {
             display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .radio-label {
             flex: 1;
-            padding: 10px;
+            padding: 9px;
             border-radius: 10px;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            font-size: 0.9em;
+            font-size: 0.88em;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -511,16 +539,38 @@
         .checkbox-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            font-size: 0.85em;
+            gap: 6px;
+            font-size: 0.82em;
             color: var(--text-muted);
         }
 
         .checkbox-label {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             cursor: pointer;
+        }
+
+        .btn-add-companion {
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px dashed var(--accent);
+            color: var(--accent-light);
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-add-companion:hover {
+            background: rgba(212, 175, 55, 0.2);
         }
 
         /* Toast notification */
@@ -609,12 +659,12 @@
                         {% if guests %}
                         <div class="guest-greeting-box interactive-content">
                             <h3>¡Hola {{ group_names }}!</h3>
-                            <p style="font-size: 0.9em; color: var(--text-muted);">
-                                Invitación especial para su grupo:
+                            <p style="font-size: 0.88em; color: var(--text-muted);">
+                                Invitación grupal ({{ guests|length }} personas):
                             </p>
-                            <div class="chips-container">
+                            <div class="chips-container" id="slide1Chips">
                                 {% for guest in guests %}
-                                <div class="chip">
+                                <div class="chip" data-chip-guest-id="{{ guest.id }}">
                                     <span class="status-dot {{ guest.confirmacion or 'pending' }}"></span>
                                     <span>{{ guest.nombre }} {{ guest.apellido }}</span>
                                 </div>
@@ -624,7 +674,7 @@
                         {% elif invitacion_id %}
                         <div class="guest-greeting-box interactive-content">
                             <h3>Invitación: {{ invitacion_id }}</h3>
-                            <p style="font-size: 0.9em; color: var(--text-muted);">¡Bienvenidos a nuestra celebración!</p>
+                            <p style="font-size: 0.88em; color: var(--text-muted);">¡Bienvenidos a nuestra celebración!</p>
                         </div>
                         {% endif %}
 
@@ -744,69 +794,88 @@
                     </div>
                 </div>
 
-                <!-- SLIDE 6: Confirmación (RSVP) Formulario Interactivo -->
+                <!-- SLIDE 6: Confirmación (RSVP) Grupo Completo -->
                 <div class="story-slide" data-duration="0">
                     <div class="slide-body" style="justify-content: flex-start; padding-top: 10px;">
                         <span class="slide-tag">RSVP</span>
-                        <h2 class="slide-title" style="font-size: 1.6em; margin-bottom: 8px;">Confirmá tu <strong>Asistencia</strong></h2>
-                        <p class="slide-desc" style="font-size: 0.9em; margin-bottom: 14px;">
-                            Por favor completá los datos para organizar tu mesa y menú.
+                        <h2 class="slide-title" style="font-size: 1.5em; margin-bottom: 6px;">Confirmación de <strong>Grupo</strong></h2>
+                        <p class="slide-desc" style="font-size: 0.88em; margin-bottom: 10px;">
+                            Confirmá la asistencia y menú de todos los invitados de este grupo:
                         </p>
 
                         <div class="interactive-content rsvp-form-container">
-                            <form id="storyRsvpForm">
-                                {% if guests %}
-                                    {% for guest in guests %}
-                                    <div class="rsvp-card" data-guest-id="{{ guest.id }}">
-                                        <h4>👤 {{ guest.nombre }} {{ guest.apellido }}</h4>
-                                        <div class="radio-group">
-                                            <label class="radio-label {% if guest.confirmacion == 'si' %}selected-si{% endif %}">
-                                                <input type="radio" name="asistencia_{{ guest.id }}" value="si" {% if guest.confirmacion == 'si' %}checked{% endif %}>
-                                                ✓ Sí, asisto
-                                            </label>
-                                            <label class="radio-label {% if guest.confirmacion == 'no' %}selected-no{% endif %}">
-                                                <input type="radio" name="asistencia_{{ guest.id }}" value="no" {% if guest.confirmacion == 'no' %}checked{% endif %}>
-                                                ✗ No puedo
-                                            </label>
-                                        </div>
+                            {% if guests %}
+                            <div class="group-quick-actions">
+                                <button type="button" class="action-btn secondary small" id="btnAllYes">✓ Todos Asisten</button>
+                                <button type="button" class="action-btn secondary small" id="btnAllNo">✗ Nadie Asiste</button>
+                            </div>
+                            {% endif %}
 
-                                        <div class="diet-section" style="{% if guest.confirmacion == 'no' %}display: none;{% endif %}">
-                                            <div style="font-size: 0.8em; color: var(--text-muted); margin-bottom: 6px;">Preferencia de menú:</div>
-                                            <div class="checkbox-grid">
-                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="general" {% if guest.pa_general == 'si' %}checked{% endif %}> General</label>
-                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}> Vegetariano</label>
-                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}> Vegano</label>
-                                                <label class="checkbox-label"><input type="checkbox" class="diet-check" value="celiaco" {% if guest.pa_celiaco == 'si' %}checked{% endif %}> Celíaco</label>
+                            <form id="storyRsvpForm">
+                                <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
+                                
+                                <div id="rsvpCardsContainer">
+                                    {% if guests %}
+                                        {% for guest in guests %}
+                                        <div class="rsvp-card" data-guest-id="{{ guest.id }}">
+                                            <h4>👤 {{ guest.nombre }} {{ guest.apellido }}</h4>
+                                            <div class="radio-group">
+                                                <label class="radio-label {% if guest.confirmacion == 'si' %}selected-si{% endif %}">
+                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="si" {% if guest.confirmacion == 'si' %}checked{% endif %}>
+                                                    ✓ Asiste
+                                                </label>
+                                                <label class="radio-label {% if guest.confirmacion == 'no' %}selected-no{% endif %}">
+                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="no" {% if guest.confirmacion == 'no' %}checked{% endif %}>
+                                                    ✗ No asiste
+                                                </label>
+                                            </div>
+
+                                            <div class="diet-section" style="{% if guest.confirmacion == 'no' %}display: none;{% endif %}">
+                                                <div style="font-size: 0.78em; color: var(--text-muted); margin-bottom: 5px;">Menú:</div>
+                                                <div class="checkbox-grid">
+                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="general" {% if guest.pa_general == 'si' %}checked{% endif %}> General</label>
+                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}> Vegetariano</label>
+                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}> Vegano</label>
+                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="celiaco" {% if guest.pa_celiaco == 'si' %}checked{% endif %}> Celíaco</label>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <!-- Fallback Individual Registration if no group recognized -->
-                                    <div class="rsvp-card">
-                                        <label style="display: block; font-size: 0.85em; color: var(--text-muted); margin-bottom: 4px;">Nombre y Apellido</label>
-                                        <input type="text" id="manual_nombre" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 12px;">
+                                        {% endfor %}
+                                    {% else %}
+                                        <!-- Initial card if opening without pre-assigned group -->
+                                        <div class="rsvp-card new-companion-card">
+                                            <label style="display: block; font-size: 0.82em; color: var(--text-muted); margin-bottom: 3px;">Nombre y Apellido</label>
+                                            <input type="text" class="comp_nombre" placeholder="Ej: Carlos Gómez" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px;">
 
-                                        <div class="radio-group">
-                                            <label class="radio-label selected-si">
-                                                <input type="radio" name="manual_asistencia" value="si" checked> ✓ Sí, asisto
-                                            </label>
-                                            <label class="radio-label">
-                                                <input type="radio" name="manual_asistencia" value="no"> ✗ No puedo
-                                            </label>
-                                        </div>
+                                            <div class="radio-group">
+                                                <label class="radio-label selected-si">
+                                                    <input type="radio" name="comp_asistencia_0" value="si" checked> ✓ Asiste
+                                                </label>
+                                                <label class="radio-label">
+                                                    <input type="radio" name="comp_asistencia_0" value="no"> ✗ No asiste
+                                                </label>
+                                            </div>
 
-                                        <div class="checkbox-grid">
-                                            <label class="checkbox-label"><input type="checkbox" class="manual_diet" value="general" checked> General</label>
-                                            <label class="checkbox-label"><input type="checkbox" class="manual_diet" value="vegetariano"> Vegetariano</label>
-                                            <label class="checkbox-label"><input type="checkbox" class="manual_diet" value="vegano"> Vegano</label>
-                                            <label class="checkbox-label"><input type="checkbox" class="manual_diet" value="celiaco"> Celíaco</label>
+                                            <div class="diet-section">
+                                                <div class="checkbox-grid">
+                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="general" checked> General</label>
+                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegetariano"> Vegetariano</label>
+                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegano"> Vegano</label>
+                                                    <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="celiaco"> Celíaco</label>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if invitacion_id %}
+                                <button type="button" class="btn-add-companion" id="btnAddCompanion">
+                                    + Agregar acompañante a esta invitación
+                                </button>
                                 {% endif %}
 
-                                <button type="submit" class="action-btn" id="btnSubmitRsvp" style="margin-top: 15px;">
-                                    ✉️ Guardar Confirmación
+                                <button type="submit" class="action-btn" id="btnSubmitRsvp">
+                                    ✉️ Guardar Todas las Confirmaciones
                                 </button>
                                 <div id="rsvpFeedback" style="margin-top: 10px; font-weight: bold; font-size: 0.9em; text-align: center;"></div>
                             </form>
@@ -839,7 +908,6 @@
         let isPaused = false;
         let slideStartTime = 0;
         let elapsedTimeOnSlide = 0;
-        let currentTimer = null;
         let animationFrameId = null;
 
         // Build top progress bar slots
@@ -887,7 +955,6 @@
             const slide = slides[currentIndex];
             const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
 
-            // If duration is 0 (e.g. form slide), don't auto-advance
             if (duration <= 0) {
                 updateProgressDisplay(100);
                 return;
@@ -937,7 +1004,6 @@
             if (currentIndex < slides.length - 1) {
                 goToSlide(currentIndex + 1);
             } else {
-                // Stay on last slide
                 updateProgressDisplay(100);
             }
         }
@@ -955,7 +1021,7 @@
             btnPause.textContent = isPaused ? '▶' : '⏸';
         }
 
-        // Tap Handlers
+        // Tap & Navigation Handlers
         tapLeft.addEventListener('click', prevSlide);
         tapRight.addEventListener('click', nextSlide);
         btnDesktopPrev.addEventListener('click', prevSlide);
@@ -970,9 +1036,7 @@
         const container = document.getElementById('storyContainer');
 
         function onHoldStart() {
-            holdTimeout = setTimeout(() => {
-                isPaused = true;
-            }, 180);
+            holdTimeout = setTimeout(() => { isPaused = true; }, 180);
         }
 
         function onHoldEnd() {
@@ -1013,34 +1077,117 @@
         function showToast(msg) {
             toast.textContent = msg;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2500);
+            setTimeout(() => { toast.classList.remove('show'); }, 2500);
         }
 
-        // Radio button dynamic styling & Diet toggle on RSVP slide
-        document.querySelectorAll('.rsvp-card').forEach(card => {
-            const radios = card.querySelectorAll('input[type="radio"]');
-            const dietSection = card.querySelector('.diet-section');
+        // Radio button dynamic styling binding
+        function bindRadioEvents(scope) {
+            scope.querySelectorAll('.rsvp-card').forEach(card => {
+                const radios = card.querySelectorAll('input[type="radio"]');
+                const dietSection = card.querySelector('.diet-section');
 
-            radios.forEach(radio => {
-                radio.addEventListener('change', () => {
-                    card.querySelectorAll('.radio-label').forEach(lbl => {
-                        lbl.classList.remove('selected-si', 'selected-no');
-                    });
-                    const parentLabel = radio.closest('.radio-label');
-                    if (radio.value === 'si') {
-                        parentLabel.classList.add('selected-si');
-                        if (dietSection) dietSection.style.display = 'block';
-                    } else {
-                        parentLabel.classList.add('selected-no');
-                        if (dietSection) dietSection.style.display = 'none';
-                    }
+                radios.forEach(radio => {
+                    radio.onchange = () => {
+                        card.querySelectorAll('.radio-label').forEach(lbl => {
+                            lbl.classList.remove('selected-si', 'selected-no');
+                        });
+                        const parentLabel = radio.closest('.radio-label');
+                        if (radio.value === 'si') {
+                            parentLabel.classList.add('selected-si');
+                            if (dietSection) dietSection.style.display = 'block';
+                        } else {
+                            parentLabel.classList.add('selected-no');
+                            if (dietSection) dietSection.style.display = 'none';
+                        }
+                    };
                 });
             });
-        });
+        }
 
-        // RSVP Form Submit AJAX
+        bindRadioEvents(document);
+
+        // Group Quick Action Buttons (All Yes / All No)
+        const btnAllYes = document.getElementById('btnAllYes');
+        const btnAllNo = document.getElementById('btnAllNo');
+
+        if (btnAllYes) {
+            btnAllYes.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.rsvp-card').forEach(card => {
+                    const yesRadio = card.querySelector('input[type="radio"][value="si"]');
+                    if (yesRadio) {
+                        yesRadio.checked = true;
+                        yesRadio.dispatchEvent(new Event('change'));
+                    }
+                });
+                showToast('✓ Todo el grupo marcado como Asiste');
+            });
+        }
+
+        if (btnAllNo) {
+            btnAllNo.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.rsvp-card').forEach(card => {
+                    const noRadio = card.querySelector('input[type="radio"][value="no"]');
+                    if (noRadio) {
+                        noRadio.checked = true;
+                        noRadio.dispatchEvent(new Event('change'));
+                    }
+                });
+                showToast('✗ Todo el grupo marcado como No asiste');
+            });
+        }
+
+        // Add Extra Companion under same invitacion_id
+        const btnAddCompanion = document.getElementById('btnAddCompanion');
+        const rsvpCardsContainer = document.getElementById('rsvpCardsContainer');
+        let newCompanionCounter = 1;
+
+        if (btnAddCompanion) {
+            btnAddCompanion.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const card = document.createElement('div');
+                card.className = 'rsvp-card new-companion-card';
+                card.innerHTML = `
+                    <h4>
+                        <span>👤 Nuevo Acompañante</span>
+                        <button type="button" class="btn-remove-companion" title="Quitar">×</button>
+                    </h4>
+                    <label style="display: block; font-size: 0.82em; color: var(--text-muted); margin-bottom: 3px;">Nombre y Apellido</label>
+                    <input type="text" class="comp_nombre" placeholder="Ej: María Gómez" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px;">
+
+                    <div class="radio-group">
+                        <label class="radio-label selected-si">
+                            <input type="radio" name="new_comp_asistencia_${newCompanionCounter}" value="si" checked> ✓ Asiste
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="new_comp_asistencia_${newCompanionCounter}" value="no"> ✗ No asiste
+                        </label>
+                    </div>
+
+                    <div class="diet-section">
+                        <div class="checkbox-grid">
+                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="general" checked> General</label>
+                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegetariano"> Vegetariano</label>
+                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="vegano"> Vegano</label>
+                            <label class="checkbox-label"><input type="checkbox" class="comp_diet" value="celiaco"> Celíaco</label>
+                        </div>
+                    </div>
+                `;
+
+                card.querySelector('.btn-remove-companion').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    card.remove();
+                });
+
+                rsvpCardsContainer.appendChild(card);
+                bindRadioEvents(card);
+                newCompanionCounter++;
+                card.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        // RSVP Form Submit for all guests in group
         const rsvpForm = document.getElementById('storyRsvpForm');
         const rsvpFeedback = document.getElementById('rsvpFeedback');
         const btnSubmit = document.getElementById('btnSubmitRsvp');
@@ -1050,47 +1197,58 @@
                 e.preventDefault();
                 e.stopPropagation();
                 btnSubmit.disabled = true;
-                btnSubmit.textContent = 'Enviando...';
+                btnSubmit.textContent = 'Guardando grupo...';
                 rsvpFeedback.textContent = '';
 
-                const guestCards = Array.from(document.querySelectorAll('.rsvp-card[data-guest-id]'));
+                const invitacionId = document.getElementById('form_invitacion_id').value;
+                const existingGuestCards = Array.from(document.querySelectorAll('.rsvp-card[data-guest-id]'));
+                const newCompanionCards = Array.from(document.querySelectorAll('.rsvp-card.new-companion-card'));
                 const updates = [];
 
-                if (guestCards.length > 0) {
-                    for (const card of guestCards) {
-                        const guestId = card.getAttribute('data-guest-id');
-                        const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
-                        const asistencia = radioChecked ? radioChecked.value : '';
-
-                        const diets = Array.from(card.querySelectorAll('.diet-check:checked')).map(c => c.value);
-
-                        const payload = {
-                            confirmacion: asistencia,
-                            pa_general: diets.includes('general') ? 'si' : '',
-                            pa_vegetariano: diets.includes('vegetariano') ? 'si' : '',
-                            pa_vegano: diets.includes('vegano') ? 'si' : '',
-                            pa_celiaco: diets.includes('celiaco') ? 'si' : ''
-                        };
-
-                        try {
-                            const res = await fetch(`/invitados/${guestId}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            });
-                            updates.push(res.ok);
-                        } catch (err) {
-                            updates.push(false);
-                        }
-                    }
-                } else {
-                    // Manual single guest registration
-                    const nombre = document.getElementById('manual_nombre').value.trim();
-                    const radioChecked = document.querySelector('input[name="manual_asistencia"]:checked');
-                    const asistencia = radioChecked ? radioChecked.value : 'si';
-                    const diets = Array.from(document.querySelectorAll('.manual_diet:checked')).map(c => c.value);
+                // 1. Update all existing group guests
+                for (const card of existingGuestCards) {
+                    const guestId = card.getAttribute('data-guest-id');
+                    const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+                    const asistencia = radioChecked ? radioChecked.value : '';
+                    const diets = Array.from(card.querySelectorAll('.diet-check:checked')).map(c => c.value);
 
                     const payload = {
+                        confirmacion: asistencia,
+                        pa_general: diets.includes('general') ? 'si' : '',
+                        pa_vegetariano: diets.includes('vegetariano') ? 'si' : '',
+                        pa_vegano: diets.includes('vegano') ? 'si' : '',
+                        pa_celiaco: diets.includes('celiaco') ? 'si' : ''
+                    };
+
+                    try {
+                        const res = await fetch(`/invitados/${guestId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        updates.push(res.ok);
+
+                        // Update Slide 1 dot status live
+                        const chipDot = document.querySelector(`[data-chip-guest-id="${guestId}"] .status-dot`);
+                        if (chipDot) {
+                            chipDot.className = 'status-dot ' + (asistencia || 'pending');
+                        }
+                    } catch (err) {
+                        updates.push(false);
+                    }
+                }
+
+                // 2. Insert any newly added companions with the same invitacion_id
+                for (const card of newCompanionCards) {
+                    const nombre = card.querySelector('.comp_nombre').value.trim();
+                    if (!nombre) continue; // Skip empty companion names
+
+                    const radioChecked = card.querySelector('input[type="radio"]:checked');
+                    const asistencia = radioChecked ? radioChecked.value : 'si';
+                    const diets = Array.from(card.querySelectorAll('.comp_diet:checked')).map(c => c.value);
+
+                    const payload = {
+                        invitacion: invitacionId,
                         nombre: nombre,
                         confirmacion: asistencia,
                         pa_general: diets.includes('general') ? 'si' : '',
@@ -1112,15 +1270,18 @@
                 }
 
                 btnSubmit.disabled = false;
-                btnSubmit.textContent = '✓ ¡Confirmación Guardada!';
+                btnSubmit.textContent = '✓ ¡Confirmación del Grupo Guardada!';
 
-                if (updates.every(Boolean)) {
+                if (updates.every(Boolean) && updates.length > 0) {
                     rsvpFeedback.style.color = '#2ecc71';
-                    rsvpFeedback.textContent = '✨ ¡Muchas gracias! Tu respuesta fue registrada con éxito.';
-                    showToast('✓ ¡Confirmación guardada con éxito!');
+                    rsvpFeedback.textContent = '✨ ¡Excelente! Las confirmaciones de todo el grupo fueron registradas con éxito.';
+                    showToast('✓ ¡Todo el grupo confirmado con éxito!');
+                } else if (updates.length === 0) {
+                    rsvpFeedback.style.color = '#f39c12';
+                    rsvpFeedback.textContent = 'Por favor completá los nombres de los acompañantes.';
                 } else {
                     rsvpFeedback.style.color = '#f39c12';
-                    rsvpFeedback.textContent = 'Hubo un detalle al guardar algunos registros. Por favor revisá la información.';
+                    rsvpFeedback.textContent = 'Se guardaron algunos registros con éxito.';
                 }
             });
         }
