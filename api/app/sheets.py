@@ -7,8 +7,24 @@ from datetime import datetime
 import gspread
 from gspread.utils import rowcol_to_a1
 
-FIELDNAMES = ["id", "updated_at", "apellido", "nombre", "telefono", "invitacion", "confirmacion", "pa_general", "pa_vegetariano", "pa_vegano", "pa_celiaco", ""]
-
+FIELDNAMES = [
+    "id",
+    "updated_at",
+    "apellido",
+    "nombre",
+    "telefono",
+    "invitacion_id",
+    "cenaobaile",
+    "invitaoreserva",
+    "precio",
+    "pago",
+    "confirmacion",
+    "pa_general",
+    "pa_vegetariano",
+    "pa_vegano",
+    "pa_celiaco",
+    "",
+]
 
 class GoogleSheetsTable:
     def __init__(self, credentials_path=None, sheet_id=None, worksheet_name=None):
