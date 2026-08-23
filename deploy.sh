@@ -16,7 +16,8 @@ git push origin "$BRANCH"
 
 # 3. Connect via SSH and pull on the server
 echo "🌐 Connecting to ${REMOTE_HOST}..."
-ssh "$REMOTE_HOST" "cd ${REMOTE_DIR} && echo '⬇️ Pulling latest changes...' && git pull origin ${BRANCH}"
+ssh "$REMOTE_HOST" "cd ${REMOTE_DIR} && echo '⬇️ Pulling latest changes...' && git pull origin ${BRANCH} && docker compose exec -T web nginx -s reload 2>/dev/null || true"
+
 
 echo "========================================="
 echo "✅ Deployment completed successfully!"
