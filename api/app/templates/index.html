@@ -994,15 +994,19 @@
             });
         }
 
-        // Allow clicking on any side preview card to navigate directly to it
+        // Clicking on any side preview card advances one by one
         slides.forEach((s, idx) => {
             s.addEventListener('click', (e) => {
-                if (idx !== currentIndex) {
+                if (idx < currentIndex) {
                     e.stopPropagation();
-                    goToSlide(idx);
+                    prevSlide();
+                } else if (idx > currentIndex) {
+                    e.stopPropagation();
+                    nextSlide();
                 }
             });
         });
+
 
         window.addEventListener('resize', () => showSlide(currentIndex));
 
