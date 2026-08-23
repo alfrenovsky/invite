@@ -242,6 +242,38 @@
             background-position: center;
         }
 
+        /* Active & Interactive Layers */
+        .story-slide.active {
+            z-index: 300 !important;
+            pointer-events: none !important;
+        }
+
+        .story-slide.active .slide-body {
+            pointer-events: none;
+        }
+
+        .story-slide.active a,
+        .story-slide.active button,
+        .story-slide.active input,
+        .story-slide.active label,
+        .story-slide.active .interactive-content,
+        .story-slide.active .action-btn,
+        .story-slide.active .chip,
+        .story-slide.active .chips-container,
+        .story-slide.active .rsvp-card,
+        .story-slide.active .rsvp-card-header,
+        .story-slide.active .countdown-container {
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 350;
+        }
+
+        .story-slide.active,
+        .story-slide.active:hover {
+            filter: blur(0px) brightness(1) !important;
+            opacity: 1 !important;
+        }
+
         @media (min-width: 768px) {
             .story-slide.side-slide {
                 pointer-events: auto !important;
@@ -261,16 +293,8 @@
             .story-slide.side-slide.prev-slide:hover {
                 filter: blur(0px) brightness(1) !important;
             }
-            .story-slide.active,
-            .story-slide.active:hover {
-                filter: blur(0px) brightness(1) !important;
-                opacity: 1 !important;
-                pointer-events: auto !important;
-            }
-            .story-slide.active * {
-                pointer-events: auto;
-            }
         }
+
 
 
 
@@ -1125,11 +1149,12 @@
                     s.style.transform = isDesktop ? 'translateX(0) scale(1)' : 'scale(1)';
                     s.style.opacity = '1';
                     s.style.filter = 'blur(0px) brightness(1)';
-                    s.style.zIndex = '30';
-                    s.style.pointerEvents = 'auto';
+                    s.style.zIndex = '300';
+                    s.style.pointerEvents = 'none';
                     s.style.cursor = 'default';
 
                 } else if (isDesktop) {
+
                     const sign = offset > 0 ? 1 : -1;
                     const absOffset = Math.abs(offset);
                     const shiftPx = sign * (300 + (absOffset - 1) * 185);
@@ -1493,8 +1518,16 @@
         }
 
 
+        // Prevent any interactive button or link from triggering slide advance
+        document.querySelectorAll('.interactive-content, .action-btn, a[href], button, input, label').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+
         // Initialize First Slide
         goToSlide(0);
+
 
     })();
     </script>
