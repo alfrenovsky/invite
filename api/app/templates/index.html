@@ -254,19 +254,23 @@
                 opacity: 0.95 !important;
                 transform: var(--slide-hover-transform) !important;
             }
-            .story-slide.next-slide:hover {
+            .story-slide.side-slide.next-slide:hover {
                 filter: blur(6px) brightness(0.8) !important;
             }
-            .story-slide.prev-slide:hover {
+            .story-slide.side-slide.prev-slide:hover {
                 filter: blur(0px) brightness(1) !important;
             }
-            .story-slide.active {
+            .story-slide.active,
+            .story-slide.active:hover {
+                filter: blur(0px) brightness(1) !important;
+                opacity: 1 !important;
                 pointer-events: auto !important;
             }
             .story-slide.active * {
                 pointer-events: auto;
             }
         }
+
 
 
 
@@ -1100,7 +1104,7 @@
 
             slides.forEach((s, idx) => {
                 const offset = idx - index;
-                s.classList.remove('active', 'side-slide', 'hidden-slide');
+                s.classList.remove('active', 'side-slide', 'hidden-slide', 'prev-slide', 'next-slide');
 
                 if (offset === 0) {
                     s.classList.add('active');
@@ -1110,6 +1114,7 @@
                     s.style.zIndex = '30';
                     s.style.pointerEvents = 'auto';
                     s.style.cursor = 'default';
+
                 } else if (isDesktop) {
                     const sign = offset > 0 ? 1 : -1;
                     const absOffset = Math.abs(offset);
