@@ -56,11 +56,13 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   └── requirements.txt       # Flask, gspread, google-auth dependencies
 ├── html/
 │   ├── assets/
+│   │   ├── avatar.png         # Circular story header avatar image
 │   │   ├── background.jpeg    # High-resolution desktop background
 │   │   ├── favicon.svg        # Golden heart vector favicon
 │   │   ├── intro.mp4          # Introductory video asset
 │   │   └── whatsapp.thumb.jpg # 600x600 WhatsApp thumbnail asset
 │   ├── form.html              # Standalone guest registration form
+
 │   ├── favicon.svg            # Fallback favicon asset
 │   └── index.html             # Static fallback invitation page
 ├── nginx/
