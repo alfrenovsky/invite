@@ -187,15 +187,36 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            background: linear-gradient(135deg, #9fd3fc, #4a9ee8);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.85em;
             font-weight: bold;
-            color: #1a252f;
+            color: #0c2340;
             box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
         }
+
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 50%;
+        }
+
+        .avatar-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
 
         .header-titles {
             display: flex;
@@ -938,8 +959,13 @@
 
                 <div class="header-meta">
                     <div class="avatar-group">
-                        <div class="avatar-badge">C&A</div>
+                        <div class="avatar-badge">
+                            <img src="/assets/avatar.png" alt="Celia & Alfredo" class="avatar-img" onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1';this.src='/assets/avatar.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+                            <span class="avatar-fallback" style="display: none;">C&A</span>
+                        </div>
                         <div class="header-titles">
+
+
                             <span class="header-title">Celia & Alfredo</span>
                             <span class="header-subtitle">Nuestra Boda — 19 de Marzo</span>
                         </div>
