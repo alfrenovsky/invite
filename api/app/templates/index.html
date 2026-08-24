@@ -47,8 +47,8 @@
             --success: #2ecc71;
             --danger: #e74c3c;
             --warning: #f39c12;
-            --story-width: 420px;
-            --story-height: 820px;
+            --story-width: 440px;
+            --story-height: 1664px;
         }
 
         * {
@@ -113,10 +113,14 @@
         @media (min-width: 768px) {
             .story-container {
                 height: 98vh;
-                max-height: 98vh;
+                max-height: min(98vh, 1664px);
+                aspect-ratio: 9 / 18.5;
+                width: auto;
+                max-width: calc(min(98vh, 1664px) * (9 / 18.5));
                 overflow: visible;
             }
         }
+
 
 
         @media (max-width: 767px) {
