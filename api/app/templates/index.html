@@ -1539,13 +1539,40 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // Auto-Save Engine
+        // Auto-Save Engine with Change-Detection & Throttling
         const dirtyGuests = new Set();
+        const savedGuestStates = {};
         let autoSaveTimer = null;
         let isSaving = false;
         const autoSaveStatus = document.getElementById('autoSaveStatus');
         const autoSaveIcon = document.getElementById('autoSaveIcon');
         const autoSaveText = document.getElementById('autoSaveText');
+
+        function getGuestPayload(card) {
+            const guestId = card.getAttribute('data-guest-id');
+            const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+            const asistencia = radioChecked ? radioChecked.value : '';
+            const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
+            const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
+            const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+            const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+
+            return {
+                nombre: inputNombre ? inputNombre.value.trim() : '',
+                apellido: inputApellido ? inputApellido.value.trim() : '',
+                confirmacion: asistencia,
+                pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
+                pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
+                pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
+                pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
+            };
+        }
+
+        // Initialize snapshot of currently loaded states
+        document.querySelectorAll('.rsvp-card[data-guest-id]').forEach(card => {
+            const guestId = card.getAttribute('data-guest-id');
+            savedGuestStates[guestId] = JSON.stringify(getGuestPayload(card));
+        });
 
         function setAutoSaveState(state, text) {
             if (!autoSaveStatus) return;
@@ -1572,45 +1599,48 @@
             }
             if (dirtyGuests.size === 0 || isSaving) return;
 
-            isSaving = true;
-            setAutoSaveState('saving', 'Guardando respuestas...');
-
             const guestIdsToSave = Array.from(dirtyGuests);
-            let allOk = true;
-
+            const actualToSave = [];
             for (const guestId of guestIdsToSave) {
                 const card = document.querySelector(`.rsvp-card[data-guest-id="${guestId}"]`);
-                if (!card) continue;
+                if (!card) {
+                    dirtyGuests.delete(guestId);
+                    continue;
+                }
+                const payload = getGuestPayload(card);
+                const currentStr = JSON.stringify(payload);
+                if (currentStr === savedGuestStates[guestId]) {
+                    dirtyGuests.delete(guestId);
+                } else {
+                    actualToSave.push({ guestId, card, payload, currentStr });
+                }
+            }
 
-                const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
-                const asistencia = radioChecked ? radioChecked.value : '';
-                const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
-                const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
-                const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
-                const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+            if (actualToSave.length === 0) {
+                if (dirtyGuests.size === 0) {
+                    setAutoSaveState('saved', '✓ Respuestas sincronizadas');
+                }
+                return;
+            }
 
-                const payload = {
-                    nombre: inputNombre ? inputNombre.value.trim() : '',
-                    apellido: inputApellido ? inputApellido.value.trim() : '',
-                    confirmacion: asistencia,
-                    pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
-                    pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
-                    pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
-                    pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
-                };
+            isSaving = true;
+            setAutoSaveState('saving', 'Guardando respuestas...');
+            let allOk = true;
 
+            for (const item of actualToSave) {
                 try {
-                    const res = await fetch(`/invitados/${guestId}`, {
+                    const res = await fetch(`/invitados/${item.guestId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify(item.payload)
                     });
                     if (res.ok) {
-                        dirtyGuests.delete(guestId);
+                        savedGuestStates[item.guestId] = item.currentStr;
+                        dirtyGuests.delete(item.guestId);
                         // Update Slide 1 dot status live
-                        const chipDot = document.querySelector(`[data-chip-guest-id="${guestId}"] .status-dot`);
+                        const chipDot = document.querySelector(`[data-chip-guest-id="${item.guestId}"] .status-dot`);
                         if (chipDot) {
-                            chipDot.className = 'status-dot ' + (asistencia || 'pending');
+                            chipDot.className = 'status-dot ' + (item.payload.confirmacion || 'pending');
                         }
                     } else {
                         allOk = false;
@@ -1626,11 +1656,11 @@
                 setAutoSaveState('saved', '✓ Cambios guardados automáticamente');
             } else {
                 setAutoSaveState('error', '⚠️ Error al guardar. Se reintentará...');
-                setTimeout(flushAutoSave, 2500);
+                setTimeout(flushAutoSave, 3000);
             }
         }
 
-        function queueAutoSave(guestId, delay = 600) {
+        function queueAutoSave(guestId, delay = 1800) {
             dirtyGuests.add(guestId);
             setAutoSaveState('saving', 'Guardando cambios...');
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -1739,7 +1769,7 @@
                         }
 
                         updateDietIcons(card);
-                        queueAutoSave(guestId, 300);
+                        queueAutoSave(guestId, 1500);
 
                         // Auto-expand next pending guest card if any
                         const nextCard = cards[cardIdx + 1];
@@ -1759,7 +1789,7 @@
                         card.querySelectorAll('.menu-radio-label').forEach(lbl => lbl.classList.remove('selected'));
                         mRadio.closest('.menu-radio-label')?.classList.add('selected');
                         updateDietIcons(card);
-                        queueAutoSave(guestId, 300);
+                        queueAutoSave(guestId, 1500);
                     };
                 });
 
@@ -1773,7 +1803,7 @@
                             lbl?.classList.remove('selected');
                         }
                         updateDietIcons(card);
-                        queueAutoSave(guestId, 300);
+                        queueAutoSave(guestId, 1500);
                     };
                 }
 
@@ -1789,7 +1819,7 @@
                     const full = (n || a) ? `${n} ${a}`.trim() : 'Acompañante';
                     if (headerName) headerName.textContent = full;
                     if (chipName) chipName.textContent = full;
-                    queueAutoSave(guestId, 700);
+                    queueAutoSave(guestId, 2200);
                 }
 
                 if (inputNombre) {
@@ -1810,6 +1840,7 @@
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') flushAutoSave();
         });
+
 
         // Initialize First Slide
         goToSlide(0);
