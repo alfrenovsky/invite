@@ -157,8 +157,22 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(generate_whatsapp_url("", url), "")
 
 
+    def test_index_page_rendering(self):
+        from app import app
+        with patch("app.table.get_by_invitacion") as mock_get_by_inv:
+            mock_get_by_inv.return_value = [
+                {"id": "abc1", "nombre": "Juan", "apellido": "Perez", "confirmacion": "si", "url": "http://nos.vamos.acas.ar/i/familia_perez_123456"}
+            ]
+            with app.test_client() as client:
+                code = compute_check_code("familia_perez")
+                res = client.get(f"/i/familia_perez_{code}")
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(b"Celia", res.data)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
 
