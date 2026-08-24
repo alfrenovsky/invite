@@ -1388,19 +1388,23 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // Accordion toggle click handler
-        document.addEventListener('click', (e) => {
-            const header = e.target.closest('[data-toggle-guest]');
-            if (header) {
-                e.stopPropagation();
-                const card = header.closest('.rsvp-card');
-                const isExpanded = card.classList.contains('expanded');
-                document.querySelectorAll('.rsvp-card').forEach(c => c.classList.remove('expanded'));
-                if (!isExpanded) {
-                    card.classList.add('expanded');
-                }
-            }
-        });
+        // Direct Accordion Toggle Handler
+        function initAccordion() {
+            document.querySelectorAll('.rsvp-card-header').forEach(header => {
+                header.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const card = header.closest('.rsvp-card');
+                    const isExpanded = card.classList.contains('expanded');
+                    document.querySelectorAll('.rsvp-card').forEach(c => c.classList.remove('expanded'));
+                    if (!isExpanded) {
+                        card.classList.add('expanded');
+                    }
+                };
+            });
+        }
+        initAccordion();
+
 
         // Radio button dynamic styling & badge update binding
         function bindRadioEvents(scope) {
@@ -1521,15 +1525,9 @@
         }
 
 
-        // Prevent any interactive button or link from triggering slide advance
-        document.querySelectorAll('.interactive-content, .action-btn, a[href], button, input, label').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-        });
-
         // Initialize First Slide
         goToSlide(0);
+
 
 
     })();
