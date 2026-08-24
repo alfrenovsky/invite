@@ -54,11 +54,16 @@ def index_page(token=None):
     rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
     pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
     all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
-    any_confirmed = (confirmed_count > 0)
+    invitation_url = ""
+    for g in guests:
+        if g.get("url"):
+            invitation_url = g["url"]
+            break
 
     return render_template(
         "index.html",
         invitacion_id=validated_slug,
+        invitation_url=invitation_url,
         guests=guests,
         group_names=group_names,
         confirmed_count=confirmed_count,
@@ -67,6 +72,7 @@ def index_page(token=None):
         all_confirmed=all_confirmed,
         any_confirmed=any_confirmed,
     )
+
 
 
 
