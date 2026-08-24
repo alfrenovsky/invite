@@ -30,10 +30,11 @@ The application is containerized using **Docker Compose** and consists of two ma
                                     (gspread integration)
 ```
 
-- **Frontend**: Static HTML/JS pages (`html/index.html`, `html/form.html`) served directly by Nginx.
+- **Frontend / SSR**: Dynamic Jinja2 server-rendered Story view (`api/app/templates/index.html`) and static assets (`html/assets/`) served directly by Nginx.
 - **Backend API**: Python 3.12 Flask REST API (`api/app/app.py`).
 - **Database / Storage**: Google Sheets integration via `gspread` (`api/app/sheets.py`).
-- **Reverse Proxy**: Nginx (`nginx/nginx.conf`) handling route proxying and static asset serving.
+- **Reverse Proxy**: Nginx (`nginx/nginx.conf`) handling route proxying, `/assets/`, and caching.
+- **Security**: Tamper-proof salted anti-forgery URL check codes (`/i/<invitacion_id>_<check_code>`).
 - **Containerization**: Docker Compose (`docker-compose.yml`, `docker-compose.override.yml`).
 
 ---
@@ -43,23 +44,31 @@ The application is containerized using **Docker Compose** and consists of two ma
 ```
 ├── api/
 │   ├── app/
-│   │   ├── app.py             # Flask CRUD endpoints (/invitados, /health)
+│   │   ├── app.py             # Flask CRUD endpoints (/invitados, /health, /i/<token>)
 │   │   ├── sheets.py          # GoogleSheetsTable class (gspread wrapper with thread lock)
-│   │   └── test_sheets.py     # Unit tests for Google Sheets table logic
+│   │   ├── test_sheets.py     # Unit tests for Google Sheets table & anti-forgery logic
+│   │   └── templates/
+│   │       ├── index.html     # Main wedding invitation story deck (SSR + Auto-Save)
+│   │       ├── blank.html     # Blank template for invalid tokens/forgery protection
+│   │       └── invitados.html # Admin guest overview table
 │   ├── Dockerfile             # Python 3.12 slim container build definition
 │   └── requirements.txt       # Flask, gspread, google-auth dependencies
 ├── html/
-│   ├── index.html             # Main wedding invitation page
-│   ├── form.html              # Guest registration form
-│   └── whatsapp.thumb.jpg     # Thumbnail asset
+│   ├── assets/
+│   │   ├── background.jpeg    # High-resolution desktop background
+│   │   ├── intro.mp4          # Introductory video asset
+│   │   └── whatsapp.thumb.jpg # Thumbnail asset
+│   ├── form.html              # Standalone guest registration form
+│   └── index.html             # Static fallback invitation page
 ├── nginx/
-│   └── nginx.conf             # Nginx server configuration and API proxy rules
+│   └── nginx.conf             # Nginx server configuration, /assets/, and API proxy rules
 ├── secrets/
 │   └── credentials.json       # Google Service Account JSON credentials (mounted read-only)
 ├── docker-compose.yml         # Main Docker Compose configuration
 ├── docker-compose.override.yml# Local override configuration (ports, mounts)
+├── deploy.sh                  # Automated deployment script with remote container refresh
 ├── project.env                # Project environment variables
-├── API.md                     # Full RESTful CRUD API documentation
+├── API.md                     # Full RESTful CRUD API documentation & field specs
 └── AGENTS.md                  # Instructions for AI agents (this file)
 ```
 
@@ -74,39 +83,40 @@ All API routes are proxied through Nginx:
 | Method | Endpoint | Description | Payload / Parameters |
 |---|---|---|---|
 | `GET` | `/health` | API Healthcheck | None |
+| `GET` | `/i/<token>` | Tamper-proof invitation story deck (SSR) | `token` (`<invitacion_id>_<check_code>`) |
 | `GET` | `/invitados` | Fetch all guest records | None |
 | `GET` | `/invitados/<id>` | Fetch guest by ID | `record_id` (path param) |
 | `POST` | `/invitados` | Create guest record(s) | Single JSON object or array of objects |
-| `PUT / PATCH` | `/invitados/<id>` | Update guest record | JSON updates |
+| `PUT / PATCH` | `/invitados/<id>` | Update guest record | JSON updates (`confirmacion`, `nombre`, `apellido`, diets) |
 | `DELETE` | `/invitados/<id>` | Delete guest record | None |
 
 ---
 
 ## ⚙️ Environment Variables (`project.env`)
 
+- `BASE_URL`: Base domain URL for invitation links (e.g., `https://nos.vamos.acas.ar`).
+- `INVITATION_SALT`: Secret salt used to compute deterministic anti-forgery check codes.
 - `VIRTUAL_HOST`: Domain name for reverse proxy routing.
 - `LETSENCRYPT_HOST`: Domain name for SSL certificate generation.
 - `LETSENCRYPT_EMAIL`: Contact email for SSL notifications.
 - `GOOGLE_SHEET_ID`: Unique ID of the target Google Sheet document.
 - `GOOGLE_CREDENTIALS_PATH`: Path inside container to Google Service Account credentials (`/secrets/credentials.json`).
-- `WORKSHEET_NAME`: Worksheet tab name within the Google Sheet (e.g., `Respuestas`).
+- `WORKSHEET_NAME`: Worksheet tab name within the Google Sheet (e.g., `Confirmaciones`).
 
 ---
 
 ## 🧪 Testing & Verification
 
 - **Backend Unit Tests**:
-  Unit tests for Google Sheets integration logic reside in `api/app/test_sheets.py`.
+  Unit tests reside in `api/app/test_sheets.py` covering Google Sheets CRUD, field mapping, salted anti-forgery tokens, WhatsApp link generation, and route rendering.
   To execute tests inside container:
   ```bash
   docker compose exec api python3 -m unittest test_sheets.py
   ```
 
-- **Docker Compose Command Verification**:
-  Validate container setup and configuration:
+- **Deployment Verification**:
   ```bash
-  docker compose config
-  docker compose up --build -d
+  ./deploy.sh
   ```
 
 ---
@@ -114,6 +124,9 @@ All API routes are proxied through Nginx:
 ## 🤖 Guidelines for AI Agents
 
 1. **API Contracts**: Preserve response structures (`{"ok": true, "data": ...}`).
-2. **Concurrency Safety**: Interactions with Google Sheets in `api/app/sheets.py` are synchronized via `threading.Lock()`. Maintain thread safety for any new sheet operations.
-3. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
-4. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+2. **Concurrency Safety**: Interactions with Google Sheets in `api/app/sheets.py` are synchronized via `threading.RLock()`. Maintain thread safety for any new sheet operations.
+3. **Anti-Forgery Link Protection**: Keep invitation tokens formatted as `{invitacion_id}_{check_code}` (6 hex characters generated with `sha256(f"{invitacion_id}:{INVITATION_SALT}")[:6]`).
+4. **Auto-Save Engine**: Story RSVP confirmation uses debounced auto-saving with state diffing to minimize Google Sheets API consumption.
+5. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
+6. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+
