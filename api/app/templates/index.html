@@ -112,8 +112,8 @@
 
         @media (min-width: 768px) {
             .story-container {
-                height: 96vh;
-                max-height: 96vh;
+                height: 98vh;
+                max-height: 98vh;
                 overflow: visible;
             }
         }
@@ -1454,8 +1454,15 @@
         }
 
         // Tap & Navigation Handlers
-        tapLeft.addEventListener('click', prevSlide);
-        tapRight.addEventListener('click', nextSlide);
+        let isSwiping = false;
+        tapLeft.addEventListener('click', (e) => {
+            if (isSwiping) return;
+            prevSlide();
+        });
+        tapRight.addEventListener('click', (e) => {
+            if (isSwiping) return;
+            nextSlide();
+        });
         btnDesktopPrev.addEventListener('click', prevSlide);
         btnDesktopNext.addEventListener('click', nextSlide);
         btnPause.addEventListener('click', (e) => {
@@ -1464,12 +1471,15 @@
         });
 
 
-        // Press & Hold to pause
+        // Press & Hold to pause + Mobile Touch Swipe Navigation
         let holdTimeout = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
         const container = document.getElementById('storyContainer');
 
         function onHoldStart() {
-            holdTimeout = setTimeout(() => { isPaused = true; }, 180);
+            holdTimeout = setTimeout(() => { isPaused = true; }, 200);
         }
 
         function onHoldEnd() {
@@ -1479,8 +1489,66 @@
 
         container.addEventListener('mousedown', onHoldStart);
         container.addEventListener('mouseup', onHoldEnd);
-        container.addEventListener('touchstart', onHoldStart, { passive: true });
-        container.addEventListener('touchend', onHoldEnd, { passive: true });
+
+        container.addEventListener('touchstart', (e) => {
+            if (!e.touches || e.touches.length === 0) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+            isSwiping = false;
+            onHoldStart();
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!e.touches || e.touches.length === 0) return;
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = touchStartX - currentX;
+            const diffY = touchStartY - currentY;
+
+            // If user has moved horizontally more than 15px, mark as swiping and cancel hold pause
+            if (Math.abs(diffX) > 15 && Math.abs(diffX) > Math.abs(diffY)) {
+                isSwiping = true;
+                if (holdTimeout) clearTimeout(holdTimeout);
+                isPaused = false;
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            onHoldEnd();
+            if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            const duration = Date.now() - touchStartTime;
+
+            // On RSVP slide, allow vertical scrolling inside form without triggering horizontal slide change
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('.rsvp-form-container'))) {
+                if (currentIndex === slides.length - 1 && Math.abs(diffY) > Math.abs(diffX)) {
+                    setTimeout(() => { isSwiping = false; }, 50);
+                    return;
+                }
+            }
+
+            // Detect horizontal swipe: distance >= 40px, predominantly horizontal, within 800ms
+            const minSwipeDistance = 40;
+            if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(diffY) * 1.2 && duration < 800) {
+                if (diffX > 0) {
+                    // Swiped Left -> Next Slide
+                    nextSlide();
+                } else {
+                    // Swiped Right -> Previous Slide
+                    prevSlide();
+                }
+            }
+
+            // Reset isSwiping after short delay so clicks don't double fire
+            setTimeout(() => { isSwiping = false; }, 80);
+        }, { passive: true });
+
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
