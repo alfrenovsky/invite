@@ -923,10 +923,11 @@
                                 {% for guest in guests %}
                                 <div class="chip" data-chip-guest-id="{{ guest.id }}">
                                     <span class="status-dot {{ guest.confirmacion or 'pending' }}"></span>
-                                    <span>{{ guest.nombre }} {{ guest.apellido }}</span>
+                                    <span class="chip-name-text">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
                                 </div>
                                 {% endfor %}
                             </div>
+
                         </div>
                         {% endif %}
 
@@ -1088,7 +1089,7 @@
                                     <div class="rsvp-card {% if loop.first %}expanded{% endif %}" data-guest-id="{{ guest.id }}">
                                         <div class="rsvp-card-header" data-toggle-guest="{{ guest.id }}">
                                             <div class="guest-info-line">
-                                                <span class="guest-name">👤 {{ guest.nombre }} {{ guest.apellido }}</span>
+                                                <span class="guest-name">👤 <span class="guest-header-name">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span></span>
                                                 <span class="guest-badge badge-{{ guest.confirmacion or 'pending' }}" id="badge_{{ guest.id }}">
                                                     {% if guest.confirmacion == 'si' %}✓ Asiste{% elif guest.confirmacion == 'no' %}✗ No asiste{% else %}⏳ Pendiente{% endif %}
                                                 </span>
@@ -1111,7 +1112,20 @@
                                         </div>
 
                                         <div class="rsvp-card-body">
+                                            <!-- Editable Name and Last Name -->
+                                            <div class="guest-name-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 9px;">
+                                                <div>
+                                                    <label style="font-size: 0.72em; color: var(--text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Nombre:</label>
+                                                    <input type="text" class="guest-input-nombre" name="nombre_{{ guest.id }}" value="{{ guest.nombre }}" placeholder="Nombre" style="width: 100%; padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.84em; outline: none; box-sizing: border-box;">
+                                                </div>
+                                                <div>
+                                                    <label style="font-size: 0.72em; color: var(--text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Apellido:</label>
+                                                    <input type="text" class="guest-input-apellido" name="apellido_{{ guest.id }}" value="{{ guest.apellido }}" placeholder="Apellido" style="width: 100%; padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.84em; outline: none; box-sizing: border-box;">
+                                                </div>
+                                            </div>
+
                                             <div class="radio-group">
+
                                                 <label class="radio-label {% if guest.confirmacion == 'si' %}selected-si{% endif %}">
                                                     <input type="radio" name="asistencia_{{ guest.id }}" value="si" {% if guest.confirmacion == 'si' %}checked{% endif %}>
                                                     ✓ Asiste
@@ -1612,6 +1626,23 @@
                         updateDietIcons(card);
                     };
                 }
+
+                // Editable Name live synchronization
+                const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+                const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+                const headerName = card.querySelector('.guest-header-name');
+                const chipName = document.querySelector(`[data-chip-guest-id="${guestId}"] .chip-name-text`);
+
+                function syncName() {
+                    const n = inputNombre ? inputNombre.value.trim() : '';
+                    const a = inputApellido ? inputApellido.value.trim() : '';
+                    const full = (n || a) ? `${n} ${a}`.trim() : 'Acompañante';
+                    if (headerName) headerName.textContent = full;
+                    if (chipName) chipName.textContent = full;
+                }
+
+                if (inputNombre) inputNombre.addEventListener('input', syncName);
+                if (inputApellido) inputApellido.addEventListener('input', syncName);
             });
         }
 
@@ -1642,14 +1673,19 @@
                     const asistencia = radioChecked ? radioChecked.value : '';
                     const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
                     const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
+                    const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+                    const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
 
                     const payload = {
+                        nombre: inputNombre ? inputNombre.value.trim() : '',
+                        apellido: inputApellido ? inputApellido.value.trim() : '',
                         confirmacion: asistencia,
                         pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
                         pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
                         pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
                         pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
                     };
+
 
                     try {
                         const res = await fetch(`/invitados/${guestId}`, {
