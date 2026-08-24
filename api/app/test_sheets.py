@@ -169,9 +169,26 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Celia", res.data)
 
+    def test_whatsapp_crawler_preview_bypass(self):
+        from app import app
+        with patch("app.table.get_by_invitacion") as mock_get_by_inv:
+            with app.test_client() as client:
+                code = compute_check_code("familia_perez")
+                # Simulate WhatsApp crawler User-Agent
+                headers = {"User-Agent": "WhatsApp/2.21.12.21 A"}
+                res = client.get(f"/i/familia_perez_{code}", headers=headers)
+                self.assertEqual(res.status_code, 200)
+                # Verify sheets API was never called
+                mock_get_by_inv.assert_not_called()
+                # Verify OG metadata is in response
+                self.assertIn(b"og:image", res.data)
+                self.assertIn(b"whatsapp.thumb.jpg", res.data)
+
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

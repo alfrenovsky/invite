@@ -32,10 +32,22 @@ def index_page(token=None):
     if not validated_slug:
         return render_template("blank.html")
 
+    user_agent = request.headers.get("User-Agent", "").lower()
+    is_crawler = any(bot in user_agent for bot in ("whatsapp", "facebookexternalhit", "facebot", "twitterbot", "telegrambot"))
+    if is_crawler:
+        base_url = os.environ.get("BASE_URL", "https://nos.vamos.acas.ar")
+        full_invite_url = f"{base_url}/i/{token}"
+        return render_template(
+            "og_preview.html",
+            invitation_url=full_invite_url,
+            base_url=base_url
+        )
+
     try:
         guests = table.get_by_invitacion(validated_slug)
     except Exception:
         guests = []
+
 
     if not guests:
         return render_template("blank.html")
