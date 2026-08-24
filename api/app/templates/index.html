@@ -1139,7 +1139,7 @@
                                                             <span class="diet-mini-badge" title="General">🍽️ General</span>
                                                         {% endif %}
                                                         {% if guest.pa_celiaco == 'si' %}
-                                                            <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin TACC">🌾 Celíaco</span>
+                                                            <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin Gluten">🌾 Celíaco</span>
                                                         {% endif %}
                                                     {% endif %}
                                                 </span>
@@ -1195,7 +1195,7 @@
 
                                                 <label class="celiac-checkbox-label {% if guest.pa_celiaco == 'si' %}selected{% endif %}">
                                                     <input type="checkbox" name="celiaco_{{ guest.id }}" value="si" class="celiac-check" {% if guest.pa_celiaco == 'si' %}checked{% endif %}>
-                                                    <span>🌾 Menú Apto Celíaco / Sin TACC</span>
+                                                    <span>🌾 Menú Apto Celíaco / Sin Gluten</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -1338,18 +1338,16 @@
             });
         }
 
-        // Clicking on any side preview card advances one by one
+        // In PC / Desktop, clicking on any miniature preview slide navigates directly to that slide
         slides.forEach((s, idx) => {
             s.addEventListener('click', (e) => {
-                if (idx < currentIndex) {
+                if (idx !== currentIndex) {
                     e.stopPropagation();
-                    prevSlide();
-                } else if (idx > currentIndex) {
-                    e.stopPropagation();
-                    nextSlide();
+                    goToSlide(idx);
                 }
             });
         });
+
 
 
         window.addEventListener('resize', () => showSlide(currentIndex));
@@ -1724,7 +1722,7 @@
             }
 
             if (isCeliac) {
-                html += ' <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin TACC">🌾 Celíaco</span>';
+                html += ' <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin Gluten">🌾 Celíaco</span>';
             }
 
             iconsContainer.innerHTML = html;
