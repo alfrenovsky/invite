@@ -85,20 +85,22 @@ For complete schema details, request/response payloads, and examples, see [`API.
 
 All API routes are proxied through Nginx:
 
-| Method | Endpoint | Description | Payload / Parameters |
+| Method | Endpoint | Description | Auth / Parameters |
 |---|---|---|---|
-| `GET` | `/health` | API Healthcheck | None |
-| `GET` | `/i/<token>` | Tamper-proof invitation story deck (SSR) or crawler OG preview | `token` (`<invitacion_id>_<check_code>`) |
-| `GET` | `/invitados` | Fetch all guest records | None |
-| `GET` | `/invitados/<id>` | Fetch guest by ID | `record_id` (path param) |
-| `POST` | `/invitados` | Create guest record(s) | Single JSON object or array of objects |
-| `PUT / PATCH` | `/invitados/<id>` | Update guest record | JSON updates (`confirmacion`, `nombre`, `apellido`, diets) |
-| `DELETE` | `/invitados/<id>` | Delete guest record | None |
+| `GET` | `/health` | API Healthcheck | Public |
+| `GET` | `/i/<token>` | Tamper-proof invitation story deck (SSR) or crawler OG preview | Public (`<invitacion_id>_<check_code>`) |
+| `GET` | `/invitados` | Fetch all guest records | **API Key Required** (`X-API-Key` or `?api_key=`) |
+| `GET` | `/invitados/<id>` | Fetch guest by ID | Public (`record_id` path param) |
+| `POST` | `/invitados` | Create guest record(s) | **API Key Required** (Single JSON object or array) |
+| `POST` | `/invitados/ensure-ids`| Generate missing guest IDs in Sheets | **API Key Required** |
+| `PUT / PATCH` | `/invitados/<id>` | Update guest record (RSVP auto-save) | Public (JSON updates) |
+| `DELETE` | `/invitados/<id>` | Delete guest record | **API Key Required** |
 
 ---
 
 ## ⚙️ Environment Variables (`project.env`)
 
+- `API_KEY`: Secret authentication key for admin endpoints (`/invitados` CRUD).
 - `BASE_URL`: Base domain URL for invitation links (e.g., `https://nos.vamos.acas.ar`).
 - `INVITATION_SALT`: Secret salt used to compute deterministic anti-forgery check codes.
 - `VIRTUAL_HOST`: Domain name for reverse proxy routing.
@@ -128,13 +130,15 @@ All API routes are proxied through Nginx:
 
 ## 🤖 Guidelines for AI Agents
 
-1. **API Contracts**: Preserve response structures (`{"ok": true, "data": ...}`).
+1. **API Contracts & Security**: Preserve response structures (`{"ok": true, "data": ...}`). Administrative endpoints (`GET /invitados`, `POST /invitados`, `DELETE`) require the `API_KEY` (via header `X-API-Key`, `Authorization: Bearer`, or query param `?api_key=`).
 2. **Concurrency Safety**: Interactions with Google Sheets in `api/app/sheets.py` are synchronized via `threading.RLock()`. Maintain thread safety for any new sheet operations.
 3. **Anti-Forgery Link Protection**: Keep invitation tokens formatted as `{invitacion_id}_{check_code}` (6 hex characters generated with `sha256(f"{invitacion_id}:{INVITATION_SALT}")[:6]`).
 4. **Crawler Bypass Optimization**: Requests with crawler User-Agents (WhatsApp, Facebook, Twitter, Telegram) on `/i/<token>` must return `og_preview.html` without querying Google Sheets API.
 5. **Auto-Save Engine**: Story RSVP confirmation uses debounced auto-saving (configured via `AUTOSAVE_CONFIG`) with state diffing to minimize Google Sheets API consumption. Immediate flushes trigger on `blur`, accordion toggle, slide change, and `pagehide`/`visibilitychange`.
 6. **Navigation Features**: Mobile devices support touch swipe horizontal gestures while allowing vertical form scrolling. Desktop mode supports direct slide jumping on preview miniatures.
-7. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
-8. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+7. **Rate Limiting**: Nginx rate-limits API requests at 20 req/s with a burst of 30 to prevent API exhaustion.
+8. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
+9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+
 
 

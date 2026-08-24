@@ -186,8 +186,37 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
 
 
+    def test_api_key_protection_and_methods(self):
+        from app import app
+        with patch("app.table.get_all") as mock_get_all, patch("app.table.update_record") as mock_update:
+            mock_get_all.return_value = [{"id": "1", "nombre": "Test"}]
+            mock_update.return_value = {"id": "1", "nombre": "Test", "confirmacion": "si"}
+
+            with app.test_client() as client:
+                # 1. Accessing GET /invitados without key -> 401
+                res = client.get("/invitados")
+                self.assertEqual(res.status_code, 401)
+
+                # 2. Accessing GET /invitados with X-API-Key header -> 200
+                res = client.get("/invitados", headers={"X-API-Key": "boda_secret_api_key_2027"})
+                self.assertEqual(res.status_code, 200)
+
+                # 3. Accessing GET /invitados with Authorization Bearer header -> 200
+                res = client.get("/invitados", headers={"Authorization": "Bearer boda_secret_api_key_2027"})
+                self.assertEqual(res.status_code, 200)
+
+                # 4. Accessing GET /invitados with query param ?api_key=... -> 200
+                res = client.get("/invitados?api_key=boda_secret_api_key_2027")
+                self.assertEqual(res.status_code, 200)
+
+                # 5. Public PUT /invitados/1 (RSVP auto-save) does NOT require API key -> 200
+                res = client.put("/invitados/1", json={"confirmacion": "si"})
+                self.assertEqual(res.status_code, 200)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

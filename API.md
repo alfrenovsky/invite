@@ -26,11 +26,17 @@ The **Boda API** is a Flask-based RESTful service that provides CRUD management 
 
 - **Base URL (Local/Docker)**: `http://localhost/` (via Nginx proxy) or `http://localhost:5000/` (Direct Flask container)
 - **Content Type**: `application/json`
-- **Data Persistence**: Google Sheets (Worksheet: `Respuestas` or configured via `WORKSHEET_NAME`)
+- **Data Persistence**: Google Sheets (Worksheet: `Confirmaciones` or configured via `WORKSHEET_NAME`)
+- **API Key Security**: Admin endpoints (`GET /invitados`, `POST /invitados`, `DELETE`, `/invitados-view`) require the `API_KEY` configured in `project.env`.
+  - Pass via Header: `X-API-Key: <key>`
+  - Pass via Bearer: `Authorization: Bearer <key>`
+  - Pass via Query Param: `?api_key=<key>`
+- **Rate Limiting**: Nginx rate-limits API requests to 20 req/s with a burst of 30.
 
 ---
 
 ## 📊 2. Data Models & Schemas
+
 
 ### 2.1 Google Sheets Column Headers (`FIELDNAMES`)
 
@@ -109,8 +115,10 @@ Retrieves all registered guest records from the Google Sheet database.
 
 ##### Example Curl Request
 ```bash
-curl -X GET http://localhost/invitados
+curl -X GET http://localhost/invitados \
+  -H "X-API-Key: boda_secret_api_key_2027"
 ```
+
 
 ---
 
@@ -205,9 +213,11 @@ Adds one or multiple new guest records directly to the system. No fields are man
 ##### Example Curl Request
 ```bash
 curl -X POST http://localhost/invitados \
+  -H "X-API-Key: boda_secret_api_key_2027" \
   -H "Content-Type: application/json" \
   -d '{ "nombre": "Carlos", "apellido": "López", "confirmacion": "si" }'
 ```
+
 
 ---
 
@@ -280,7 +290,8 @@ Deletes a guest record by ID from Google Sheets.
 
 ##### Example Curl Request
 ```bash
-curl -X DELETE http://localhost/invitados/a1b2c3d4
+curl -X DELETE http://localhost/invitados/a1b2c3d4 \
+  -H "X-API-Key: boda_secret_api_key_2027"
 ```
 
 ---
@@ -301,8 +312,10 @@ Scans all guest rows in Google Sheets. Any row with a blank or missing `id` will
 
 ##### Example Curl Request
 ```bash
-curl -X POST http://localhost/invitados/ensure-ids
+curl -X POST http://localhost/invitados/ensure-ids \
+  -H "X-API-Key: boda_secret_api_key_2027"
 ```
+
 
 ---
 

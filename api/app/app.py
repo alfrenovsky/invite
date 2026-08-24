@@ -103,7 +103,36 @@ def form_page():
     return render_template("form.html", guest=guest)
 
 
+from functools import wraps
+
+API_KEY = os.environ.get("API_KEY", "boda_secret_api_key_2027")
+
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # 1. Check Header 'X-API-Key'
+        key = request.headers.get("X-API-Key")
+        # 2. Check Header 'Authorization: Bearer <key>' or 'Authorization: <key>'
+        if not key:
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                key = auth_header[7:].strip()
+            elif auth_header:
+                key = auth_header.strip()
+        # 3. Check query parameter '?api_key=<key>' or '?key=<key>'
+        if not key:
+            key = request.args.get("api_key") or request.args.get("key")
+
+        if not key or key != API_KEY:
+            return jsonify({"ok": False, "error": "No autorizado: API Key inválida o faltante"}), 401
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 @app.get("/invitados-view")
+@require_api_key
 def invitados_view_page():
     try:
         invitados = table.get_all()
@@ -114,6 +143,7 @@ def invitados_view_page():
 
 
 @app.get("/invitados")
+@require_api_key
 def list_invitados():
     try:
         invitados = table.get_all()
@@ -123,6 +153,7 @@ def list_invitados():
 
 
 @app.post("/invitados/ensure-ids")
+@require_api_key
 def ensure_invitados_ids():
     try:
         records, updated_count = table.ensure_ids()
@@ -143,6 +174,7 @@ def get_invitado(record_id):
 
 
 @app.post("/invitados")
+@require_api_key
 def create_invitado():
     data = request.get_json(silent=True)
     if data is None:
@@ -172,6 +204,7 @@ def update_invitado(record_id):
 
 
 @app.delete("/invitados/<record_id>")
+@require_api_key
 def delete_invitado(record_id):
     try:
         success = table.delete_record(record_id)
@@ -180,6 +213,7 @@ def delete_invitado(record_id):
         return jsonify({"ok": True, "message": "Invitado eliminado correctamente"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
 
 
 @app.get("/health")
