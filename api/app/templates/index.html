@@ -826,6 +826,41 @@
             font-weight: 600;
         }
 
+        /* Auto-Save Status Bar */
+        .autosave-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.80em;
+            color: var(--text-muted);
+            transition: all 0.25s ease;
+        }
+
+        .autosave-status.saving {
+            color: #f39c12;
+            border-color: rgba(243, 156, 18, 0.3);
+            background: rgba(243, 156, 18, 0.08);
+        }
+
+        .autosave-status.saved {
+            color: #2ecc71;
+            border-color: rgba(46, 204, 113, 0.3);
+            background: rgba(46, 204, 113, 0.08);
+        }
+
+        .autosave-status.error {
+            color: #e74c3c;
+            border-color: rgba(231, 76, 60, 0.3);
+            background: rgba(231, 76, 60, 0.08);
+        }
+
+
 
 
         /* Toast notification */
@@ -1171,12 +1206,13 @@
 
 
 
-                                <button type="submit" class="action-btn" id="btnSubmitRsvp">
-                                    ✉️ Guardar Confirmaciones
-                                </button>
-                                <div id="rsvpFeedback" style="margin-top: 10px; font-weight: bold; font-size: 0.9em; text-align: center;"></div>
+                                <div class="autosave-status" id="autoSaveStatus">
+                                    <span class="autosave-icon" id="autoSaveIcon">✓</span>
+                                    <span class="autosave-text" id="autoSaveText">Respuestas sincronizadas automáticamente</span>
+                                </div>
                             </form>
                         </div>
+
 
                     </div>
                 </div>
@@ -1503,12 +1539,111 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // Direct Accordion Toggle Handler
+        // Auto-Save Engine
+        const dirtyGuests = new Set();
+        let autoSaveTimer = null;
+        let isSaving = false;
+        const autoSaveStatus = document.getElementById('autoSaveStatus');
+        const autoSaveIcon = document.getElementById('autoSaveIcon');
+        const autoSaveText = document.getElementById('autoSaveText');
+
+        function setAutoSaveState(state, text) {
+            if (!autoSaveStatus) return;
+            autoSaveStatus.className = 'autosave-status ' + state;
+            if (state === 'saving') {
+                if (autoSaveIcon) autoSaveIcon.textContent = '⏳';
+                if (autoSaveText) autoSaveText.textContent = text || 'Guardando cambios...';
+            } else if (state === 'saved') {
+                if (autoSaveIcon) autoSaveIcon.textContent = '✓';
+                if (autoSaveText) autoSaveText.textContent = text || 'Cambios guardados automáticamente';
+            } else if (state === 'error') {
+                if (autoSaveIcon) autoSaveIcon.textContent = '⚠️';
+                if (autoSaveText) autoSaveText.textContent = text || 'Error al guardar. Reintentando...';
+            } else {
+                if (autoSaveIcon) autoSaveIcon.textContent = '✓';
+                if (autoSaveText) autoSaveText.textContent = text || 'Respuestas sincronizadas';
+            }
+        }
+
+        async function flushAutoSave() {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+            if (dirtyGuests.size === 0 || isSaving) return;
+
+            isSaving = true;
+            setAutoSaveState('saving', 'Guardando respuestas...');
+
+            const guestIdsToSave = Array.from(dirtyGuests);
+            let allOk = true;
+
+            for (const guestId of guestIdsToSave) {
+                const card = document.querySelector(`.rsvp-card[data-guest-id="${guestId}"]`);
+                if (!card) continue;
+
+                const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+                const asistencia = radioChecked ? radioChecked.value : '';
+                const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
+                const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
+                const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+                const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+
+                const payload = {
+                    nombre: inputNombre ? inputNombre.value.trim() : '',
+                    apellido: inputApellido ? inputApellido.value.trim() : '',
+                    confirmacion: asistencia,
+                    pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
+                    pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
+                    pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
+                    pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
+                };
+
+                try {
+                    const res = await fetch(`/invitados/${guestId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        dirtyGuests.delete(guestId);
+                        // Update Slide 1 dot status live
+                        const chipDot = document.querySelector(`[data-chip-guest-id="${guestId}"] .status-dot`);
+                        if (chipDot) {
+                            chipDot.className = 'status-dot ' + (asistencia || 'pending');
+                        }
+                    } else {
+                        allOk = false;
+                    }
+                } catch (err) {
+                    allOk = false;
+                }
+            }
+
+            isSaving = false;
+
+            if (allOk) {
+                setAutoSaveState('saved', '✓ Cambios guardados automáticamente');
+            } else {
+                setAutoSaveState('error', '⚠️ Error al guardar. Se reintentará...');
+                setTimeout(flushAutoSave, 2500);
+            }
+        }
+
+        function queueAutoSave(guestId, delay = 600) {
+            dirtyGuests.add(guestId);
+            setAutoSaveState('saving', 'Guardando cambios...');
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(flushAutoSave, delay);
+        }
+
+        // Direct Accordion Toggle Handler with auto-save flush
         function initAccordion() {
             document.querySelectorAll('.rsvp-card-header').forEach(header => {
                 header.onclick = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    flushAutoSave();
                     const card = header.closest('.rsvp-card');
                     const isExpanded = card.classList.contains('expanded');
                     document.querySelectorAll('.rsvp-card').forEach(c => c.classList.remove('expanded'));
@@ -1604,11 +1739,13 @@
                         }
 
                         updateDietIcons(card);
+                        queueAutoSave(guestId, 300);
 
                         // Auto-expand next pending guest card if any
                         const nextCard = cards[cardIdx + 1];
                         if (nextCard && !nextCard.querySelector('input[type="radio"]:checked')) {
                             setTimeout(() => {
+                                flushAutoSave();
                                 cards.forEach(c => c.classList.remove('expanded'));
                                 nextCard.classList.add('expanded');
                             }, 320);
@@ -1622,6 +1759,7 @@
                         card.querySelectorAll('.menu-radio-label').forEach(lbl => lbl.classList.remove('selected'));
                         mRadio.closest('.menu-radio-label')?.classList.add('selected');
                         updateDietIcons(card);
+                        queueAutoSave(guestId, 300);
                     };
                 });
 
@@ -1635,6 +1773,7 @@
                             lbl?.classList.remove('selected');
                         }
                         updateDietIcons(card);
+                        queueAutoSave(guestId, 300);
                     };
                 }
 
@@ -1650,90 +1789,31 @@
                     const full = (n || a) ? `${n} ${a}`.trim() : 'Acompañante';
                     if (headerName) headerName.textContent = full;
                     if (chipName) chipName.textContent = full;
+                    queueAutoSave(guestId, 700);
                 }
 
-                if (inputNombre) inputNombre.addEventListener('input', syncName);
-                if (inputApellido) inputApellido.addEventListener('input', syncName);
+                if (inputNombre) {
+                    inputNombre.addEventListener('input', syncName);
+                    inputNombre.addEventListener('blur', () => flushAutoSave());
+                }
+                if (inputApellido) {
+                    inputApellido.addEventListener('input', syncName);
+                    inputApellido.addEventListener('blur', () => flushAutoSave());
+                }
             });
         }
 
         bindRadioEvents(document);
 
-
-
-        // RSVP Form Submit for all guests in group
-        const rsvpForm = document.getElementById('storyRsvpForm');
-        const rsvpFeedback = document.getElementById('rsvpFeedback');
-        const btnSubmit = document.getElementById('btnSubmitRsvp');
-
-        if (rsvpForm) {
-            rsvpForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                btnSubmit.disabled = true;
-                btnSubmit.textContent = 'Guardando confirmaciones...';
-                rsvpFeedback.textContent = '';
-
-                const existingGuestCards = Array.from(document.querySelectorAll('.rsvp-card[data-guest-id]'));
-                const updates = [];
-
-                // Update all existing group guests
-                for (const card of existingGuestCards) {
-                    const guestId = card.getAttribute('data-guest-id');
-                    const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
-                    const asistencia = radioChecked ? radioChecked.value : '';
-                    const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
-                    const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
-                    const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
-                    const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
-
-                    const payload = {
-                        nombre: inputNombre ? inputNombre.value.trim() : '',
-                        apellido: inputApellido ? inputApellido.value.trim() : '',
-                        confirmacion: asistencia,
-                        pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
-                        pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
-                        pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
-                        pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
-                    };
-
-
-                    try {
-                        const res = await fetch(`/invitados/${guestId}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        updates.push(res.ok);
-
-                        // Update Slide 1 dot status live
-                        const chipDot = document.querySelector(`[data-chip-guest-id="${guestId}"] .status-dot`);
-                        if (chipDot) {
-                            chipDot.className = 'status-dot ' + (asistencia || 'pending');
-                        }
-                    } catch (err) {
-                        updates.push(false);
-                    }
-                }
-
-
-                btnSubmit.disabled = false;
-                btnSubmit.textContent = '✓ ¡Confirmación Guardada!';
-
-                if (updates.every(Boolean) && updates.length > 0) {
-                    rsvpFeedback.style.color = '#2ecc71';
-                    rsvpFeedback.textContent = '✨ ¡Excelente! Las respuestas fueron registradas con éxito.';
-                    showToast('✓ ¡Confirmaciones guardadas con éxito!');
-                } else {
-                    rsvpFeedback.style.color = '#f39c12';
-                    rsvpFeedback.textContent = 'Se guardaron algunos registros con éxito.';
-                }
-            });
-        }
-
+        // Page exit listeners to guarantee all pending changes are sent
+        window.addEventListener('beforeunload', flushAutoSave);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') flushAutoSave();
+        });
 
         // Initialize First Slide
         goToSlide(0);
+
 
 
 
