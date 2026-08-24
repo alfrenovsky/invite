@@ -30,11 +30,11 @@ The application is containerized using **Docker Compose** and consists of two ma
                                     (gspread integration)
 ```
 
-- **Frontend / SSR**: Dynamic Jinja2 server-rendered Story view (`api/app/templates/index.html`) and static assets (`html/assets/`) served directly by Nginx.
+- **Frontend / SSR**: Dynamic Jinja2 server-rendered Story view (`api/app/templates/index.html`), social crawler previews (`og_preview.html`), and static assets (`html/assets/`) served directly by Nginx.
 - **Backend API**: Python 3.12 Flask REST API (`api/app/app.py`).
 - **Database / Storage**: Google Sheets integration via `gspread` (`api/app/sheets.py`).
-- **Reverse Proxy**: Nginx (`nginx/nginx.conf`) handling route proxying, `/assets/`, and caching.
-- **Security**: Tamper-proof salted anti-forgery URL check codes (`/i/<invitacion_id>_<check_code>`).
+- **Reverse Proxy**: Nginx (`nginx/nginx.conf`) handling route proxying, `/assets/`, `/favicon.*`, and caching.
+- **Security & Crawlers**: Tamper-proof salted anti-forgery URL check codes (`/i/<invitacion_id>_<check_code>`) with crawler bypass for social bots (WhatsApp/Meta) to prevent Google Sheets API exhaustion.
 - **Containerization**: Docker Compose (`docker-compose.yml`, `docker-compose.override.yml`).
 
 ---
@@ -46,9 +46,10 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   ├── app/
 │   │   ├── app.py             # Flask CRUD endpoints (/invitados, /health, /i/<token>)
 │   │   ├── sheets.py          # GoogleSheetsTable class (gspread wrapper with thread lock)
-│   │   ├── test_sheets.py     # Unit tests for Google Sheets table & anti-forgery logic
+│   │   ├── test_sheets.py     # Unit tests for Google Sheets table, crawler bypass & anti-forgery logic
 │   │   └── templates/
-│   │       ├── index.html     # Main wedding invitation story deck (SSR + Auto-Save)
+│   │       ├── index.html     # Main wedding invitation story deck (SSR + Auto-Save + Swipe Gestures)
+│   │       ├── og_preview.html# Lightweight Open Graph preview for WhatsApp/social crawlers (0 Sheet calls)
 │   │       ├── blank.html     # Blank template for invalid tokens/forgery protection
 │   │       └── invitados.html # Admin guest overview table
 │   ├── Dockerfile             # Python 3.12 slim container build definition
@@ -56,12 +57,14 @@ The application is containerized using **Docker Compose** and consists of two ma
 ├── html/
 │   ├── assets/
 │   │   ├── background.jpeg    # High-resolution desktop background
+│   │   ├── favicon.svg        # Golden heart vector favicon
 │   │   ├── intro.mp4          # Introductory video asset
-│   │   └── whatsapp.thumb.jpg # Thumbnail asset
+│   │   └── whatsapp.thumb.jpg # 600x600 WhatsApp thumbnail asset
 │   ├── form.html              # Standalone guest registration form
+│   ├── favicon.svg            # Fallback favicon asset
 │   └── index.html             # Static fallback invitation page
 ├── nginx/
-│   └── nginx.conf             # Nginx server configuration, /assets/, and API proxy rules
+│   └── nginx.conf             # Nginx server configuration, /assets/, /favicon.*, and API proxy rules
 ├── secrets/
 │   └── credentials.json       # Google Service Account JSON credentials (mounted read-only)
 ├── docker-compose.yml         # Main Docker Compose configuration
@@ -83,7 +86,7 @@ All API routes are proxied through Nginx:
 | Method | Endpoint | Description | Payload / Parameters |
 |---|---|---|---|
 | `GET` | `/health` | API Healthcheck | None |
-| `GET` | `/i/<token>` | Tamper-proof invitation story deck (SSR) | `token` (`<invitacion_id>_<check_code>`) |
+| `GET` | `/i/<token>` | Tamper-proof invitation story deck (SSR) or crawler OG preview | `token` (`<invitacion_id>_<check_code>`) |
 | `GET` | `/invitados` | Fetch all guest records | None |
 | `GET` | `/invitados/<id>` | Fetch guest by ID | `record_id` (path param) |
 | `POST` | `/invitados` | Create guest record(s) | Single JSON object or array of objects |
@@ -108,7 +111,7 @@ All API routes are proxied through Nginx:
 ## 🧪 Testing & Verification
 
 - **Backend Unit Tests**:
-  Unit tests reside in `api/app/test_sheets.py` covering Google Sheets CRUD, field mapping, salted anti-forgery tokens, WhatsApp link generation, and route rendering.
+  Unit tests reside in `api/app/test_sheets.py` covering Google Sheets CRUD, field mapping, salted anti-forgery tokens, WhatsApp link generation, crawler bypass, and route rendering.
   To execute tests inside container:
   ```bash
   docker compose exec api python3 -m unittest test_sheets.py
@@ -126,7 +129,10 @@ All API routes are proxied through Nginx:
 1. **API Contracts**: Preserve response structures (`{"ok": true, "data": ...}`).
 2. **Concurrency Safety**: Interactions with Google Sheets in `api/app/sheets.py` are synchronized via `threading.RLock()`. Maintain thread safety for any new sheet operations.
 3. **Anti-Forgery Link Protection**: Keep invitation tokens formatted as `{invitacion_id}_{check_code}` (6 hex characters generated with `sha256(f"{invitacion_id}:{INVITATION_SALT}")[:6]`).
-4. **Auto-Save Engine**: Story RSVP confirmation uses debounced auto-saving with state diffing to minimize Google Sheets API consumption.
-5. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
-6. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+4. **Crawler Bypass Optimization**: Requests with crawler User-Agents (WhatsApp, Facebook, Twitter, Telegram) on `/i/<token>` must return `og_preview.html` without querying Google Sheets API.
+5. **Auto-Save Engine**: Story RSVP confirmation uses debounced auto-saving (configured via `AUTOSAVE_CONFIG`) with state diffing to minimize Google Sheets API consumption. Immediate flushes trigger on `blur`, accordion toggle, slide change, and `pagehide`/`visibilitychange`.
+6. **Navigation Features**: Mobile devices support touch swipe horizontal gestures while allowing vertical form scrolling. Desktop mode supports direct slide jumping on preview miniatures.
+7. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
+8. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+
 
