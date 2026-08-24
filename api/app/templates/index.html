@@ -1394,6 +1394,9 @@
         }
 
         function goToSlide(index) {
+            if (typeof flushAutoSave === 'function' && typeof dirtyGuests !== 'undefined' && dirtyGuests.size > 0) {
+                flushAutoSave();
+            }
             if (index < 0) index = 0;
             if (index >= slides.length) index = slides.length - 1;
 
@@ -1402,6 +1405,7 @@
             showSlide(currentIndex);
             startSlideTimer();
         }
+
 
         function nextSlide() {
             if (currentIndex < slides.length - 1) {
@@ -1541,10 +1545,11 @@
         // ⚙️ Configuración de Tiempos de Auto-Guardado (Milisegundos)
         // ==============================================================
         const AUTOSAVE_CONFIG = {
-            CLICK_DEBOUNCE_MS: 1500,  // Tiempo de espera tras clics (Asistencia, Menú, Celíaco)
-            INPUT_DEBOUNCE_MS: 2200,  // Tiempo de espera tras teclear (Nombre, Apellido)
-            RETRY_DELAY_MS: 3000      // Intervalo de reintento si falla la red
+            CLICK_DEBOUNCE_MS: 10000, // 10 segundos de inactividad tras clics (Asistencia, Menú, Celíaco)
+            INPUT_DEBOUNCE_MS: 10000, // 10 segundos de inactividad tras teclear (Nombre, Apellido)
+            RETRY_DELAY_MS: 4000      // Intervalo de reintento si falla la conexión
         };
+
 
         // Auto-Save Engine with Change-Detection & Throttling
         const dirtyGuests = new Set();
@@ -1847,9 +1852,11 @@
 
         // Page exit listeners to guarantee all pending changes are sent
         window.addEventListener('beforeunload', flushAutoSave);
+        window.addEventListener('pagehide', flushAutoSave);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') flushAutoSave();
         });
+
 
 
         // Initialize First Slide
