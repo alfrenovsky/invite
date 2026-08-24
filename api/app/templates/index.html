@@ -750,20 +750,82 @@
             font-weight: 600;
         }
 
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-            font-size: 0.80em;
-            color: var(--text-muted);
+        .guest-diet-icons {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 2px;
         }
 
-        .checkbox-label {
+        .diet-mini-badge {
+            font-size: 0.68em;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .diet-mini-badge.badge-celiac {
+            background: rgba(243, 156, 18, 0.22);
+            border-color: rgba(243, 156, 18, 0.45);
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .menu-radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 6px;
+        }
+
+        .menu-radio-label {
+            padding: 7px 3px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            font-size: 0.78em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .menu-radio-label input {
+            display: none;
+        }
+
+        .menu-radio-label.selected {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--accent);
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .celiac-checkbox-label {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.80em;
             cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 4px;
         }
+
+        .celiac-checkbox-label.selected {
+            background: rgba(243, 156, 18, 0.15);
+            border-color: rgba(243, 156, 18, 0.35);
+            color: #f39c12;
+            font-weight: 600;
+        }
+
 
 
         /* Toast notification */
@@ -1030,6 +1092,20 @@
                                                 <span class="guest-badge badge-{{ guest.confirmacion or 'pending' }}" id="badge_{{ guest.id }}">
                                                     {% if guest.confirmacion == 'si' %}✓ Asiste{% elif guest.confirmacion == 'no' %}✗ No asiste{% else %}⏳ Pendiente{% endif %}
                                                 </span>
+                                                <span class="guest-diet-icons" id="diet_icons_{{ guest.id }}">
+                                                    {% if guest.confirmacion == 'si' %}
+                                                        {% if guest.pa_vegano == 'si' %}
+                                                            <span class="diet-mini-badge" title="Vegano">🌱 Vegano</span>
+                                                        {% elif guest.pa_vegetariano == 'si' %}
+                                                            <span class="diet-mini-badge" title="Vegetariano">🥗 Vegetariano</span>
+                                                        {% else %}
+                                                            <span class="diet-mini-badge" title="General">🍽️ General</span>
+                                                        {% endif %}
+                                                        {% if guest.pa_celiaco == 'si' %}
+                                                            <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin TACC">🌾 Celíaco</span>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </span>
                                             </div>
                                             <span class="chevron-icon">▼</span>
                                         </div>
@@ -1050,19 +1126,33 @@
                                                 </label>
                                             </div>
 
-                                            <div class="diet-section" style="{% if guest.confirmacion != 'si' %}display: none;{% endif %}">
-                                                <div style="font-size: 0.78em; color: var(--text-muted); margin-bottom: 5px;">Menú / Preferencia:</div>
-                                                <div class="checkbox-grid">
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="general" {% if guest.pa_general == 'si' %}checked{% endif %}> General</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}> Vegetariano</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}> Vegano</label>
-                                                    <label class="checkbox-label"><input type="checkbox" class="diet-check" value="celiaco" {% if guest.pa_celiaco == 'si' %}checked{% endif %}> Celíaco</label>
+                                            <div class="diet-section" id="diet_sec_{{ guest.id }}" style="{% if guest.confirmacion != 'si' %}display: none;{% endif %}">
+                                                <div style="font-size: 0.76em; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Menú Principal:</div>
+                                                <div class="menu-radio-group">
+                                                    <label class="menu-radio-label {% if guest.pa_general == 'si' or (not guest.pa_vegetariano and not guest.pa_vegano) %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="general" {% if guest.pa_general == 'si' or (not guest.pa_vegetariano and not guest.pa_vegano) %}checked{% endif %}>
+                                                        🍽️ General
+                                                    </label>
+                                                    <label class="menu-radio-label {% if guest.pa_vegetariano == 'si' %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}>
+                                                        🥗 Vegetariano
+                                                    </label>
+                                                    <label class="menu-radio-label {% if guest.pa_vegano == 'si' %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}>
+                                                        🌱 Vegano
+                                                    </label>
                                                 </div>
+
+                                                <label class="celiac-checkbox-label {% if guest.pa_celiaco == 'si' %}selected{% endif %}">
+                                                    <input type="checkbox" name="celiaco_{{ guest.id }}" value="si" class="celiac-check" {% if guest.pa_celiaco == 'si' %}checked{% endif %}>
+                                                    <span>🌾 Menú Apto Celíaco / Sin TACC</span>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
                                     {% endfor %}
                                 </div>
+
 
 
 
@@ -1406,15 +1496,51 @@
         initAccordion();
 
 
+        // Helper to dynamically update dietary badge/icon in guest header
+        function updateDietIcons(card) {
+            const guestId = card.getAttribute('data-guest-id');
+            const iconsContainer = card.querySelector(`#diet_icons_${guestId}`);
+            if (!iconsContainer) return;
+
+            const radioAsistencia = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+            const asistencia = radioAsistencia ? radioAsistencia.value : '';
+
+            if (asistencia !== 'si') {
+                iconsContainer.innerHTML = '';
+                return;
+            }
+
+            const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
+            const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
+
+            let html = '';
+            if (selectedMenu === 'vegano') {
+                html += '<span class="diet-mini-badge" title="Vegano">🌱 Vegano</span>';
+            } else if (selectedMenu === 'vegetariano') {
+                html += '<span class="diet-mini-badge" title="Vegetariano">🥗 Vegetariano</span>';
+            } else {
+                html += '<span class="diet-mini-badge" title="General">🍽️ General</span>';
+            }
+
+            if (isCeliac) {
+                html += ' <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin TACC">🌾 Celíaco</span>';
+            }
+
+            iconsContainer.innerHTML = html;
+        }
+
         // Radio button dynamic styling & badge update binding
         function bindRadioEvents(scope) {
             const cards = Array.from(scope.querySelectorAll('.rsvp-card'));
             cards.forEach((card, cardIdx) => {
                 const guestId = card.getAttribute('data-guest-id');
                 const badge = card.querySelector('.guest-badge');
-                const radios = card.querySelectorAll('input[type="radio"]');
+                const radios = card.querySelectorAll(`input[name="asistencia_${guestId}"]`);
                 const dietSection = card.querySelector('.diet-section');
+                const menuRadios = card.querySelectorAll(`input[name="menu_${guestId}"]`);
+                const celiacCheck = card.querySelector(`input[name="celiaco_${guestId}"]`);
 
+                // Attendance Radios
                 radios.forEach(radio => {
                     radio.onchange = () => {
                         card.querySelectorAll('.radio-label').forEach(lbl => {
@@ -1427,6 +1553,14 @@
                             if (badge) {
                                 badge.className = 'guest-badge badge-si';
                                 badge.textContent = '✓ Asiste';
+                            }
+                            // Ensure a base menu is checked if none
+                            if (!card.querySelector(`input[name="menu_${guestId}"]:checked`)) {
+                                const genRadio = card.querySelector(`input[name="menu_${guestId}"][value="general"]`);
+                                if (genRadio) {
+                                    genRadio.checked = true;
+                                    genRadio.closest('.menu-radio-label')?.classList.add('selected');
+                                }
                             }
                         } else if (radio.value === 'no') {
                             parentLabel.classList.add('selected-no');
@@ -1444,6 +1578,8 @@
                             }
                         }
 
+                        updateDietIcons(card);
+
                         // Auto-expand next pending guest card if any
                         const nextCard = cards[cardIdx + 1];
                         if (nextCard && !nextCard.querySelector('input[type="radio"]:checked')) {
@@ -1454,6 +1590,28 @@
                         }
                     };
                 });
+
+                // Mutually Exclusive Menu Radios
+                menuRadios.forEach(mRadio => {
+                    mRadio.onchange = () => {
+                        card.querySelectorAll('.menu-radio-label').forEach(lbl => lbl.classList.remove('selected'));
+                        mRadio.closest('.menu-radio-label')?.classList.add('selected');
+                        updateDietIcons(card);
+                    };
+                });
+
+                // Independent Celiac Checkbox
+                if (celiacCheck) {
+                    celiacCheck.onchange = () => {
+                        const lbl = celiacCheck.closest('.celiac-checkbox-label');
+                        if (celiacCheck.checked) {
+                            lbl?.classList.add('selected');
+                        } else {
+                            lbl?.classList.remove('selected');
+                        }
+                        updateDietIcons(card);
+                    };
+                }
             });
         }
 
@@ -1482,14 +1640,15 @@
                     const guestId = card.getAttribute('data-guest-id');
                     const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
                     const asistencia = radioChecked ? radioChecked.value : '';
-                    const diets = Array.from(card.querySelectorAll('.diet-check:checked')).map(c => c.value);
+                    const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
+                    const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
 
                     const payload = {
                         confirmacion: asistencia,
-                        pa_general: diets.includes('general') ? 'si' : '',
-                        pa_vegetariano: diets.includes('vegetariano') ? 'si' : '',
-                        pa_vegano: diets.includes('vegano') ? 'si' : '',
-                        pa_celiaco: diets.includes('celiaco') ? 'si' : ''
+                        pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
+                        pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
+                        pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
+                        pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
                     };
 
                     try {
@@ -1509,6 +1668,7 @@
                         updates.push(false);
                     }
                 }
+
 
                 btnSubmit.disabled = false;
                 btnSubmit.textContent = '✓ ¡Confirmación Guardada!';
