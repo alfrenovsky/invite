@@ -1628,7 +1628,7 @@
 
             if (actualToSave.length === 0) {
                 if (dirtyGuests.size === 0) {
-                    setAutoSaveState('saved', '✓ Respuestas sincronizadas');
+                    setAutoSaveState('saved', 'Respuestas sincronizadas');
                 }
                 return;
             }
@@ -1663,12 +1663,13 @@
             isSaving = false;
 
             if (allOk) {
-                setAutoSaveState('saved', '✓ Cambios guardados automáticamente');
+                setAutoSaveState('saved', 'Cambios guardados automáticamente');
             } else {
-                setAutoSaveState('error', '⚠️ Error al guardar. Se reintentará...');
+                setAutoSaveState('error', 'Error al guardar. Se reintentará...');
                 setTimeout(flushAutoSave, AUTOSAVE_CONFIG.RETRY_DELAY_MS);
             }
         }
+
 
         function queueAutoSave(guestId, delay = AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS) {
             dirtyGuests.add(guestId);
