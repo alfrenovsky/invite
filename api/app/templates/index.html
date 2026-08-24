@@ -1539,8 +1539,18 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
+        // ==============================================================
+        // ⚙️ Configuración de Tiempos de Auto-Guardado (Milisegundos)
+        // ==============================================================
+        const AUTOSAVE_CONFIG = {
+            CLICK_DEBOUNCE_MS: 1500,  // Tiempo de espera tras clics (Asistencia, Menú, Celíaco)
+            INPUT_DEBOUNCE_MS: 2200,  // Tiempo de espera tras teclear (Nombre, Apellido)
+            RETRY_DELAY_MS: 3000      // Intervalo de reintento si falla la red
+        };
+
         // Auto-Save Engine with Change-Detection & Throttling
         const dirtyGuests = new Set();
+
         const savedGuestStates = {};
         let autoSaveTimer = null;
         let isSaving = false;
@@ -1656,11 +1666,11 @@
                 setAutoSaveState('saved', '✓ Cambios guardados automáticamente');
             } else {
                 setAutoSaveState('error', '⚠️ Error al guardar. Se reintentará...');
-                setTimeout(flushAutoSave, 3000);
+                setTimeout(flushAutoSave, AUTOSAVE_CONFIG.RETRY_DELAY_MS);
             }
         }
 
-        function queueAutoSave(guestId, delay = 1800) {
+        function queueAutoSave(guestId, delay = AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS) {
             dirtyGuests.add(guestId);
             setAutoSaveState('saving', 'Guardando cambios...');
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -1769,7 +1779,7 @@
                         }
 
                         updateDietIcons(card);
-                        queueAutoSave(guestId, 1500);
+                        queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
 
                         // Auto-expand next pending guest card if any
                         const nextCard = cards[cardIdx + 1];
@@ -1789,7 +1799,7 @@
                         card.querySelectorAll('.menu-radio-label').forEach(lbl => lbl.classList.remove('selected'));
                         mRadio.closest('.menu-radio-label')?.classList.add('selected');
                         updateDietIcons(card);
-                        queueAutoSave(guestId, 1500);
+                        queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                     };
                 });
 
@@ -1803,7 +1813,7 @@
                             lbl?.classList.remove('selected');
                         }
                         updateDietIcons(card);
-                        queueAutoSave(guestId, 1500);
+                        queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                     };
                 }
 
@@ -1819,7 +1829,7 @@
                     const full = (n || a) ? `${n} ${a}`.trim() : 'Acompañante';
                     if (headerName) headerName.textContent = full;
                     if (chipName) chipName.textContent = full;
-                    queueAutoSave(guestId, 2200);
+                    queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
                 }
 
                 if (inputNombre) {
@@ -1832,6 +1842,7 @@
                 }
             });
         }
+
 
         bindRadioEvents(document);
 
