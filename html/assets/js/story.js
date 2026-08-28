@@ -374,9 +374,18 @@
             setTimeout(() => { isSwiping = false; }, 80);
         }, { passive: true });
 
-
+        container.addEventListener('touchcancel', () => {
+            onHoldEnd();
+            isSwiping = false;
+            isPullingToRefresh = false;
+            if (ptrIndicator) {
+                ptrIndicator.style.transform = 'translate(-50%, -120px)';
+                ptrIndicator.classList.remove('visible', 'ready');
+            }
+        });
 
         // Keyboard navigation
+
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
             if (e.key === 'ArrowRight' || e.key === ' ') {

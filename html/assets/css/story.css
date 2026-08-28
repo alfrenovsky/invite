@@ -272,7 +272,7 @@
         .story-slide.active .countdown-container {
             pointer-events: auto !important;
             position: relative;
-            z-index: 350;
+            z-index: 500;
         }
 
         .story-slide.active,
@@ -302,25 +302,25 @@
             }
         }
 
-
-
-
-
         @media (max-width: 767px) {
             .story-slide {
                 border-radius: 0;
                 box-shadow: none;
+                touch-action: pan-y;
+            }
+            .story-container {
+                touch-action: pan-y;
             }
         }
-
 
         /* Interactive Click Zones */
         .tap-zone {
             position: absolute;
             top: 75px;
             bottom: 0;
-            z-index: 200;
+            z-index: 400;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .tap-left {
@@ -332,6 +332,7 @@
             right: 0;
             width: 70%;
         }
+
 
         /* Interactive content wrapper to prevent tap-through */
         .interactive-content {
