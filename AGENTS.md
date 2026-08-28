@@ -135,8 +135,9 @@ All API routes are proxied through Nginx:
 3. **Anti-Forgery Link Protection**: Keep invitation tokens formatted as `{invitacion_id}_{check_code}` (6 hex characters generated with `sha256(f"{invitacion_id}:{INVITATION_SALT}")[:6]`).
 4. **Crawler Bypass Optimization**: Requests with crawler User-Agents (WhatsApp, Facebook, Twitter, Telegram) on `/i/<token>` must return `og_preview.html` without querying Google Sheets API.
 5. **Auto-Save Engine**: Story RSVP confirmation uses debounced auto-saving (configured via `AUTOSAVE_CONFIG`) with state diffing to minimize Google Sheets API consumption. Immediate flushes trigger on `blur`, accordion toggle, slide change, and `pagehide`/`visibilitychange`.
-6. **Navigation Features**: Mobile devices support touch swipe horizontal gestures while allowing vertical form scrolling. Desktop mode supports direct slide jumping on preview miniatures.
+6. **Navigation Features**: Mobile devices support touch swipe horizontal gestures with slide-over focus animations, pull-to-refresh downward gesture (`window.location.reload()`), and smart vertical form scrolling on the RSVP slide. Desktop mode supports direct slide jumping on preview miniatures.
 7. **Rate Limiting**: Nginx rate-limits API requests at 20 req/s with a burst of 30 to prevent API exhaustion.
+
 8. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
 9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
 
