@@ -47,14 +47,15 @@
             {% include "partials/top_bar.html" %}
             {% include "partials/tap_zones.html" %}
 
-            <!-- Dynamic Slide Deck -->
+            <!-- Slide Deck (Instant First Paint SSR) -->
             <div class="story-slides" id="storySlides">
-                <div class="slide-loader" id="slideLoader">
-                    <div class="slide-spinner"></div>
-                </div>
+                {% for slide in active_slides %}
+                    {% include slide.template %}
+                {% endfor %}
             </div>
         </div>
     </div>
+
 
 
     {% include "partials/toast.html" %}

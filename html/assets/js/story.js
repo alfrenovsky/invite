@@ -1,7 +1,6 @@
 (function() {
     let slides = [];
     let progressSlots = [];
-    let activeManifest = null;
     const progressContainer = document.getElementById('progressBarsContainer');
     const tapLeft = document.getElementById('tapLeft');
     const tapRight = document.getElementById('tapRight');
@@ -33,26 +32,29 @@
     // ==============================================================
     // 🔗 URL Hash Navigation (#1, #2, #3... or #rsvp)
     // ==============================================================
-    function getTargetIndexFromHash(manifestSlides) {
-        if (!manifestSlides || manifestSlides.length === 0) return 0;
+    function getTargetIndexFromHash() {
+        if (!slides || slides.length === 0) return 0;
         const rawHash = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
         if (!rawHash) return 0;
 
         // Check if numeric 1-indexed (#1, #2, #3...)
         const num = parseInt(rawHash, 10);
-        if (!isNaN(num) && num >= 1 && num <= manifestSlides.length) {
+        if (!isNaN(num) && num >= 1 && num <= slides.length) {
             return num - 1;
         }
 
         // Check if matching slide slug/id (#rsvp, #intro, etc.)
-        const foundIdx = manifestSlides.findIndex(s => s.id.toLowerCase() === rawHash);
+        const foundIdx = slides.findIndex(s => {
+            const sid = (s.getAttribute('data-slide-id') || '').toLowerCase();
+            return sid === rawHash;
+        });
         if (foundIdx !== -1) return foundIdx;
 
         return 0;
     }
 
     function updateUrlHash(index) {
-        if (!activeManifest || !activeManifest.slides || activeManifest.slides.length === 0) return;
+        if (!slides || slides.length === 0) return;
         const slideNumber = index + 1;
         const targetHash = '#' + slideNumber;
         if (window.location.hash !== targetHash) {
@@ -61,11 +63,9 @@
     }
 
     window.addEventListener('hashchange', () => {
-        if (activeManifest && activeManifest.slides) {
-            const targetIdx = getTargetIndexFromHash(activeManifest.slides);
-            if (targetIdx !== currentIndex) {
-                goToSlide(targetIdx);
-            }
+        const targetIdx = getTargetIndexFromHash();
+        if (targetIdx !== currentIndex) {
+            goToSlide(targetIdx);
         }
     });
 
@@ -811,113 +811,70 @@
     });
 
     // ==============================================================
-    // 🚀 Fast Target-First Slide Loader + Background Prefetch
+    // 🚀 Instant Initialization (SSR) + Background Real-Time Sync
     // ==============================================================
-    async function loadAndInitStory() {
+    function initStory() {
         const slidesContainer = document.getElementById('storySlides');
+        if (!slidesContainer) return;
+
+        slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
+        if (slides.length === 0) return;
+
+        buildProgressBars();
+        bindInteractiveEvents();
+
+        const targetIdx = getTargetIndexFromHash();
+        goToSlide(targetIdx);
+
+        // Optional background check for dynamically toggled slides
         const token = (container && container.dataset.token) || (window.location.pathname.split('/i/')[1] || '').split('/')[0];
-
-        if (!token || !slidesContainer) {
-            console.error("Token or slides container not found");
-            return;
-        }
-
-        try {
-            // 1. Fetch Slide Manifest
-            const manifestRes = await fetch(`/i/${token}/slides`);
-            if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
-            activeManifest = await manifestRes.json();
-
-            if (!activeManifest.ok || !Array.isArray(activeManifest.slides) || activeManifest.slides.length === 0) {
-                throw new Error("No active slides available");
-            }
-
-            const totalSlides = activeManifest.slides.length;
-            const targetIdx = getTargetIndexFromHash(activeManifest.slides);
-            const targetSlide = activeManifest.slides[targetIdx];
-
-            // 2. Fetch the target slide immediately (Instant Render)
-            const targetRes = await fetch(targetSlide.url);
-            if (!targetRes.ok) throw new Error(`Target slide fetch failed: ${targetRes.status}`);
-            const targetHtml = await targetRes.text();
-
-            // 3. Build initial DOM with placeholders and the target slide
-            slidesContainer.innerHTML = '';
-            for (let i = 0; i < totalSlides; i++) {
-                if (i === targetIdx) {
-                    slidesContainer.insertAdjacentHTML('beforeend', targetHtml);
-                } else {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'story-slide placeholder';
-                    placeholder.setAttribute('data-duration', activeManifest.slides[i].duration || '7000');
-                    placeholder.setAttribute('data-slide-index', i);
-                    slidesContainer.appendChild(placeholder);
-                }
-            }
-
-            // 4. Update slides reference and immediately activate target slide
-            slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
-            buildProgressBars();
-            bindInteractiveEvents();
-            goToSlide(targetIdx);
-
-            // 5. Fetch remaining slides concurrently in background
-            const remainingSlides = activeManifest.slides
-                .map((s, idx) => ({ ...s, index: idx }))
-                .filter(s => s.index !== targetIdx);
-
-            if (remainingSlides.length > 0) {
-                Promise.all(
-                    remainingSlides.map(async (s) => {
-                        try {
-                            const res = await fetch(s.url);
-                            if (res.ok) {
-                                const html = await res.text();
-                                return { index: s.index, html };
-                            }
-                        } catch (e) {
-                            console.error(`Background fetch error for slide ${s.id}:`, e);
-                        }
-                        return null;
-                    })
-                ).then(loadedItems => {
-                    loadedItems.forEach(item => {
-                        if (!item) return;
-                        const placeholder = slidesContainer.querySelector(`.story-slide.placeholder[data-slide-index="${item.index}"]`);
-                        if (placeholder) {
-                            placeholder.outerHTML = item.html;
-                        }
-                    });
-
-                    // Refresh references and re-bind interactive events
-                    slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
-                    bindInteractiveEvents();
-                    showSlide(currentIndex);
-                });
-            }
-
-        } catch (err) {
-            console.error("Error loading dynamic slides:", err);
-            if (slidesContainer) {
-                slidesContainer.innerHTML = `
-                    <div class="story-slide active" style="justify-content: center; text-align: center;">
-                        <div class="slide-body">
-                            <span class="slide-tag">INVITACIÓN</span>
-                            <h2 class="slide-title">Celia & Alfredo</h2>
-                            <p class="slide-desc" style="color: #f39c12;">Hubo un problema al cargar la invitación.<br>Por favor recargá la página.</p>
-                            <button onclick="window.location.reload()" class="action-btn" style="margin-top: 15px;">🔄 Recargar</button>
-                        </div>
-                    </div>
-                `;
-            }
+        if (token) {
+            syncDynamicSlidesInBackground(token, slidesContainer);
         }
     }
 
-    // Launch async story initialization
+    async function syncDynamicSlidesInBackground(token, slidesContainer) {
+        try {
+            const manifestRes = await fetch(`/i/${token}/slides`);
+            if (!manifestRes.ok) return;
+            const manifest = await manifestRes.json();
+            if (!manifest.ok || !Array.isArray(manifest.slides)) return;
+
+            const currentSlideIds = slides.map(s => s.getAttribute('data-slide-id')).filter(Boolean);
+            const serverSlideIds = manifest.slides.map(s => s.id);
+
+            // Check if server configuration matches current DOM
+            const isMatch = (currentSlideIds.length === serverSlideIds.length) &&
+                currentSlideIds.every((id, i) => id === serverSlideIds[i]);
+
+            if (!isMatch) {
+                // Fetch updated slides and refresh DOM seamlessly
+                const slideResults = await Promise.all(
+                    manifest.slides.map(async (s) => {
+                        const res = await fetch(s.url);
+                        return res.ok ? await res.text() : null;
+                    })
+                );
+
+                const validHtmls = slideResults.filter(Boolean);
+                if (validHtmls.length > 0) {
+                    slidesContainer.innerHTML = validHtmls.join('');
+                    slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
+                    buildProgressBars();
+                    bindInteractiveEvents();
+                    showSlide(currentIndex);
+                }
+            }
+        } catch (e) {
+            // Silently ignore background sync errors to preserve user experience
+        }
+    }
+
+    // Launch instant initialization
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadAndInitStory);
+        document.addEventListener('DOMContentLoaded', initStory);
     } else {
-        loadAndInitStory();
+        initStory();
     }
 
 })();
