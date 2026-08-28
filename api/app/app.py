@@ -1,6 +1,8 @@
 import os
+import time
 from flask import Flask, request, jsonify, render_template
 from sheets import GoogleSheetsTable, parse_and_validate_token
+
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -107,7 +109,9 @@ def get_guest_context(validated_slug):
         "all_confirmed": all_confirmed,
         "any_confirmed": any_confirmed,
         "active_slides": active_slides,
+        "config_version": int(time.time()),
     }
+
 
 
 

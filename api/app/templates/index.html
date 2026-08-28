@@ -32,8 +32,8 @@
     <meta name="twitter:description" content="19 de Marzo de 2027 — ¡Queremos compartir este día tan especial con vos!" />
     <meta name="twitter:image" content="{{ (invitation_url.split('/i/')[0] if invitation_url else 'https://nos.vamos.acas.ar') }}/assets/whatsapp.thumb.jpg" />
 
-    <!-- Story Stylesheet (no-cache for development) -->
-    <link rel="stylesheet" href="/assets/css/story.css">
+    <!-- Story Stylesheet (no-cache with auto-versioning) -->
+    <link rel="stylesheet" href="/assets/css/story.css?v={{ config_version }}">
 </head>
 <body>
     {% include "partials/pull_to_refresh.html" %}
@@ -56,11 +56,10 @@
         </div>
     </div>
 
-
-
     {% include "partials/toast.html" %}
 
-    <!-- Story Client Script (no-cache for development) -->
-    <script src="/assets/js/story.js" defer></script>
+    <!-- Story Client Script (no-cache with auto-versioning) -->
+    <script src="/assets/js/story.js?v={{ config_version }}" defer></script>
 </body>
 </html>
+
