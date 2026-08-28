@@ -18,6 +18,95 @@ def add_cache_headers(response):
 
 
 
+SLIDES_CONFIG = [
+    {
+        "id": "intro",
+        "title": "Portada",
+        "template": "slides/01_intro.html",
+        "duration": 7000,
+        "enabled": True,
+    },
+    {
+        "id": "fecha_lugar",
+        "title": "Cuándo",
+        "template": "slides/02_fecha_lugar.html",
+        "duration": 7000,
+        "enabled": True,
+    },
+    {
+        "id": "lugar",
+        "title": "Dónde",
+        "template": "slides/03_lugar.html",
+        "duration": 6500,
+        "enabled": True,
+    },
+    {
+        "id": "itinerario",
+        "title": "Itinerario",
+        "template": "slides/04_itinerario.html",
+        "duration": 7000,
+        "enabled": True,
+    },
+    {
+        "id": "regalos",
+        "title": "Regalos",
+        "template": "slides/05_regalos.html",
+        "duration": 7000,
+        "enabled": True,
+    },
+    {
+        "id": "rsvp",
+        "title": "Confirmación",
+        "template": "slides/06_rsvp.html",
+        "duration": 0,
+        "enabled": True,
+    },
+]
+
+
+def get_guest_context(validated_slug):
+    try:
+        guests = table.get_by_invitacion(validated_slug)
+    except Exception:
+        guests = []
+
+    if not guests:
+        return None
+
+    names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
+    if len(names) == 1:
+        group_names = names[0]
+    elif len(names) == 2:
+        group_names = f"{names[0]} y {names[1]}"
+    elif len(names) > 2:
+        group_names = f"{', '.join(names[:-1])} y {names[-1]}"
+    else:
+        group_names = "Familia / Pareja"
+
+    confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
+    rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
+    pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
+    all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
+    any_confirmed = (confirmed_count > 0)
+    invitation_url = ""
+    for g in guests:
+        if g.get("url"):
+            invitation_url = g["url"]
+            break
+
+    return {
+        "invitacion_id": validated_slug,
+        "invitation_url": invitation_url,
+        "guests": guests,
+        "group_names": group_names,
+        "confirmed_count": confirmed_count,
+        "rejected_count": rejected_count,
+        "pending_count": pending_count,
+        "all_confirmed": all_confirmed,
+        "any_confirmed": any_confirmed,
+    }
+
+
 @app.get("/")
 @app.get("/i/<token>")
 @app.get("/invitacion/<token>")
@@ -43,49 +132,66 @@ def index_page(token=None):
             base_url=base_url
         )
 
-    try:
-        guests = table.get_by_invitacion(validated_slug)
-    except Exception:
-        guests = []
-
-
-    if not guests:
+    context = get_guest_context(validated_slug)
+    if not context:
         return render_template("blank.html")
-
-    names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
-    if len(names) == 1:
-        group_names = names[0]
-    elif len(names) == 2:
-        group_names = f"{names[0]} y {names[1]}"
-    elif len(names) > 2:
-        group_names = f"{', '.join(names[:-1])} y {names[-1]}"
-    else:
-        group_names = "Familia / Pareja"
-
-    confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
-    rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
-    pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
-    all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
-    any_confirmed = (confirmed_count > 0)
-    invitation_url = ""
-    for g in guests:
-        if g.get("url"):
-            invitation_url = g["url"]
-            break
-
 
     return render_template(
         "index.html",
-        invitacion_id=validated_slug,
-        invitation_url=invitation_url,
-        guests=guests,
-        group_names=group_names,
-        confirmed_count=confirmed_count,
-        rejected_count=rejected_count,
-        pending_count=pending_count,
-        all_confirmed=all_confirmed,
-        any_confirmed=any_confirmed,
+        token=token,
+        **context
     )
+
+
+@app.get("/i/<token>/slides")
+@app.get("/invitacion/<token>/slides")
+def get_slides_manifest(token):
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
+        return jsonify({"ok": False, "error": "Token inválido"}), 403
+
+    context = get_guest_context(validated_slug)
+    if not context:
+        return jsonify({"ok": False, "error": "Invitación no encontrada"}), 404
+
+    active_slides = []
+    order = 1
+    for s in SLIDES_CONFIG:
+        if s.get("enabled", True):
+            active_slides.append({
+                "id": s["id"],
+                "title": s.get("title", s["id"]),
+                "order": order,
+                "duration": s.get("duration", 7000),
+                "url": f"/i/{token}/slide/{s['id']}"
+            })
+            order += 1
+
+    return jsonify({
+        "ok": True,
+        "invitacion_id": validated_slug,
+        "slides": active_slides,
+        "count": len(active_slides)
+    })
+
+
+@app.get("/i/<token>/slide/<slide_id>")
+@app.get("/invitacion/<token>/slide/<slide_id>")
+def get_single_slide(token, slide_id):
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
+        return render_template("blank.html"), 403
+
+    context = get_guest_context(validated_slug)
+    if not context:
+        return render_template("blank.html"), 404
+
+    slide = next((s for s in SLIDES_CONFIG if s["id"] == slide_id and s.get("enabled", True)), None)
+    if not slide:
+        return "Slide no encontrada o deshabilitada", 404
+
+    return render_template(slide["template"], **context)
+
 
 
 

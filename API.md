@@ -319,7 +319,56 @@ curl -X POST http://localhost/invitados/ensure-ids \
 
 ---
 
+### 3.8 Dynamic Slides Manifest (`READ`)
+
+#### `GET /i/<token>/slides`
+Returns JSON array of currently enabled slide definitions for the given invitation token.
+
+##### Response (`200 OK`)
+```json
+{
+  "ok": true,
+  "invitacion_id": "familia_perez",
+  "count": 6,
+  "slides": [
+    {
+      "id": "intro",
+      "title": "Portada",
+      "order": 1,
+      "duration": 7000,
+      "url": "/i/familia_perez_a1b2c3/slide/intro"
+    },
+    {
+      "id": "rsvp",
+      "title": "Confirmación",
+      "order": 6,
+      "duration": 0,
+      "url": "/i/familia_perez_a1b2c3/slide/rsvp"
+    }
+  ]
+}
+```
+
+---
+
+### 3.9 Render Single Slide HTML (`READ`)
+
+#### `GET /i/<token>/slide/<slide_id>`
+Renders and returns the HTML snippet for a specific slide ID (`intro`, `fecha_lugar`, `lugar`, `itinerario`, `regalos`, `rsvp`).
+
+##### Response (`200 OK`)
+```html
+<div class="story-slide active" data-duration="7000">
+    <div class="slide-body">
+        ...
+    </div>
+</div>
+```
+
+---
+
 ## 🔒 4. Concurrency & Thread Safety
 
 Google Sheets API operations are synchronized in Python using `threading.RLock()` inside [`GoogleSheetsTable`](file:///home/alfredo/dev/boda/api/app/sheets.py).
+
 

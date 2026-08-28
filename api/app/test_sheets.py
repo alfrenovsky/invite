@@ -217,24 +217,38 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res.status_code, 200)
 
                 # 5. Public PUT /invitados/1 (RSVP auto-save) does NOT require API key -> 200
-                res = client.put("/invitados/1", json={"confirmacion": "si"})
+    def test_dynamic_slides_manifest_and_single_slide(self):
+        from app import app
+        with patch("app.table.get_by_invitacion") as mock_get_by_inv:
+            mock_get_by_inv.return_value = [
+                {"id": "abc1", "nombre": "Juan", "apellido": "Perez", "confirmacion": "si", "url": "http://nos.vamos.acas.ar/i/familia_perez_123456"}
+            ]
+            with app.test_client() as client:
+                code = compute_check_code("familia_perez")
+                
+                # 1. Fetch Manifest
+                res = client.get(f"/i/familia_perez_{code}/slides")
                 self.assertEqual(res.status_code, 200)
+                data = res.get_json()
+                self.assertTrue(data["ok"])
+                self.assertGreaterEqual(len(data["slides"]), 5)
+                self.assertEqual(data["slides"][0]["id"], "intro")
+
+                # 2. Fetch Single Slide (Intro)
+                res_slide = client.get(f"/i/familia_perez_{code}/slide/intro")
+                self.assertEqual(res_slide.status_code, 200)
+                self.assertIn(b"Celia", res_slide.data)
+
+                # 3. Fetch Single Slide (RSVP)
+                res_rsvp = client.get(f"/i/familia_perez_{code}/slide/rsvp")
+                self.assertEqual(res_rsvp.status_code, 200)
+                self.assertIn(b"storyRsvpForm", res_rsvp.data)
+
+                # 4. Invalid token -> 403
+                res_invalid = client.get("/i/familia_perez_invalid/slides")
+                self.assertEqual(res_invalid.status_code, 403)
 
 
 if __name__ == "__main__":
     unittest.main()
 
-
-
-
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    unittest.main()

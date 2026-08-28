@@ -43,21 +43,19 @@
         <button class="desktop-arrow desktop-prev" id="btnDesktopPrev" aria-label="Anterior">‹</button>
         <button class="desktop-arrow desktop-next" id="btnDesktopNext" aria-label="Siguiente">›</button>
 
-        <div class="story-container" id="storyContainer" data-invite-url="{{ invitation_url }}">
+        <div class="story-container" id="storyContainer" data-token="{{ token }}" data-invite-url="{{ invitation_url }}">
             {% include "partials/top_bar.html" %}
             {% include "partials/tap_zones.html" %}
 
-            <!-- Slide Deck -->
+            <!-- Dynamic Slide Deck -->
             <div class="story-slides" id="storySlides">
-                {% include "slides/01_intro.html" %}
-                {% include "slides/02_fecha_lugar.html" %}
-                {% include "slides/03_lugar.html" %}
-                {% include "slides/04_itinerario.html" %}
-                {% include "slides/05_regalos.html" %}
-                {% include "slides/06_rsvp.html" %}
+                <div class="slide-loader" id="slideLoader">
+                    <div class="slide-spinner"></div>
+                </div>
             </div>
         </div>
     </div>
+
 
     {% include "partials/toast.html" %}
 
