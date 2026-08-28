@@ -1,37 +1,23 @@
+<!-- Top Header & Progress Bars -->
+<div class="top-bar">
+    <div class="progress-bars" id="progressBarsContainer">
+        <!-- Progress slots will be injected by JS -->
+    </div>
 
-    <div class="stories-wrapper">
-
-
-        <!-- Desktop Navigation Arrows -->
-        <button class="desktop-arrow desktop-prev" id="btnDesktopPrev" aria-label="Anterior">‹</button>
-        <button class="desktop-arrow desktop-next" id="btnDesktopNext" aria-label="Siguiente">›</button>
-
-        <div class="story-container" id="storyContainer">
-
-            <!-- Top Header & Progress Bars -->
-            <div class="top-bar">
-                <div class="progress-bars" id="progressBarsContainer">
-                    <!-- Progress slots will be injected by JS -->
-                </div>
-
-                <div class="header-meta">
-                    <div class="avatar-group">
-                        <div class="avatar-badge">
-                            <img src="/assets/avatar.png" alt="Celia & Alfredo" class="avatar-img" onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1';this.src='/assets/avatar.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
-                            <span class="avatar-fallback" style="display: none;">C&A</span>
-                        </div>
-                        <div class="header-titles">
-
-
-                            <span class="header-title">Celia & Alfredo</span>
-                            <span class="header-subtitle">Nuestra Boda — 19 de Marzo</span>
-                        </div>
-                    </div>
-
-                    <div class="header-actions">
-                        <button class="header-btn" id="btnPause" title="Iniciar avance automático">▶</button>
-                    </div>
-
-                </div>
+    <div class="header-meta">
+        <div class="avatar-group">
+            <div class="avatar-badge">
+                <img src="/assets/avatar.png" alt="Celia & Alfredo" class="avatar-img" onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1';this.src='/assets/avatar.jpg';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+                <span class="avatar-fallback" style="display: none;">C&A</span>
             </div>
+            <div class="header-titles">
+                <span class="header-title">Celia & Alfredo</span>
+                <span class="header-subtitle">Nuestra Boda — 19 de Marzo</span>
+            </div>
+        </div>
 
+        <div class="header-actions">
+            <button class="header-btn" id="btnPause" title="Iniciar avance automático">▶</button>
+        </div>
+    </div>
+</div>
