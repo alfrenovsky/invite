@@ -1,6 +1,7 @@
 (function() {
     let slides = [];
     let progressSlots = [];
+    let activeManifest = null;
     const progressContainer = document.getElementById('progressBarsContainer');
     const tapLeft = document.getElementById('tapLeft');
     const tapRight = document.getElementById('tapRight');
@@ -29,6 +30,48 @@
     let autoSaveTimer = null;
     let isSaving = false;
 
+    // ==============================================================
+    // 🔗 URL Hash Navigation (#1, #2, #3... or #rsvp)
+    // ==============================================================
+    function getTargetIndexFromHash(manifestSlides) {
+        if (!manifestSlides || manifestSlides.length === 0) return 0;
+        const rawHash = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+        if (!rawHash) return 0;
+
+        // Check if numeric 1-indexed (#1, #2, #3...)
+        const num = parseInt(rawHash, 10);
+        if (!isNaN(num) && num >= 1 && num <= manifestSlides.length) {
+            return num - 1;
+        }
+
+        // Check if matching slide slug/id (#rsvp, #intro, etc.)
+        const foundIdx = manifestSlides.findIndex(s => s.id.toLowerCase() === rawHash);
+        if (foundIdx !== -1) return foundIdx;
+
+        return 0;
+    }
+
+    function updateUrlHash(index) {
+        if (!activeManifest || !activeManifest.slides || activeManifest.slides.length === 0) return;
+        const slideNumber = index + 1;
+        const targetHash = '#' + slideNumber;
+        if (window.location.hash !== targetHash) {
+            history.replaceState(null, '', targetHash);
+        }
+    }
+
+    window.addEventListener('hashchange', () => {
+        if (activeManifest && activeManifest.slides) {
+            const targetIdx = getTargetIndexFromHash(activeManifest.slides);
+            if (targetIdx !== currentIndex) {
+                goToSlide(targetIdx);
+            }
+        }
+    });
+
+    // ==============================================================
+    // 📊 Progress Bars UI
+    // ==============================================================
     function buildProgressBars() {
         if (!progressContainer) return;
         progressContainer.innerHTML = '';
@@ -62,6 +105,9 @@
         });
     }
 
+    // ==============================================================
+    // 📱 Slide Presentation & Animation Engine
+    // ==============================================================
     function showSlide(index) {
         if (slides.length === 0) return;
         const isDesktop = window.innerWidth >= 768;
@@ -82,7 +128,6 @@
                 s.style.opacity = '1';
                 s.style.filter = 'blur(0px) brightness(1)';
                 s.style.zIndex = '300';
-                s.style.pointerEvents = 'none';
                 s.style.cursor = 'default';
             } else if (isDesktop) {
                 const sign = offset > 0 ? 1 : -1;
@@ -93,7 +138,6 @@
                 s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
                 s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
                 s.style.zIndex = (20 - absOffset).toString();
-                s.style.pointerEvents = 'auto';
                 s.style.cursor = 'pointer';
 
                 const opacityVal = Math.max(0.35, 0.85 - (absOffset - 1) * 0.15).toString();
@@ -121,7 +165,6 @@
                     s.style.opacity = '0.35';
                     s.style.filter = 'none';
                 }
-                s.style.pointerEvents = 'none';
                 s.style.cursor = 'default';
             }
         });
@@ -133,6 +176,7 @@
         clearTimers();
         if (slides.length === 0) return;
         const slide = slides[currentIndex];
+        if (!slide) return;
         const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
 
         if (!isAutoplay || duration <= 0) {
@@ -182,6 +226,7 @@
 
         currentIndex = index;
         elapsedTimeOnSlide = 0;
+        updateUrlHash(currentIndex);
         showSlide(currentIndex);
         startSlideTimer();
     }
@@ -216,18 +261,27 @@
         }
     }
 
-    // Tap & Navigation Handlers
+    // ==============================================================
+    // 👆 Tap & Desktop Button Handlers
+    // ==============================================================
     let isSwiping = false;
+
+    function handleTap(direction) {
+        if (isSwiping || isPullingToRefresh) return;
+        if (direction === 'next') nextSlide();
+        else prevSlide();
+    }
+
     if (tapLeft) {
         tapLeft.addEventListener('click', (e) => {
-            if (isSwiping) return;
-            prevSlide();
+            e.stopPropagation();
+            handleTap('prev');
         });
     }
     if (tapRight) {
         tapRight.addEventListener('click', (e) => {
-            if (isSwiping) return;
-            nextSlide();
+            e.stopPropagation();
+            handleTap('next');
         });
     }
     if (btnDesktopPrev) btnDesktopPrev.addEventListener('click', prevSlide);
@@ -239,14 +293,15 @@
         });
     }
 
-    // Pull to Refresh Elements & State
+    // ==============================================================
+    // 🔄 Mobile Pull to Refresh & Horizontal Swipe Engine
+    // ==============================================================
     const ptrIndicator = document.getElementById('pullToRefreshIndicator');
     const ptrLabel = document.getElementById('ptrLabel');
     let isPullingToRefresh = false;
     let pullEligible = false;
     let isRefreshing = false;
 
-    // Press & Hold to pause + Mobile Touch Swipe Navigation
     let holdTimeout = null;
     let touchStartX = 0;
     let touchStartY = 0;
@@ -292,15 +347,16 @@
             const currentX = e.touches[0].clientX;
             const currentY = e.touches[0].clientY;
             const diffX = touchStartX - currentX;
-            const diffY = currentY - touchStartY;
+            const diffY = currentY - touchStartY; // Positive when pulling DOWN
 
-            if (Math.abs(diffX) > 15 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (Math.abs(diffX) > 10) {
                 isSwiping = true;
                 if (holdTimeout) clearTimeout(holdTimeout);
                 isPaused = false;
             }
 
-            if (pullEligible && diffY > 15 && diffY > Math.abs(diffX) * 1.2 && window.innerWidth < 768) {
+            // Pull to refresh downward gesture
+            if (pullEligible && diffY > 15 && diffY > Math.abs(diffX) * 1.1 && window.innerWidth < 768) {
                 isPullingToRefresh = true;
                 if (holdTimeout) clearTimeout(holdTimeout);
                 isPaused = false;
@@ -331,6 +387,7 @@
             const diffY = touchEndY - touchStartY;
             const duration = Date.now() - touchStartTime;
 
+            // Handle Pull to Refresh on release
             if (isPullingToRefresh && ptrIndicator) {
                 if (diffY >= 80) {
                     isRefreshing = true;
@@ -349,16 +406,16 @@
                 }
             }
 
+            // On RSVP slide, preserve vertical scrolling inside form
             const target = e.target;
-            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('.rsvp-form-container'))) {
-                if (currentIndex === slides.length - 1 && Math.abs(touchStartY - touchEndY) > Math.abs(diffX)) {
-                    setTimeout(() => { isSwiping = false; }, 50);
-                    return;
-                }
+            if (target && target.closest('.rsvp-form-container') && Math.abs(touchStartY - touchEndY) > Math.abs(diffX)) {
+                setTimeout(() => { isSwiping = false; }, 50);
+                return;
             }
 
-            const minSwipeDistance = 40;
-            if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(touchStartY - touchEndY) * 1.2 && duration < 800) {
+            // Detect horizontal swipe: distance >= 30px, within 750ms
+            const minSwipeDistance = 30;
+            if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(touchStartY - touchEndY) * 0.7 && duration < 750) {
                 if (diffX > 0) {
                     nextSlide();
                 } else {
@@ -366,7 +423,7 @@
                 }
             }
 
-            setTimeout(() => { isSwiping = false; }, 80);
+            setTimeout(() => { isSwiping = false; }, 60);
         }, { passive: true });
 
         container.addEventListener('touchcancel', () => {
@@ -431,6 +488,9 @@
         elSecs.textContent = String(seconds).padStart(2, '0');
     }
 
+    // ==============================================================
+    // 💾 RSVP Auto-Save Engine
+    // ==============================================================
     function getGuestPayload(card) {
         const guestId = card.getAttribute('data-guest-id');
         const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
@@ -576,20 +636,20 @@
     }
 
     function bindInteractiveEvents() {
-        // Desktop miniature clicks
+        // Desktop miniature previews click to jump
         slides.forEach((s, idx) => {
-            s.addEventListener('click', (e) => {
+            s.onclick = (e) => {
                 if (idx !== currentIndex) {
                     e.stopPropagation();
                     goToSlide(idx);
                 }
-            });
+            };
         });
 
         // Copy Alias Handler
         const btnCopyAlias = document.getElementById('btnCopyAlias');
         if (btnCopyAlias) {
-            btnCopyAlias.addEventListener('click', (e) => {
+            btnCopyAlias.onclick = (e) => {
                 e.stopPropagation();
                 const aliasEl = document.getElementById('aliasText');
                 const alias = aliasEl ? aliasEl.textContent.trim() : 'BODA.CELIA.ALFREDO';
@@ -598,7 +658,7 @@
                 }).catch(() => {
                     showToast('Alias: ' + alias);
                 });
-            });
+            };
         }
 
         // Google Calendar Button
@@ -743,7 +803,7 @@
         });
     }
 
-    // Page exit listeners to guarantee all pending changes are sent
+    // Page exit listeners
     window.addEventListener('beforeunload', flushAutoSave);
     window.addEventListener('pagehide', flushAutoSave);
     document.addEventListener('visibilitychange', () => {
@@ -751,7 +811,7 @@
     });
 
     // ==============================================================
-    // 🚀 Dynamic Slide Loading Engine (Independent HTTP Requests)
+    // 🚀 Fast Target-First Slide Loader + Background Prefetch
     // ==============================================================
     async function loadAndInitStory() {
         const slidesContainer = document.getElementById('storySlides');
@@ -766,36 +826,75 @@
             // 1. Fetch Slide Manifest
             const manifestRes = await fetch(`/i/${token}/slides`);
             if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
-            const manifest = await manifestRes.json();
+            activeManifest = await manifestRes.json();
 
-            if (!manifest.ok || !Array.isArray(manifest.slides) || manifest.slides.length === 0) {
+            if (!activeManifest.ok || !Array.isArray(activeManifest.slides) || activeManifest.slides.length === 0) {
                 throw new Error("No active slides available");
             }
 
-            // 2. Fetch all individual slide HTML snippets in parallel
-            const slideResults = await Promise.all(
-                manifest.slides.map(async (s) => {
-                    const res = await fetch(s.url);
-                    if (!res.ok) throw new Error(`Slide ${s.id} fetch failed: ${res.status}`);
-                    return { id: s.id, duration: s.duration, html: await res.text() };
-                })
-            );
+            const totalSlides = activeManifest.slides.length;
+            const targetIdx = getTargetIndexFromHash(activeManifest.slides);
+            const targetSlide = activeManifest.slides[targetIdx];
 
-            // 3. Inject slide HTMLs into container
+            // 2. Fetch the target slide immediately (Instant Render)
+            const targetRes = await fetch(targetSlide.url);
+            if (!targetRes.ok) throw new Error(`Target slide fetch failed: ${targetRes.status}`);
+            const targetHtml = await targetRes.text();
+
+            // 3. Build initial DOM with placeholders and the target slide
             slidesContainer.innerHTML = '';
-            slideResults.forEach(item => {
-                slidesContainer.insertAdjacentHTML('beforeend', item.html);
-            });
+            for (let i = 0; i < totalSlides; i++) {
+                if (i === targetIdx) {
+                    slidesContainer.insertAdjacentHTML('beforeend', targetHtml);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'story-slide placeholder';
+                    placeholder.setAttribute('data-duration', activeManifest.slides[i].duration || '7000');
+                    placeholder.setAttribute('data-slide-index', i);
+                    slidesContainer.appendChild(placeholder);
+                }
+            }
 
-            // 4. Update slides reference
+            // 4. Update slides reference and immediately activate target slide
             slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
-
-            // 5. Build Progress Bars & bind interactive components
             buildProgressBars();
             bindInteractiveEvents();
+            goToSlide(targetIdx);
 
-            // 6. Initialize First Slide
-            goToSlide(0);
+            // 5. Fetch remaining slides concurrently in background
+            const remainingSlides = activeManifest.slides
+                .map((s, idx) => ({ ...s, index: idx }))
+                .filter(s => s.index !== targetIdx);
+
+            if (remainingSlides.length > 0) {
+                Promise.all(
+                    remainingSlides.map(async (s) => {
+                        try {
+                            const res = await fetch(s.url);
+                            if (res.ok) {
+                                const html = await res.text();
+                                return { index: s.index, html };
+                            }
+                        } catch (e) {
+                            console.error(`Background fetch error for slide ${s.id}:`, e);
+                        }
+                        return null;
+                    })
+                ).then(loadedItems => {
+                    loadedItems.forEach(item => {
+                        if (!item) return;
+                        const placeholder = slidesContainer.querySelector(`.story-slide.placeholder[data-slide-index="${item.index}"]`);
+                        if (placeholder) {
+                            placeholder.outerHTML = item.html;
+                        }
+                    });
+
+                    // Refresh references and re-bind interactive events
+                    slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
+                    bindInteractiveEvents();
+                    showSlide(currentIndex);
+                });
+            }
 
         } catch (err) {
             console.error("Error loading dynamic slides:", err);

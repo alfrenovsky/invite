@@ -250,6 +250,10 @@
         }
 
         /* Active & Interactive Layers */
+        .story-slide {
+            pointer-events: none !important;
+        }
+
         .story-slide.active {
             z-index: 300 !important;
             pointer-events: none !important;
@@ -259,20 +263,22 @@
             pointer-events: none;
         }
 
-        .story-slide.active a,
-        .story-slide.active button,
-        .story-slide.active input,
-        .story-slide.active label,
-        .story-slide.active .interactive-content,
-        .story-slide.active .action-btn,
-        .story-slide.active .chip,
-        .story-slide.active .chips-container,
-        .story-slide.active .rsvp-card,
-        .story-slide.active .rsvp-card-header,
-        .story-slide.active .countdown-container {
+        .story-slide a,
+        .story-slide button,
+        .story-slide input,
+        .story-slide label,
+        .story-slide .action-btn,
+        .story-slide .rsvp-card,
+        .story-slide .rsvp-card-header,
+        .story-slide .rsvp-form-container {
             pointer-events: auto !important;
             position: relative;
             z-index: 500;
+        }
+
+        .story-slide.placeholder {
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         .story-slide.active,
@@ -316,30 +322,40 @@
         /* Interactive Click Zones */
         .tap-zone {
             position: absolute;
-            top: 75px;
+            top: 60px;
             bottom: 0;
             z-index: 400;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y;
         }
 
         .tap-left {
             left: 0;
-            width: 30%;
+            width: 35%;
         }
 
         .tap-right {
             right: 0;
-            width: 70%;
+            width: 65%;
         }
 
-
-        /* Interactive content wrapper to prevent tap-through */
+        /* Interactive content wrapper */
         .interactive-content {
             position: relative;
             z-index: 300;
-            user-select: text;
+            pointer-events: none;
         }
+
+        .interactive-content a,
+        .interactive-content button,
+        .interactive-content input,
+        .interactive-content label,
+        .interactive-content .rsvp-card,
+        .interactive-content .rsvp-form-container {
+            pointer-events: auto !important;
+        }
+
 
         /* Desktop Floating Arrows */
         .desktop-arrow {
