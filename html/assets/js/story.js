@@ -1,6 +1,8 @@
-        const slides = Array.from(document.querySelectorAll('.story-slide'));
-        const progressContainer = document.getElementById('progressBarsContainer');
-        const tapLeft = document.getElementById('tapLeft');
+(function() {
+    const slides = Array.from(document.querySelectorAll('.story-slide'));
+    const progressContainer = document.getElementById('progressBarsContainer');
+    const tapLeft = document.getElementById('tapLeft');
+
         const tapRight = document.getElementById('tapRight');
         const btnDesktopPrev = document.getElementById('btnDesktopPrev');
         const btnDesktopNext = document.getElementById('btnDesktopNext');
@@ -770,12 +772,9 @@
 
 
 
-        // Initialize First Slide
-        goToSlide(0);
+    // Initialize First Slide
+    goToSlide(0);
 
+})();
 
-
-
-    })();
-    </script>
 
