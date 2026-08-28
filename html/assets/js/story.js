@@ -126,6 +126,7 @@
                 s.classList.add('active');
                 s.style.transform = isDesktop ? 'translateX(0) scale(1)' : 'translateX(0)';
                 s.style.opacity = '1';
+                s.style.visibility = 'visible';
                 s.style.filter = 'blur(0px) brightness(1)';
                 s.style.zIndex = '300';
                 s.style.cursor = 'default';
@@ -138,6 +139,7 @@
                 s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
                 s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
                 s.style.zIndex = (20 - absOffset).toString();
+                s.style.visibility = 'visible';
                 s.style.cursor = 'pointer';
 
                 const opacityVal = Math.max(0.35, 0.85 - (absOffset - 1) * 0.15).toString();
@@ -151,19 +153,18 @@
                     s.style.filter = 'blur(10px) brightness(0.55)';
                 }
             } else {
-                // Mobile Slide-Over Transitions
+                // Mobile Slide Clean State (Only active slide is visible!)
+                s.style.opacity = '0';
+                s.style.visibility = 'hidden';
+                s.style.filter = 'none';
                 if (offset > 0) {
                     s.classList.add('next-slide');
                     s.style.transform = 'translateX(100%)';
-                    s.style.zIndex = (350 - offset).toString();
-                    s.style.opacity = '1';
-                    s.style.filter = 'none';
+                    s.style.zIndex = (200 - offset).toString();
                 } else {
                     s.classList.add('prev-slide');
-                    s.style.transform = 'translateX(-30%) scale(0.96)';
+                    s.style.transform = 'translateX(-100%)';
                     s.style.zIndex = (200 + offset).toString();
-                    s.style.opacity = '0.35';
-                    s.style.filter = 'none';
                 }
                 s.style.cursor = 'default';
             }
@@ -334,7 +335,7 @@
                 pullEligible = true;
             } else {
                 const formScroll = document.querySelector('.rsvp-form-container');
-                if (formScroll && formScroll.scrollTop <= 5) {
+                if (!formScroll || formScroll.scrollTop <= 5) {
                     pullEligible = true;
                 }
             }
@@ -355,18 +356,18 @@
                 isPaused = false;
             }
 
-            // Pull to refresh downward gesture
-            if (pullEligible && diffY > 15 && diffY > Math.abs(diffX) * 1.1 && window.innerWidth < 768) {
+            // Pull to refresh downward gesture (diffY > 15 and downward dominant)
+            if (pullEligible && diffY > 15 && diffY > Math.abs(diffX) * 0.8 && window.innerWidth < 768) {
                 isPullingToRefresh = true;
                 if (holdTimeout) clearTimeout(holdTimeout);
                 isPaused = false;
 
-                const pullOffset = Math.min(diffY * 0.42, 95);
+                const pullOffset = Math.min(diffY * 0.55, 80);
                 if (ptrIndicator) {
-                    ptrIndicator.style.transform = `translate(-50%, ${pullOffset - 50}px)`;
+                    ptrIndicator.style.transform = `translate(-50%, ${pullOffset}px)`;
                     ptrIndicator.classList.add('visible');
 
-                    if (diffY >= 80) {
+                    if (diffY >= 50) {
                         ptrIndicator.classList.add('ready');
                         if (ptrLabel) ptrLabel.textContent = 'Soltá para recargar';
                     } else {
@@ -389,15 +390,15 @@
 
             // Handle Pull to Refresh on release
             if (isPullingToRefresh && ptrIndicator) {
-                if (diffY >= 80) {
+                if (diffY >= 50) {
                     isRefreshing = true;
                     ptrIndicator.classList.remove('ready');
                     ptrIndicator.classList.add('refreshing');
                     if (ptrLabel) ptrLabel.textContent = 'Recargando...';
-                    ptrIndicator.style.transform = 'translate(-50%, 30px)';
+                    ptrIndicator.style.transform = 'translate(-50%, 60px)';
                     setTimeout(() => {
                         window.location.reload();
-                    }, 400);
+                    }, 350);
                     return;
                 } else {
                     ptrIndicator.style.transform = 'translate(-50%, -120px)';
@@ -413,9 +414,9 @@
                 return;
             }
 
-            // Detect horizontal swipe: distance >= 30px, within 750ms
-            const minSwipeDistance = 30;
-            if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(touchStartY - touchEndY) * 0.7 && duration < 750) {
+            // Detect horizontal swipe: distance >= 25px, within 750ms
+            const minSwipeDistance = 25;
+            if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(touchStartY - touchEndY) * 0.65 && duration < 750) {
                 if (diffX > 0) {
                     nextSlide();
                 } else {
@@ -843,12 +844,10 @@
             const currentSlideIds = slides.map(s => s.getAttribute('data-slide-id')).filter(Boolean);
             const serverSlideIds = manifest.slides.map(s => s.id);
 
-            // Check if server configuration matches current DOM
             const isMatch = (currentSlideIds.length === serverSlideIds.length) &&
                 currentSlideIds.every((id, i) => id === serverSlideIds[i]);
 
             if (!isMatch) {
-                // Fetch updated slides and refresh DOM seamlessly
                 const slideResults = await Promise.all(
                     manifest.slides.map(async (s) => {
                         const res = await fetch(s.url);
