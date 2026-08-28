@@ -1,14 +1,17 @@
+import os
 import unittest
 from unittest.mock import MagicMock, patch
 from sheets import (
     GoogleSheetsTable,
     FIELDNAMES,
+    BASE_URL,
     compute_check_code,
     generate_invitation_url,
     parse_and_validate_token,
     clean_phone_number,
     generate_whatsapp_url,
 )
+
 
 
 class TestGoogleSheetsTable(unittest.TestCase):
@@ -58,7 +61,8 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(res[0]["apellido"], "Lopez")
         self.assertEqual(res[0]["pa_celiaco"], "si")
         self.assertEqual(len(res[0]["id"]), 8)  # random 8 digit hex
-        self.assertTrue(res[0]["url"].startswith("http://nos.vamos.acas.ar/i/amigos_"))
+        self.assertTrue(res[0]["url"].startswith(f"{BASE_URL}/i/amigos_"))
+
         self.assertTrue(res[0]["whatsapp"].startswith("https://wa.me/5491112345678?text="))
         self.mock_ws.append_rows.assert_called_once()
 
@@ -93,7 +97,8 @@ class TestGoogleSheetsTable(unittest.TestCase):
         records, updated_count = self.table.ensure_ids()
         self.assertEqual(updated_count, 1)
         self.assertEqual(len(records[0]["id"]), 8)
-        self.assertTrue(records[0]["url"].startswith("http://nos.vamos.acas.ar/i/familia_perez_"))
+        self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/i/familia_perez_"))
+
         self.assertTrue(records[0]["whatsapp"].startswith("https://wa.me/5491198765432?text="))
         self.mock_ws.update.assert_called_once()
 
@@ -129,8 +134,10 @@ class TestGoogleSheetsTable(unittest.TestCase):
         code = compute_check_code(inv_id)
         self.assertEqual(len(code), 6)
 
+        base_url = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
         url = generate_invitation_url(inv_id)
-        self.assertEqual(url, f"http://nos.vamos.acas.ar/i/familia_rodriguez_{code}")
+        self.assertEqual(url, f"{base_url}/i/familia_rodriguez_{code}")
+
 
         # Valid token validation
         valid_slug = parse_and_validate_token(f"familia_rodriguez_{code}")
