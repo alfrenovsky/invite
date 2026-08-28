@@ -1,0 +1,109 @@
+                <div class="story-slide" data-duration="0">
+                    <div class="slide-body" style="justify-content: flex-start; padding-top: 10px;">
+                        <span class="slide-tag">RSVP</span>
+                        <h2 class="slide-title" style="font-size: 1.5em; margin-bottom: 6px;">Confirmación de <strong>Grupo</strong></h2>
+                        <p class="slide-desc" style="font-size: 0.88em; margin-bottom: 10px;">
+                            Confirmá la asistencia y menú de todos los invitados de este grupo:
+                        </p>
+
+                        <div class="interactive-content rsvp-form-container">
+                            <form id="storyRsvpForm">
+                                <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
+                                
+                                <div id="rsvpCardsContainer">
+                                    {% for guest in guests %}
+                                    <div class="rsvp-card {% if loop.first %}expanded{% endif %}" data-guest-id="{{ guest.id }}">
+                                        <div class="rsvp-card-header" data-toggle-guest="{{ guest.id }}">
+                                            <div class="guest-info-line">
+                                                <span class="guest-name">👤 <span class="guest-header-name">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span></span>
+                                                <span class="guest-badge badge-{{ guest.confirmacion or 'pending' }}" id="badge_{{ guest.id }}">
+                                                    {% if guest.confirmacion == 'si' %}✓ Asiste{% elif guest.confirmacion == 'no' %}✗ No asiste{% else %}⏳ Pendiente{% endif %}
+                                                </span>
+                                                <span class="guest-diet-icons" id="diet_icons_{{ guest.id }}">
+                                                    {% if guest.confirmacion == 'si' %}
+                                                        {% if guest.pa_vegano == 'si' %}
+                                                            <span class="diet-mini-badge" title="Vegano">🌱 Vegano</span>
+                                                        {% elif guest.pa_vegetariano == 'si' %}
+                                                            <span class="diet-mini-badge" title="Vegetariano">🥗 Vegetariano</span>
+                                                        {% else %}
+                                                            <span class="diet-mini-badge" title="General">🍽️ General</span>
+                                                        {% endif %}
+                                                        {% if guest.pa_celiaco == 'si' %}
+                                                            <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin Gluten">🌾 Celíaco</span>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            <span class="chevron-icon">▼</span>
+                                        </div>
+
+                                        <div class="rsvp-card-body">
+                                            <!-- Editable Name and Last Name -->
+                                            <div class="guest-name-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 9px;">
+                                                <div>
+                                                    <label style="font-size: 0.72em; color: var(--text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Nombre:</label>
+                                                    <input type="text" class="guest-input-nombre" name="nombre_{{ guest.id }}" value="{{ guest.nombre }}" placeholder="Nombre" style="width: 100%; padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.84em; outline: none; box-sizing: border-box;">
+                                                </div>
+                                                <div>
+                                                    <label style="font-size: 0.72em; color: var(--text-muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Apellido:</label>
+                                                    <input type="text" class="guest-input-apellido" name="apellido_{{ guest.id }}" value="{{ guest.apellido }}" placeholder="Apellido" style="width: 100%; padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.84em; outline: none; box-sizing: border-box;">
+                                                </div>
+                                            </div>
+
+                                            <div class="radio-group">
+
+                                                <label class="radio-label {% if guest.confirmacion == 'si' %}selected-si{% endif %}">
+                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="si" {% if guest.confirmacion == 'si' %}checked{% endif %}>
+                                                    ✓ Asiste
+                                                </label>
+                                                <label class="radio-label {% if guest.confirmacion == 'no' %}selected-no{% endif %}">
+                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="no" {% if guest.confirmacion == 'no' %}checked{% endif %}>
+                                                    ✗ No asiste
+                                                </label>
+                                                <label class="radio-label {% if not guest.confirmacion or guest.confirmacion not in ['si', 'no'] %}selected-pending{% endif %}">
+                                                    <input type="radio" name="asistencia_{{ guest.id }}" value="" {% if not guest.confirmacion or guest.confirmacion not in ['si', 'no'] %}checked{% endif %}>
+                                                    ⏳ Pendiente
+                                                </label>
+                                            </div>
+
+                                            <div class="diet-section" id="diet_sec_{{ guest.id }}" style="{% if guest.confirmacion != 'si' %}display: none;{% endif %}">
+                                                <div style="font-size: 0.76em; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Menú Principal:</div>
+                                                <div class="menu-radio-group">
+                                                    <label class="menu-radio-label {% if guest.pa_general == 'si' or (not guest.pa_vegetariano and not guest.pa_vegano) %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="general" {% if guest.pa_general == 'si' or (not guest.pa_vegetariano and not guest.pa_vegano) %}checked{% endif %}>
+                                                        🍽️ General
+                                                    </label>
+                                                    <label class="menu-radio-label {% if guest.pa_vegetariano == 'si' %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}>
+                                                        🥗 Vegetariano
+                                                    </label>
+                                                    <label class="menu-radio-label {% if guest.pa_vegano == 'si' %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}>
+                                                        🌱 Vegano
+                                                    </label>
+                                                </div>
+
+                                                <label class="celiac-checkbox-label {% if guest.pa_celiaco == 'si' %}selected{% endif %}">
+                                                    <input type="checkbox" name="celiaco_{{ guest.id }}" value="si" class="celiac-check" {% if guest.pa_celiaco == 'si' %}checked{% endif %}>
+                                                    <span>🌾 Menú Apto Celíaco / Sin Gluten</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+
+
+
+                                <div class="autosave-status" id="autoSaveStatus">
+                                    <span class="autosave-icon" id="autoSaveIcon">✓</span>
+                                    <span class="autosave-text" id="autoSaveText">Respuestas sincronizadas automáticamente</span>
+                                </div>
+                            </form>
+                        </div>
+
+
+                    </div>
+                </div>
+

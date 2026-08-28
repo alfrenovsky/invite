@@ -48,7 +48,9 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   │   ├── sheets.py          # GoogleSheetsTable class (gspread wrapper with thread lock)
 │   │   ├── test_sheets.py     # Unit tests for Google Sheets table, crawler bypass & anti-forgery logic
 │   │   └── templates/
-│   │       ├── index.html     # Main wedding invitation story deck (SSR + Auto-Save + Swipe Gestures)
+│   │       ├── index.html     # Main wedding invitation story shell (Modular Jinja2 SSR)
+│   │       ├── slides/        # Modular slide templates (01_intro, 02_fecha, 03_lugar, 04_itinerario, 05_regalos, 06_rsvp)
+│   │       ├── partials/      # UI partial components (top_bar, pull_to_refresh, tap_zones, toast)
 │   │       ├── og_preview.html# Lightweight Open Graph preview for WhatsApp/social crawlers (0 Sheet calls)
 │   │       ├── blank.html     # Blank template for invalid tokens/forgery protection
 │   │       └── invitados.html # Admin guest overview table
@@ -56,17 +58,21 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   └── requirements.txt       # Flask, gspread, google-auth dependencies
 ├── html/
 │   ├── assets/
+│   │   ├── css/
+│   │   │   └── story.css      # Main stylesheet for Story UI, layout, animations & RSVP form
+│   │   ├── js/
+│   │   │   └── story.js       # Client Story engine (Auto-save, swipe gestures, timer, pull-to-refresh)
 │   │   ├── avatar.png         # Circular story header avatar image
 │   │   ├── background.jpeg    # High-resolution desktop background
 │   │   ├── favicon.svg        # Golden heart vector favicon
 │   │   ├── intro.mp4          # Introductory video asset
 │   │   └── whatsapp.thumb.jpg # 600x600 WhatsApp thumbnail asset
 │   ├── form.html              # Standalone guest registration form
-
 │   ├── favicon.svg            # Fallback favicon asset
 │   └── index.html             # Static fallback invitation page
 ├── nginx/
-│   └── nginx.conf             # Nginx server configuration, /assets/, /favicon.*, and API proxy rules
+│   └── nginx.conf             # Nginx server configuration, no-cache asset delivery in dev, and API proxy rules
+
 ├── secrets/
 │   └── credentials.json       # Google Service Account JSON credentials (mounted read-only)
 ├── docker-compose.yml         # Main Docker Compose configuration

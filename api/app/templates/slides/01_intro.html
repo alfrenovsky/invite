@@ -1,0 +1,30 @@
+                <!-- SLIDE 1: Portada & Saludo Personalizado -->
+                <div class="story-slide active" data-duration="7000">
+                    <div class="slide-body">
+                        <span class="slide-tag">NUESTRA BODA</span>
+                        <h1 class="slide-title">Celia & <strong>Alfredo</strong></h1>
+                        <p class="slide-desc">¡Nos casamos y queremos celebrarlo junto a vos!</p>
+
+                        {% if guests %}
+                        <div class="guest-greeting-box interactive-content">
+                            <h3>¡Hola {{ group_names }}!</h3>
+                            <p style="font-size: 0.88em; color: var(--text-muted);">
+                                Invitación grupal ({{ guests|length }} personas):
+                            </p>
+                            <div class="chips-container" id="slide1Chips">
+                                {% for guest in guests %}
+                                <div class="chip" data-chip-guest-id="{{ guest.id }}">
+                                    <span class="status-dot {{ guest.confirmacion or 'pending' }}"></span>
+                                    <span class="chip-name-text">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                        </div>
+                        {% endif %}
+
+
+                        <div class="tap-hint">Tocá a la derecha para continuar 👉</div>
+                    </div>
+                </div>
+
