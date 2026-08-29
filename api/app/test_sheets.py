@@ -232,13 +232,14 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res.status_code, 200)
                 data = res.get_json()
                 self.assertTrue(data["ok"])
-                self.assertGreaterEqual(len(data["slides"]), 5)
-                self.assertEqual(data["slides"][0]["id"], "intro")
+                self.assertGreaterEqual(len(data["slides"]), 6)
+                self.assertEqual(data["slides"][0]["id"], "portada")
 
-                # 2. Fetch Single Slide (Intro)
-                res_slide = client.get(f"/i/familia_perez_{code}/slide/intro")
+                # 2. Fetch Single Slide (Portada)
+                res_slide = client.get(f"/i/familia_perez_{code}/slide/portada")
                 self.assertEqual(res_slide.status_code, 200)
                 self.assertIn(b"Celia", res_slide.data)
+
 
                 # 3. Fetch Single Slide (RSVP)
                 res_rsvp = client.get(f"/i/familia_perez_{code}/slide/rsvp")

@@ -22,12 +22,20 @@ def add_cache_headers(response):
 
 SLIDES_CONFIG = [
     {
-        "id": "intro",
+        "id": "portada",
         "title": "Portada",
+        "template": "slides/00_portada.html",
+        "duration": 6000,
+        "enabled": True,
+    },
+    {
+        "id": "intro",
+        "title": "Bienvenida",
         "template": "slides/01_intro.html",
         "duration": 7000,
         "enabled": True,
     },
+
     {
         "id": "fecha_lugar",
         "title": "Cuándo",
