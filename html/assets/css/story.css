@@ -72,14 +72,9 @@
             flex-direction: column;
             overflow: visible;
             flex-shrink: 0;
-        }
-
-        @media (min-width: 768px) {
-            .story-container {
-                transform-origin: center center;
-                --scale: calc(min(98vh, 1664px) / 845);
-                transform: scale(var(--scale));
-            }
+            transform-origin: center center;
+            transform: scale(var(--scale, 1));
+            transition: transform 0.05s ease-out;
         }
 
         @media (max-width: 767px) {
@@ -90,11 +85,10 @@
 
             .story-container {
                 transform-origin: bottom center;
-                --scale: calc(100vw / 390);
-                transform: scale(var(--scale));
                 touch-action: pan-y;
             }
         }
+
 
         /* Top Bar: Progress Segments */
         .top-bar {

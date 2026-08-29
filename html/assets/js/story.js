@@ -173,7 +173,27 @@
         });
     }
 
-    window.addEventListener('resize', () => showSlide(currentIndex));
+    function updateStoryScale() {
+
+        if (!container) return;
+        const isDesktop = window.innerWidth >= 768;
+        if (isDesktop) {
+            const targetHeight = Math.min(window.innerHeight * 0.98, 1664);
+            const scale = targetHeight / 845;
+            container.style.setProperty('--scale', scale.toFixed(4));
+            container.style.transformOrigin = 'center center';
+        } else {
+            const scale = window.innerWidth / 390;
+            container.style.setProperty('--scale', scale.toFixed(4));
+            container.style.transformOrigin = 'bottom center';
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        updateStoryScale();
+        showSlide(currentIndex);
+    });
+
 
     function startSlideTimer() {
         clearTimers();
@@ -817,7 +837,9 @@
     // 🚀 Instant Initialization (SSR) + Background Real-Time Sync
     // ==============================================================
     function initStory() {
+        updateStoryScale();
         const slidesContainer = document.getElementById('storySlides');
+
         if (!slidesContainer) return;
 
         slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
