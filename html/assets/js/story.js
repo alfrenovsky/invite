@@ -133,7 +133,8 @@
             } else if (isDesktop) {
                 const sign = offset > 0 ? 1 : -1;
                 const absOffset = Math.abs(offset);
-                const shiftPx = sign * (300 + (absOffset - 1) * 185);
+                const containerWidth = (container && container.offsetWidth) || (window.innerHeight * 0.98 * (9 / 19.5));
+                const shiftPx = sign * (containerWidth * 0.72 + (absOffset - 1) * (containerWidth * 0.44));
 
                 s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
                 s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);

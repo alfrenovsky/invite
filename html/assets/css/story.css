@@ -77,11 +77,16 @@
         @media (min-width: 768px) {
             .story-container {
                 height: 98vh;
+                height: 98dvh;
                 max-height: min(98vh, 1664px);
-                aspect-ratio: 9 / 18.5;
+                aspect-ratio: 9 / 19.5;
                 width: auto;
-                max-width: calc(min(98vh, 1664px) * (9 / 18.5));
+                max-width: calc(min(98vh, 1664px) * (9 / 19.5));
                 overflow: visible;
+                container-type: size;
+                container-name: story;
+                --su: calc(min(98vh, 1664px) / 844);
+                font-size: calc(15.5px * var(--su));
             }
         }
 
@@ -309,13 +314,63 @@
         }
 
         @media (max-width: 767px) {
+            .stories-wrapper {
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+                display: flex;
+                align-items: flex-end; /* Align 19.5:9 content to bottom on 20:9+ phones */
+                justify-content: center;
+                background-color: var(--bg-dark);
+                overflow: hidden;
+            }
+
+            .story-container {
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+                max-width: 100vw;
+                max-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end; /* Content docked to bottom */
+                border-radius: 0;
+                overflow: hidden;
+                touch-action: pan-y;
+                container-type: size;
+                container-name: story;
+                --su: calc(min(100cqh, 100cqw * (19.5 / 9)) / 844);
+                font-size: calc(15.5px * var(--su));
+            }
+
+            /* Main Slide Deck: fixed 19.5:9 ratio pinned to bottom */
+            .story-slides {
+                width: 100vw;
+                height: calc(100vw * (19.5 / 9));
+                max-height: 100dvh;
+                position: relative;
+                flex-shrink: 0;
+            }
+
             .story-slide {
                 border-radius: 0;
                 box-shadow: none;
                 touch-action: pan-y;
+                padding: calc(75px * var(--su, 1)) calc(20px * var(--su, 1)) calc(22px * var(--su, 1)) calc(20px * var(--su, 1));
             }
-            .story-container {
-                touch-action: pan-y;
+
+            /* Header on mobile: anchored at top, fills upper notch/status area on 20:9+ phones */
+            .top-bar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                padding-top: max(12px, env(safe-area-inset-top));
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-bottom: 14px;
+                background: linear-gradient(180deg, rgba(15, 20, 26, 0.98) 0%, rgba(26, 37, 47, 0.85) 50%, rgba(26, 37, 47, 0) 100%);
             }
         }
 
