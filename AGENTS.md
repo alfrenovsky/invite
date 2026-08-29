@@ -66,8 +66,9 @@ The application is containerized using **Docker Compose** and consists of two ma
 
 │   │   ├── background.jpeg    # High-resolution desktop background
 │   │   ├── favicon.svg        # Golden heart vector favicon
-│   │   ├── intro.mp4          # Introductory video asset
+│   │   ├── photo01.jpeg       # Slide 0 couple photo asset
 │   │   └── whatsapp.thumb.jpeg# 600x600 WhatsApp thumbnail asset
+
 
 │   ├── form.html              # Standalone guest registration form
 │   ├── favicon.svg            # Fallback favicon asset
