@@ -201,16 +201,19 @@
                 scale = maxAllowedWidth / 390;
             }
             container.style.setProperty('--scale', scale.toFixed(4));
+            container.style.setProperty('--base-height', '845px');
             container.style.transformOrigin = 'center center';
         } else {
-            // On Phone: scale to fit viewport width and ensure top bar is always visible
-            const scaleW = window.innerWidth / 390;
-            const scaleH = window.innerHeight / 845;
-            const scale = Math.min(scaleW, scaleH);
+            // On Phone: Scale horizontally to fill 100% screen width
+            const scale = window.innerWidth / 390;
+            // Base height adapts to the exact usable browser viewport height (compensating for browser URL bars)
+            const baseHeight = window.innerHeight / scale;
             container.style.setProperty('--scale', scale.toFixed(4));
+            container.style.setProperty('--base-height', `${baseHeight.toFixed(1)}px`);
             container.style.transformOrigin = 'top center';
         }
     }
+
 
 
     window.addEventListener('resize', () => {
