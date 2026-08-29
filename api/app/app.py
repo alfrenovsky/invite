@@ -71,6 +71,13 @@ SLIDES_CONFIG = [
         "duration": 0,
         "enabled": True,
     },
+    {
+        "id": "triste",
+        "title": "¡Qué pena!",
+        "template": "slides/07_triste.html",
+        "duration": 0,
+        "enabled": True,
+    },
 ]
 
 
@@ -97,6 +104,7 @@ def get_guest_context(validated_slug):
     rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
     pending_count = sum(1 for g in guests if not g.get("confirmacion") or g.get("confirmacion") not in ("si", "no"))
     all_confirmed = (confirmed_count == len(guests) and len(guests) > 0)
+    all_rejected = (rejected_count == len(guests) and len(guests) > 0)
     any_confirmed = (confirmed_count > 0)
     invitation_url = ""
     for g in guests:
@@ -115,10 +123,12 @@ def get_guest_context(validated_slug):
         "rejected_count": rejected_count,
         "pending_count": pending_count,
         "all_confirmed": all_confirmed,
+        "all_rejected": all_rejected,
         "any_confirmed": any_confirmed,
         "active_slides": active_slides,
         "config_version": int(time.time()),
     }
+
 
 
 

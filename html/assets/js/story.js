@@ -581,6 +581,31 @@
         }
     }
 
+    // ==============================================================
+    // 😿 Gato Triste Dynamic Slide Engine
+    // ==============================================================
+    function checkAllRejected() {
+        const cards = Array.from(document.querySelectorAll('.rsvp-card[data-guest-id]'));
+        if (cards.length === 0) return false;
+        return cards.every(card => {
+            const guestId = card.getAttribute('data-guest-id');
+            const checked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+            return checked && checked.value === 'no';
+        });
+    }
+
+    function updateSlideList() {
+        const slidesContainer = document.getElementById('storySlides');
+        if (!slidesContainer) return;
+        const tristeSlide = slidesContainer.querySelector('.story-slide[data-slide-id="triste"]');
+        const allRejected = checkAllRejected();
+        if (tristeSlide) {
+            tristeSlide.style.display = allRejected ? '' : 'none';
+        }
+        slides = Array.from(slidesContainer.querySelectorAll('.story-slide')).filter(s => s.style.display !== 'none');
+        buildProgressBars();
+    }
+
     async function flushAutoSave() {
         if (autoSaveTimer) {
             clearTimeout(autoSaveTimer);
@@ -642,6 +667,18 @@
 
         if (allOk) {
             setAutoSaveState('saved', 'Cambios guardados automáticamente');
+            const allRejected = checkAllRejected();
+            updateSlideList();
+            if (allRejected) {
+                const tristeIdx = slides.findIndex(s => s.getAttribute('data-slide-id') === 'triste');
+                if (tristeIdx !== -1 && currentIndex !== tristeIdx) {
+                    setTimeout(() => {
+                        if (checkAllRejected() && currentIndex !== tristeIdx) {
+                            goToSlide(tristeIdx);
+                        }
+                    }, 500);
+                }
+            }
         } else {
             setAutoSaveState('error', 'Error al guardar. Se reintentará...');
             setTimeout(flushAutoSave, AUTOSAVE_CONFIG.RETRY_DELAY_MS);
@@ -688,6 +725,19 @@
     }
 
     function bindInteractiveEvents() {
+        // Edit RSVP Button on GatoTriste slide
+        const btnEditRsvp = document.getElementById('btnEditRsvp');
+        if (btnEditRsvp) {
+            btnEditRsvp.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const rsvpIdx = slides.findIndex(s => s.getAttribute('data-slide-id') === 'rsvp');
+                if (rsvpIdx !== -1) {
+                    goToSlide(rsvpIdx);
+                }
+            };
+        }
+
         // Desktop miniature previews click to jump
         slides.forEach((s, idx) => {
             s.onclick = (e) => {
@@ -871,7 +921,7 @@
 
         if (!slidesContainer) return;
 
-        slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
+        updateSlideList();
         if (slides.length === 0) return;
 
         buildProgressBars();
