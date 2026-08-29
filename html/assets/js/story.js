@@ -131,11 +131,14 @@
                 s.style.zIndex = '300';
                 s.style.cursor = 'default';
             } else if (isDesktop) {
+                const sign = offset > 0 ? 1 : -1;
+                const absOffset = Math.abs(offset);
                 const shiftPx = sign * (390 * 0.76 + (absOffset - 1) * 165);
 
                 s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
                 s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
                 s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
+
 
                 s.style.zIndex = (20 - absOffset).toString();
                 s.style.visibility = 'visible';
