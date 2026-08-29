@@ -77,14 +77,16 @@
         }
 
         body.is-mobile-mode .stories-wrapper {
-            align-items: flex-end; /* Bottom-docked for 20:9+ phones */
+            align-items: flex-start;
+            justify-content: center;
             background-color: var(--bg-dark);
         }
 
         body.is-mobile-mode .story-container {
-            transform-origin: bottom center;
+            transform-origin: top center;
             touch-action: pan-y;
         }
+
 
 
         /* Top Bar: Progress Segments */

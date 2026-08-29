@@ -203,11 +203,15 @@
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.transformOrigin = 'center center';
         } else {
-            const scale = window.innerWidth / 390;
+            // On Phone: scale to fit viewport width and ensure top bar is always visible
+            const scaleW = window.innerWidth / 390;
+            const scaleH = window.innerHeight / 845;
+            const scale = Math.min(scaleW, scaleH);
             container.style.setProperty('--scale', scale.toFixed(4));
-            container.style.transformOrigin = 'bottom center';
+            container.style.transformOrigin = 'top center';
         }
     }
+
 
     window.addEventListener('resize', () => {
         updateStoryScale();
