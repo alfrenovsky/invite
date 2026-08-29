@@ -7,10 +7,29 @@
     const btnDesktopPrev = document.getElementById('btnDesktopPrev');
     const btnDesktopNext = document.getElementById('btnDesktopNext');
     const btnPause = document.getElementById('btnPause');
+    const isMobileDevice = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                           (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches && window.screen.width <= 768);
+    const isDesktop = !isMobileDevice;
+
+    function applyDeviceModeClass() {
+        if (document.body) {
+            document.body.classList.toggle('is-mobile-mode', isMobileDevice);
+            document.body.classList.toggle('is-desktop-mode', isDesktop);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyDeviceModeClass);
+    } else {
+        applyDeviceModeClass();
+    }
+
     const toast = document.getElementById('toast');
     const container = document.getElementById('storyContainer');
 
+
     let currentIndex = 0;
+
+
     let isAutoplay = false;
     let isPaused = false;
     let slideStartTime = 0;
@@ -110,7 +129,6 @@
     // ==============================================================
     function showSlide(index) {
         if (slides.length === 0) return;
-        const isDesktop = window.innerWidth >= 768;
         const isLastSlide = (index === slides.length - 1);
 
         if (tapLeft && tapRight) {
@@ -138,7 +156,6 @@
                 s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
                 s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
                 s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
-
 
                 s.style.zIndex = (20 - absOffset).toString();
                 s.style.visibility = 'visible';
@@ -174,12 +191,15 @@
     }
 
     function updateStoryScale() {
-
         if (!container) return;
-        const isDesktop = window.innerWidth >= 768;
         if (isDesktop) {
             const targetHeight = Math.min(window.innerHeight * 0.98, 1664);
-            const scale = targetHeight / 845;
+            let scale = targetHeight / 845;
+            // On PC when the window is narrow, scale proportionally down to fit horizontally
+            const maxAllowedWidth = window.innerWidth * 0.96;
+            if ((390 * scale) > maxAllowedWidth) {
+                scale = maxAllowedWidth / 390;
+            }
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.transformOrigin = 'center center';
         } else {
@@ -193,6 +213,7 @@
         updateStoryScale();
         showSlide(currentIndex);
     });
+
 
 
     function startSlideTimer() {
@@ -378,8 +399,9 @@
                 isPaused = false;
             }
 
-            // Pull to refresh downward gesture (diffY > 15 and downward dominant)
-            if (pullEligible && diffY > 15 && diffY > Math.abs(diffX) * 0.8 && window.innerWidth < 768) {
+            // Pull to refresh downward gesture (diffY > 15 and downward dominant on mobile)
+            if (pullEligible && diffY > 15 && diffY > Math.abs(diffX) * 0.8 && isMobileDevice) {
+
                 isPullingToRefresh = true;
                 if (holdTimeout) clearTimeout(holdTimeout);
                 isPaused = false;
