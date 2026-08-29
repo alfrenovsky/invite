@@ -76,7 +76,7 @@ SLIDES_CONFIG = [
         "title": "¡Qué pena!",
         "template": "slides/07_triste.html",
         "duration": 0,
-        "enabled": True,
+        "enabled": False,
     },
 ]
 
@@ -112,7 +112,10 @@ def get_guest_context(validated_slug):
             invitation_url = g["url"]
             break
 
-    active_slides = [s for s in SLIDES_CONFIG if s.get("enabled", True)]
+    active_slides = [
+        s for s in SLIDES_CONFIG if s.get("enabled", True) or (s.get("id") == "triste" and all_rejected)
+    ]
+
 
     return {
         "invitacion_id": validated_slug,

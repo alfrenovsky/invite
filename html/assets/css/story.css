@@ -248,6 +248,23 @@
         }
 
         /* Active & Interactive Layers */
+        
+        .story-slide[data-slide-id="rsvp"].active,
+        .story-slide[data-slide-id="triste"].active {
+            pointer-events: auto !important;
+            z-index: 600 !important;
+        }
+
+        .story-slide[data-slide-id="rsvp"].active .slide-body,
+        .story-slide[data-slide-id="triste"].active .slide-body {
+            pointer-events: auto !important;
+        }
+
+        .story-slide[data-slide-id="rsvp"].active *,
+        .story-slide[data-slide-id="triste"].active * {
+            pointer-events: auto !important;
+        }
+
         .story-slide.active {
             opacity: 1 !important;
             visibility: visible !important;

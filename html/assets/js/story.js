@@ -129,11 +129,13 @@
     // ==============================================================
     function showSlide(index) {
         if (slides.length === 0) return;
-        const isLastSlide = (index === slides.length - 1);
+        const currentSlide = slides[index];
+        const currentSlideId = currentSlide ? currentSlide.getAttribute('data-slide-id') : '';
+        const isInteractiveSlide = (currentSlideId === 'rsvp' || currentSlideId === 'triste' || index === slides.length - 1);
 
         if (tapLeft && tapRight) {
-            tapLeft.style.display = isLastSlide ? 'none' : 'block';
-            tapRight.style.display = isLastSlide ? 'none' : 'block';
+            tapLeft.style.display = isInteractiveSlide ? 'none' : 'block';
+            tapRight.style.display = isInteractiveSlide ? 'none' : 'block';
         }
 
         slides.forEach((s, idx) => {
@@ -601,6 +603,11 @@
         const allRejected = checkAllRejected();
         if (tristeSlide) {
             tristeSlide.style.display = allRejected ? '' : 'none';
+            if (!allRejected) {
+                tristeSlide.classList.remove('active');
+                tristeSlide.style.opacity = '0';
+                tristeSlide.style.visibility = 'hidden';
+            }
         }
         slides = Array.from(slidesContainer.querySelectorAll('.story-slide')).filter(s => s.style.display !== 'none');
         buildProgressBars();
