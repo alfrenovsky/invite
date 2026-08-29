@@ -105,6 +105,7 @@
             progressContainer.appendChild(slot);
         });
         progressSlots = Array.from(progressContainer.children);
+        updateProgressDisplay(100);
     }
 
     function updateProgressDisplay(percent) {
@@ -936,47 +937,6 @@
 
         const targetIdx = getTargetIndexFromHash();
         goToSlide(targetIdx);
-
-        // Optional background check for dynamically toggled slides
-        const token = (container && container.dataset.token) || (window.location.pathname.split('/i/')[1] || '').split('/')[0];
-        if (token) {
-            syncDynamicSlidesInBackground(token, slidesContainer);
-        }
-    }
-
-    async function syncDynamicSlidesInBackground(token, slidesContainer) {
-        try {
-            const manifestRes = await fetch(`/i/${token}/slides`);
-            if (!manifestRes.ok) return;
-            const manifest = await manifestRes.json();
-            if (!manifest.ok || !Array.isArray(manifest.slides)) return;
-
-            const currentSlideIds = slides.map(s => s.getAttribute('data-slide-id')).filter(Boolean);
-            const serverSlideIds = manifest.slides.map(s => s.id);
-
-            const isMatch = (currentSlideIds.length === serverSlideIds.length) &&
-                currentSlideIds.every((id, i) => id === serverSlideIds[i]);
-
-            if (!isMatch) {
-                const slideResults = await Promise.all(
-                    manifest.slides.map(async (s) => {
-                        const res = await fetch(s.url);
-                        return res.ok ? await res.text() : null;
-                    })
-                );
-
-                const validHtmls = slideResults.filter(Boolean);
-                if (validHtmls.length > 0) {
-                    slidesContainer.innerHTML = validHtmls.join('');
-                    slides = Array.from(slidesContainer.querySelectorAll('.story-slide'));
-                    buildProgressBars();
-                    bindInteractiveEvents();
-                    showSlide(currentIndex);
-                }
-            }
-        } catch (e) {
-            // Silently ignore background sync errors to preserve user experience
-        }
     }
 
     // Launch instant initialization
