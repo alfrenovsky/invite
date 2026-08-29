@@ -62,11 +62,13 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   │   │   └── story.css      # Main stylesheet for Story UI, layout, animations & RSVP form
 │   │   ├── js/
 │   │   │   └── story.js       # Client Story engine (Auto-save, swipe gestures, timer, pull-to-refresh)
-│   │   ├── avatar.png         # Circular story header avatar image
+│   │   ├── avatar.jpeg        # Circular story header avatar image
+
 │   │   ├── background.jpeg    # High-resolution desktop background
 │   │   ├── favicon.svg        # Golden heart vector favicon
 │   │   ├── intro.mp4          # Introductory video asset
-│   │   └── whatsapp.thumb.jpg # 600x600 WhatsApp thumbnail asset
+│   │   └── whatsapp.thumb.jpeg# 600x600 WhatsApp thumbnail asset
+
 │   ├── form.html              # Standalone guest registration form
 │   ├── favicon.svg            # Fallback favicon asset
 │   └── index.html             # Static fallback invitation page

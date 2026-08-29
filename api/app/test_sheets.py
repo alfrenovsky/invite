@@ -189,7 +189,8 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 mock_get_by_inv.assert_not_called()
                 # Verify OG metadata is in response
                 self.assertIn(b"og:image", res.data)
-                self.assertIn(b"whatsapp.thumb.jpg", res.data)
+                self.assertIn(b"whatsapp.thumb.jpeg", res.data)
+
 
 
 
