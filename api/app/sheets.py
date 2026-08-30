@@ -341,6 +341,25 @@ class GoogleSheetsTable:
             self._log_event("READ", "REMOTE", f"Fetched {len(remote_records)} records from Google Sheets (get_all_records)")
             return merged_records
 
+    def _check_and_consume_update_trigger(self) -> bool:
+        try:
+            cache_dir = os.path.dirname(self.cache_file_path)
+            trigger_path = os.path.join(cache_dir, "update_now") if cache_dir else "update_now"
+            if os.path.exists(trigger_path):
+                try:
+                    os.remove(trigger_path)
+                except Exception as e:
+                    print(f"Error removing trigger file: {e}")
+                self._log_event(
+                    "SYNC",
+                    "TRIGGER",
+                    "Detected 'update_now' trigger file. Removed file and forcing remote cache refresh from Google Sheets"
+                )
+                return True
+        except Exception:
+            pass
+        return False
+
     def ensure_ids(self):
         with self.lock:
             records = self.get_all(force_remote=True)
@@ -348,8 +367,9 @@ class GoogleSheetsTable:
 
     def get_all(self, force_remote=False):
         with self.lock:
+            trigger_fired = self._check_and_consume_update_trigger()
             cache = self._load_cache()
-            if cache is None or force_remote or self._is_read_expired(cache):
+            if cache is None or force_remote or trigger_fired or self._is_read_expired(cache):
                 return self._sync_from_remote(existing_cache=cache)
 
             if self._has_expired_local(cache):
@@ -359,6 +379,7 @@ class GoogleSheetsTable:
             age = time.time() - cache.get("last_remote_read", 0)
             self._log_event("READ", "CACHED", f"Served {len(cache['records'])} records from local JSON cache (age: {age:.1f}s / {self.ttl_read}s)")
             return cache["records"]
+
 
     def get_by_id(self, record_id):
         records = self.get_all()

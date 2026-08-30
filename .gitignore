@@ -16,6 +16,8 @@ docker-compose.override.yml
 # Cache data files
 data/*.json
 data/*.log
+data/update_now
+
 
 
 

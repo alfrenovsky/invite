@@ -63,7 +63,29 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(len(result2), 1)
         self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
 
+    def test_update_now_trigger_file(self):
+        sample_data = [
+            {"id": "abc12345", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si", "pa_general": "si", "url": "http://test/i/perez_123", "whatsapp": ""}
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+        
+        # 1. Initial read into cache
+        self.table.get_all()
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
+
+        # 2. Place update_now trigger file in cache directory
+        trigger_path = os.path.join(os.path.dirname(self.cache_path), "update_now")
+        with open(trigger_path, "w") as f:
+            f.write("1")
+        self.assertTrue(os.path.exists(trigger_path))
+
+        # 3. Next get_all should consume trigger file and refresh from remote
+        self.table.get_all()
+        self.assertFalse(os.path.exists(trigger_path))
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 2)
+
     def test_get_by_id(self):
+
         sample_data = [
             {"id": "abc12345", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si", "url": "http://test/i/1", "whatsapp": ""},
             {"id": "def67890", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "no", "url": "http://test/i/2", "whatsapp": ""}
