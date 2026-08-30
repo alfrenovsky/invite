@@ -319,8 +319,12 @@ class GoogleSheetsTable:
                 existing_cache = self._load_cache()
 
             ws = self._get_worksheet()
-            remote_records = ws.get_all_records()
+            try:
+                remote_records = ws.get_all_records(expected_headers=FIELDNAMES)
+            except Exception:
+                remote_records = ws.get_all_records()
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
             local_by_id = {}
             if existing_cache and existing_cache.get("records"):
