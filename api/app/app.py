@@ -29,12 +29,20 @@ SLIDES_CONFIG = [
         "enabled": True,
     },
     {
+        "id": "video",
+        "title": "Video",
+        "template": "slides/01_video.html",
+        "duration": 10000,
+        "enabled": True,
+    },
+    {
         "id": "intro",
         "title": "Bienvenida",
         "template": "slides/01_intro.html",
         "duration": 7000,
         "enabled": True,
     },
+
 
     {
         "id": "fecha_lugar",

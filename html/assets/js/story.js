@@ -140,6 +140,7 @@
         }
 
         slides.forEach((s, idx) => {
+            const video = s.querySelector('video');
             const offset = idx - index;
             s.classList.remove('active', 'side-slide', 'hidden-slide', 'prev-slide', 'next-slide');
 
@@ -151,47 +152,57 @@
                 s.style.filter = 'blur(0px) brightness(1)';
                 s.style.zIndex = '300';
                 s.style.cursor = 'default';
-            } else if (isDesktop) {
-                const sign = offset > 0 ? 1 : -1;
-                const absOffset = Math.abs(offset);
-                const shiftPx = sign * (390 * 0.76 + (absOffset - 1) * 165);
-
-                s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
-                s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
-                s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
-
-                s.style.zIndex = (20 - absOffset).toString();
-                s.style.visibility = 'visible';
-                s.style.cursor = 'pointer';
-
-                const opacityVal = Math.max(0.35, 0.85 - (absOffset - 1) * 0.15).toString();
-                s.style.opacity = opacityVal;
-
-                if (offset < 0) {
-                    s.classList.add('side-slide', 'prev-slide');
-                    s.style.filter = 'blur(0px) brightness(0.95)';
-                } else {
-                    s.classList.add('side-slide', 'next-slide');
-                    s.style.filter = 'blur(10px) brightness(0.55)';
+                if (video) {
+                    video.currentTime = 0;
+                    video.play().catch(() => {});
                 }
             } else {
-                // Mobile Slide Clean State (Only active slide is visible!)
-                s.style.opacity = '0';
-                s.style.visibility = 'hidden';
-                s.style.filter = 'none';
-                if (offset > 0) {
-                    s.classList.add('next-slide');
-                    s.style.transform = 'translateX(100%)';
-                    s.style.zIndex = (200 - offset).toString();
-                } else {
-                    s.classList.add('prev-slide');
-                    s.style.transform = 'translateX(-100%)';
-                    s.style.zIndex = (200 + offset).toString();
+                if (video) {
+                    video.pause();
                 }
-                s.style.cursor = 'default';
+                if (isDesktop) {
+                    const sign = offset > 0 ? 1 : -1;
+                    const absOffset = Math.abs(offset);
+                    const shiftPx = sign * (390 * 0.76 + (absOffset - 1) * 165);
+
+                    s.style.setProperty('--slide-transform', `translateX(${shiftPx}px) scale(0.40)`);
+                    s.style.setProperty('--slide-hover-transform', `translateX(${shiftPx}px) scale(0.43)`);
+                    s.style.transform = `translateX(${shiftPx}px) scale(0.40)`;
+
+                    s.style.zIndex = (20 - absOffset).toString();
+                    s.style.visibility = 'visible';
+                    s.style.cursor = 'pointer';
+
+                    const opacityVal = Math.max(0.35, 0.85 - (absOffset - 1) * 0.15).toString();
+                    s.style.opacity = opacityVal;
+
+                    if (offset < 0) {
+                        s.classList.add('side-slide', 'prev-slide');
+                        s.style.filter = 'blur(0px) brightness(0.95)';
+                    } else {
+                        s.classList.add('side-slide', 'next-slide');
+                        s.style.filter = 'blur(10px) brightness(0.55)';
+                    }
+                } else {
+                    // Mobile Slide Clean State (Only active slide is visible!)
+                    s.style.opacity = '0';
+                    s.style.visibility = 'hidden';
+                    s.style.filter = 'none';
+                    if (offset > 0) {
+                        s.classList.add('next-slide');
+                        s.style.transform = 'translateX(100%)';
+                        s.style.zIndex = (200 - offset).toString();
+                    } else {
+                        s.classList.add('prev-slide');
+                        s.style.transform = 'translateX(-100%)';
+                        s.style.zIndex = (200 + offset).toString();
+                    }
+                    s.style.cursor = 'default';
+                }
             }
         });
     }
+
 
     function updateStoryScale() {
         if (!container) return;
