@@ -73,16 +73,25 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.table.get_all()
         self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
 
-        # 2. Place update_now trigger file in cache directory
+        # 2. Add a local write (only 1 second old, not expired)
+        self.table.update_record("abc12345", {"confirmacion": "no"})
+        cache = self.table._load_cache()
+        self.assertEqual(cache["records"][0]["_sync_state"], "LOCAL")
+        self.mock_ws.batch_update.reset_mock()
+
+        # 3. Place update_now trigger file in cache directory
         trigger_path = os.path.join(os.path.dirname(self.cache_path), "update_now")
         with open(trigger_path, "w") as f:
             f.write("1")
         self.assertTrue(os.path.exists(trigger_path))
 
-        # 3. Next get_all should consume trigger file and refresh from remote
+        # 4. Next get_all should flush local write to Google Sheets AND refresh from remote (bidirectional)
         self.table.get_all()
         self.assertFalse(os.path.exists(trigger_path))
+        self.assertGreaterEqual(self.mock_ws.batch_update.call_count, 1)
         self.assertEqual(self.mock_ws.get_all_records.call_count, 2)
+
+
 
     def test_get_by_id(self):
         sample_data = [

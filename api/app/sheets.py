@@ -96,8 +96,21 @@ class GoogleSheetsTable:
         self.ttl_write = ttl_write if ttl_write is not None else TTL_WRITE
         self.lock = threading.RLock()
         self._ws = None
+        self._stop_watcher = threading.Event()
+        self._watcher_thread = threading.Thread(target=self._file_watcher_loop, daemon=True)
+        self._watcher_thread.start()
+
+    def _file_watcher_loop(self):
+        while not self._stop_watcher.is_set():
+            try:
+                if self._check_and_consume_update_trigger():
+                    self.get_all(force_remote=True)
+            except Exception:
+                pass
+            self._stop_watcher.wait(1.5)
 
     def _log_event(self, category: str, source: str, message: str):
+
         """
         category: "READ", "WRITE", or "SYNC"
         source: "CACHED" or "REMOTE"
@@ -314,7 +327,11 @@ class GoogleSheetsTable:
 
     def _sync_from_remote(self, existing_cache=None):
         with self.lock:
-            if existing_cache and self._has_expired_local(existing_cache):
+            if existing_cache is None:
+                existing_cache = self._load_cache()
+
+            # Bidirectional sync: Flush ALL pending LOCAL records to Google Sheets first
+            if existing_cache and any(r.get("_sync_state") == "LOCAL" for r in existing_cache.get("records", [])):
                 self.flush_local_to_remote()
                 existing_cache = self._load_cache()
 
@@ -324,7 +341,6 @@ class GoogleSheetsTable:
             except Exception:
                 remote_records = ws.get_all_records()
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
 
             local_by_id = {}
             if existing_cache and existing_cache.get("records"):
@@ -377,12 +393,13 @@ class GoogleSheetsTable:
                 self._log_event(
                     "SYNC",
                     "TRIGGER",
-                    "Detected 'update_now' trigger file. Removed file and forcing remote cache refresh from Google Sheets"
+                    "Detected 'update_now' trigger file. Triggering bidirectional sync (flush local writes + pull remote changes)"
                 )
                 return True
         except Exception:
             pass
         return False
+
 
     def ensure_ids(self):
         with self.lock:
