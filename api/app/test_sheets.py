@@ -85,7 +85,6 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(self.mock_ws.get_all_records.call_count, 2)
 
     def test_get_by_id(self):
-
         sample_data = [
             {"id": "abc12345", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si", "url": "http://test/i/1", "whatsapp": ""},
             {"id": "def67890", "apellido": "Gomez", "nombre": "Maria", "confirmacion": "no", "url": "http://test/i/2", "whatsapp": ""}
@@ -96,6 +95,27 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertIsNotNone(found)
         self.assertEqual(found["row_index"], 3)
         self.assertEqual(found["data"]["nombre"], "Maria")
+
+    def test_cache_miss_forces_remote_sync(self):
+        # Initial cache only has one group
+        self.mock_ws.get_all_records.return_value = [
+            {"id": "abc12345", "invitacion_id": "familia_perez", "nombre": "Juan", "apellido": "Perez"}
+        ]
+        self.table.get_all()
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
+
+        # A new guest group is added directly to Google Sheets
+        self.mock_ws.get_all_records.return_value = [
+            {"id": "abc12345", "invitacion_id": "familia_perez", "nombre": "Juan", "apellido": "Perez"},
+            {"id": "cel12345", "invitacion_id": "celia_y_alfredo", "nombre": "Celia", "apellido": "G"}
+        ]
+
+        # Querying the new group causes a cache miss, which immediately triggers a remote sync from Google Sheets
+        found = self.table.get_by_invitacion("celia_y_alfredo")
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["nombre"], "Celia")
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 2)
+
 
     def test_add_records(self):
         self.mock_ws.get_all_records.return_value = []

@@ -406,6 +406,12 @@ class GoogleSheetsTable:
         for rec in records:
             if str(rec.get("id")) == str(record_id):
                 return {"row_index": rec.get("_sheet_row"), "data": rec}
+        # Cache miss: force remote sync from Google Sheets in case this ID was newly created
+        records = self.get_all(force_remote=True)
+        for rec in records:
+            if str(rec.get("id")) == str(record_id):
+                self._log_event("SYNC", "REMOTE", f"Cache miss for record id '{record_id}'. Synced from Google Sheets and found record.")
+                return {"row_index": rec.get("_sheet_row"), "data": rec}
         return None
 
     def get_by_invitacion(self, invitacion_id):
@@ -422,7 +428,22 @@ class GoogleSheetsTable:
                 rec for rec in records
                 if str(rec.get("id", "")).strip().lower() == target
             ]
+        # Cache miss: if not found in local cache, force remote sync from Google Sheets!
+        if not matched:
+            records = self.get_all(force_remote=True)
+            matched = [
+                rec for rec in records
+                if str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().lower().replace(" ", "_").replace("-", "_") == target
+            ]
+            if not matched:
+                matched = [
+                    rec for rec in records
+                    if str(rec.get("id", "")).strip().lower() == target
+                ]
+            if matched:
+                self._log_event("SYNC", "REMOTE", f"Cache miss for '{invitacion_id}'. Synced from Google Sheets and found {len(matched)} record(s).")
         return matched
+
 
     def add_records(self, records):
         with self.lock:
