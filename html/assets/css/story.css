@@ -667,19 +667,47 @@
         }
 
         /* RSVP Slide Form & Accordion */
+        .story-slide[data-slide-id="rsvp"] {
+            padding: 64px 16px 8px 16px !important;
+        }
+
+        .story-slide[data-slide-id="rsvp"] .slide-body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
         .rsvp-form-container {
-            max-height: 68vh;
+            flex: 1;
+            min-height: 0;
+            max-height: none;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
             -ms-overflow-style: none;
             padding-right: 0;
+            padding-bottom: 8px;
             text-align: left;
             position: relative;
             z-index: 400;
             pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rsvp-form-container form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #rsvpCardsContainer {
+            flex: 1;
         }
 
         .rsvp-card {
+
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 14px;
