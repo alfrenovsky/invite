@@ -160,6 +160,7 @@
 
         slides.forEach((s, idx) => {
             const video = s.querySelector('video');
+            const audio = s.querySelector('audio');
             const offset = idx - index;
             s.classList.remove('active', 'side-slide', 'hidden-slide', 'prev-slide', 'next-slide');
 
@@ -189,11 +190,19 @@
                     video.currentTime = 0;
                     video.play().catch(() => {});
                 }
+                if (audio) {
+                    audio.currentTime = 0;
+                    audio.play().catch(() => {});
+                }
             } else {
                 if (video) {
                     video.pause();
                 }
+                if (audio) {
+                    audio.pause();
+                }
                 if (isDesktop) {
+
                     const sign = offset > 0 ? 1 : -1;
                     const absOffset = Math.abs(offset);
                     const shiftPx = sign * (390 * 0.76 + (absOffset - 1) * 165);
@@ -372,16 +381,21 @@
             btnPause.textContent = isAutoplay ? '⏸' : '▶';
             btnPause.title = isAutoplay ? 'Pausar avance automático' : 'Iniciar avance automático';
         }
-        const activeVideo = slides[currentIndex] ? slides[currentIndex].querySelector('video') : null;
+        const activeSlide = slides[currentIndex];
+        const activeVideo = activeSlide ? activeSlide.querySelector('video') : null;
+        const activeAudio = activeSlide ? activeSlide.querySelector('audio') : null;
         if (isAutoplay) {
             if (activeVideo) activeVideo.play().catch(() => {});
+            if (activeAudio) activeAudio.play().catch(() => {});
             startSlideTimer();
         } else {
             if (activeVideo) activeVideo.pause();
+            if (activeAudio) activeAudio.pause();
             clearTimers();
             updateProgressDisplay(100);
         }
     }
+
 
     // ==============================================================
 
