@@ -10,4 +10,7 @@ cd "$DIR"
 echo "📊 Monitoreando actividad de Google Sheets en tiempo real (Ctrl+C para salir)..."
 echo "-------------------------------------------------------------------------------"
 
-docker compose logs -f -t api 2>&1     | grep --line-buffered -E "(/i/|/invitados|/invitacion/|sheets|gspread)"     | ccze -A
+docker compose logs -f -t api 2>&1 \
+    | grep --line-buffered -E "(\[READ:|\[WRITE:|\[SYNC:|CACHED|REMOTE|/i/|/invitados|sheets|gspread)" \
+    | ccze -A
+

@@ -34,6 +34,7 @@ FIELDNAMES = [
 INVITATION_SALT = os.environ.get("INVITATION_SALT", "boda_celia_y_alfredo_2027_secret_salt")
 BASE_URL = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
 CACHE_FILE_PATH = os.environ.get("CACHE_FILE_PATH", "/data/sheet_cache.json")
+LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/data/api.log")
 TTL_READ = int(os.environ.get("TTL_READ", 600))  # 10 minutes default
 TTL_WRITE = int(os.environ.get("TTL_WRITE", 120))  # 2 minutes default
 
@@ -87,15 +88,33 @@ def parse_and_validate_token(token: str, salt: str = None):
 
 
 class GoogleSheetsTable:
-    def __init__(self, credentials_path=None, sheet_id=None, worksheet_name=None, cache_file_path=None, ttl_read=None, ttl_write=None):
+    def __init__(self, credentials_path=None, sheet_id=None, worksheet_name=None, cache_file_path=None, log_file_path=None, ttl_read=None, ttl_write=None):
         self.credentials_path = credentials_path or os.environ.get("GOOGLE_CREDENTIALS_PATH", "/secrets/credentials.json")
         self.sheet_id = sheet_id or os.environ.get("GOOGLE_SHEET_ID")
         self.worksheet_name = worksheet_name or os.environ.get("WORKSHEET_NAME", "Respuestas")
         self.cache_file_path = cache_file_path or CACHE_FILE_PATH
+        self.log_file_path = log_file_path or LOG_FILE_PATH
         self.ttl_read = ttl_read if ttl_read is not None else TTL_READ
         self.ttl_write = ttl_write if ttl_write is not None else TTL_WRITE
         self.lock = threading.RLock()
         self._ws = None
+
+    def _log_event(self, category: str, source: str, message: str):
+        """
+        category: "READ", "WRITE", or "SYNC"
+        source: "CACHED" or "REMOTE"
+        """
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_line = f"[{now_str}] [{category}:{source}] {message}"
+        print(log_line, flush=True)
+        try:
+            log_dir = os.path.dirname(self.log_file_path)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            with open(self.log_file_path, "a", encoding="utf-8") as f:
+                f.write(log_line + "\n")
+        except Exception:
+            pass
 
     def _get_worksheet(self):
         if self._ws is None:
@@ -266,6 +285,11 @@ class GoogleSheetsTable:
                 rec["_sync_state"] = "REMOTE"
 
             self._save_cache(cache)
+            self._log_event(
+                "WRITE",
+                "REMOTE",
+                f"Flushed {len(local_records)} dirty LOCAL record(s) to Google Sheets via ws.batch_update() [1 HTTPS call]"
+            )
             return len(local_records)
 
     def _sync_from_remote(self, existing_cache=None):
@@ -307,12 +331,14 @@ class GoogleSheetsTable:
 
             if missing_updates:
                 ws.batch_update(missing_updates)
+                self._log_event("SYNC", "REMOTE", f"Repaired {len(missing_updates)} records missing IDs/URLs on Google Sheets")
 
             new_cache = {
                 "last_remote_read": time.time(),
                 "records": merged_records
             }
             self._save_cache(new_cache)
+            self._log_event("READ", "REMOTE", f"Fetched {len(remote_records)} records from Google Sheets (get_all_records)")
             return merged_records
 
     def ensure_ids(self):
@@ -330,6 +356,8 @@ class GoogleSheetsTable:
                 self.flush_local_to_remote()
                 cache = self._load_cache()
 
+            age = time.time() - cache.get("last_remote_read", 0)
+            self._log_event("READ", "CACHED", f"Served {len(cache['records'])} records from local JSON cache (age: {age:.1f}s / {self.ttl_read}s)")
             return cache["records"]
 
     def get_by_id(self, record_id):
@@ -377,6 +405,7 @@ class GoogleSheetsTable:
                 added.append(item)
 
             self._save_cache(cache)
+            self._log_event("WRITE", "CACHED", f"Added {len(added)} new record(s) staged locally (status: LOCAL)")
 
             if self._has_expired_local(cache):
                 self.flush_local_to_remote()
@@ -420,6 +449,11 @@ class GoogleSheetsTable:
             found_rec.update(item)
 
             self._save_cache(cache)
+            self._log_event(
+                "WRITE",
+                "CACHED",
+                f"Updated guest '{record_id}' ({found_rec.get('nombre', '')} {found_rec.get('apellido', '')}) locally -> status: LOCAL, fields: {list(updates.keys())}"
+            )
 
             if self._has_expired_local(cache):
                 self.flush_local_to_remote()
@@ -445,4 +479,5 @@ class GoogleSheetsTable:
                         if r.get("_sheet_row") and r["_sheet_row"] > row_idx:
                             r["_sheet_row"] -= 1
                 self._save_cache(cache)
+            self._log_event("WRITE", "REMOTE", f"Deleted guest '{record_id}' (row {row_idx}) from Google Sheets and local cache")
             return True
