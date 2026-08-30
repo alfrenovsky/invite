@@ -128,10 +128,29 @@
     // ==============================================================
     // 📱 Slide Presentation & Animation Engine
     // ==============================================================
+    function getVideoType(videoElement) {
+        if (!videoElement) return 'none';
+        const src = videoElement.currentSrc || videoElement.src || (videoElement.querySelector('source') ? videoElement.querySelector('source').getAttribute('src') : '') || '';
+        const filename = src.split('/').pop().split('?')[0].trim();
+
+        // background_video... (case insensitive) -> play indefinitely
+        if (/^background_video/i.test(filename) || /^background/i.test(filename)) {
+            return 'background';
+        }
+        // videoSomething (case insensitive) -> play once, advance to next slide on finish
+        if (/^video/i.test(filename) || /^intro/i.test(filename)) {
+            return 'single';
+        }
+        return 'other';
+    }
+
     function showSlide(index) {
         if (slides.length === 0) return;
+        if (index < 0) index = 0;
+        if (index >= slides.length) index = slides.length - 1;
+
         const currentSlide = slides[index];
-        const currentSlideId = currentSlide ? currentSlide.getAttribute('data-slide-id') : '';
+        const currentSlideId = currentSlide ? currentSlide.getAttribute('data-slide-id') : null;
         const isInteractiveSlide = (currentSlideId === 'rsvp' || currentSlideId === 'triste' || index === slides.length - 1);
 
         if (tapLeft && tapRight) {
@@ -153,6 +172,20 @@
                 s.style.zIndex = '300';
                 s.style.cursor = 'default';
                 if (video) {
+                    const vType = getVideoType(video);
+                    if (vType === 'background') {
+                        video.loop = true;
+                        video.setAttribute('loop', 'loop');
+                        video.onended = null;
+                    } else if (vType === 'single') {
+                        video.loop = false;
+                        video.removeAttribute('loop');
+                        video.onended = () => {
+                            if (currentIndex === idx && isAutoplay) {
+                                nextSlide();
+                            }
+                        };
+                    }
                     video.currentTime = 0;
                     video.play().catch(() => {});
                 }
@@ -242,8 +275,30 @@
         if (slides.length === 0) return;
         const slide = slides[currentIndex];
         if (!slide) return;
-        const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
 
+        const video = slide.querySelector('video');
+        const vType = video ? getVideoType(video) : 'none';
+
+        // For videoSomething (single play): sync progress bar directly with video playback
+        if (vType === 'single' && video) {
+            function tickVideo() {
+                if (!isAutoplay) {
+                    updateProgressDisplay(100);
+                    return;
+                }
+                if (video.duration && !isNaN(video.duration) && video.duration > 0) {
+                    const percent = (video.currentTime / video.duration) * 100;
+                    updateProgressDisplay(percent);
+                }
+                if (!video.ended && currentIndex === slides.indexOf(slide)) {
+                    animationFrameId = requestAnimationFrame(tickVideo);
+                }
+            }
+            animationFrameId = requestAnimationFrame(tickVideo);
+            return;
+        }
+
+        const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
         if (!isAutoplay || duration <= 0) {
             updateProgressDisplay(100);
             return;
@@ -318,15 +373,19 @@
             btnPause.textContent = isAutoplay ? '⏸' : '▶';
             btnPause.title = isAutoplay ? 'Pausar avance automático' : 'Iniciar avance automático';
         }
+        const activeVideo = slides[currentIndex] ? slides[currentIndex].querySelector('video') : null;
         if (isAutoplay) {
+            if (activeVideo) activeVideo.play().catch(() => {});
             startSlideTimer();
         } else {
+            if (activeVideo) activeVideo.pause();
             clearTimers();
             updateProgressDisplay(100);
         }
     }
 
     // ==============================================================
+
     // 👆 Tap & Desktop Button Handlers
     // ==============================================================
     let isSwiping = false;
