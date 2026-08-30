@@ -181,7 +181,7 @@
                         video.loop = false;
                         video.removeAttribute('loop');
                         video.onended = () => {
-                            if (currentIndex === idx && isAutoplay) {
+                            if (currentIndex === idx) {
                                 nextSlide();
                             }
                         };
@@ -236,7 +236,6 @@
         });
     }
 
-
     function updateStoryScale() {
         if (!container) return;
         if (isDesktop) {
@@ -261,14 +260,10 @@
         }
     }
 
-
-
     window.addEventListener('resize', () => {
         updateStoryScale();
         showSlide(currentIndex);
     });
-
-
 
     function startSlideTimer() {
         clearTimers();
@@ -279,16 +274,19 @@
         const video = slide.querySelector('video');
         const vType = video ? getVideoType(video) : 'none';
 
-        // For videoSomething (single play): sync progress bar directly with video playback
+        // For videoSomething (single play): sync progress bar directly with video playback and auto-advance
         if (vType === 'single' && video) {
             function tickVideo() {
-                if (!isAutoplay) {
-                    updateProgressDisplay(100);
-                    return;
-                }
                 if (video.duration && !isNaN(video.duration) && video.duration > 0) {
-                    const percent = (video.currentTime / video.duration) * 100;
+                    const percent = Math.min(100, (video.currentTime / video.duration) * 100);
                     updateProgressDisplay(percent);
+                    if (video.currentTime >= video.duration - 0.08 || video.ended) {
+                        updateProgressDisplay(100);
+                        if (currentIndex === slides.indexOf(slide)) {
+                            nextSlide();
+                            return;
+                        }
+                    }
                 }
                 if (!video.ended && currentIndex === slides.indexOf(slide)) {
                     animationFrameId = requestAnimationFrame(tickVideo);
@@ -297,6 +295,7 @@
             animationFrameId = requestAnimationFrame(tickVideo);
             return;
         }
+
 
         const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
         if (!isAutoplay || duration <= 0) {
