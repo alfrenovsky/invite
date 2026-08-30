@@ -118,13 +118,16 @@ All API routes are proxied through Nginx:
 - `GOOGLE_SHEET_ID`: Unique ID of the target Google Sheet document.
 - `GOOGLE_CREDENTIALS_PATH`: Path inside container to Google Service Account credentials (`/secrets/credentials.json`).
 - `WORKSHEET_NAME`: Worksheet tab name within the Google Sheet (e.g., `Confirmaciones`).
+- `CACHE_FILE_PATH`: Path inside container to mounted JSON cache (`/data/sheet_cache.json`).
+- `TTL_READ`: Time-to-live for cached remote reads in seconds (default: 600s / 10 min).
+- `TTL_WRITE`: Max un-synced age for dirty `LOCAL` records before batch flushing in seconds (default: 120s / 2 min).
 
 ---
 
 ## 🧪 Testing & Verification
 
 - **Backend Unit Tests**:
-  Unit tests reside in `api/app/test_sheets.py` covering Google Sheets CRUD, field mapping, salted anti-forgery tokens, WhatsApp link generation, crawler bypass, and route rendering.
+  Unit tests reside in `api/app/test_sheets.py` covering Google Sheets CRUD, field mapping, salted anti-forgery tokens, WhatsApp link generation, crawler bypass, JSON caching, and route rendering.
   To execute tests inside container:
   ```bash
   docker compose exec api python3 -m unittest test_sheets.py
@@ -140,15 +143,15 @@ All API routes are proxied through Nginx:
 ## 🤖 Guidelines for AI Agents
 
 1. **API Contracts & Security**: Preserve response structures (`{"ok": true, "data": ...}`). Administrative endpoints (`GET /invitados`, `POST /invitados`, `DELETE`) require the `API_KEY` (via header `X-API-Key`, `Authorization: Bearer`, or query param `?api_key=`).
-2. **Concurrency Safety**: Interactions with Google Sheets in `api/app/sheets.py` are synchronized via `threading.RLock()`. Maintain thread safety for any new sheet operations.
+2. **Concurrency Safety & Caching**: Interactions with Google Sheets in `api/app/sheets.py` use a persistent JSON cache (`/data/sheet_cache.json`) with `TTL_READ = 10m` and `TTL_WRITE = 2m`. All operations are synchronized via `threading.RLock()`. Writes are stored locally as `LOCAL` and batched to Google Sheets via `ws.batch_update()` in single HTTPS calls.
 3. **Anti-Forgery Link Protection**: Keep invitation tokens formatted as `{invitacion_id}_{check_code}` (6 hex characters generated with `sha256(f"{invitacion_id}:{INVITATION_SALT}")[:6]`).
 4. **Crawler Bypass Optimization**: Requests with crawler User-Agents (WhatsApp, Facebook, Twitter, Telegram) on `/i/<token>` must return `og_preview.html` without querying Google Sheets API.
 5. **Auto-Save Engine**: Story RSVP confirmation uses debounced auto-saving (configured via `AUTOSAVE_CONFIG`) with state diffing to minimize Google Sheets API consumption. Immediate flushes trigger on `blur`, accordion toggle, slide change, and `pagehide`/`visibilitychange`.
 6. **Navigation Features**: Mobile devices support touch swipe horizontal gestures with slide-over focus animations, pull-to-refresh downward gesture (`window.location.reload()`), and smart vertical form scrolling on the RSVP slide. Desktop mode supports direct slide jumping on preview miniatures.
 7. **Rate Limiting**: Nginx rate-limits API requests at 20 req/s with a burst of 30 to prevent API exhaustion.
-
 8. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
 9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+
 
 
 
