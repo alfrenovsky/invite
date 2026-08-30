@@ -23,14 +23,14 @@
                                                 </span>
                                                 <span class="guest-diet-icons" id="diet_icons_{{ guest.id }}">
                                                     {% if guest.confirmacion == 'si' %}
-                                                        {% if guest.pa_vegano == 'si' %}
+                                                        {% if guest.pa == 'vegano' or guest.ap == 'vegano' or guest.pa_vegano == 'si' %}
                                                             <span class="diet-mini-badge" title="Vegano">🌱 Vegano</span>
-                                                        {% elif guest.pa_vegetariano == 'si' %}
+                                                        {% elif guest.pa == 'vegetariano' or guest.ap == 'vegetariano' or guest.pa_vegetariano == 'si' %}
                                                             <span class="diet-mini-badge" title="Vegetariano">🥗 Vegetariano</span>
                                                         {% else %}
                                                             <span class="diet-mini-badge" title="General">🍽️ General</span>
                                                         {% endif %}
-                                                        {% if guest.pa_celiaco == 'si' %}
+                                                        {% if guest.celiaco == 'si' or guest.pa_celiaco == 'si' %}
                                                             <span class="diet-mini-badge badge-celiac" title="Celíaco / Sin Gluten">🌾 Celíaco</span>
                                                         {% endif %}
                                                     {% endif %}
@@ -71,26 +71,27 @@
                                             <div class="diet-section" id="diet_sec_{{ guest.id }}" style="{% if guest.confirmacion != 'si' %}display: none;{% endif %}">
                                                 <div style="font-size: 0.76em; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Menú Principal:</div>
                                                 <div class="menu-radio-group">
-                                                    <label class="menu-radio-label {% if guest.pa_general == 'si' or (not guest.pa_vegetariano and not guest.pa_vegano) %}selected{% endif %}">
-                                                        <input type="radio" name="menu_{{ guest.id }}" value="general" {% if guest.pa_general == 'si' or (not guest.pa_vegetariano and not guest.pa_vegano) %}checked{% endif %}>
+                                                    <label class="menu-radio-label {% if guest.pa == 'general' or guest.ap == 'general' or guest.pa_general == 'si' or (not guest.pa and not guest.ap and not guest.pa_vegetariano and not guest.pa_vegano) or (guest.pa != 'vegetariano' and guest.pa != 'vegano' and guest.ap != 'vegetariano' and guest.ap != 'vegano' and guest.pa_vegetariano != 'si' and guest.pa_vegano != 'si') %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="general" {% if guest.pa == 'general' or guest.ap == 'general' or guest.pa_general == 'si' or (not guest.pa and not guest.ap and not guest.pa_vegetariano and not guest.pa_vegano) or (guest.pa != 'vegetariano' and guest.pa != 'vegano' and guest.ap != 'vegetariano' and guest.ap != 'vegano' and guest.pa_vegetariano != 'si' and guest.pa_vegano != 'si') %}checked{% endif %}>
                                                         🍽️ General
                                                     </label>
-                                                    <label class="menu-radio-label {% if guest.pa_vegetariano == 'si' %}selected{% endif %}">
-                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegetariano" {% if guest.pa_vegetariano == 'si' %}checked{% endif %}>
+                                                    <label class="menu-radio-label {% if guest.pa == 'vegetariano' or guest.ap == 'vegetariano' or guest.pa_vegetariano == 'si' %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegetariano" {% if guest.pa == 'vegetariano' or guest.ap == 'vegetariano' or guest.pa_vegetariano == 'si' %}checked{% endif %}>
                                                         🥗 Vegetariano
                                                     </label>
-                                                    <label class="menu-radio-label {% if guest.pa_vegano == 'si' %}selected{% endif %}">
-                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegano" {% if guest.pa_vegano == 'si' %}checked{% endif %}>
+                                                    <label class="menu-radio-label {% if guest.pa == 'vegano' or guest.ap == 'vegano' or guest.pa_vegano == 'si' %}selected{% endif %}">
+                                                        <input type="radio" name="menu_{{ guest.id }}" value="vegano" {% if guest.pa == 'vegano' or guest.ap == 'vegano' or guest.pa_vegano == 'si' %}checked{% endif %}>
                                                         🌱 Vegano
                                                     </label>
                                                 </div>
 
-                                                <label class="celiac-checkbox-label {% if guest.pa_celiaco == 'si' %}selected{% endif %}">
-                                                    <input type="checkbox" name="celiaco_{{ guest.id }}" value="si" class="celiac-check" {% if guest.pa_celiaco == 'si' %}checked{% endif %}>
+                                                <label class="celiac-checkbox-label {% if guest.celiaco == 'si' or guest.pa_celiaco == 'si' %}selected{% endif %}">
+                                                    <input type="checkbox" name="celiaco_{{ guest.id }}" value="si" class="celiac-check" {% if guest.celiaco == 'si' or guest.pa_celiaco == 'si' %}checked{% endif %}>
                                                     <span>🌾 Menú Apto Celíaco / Sin Gluten</span>
                                                 </label>
                                             </div>
                                         </div>
+
                                     </div>
                                     {% endfor %}
                                 </div>

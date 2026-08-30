@@ -13,19 +13,17 @@ from gspread.utils import rowcol_to_a1
 FIELDNAMES = [
     "id",
     "updated_at",
+    "invitacion_id",
     "nombre",
     "apellido",
-    "telefono",
-    "invitacion_id",
-    "cenaobaile",
-    "invitaoreserva",
-    "precio",
-    "pago",
+    "dequien",
+    "tipo",
+    "nivel",
     "confirmacion",
-    "pa_general",
-    "pa_vegetariano",
-    "pa_vegano",
-    "pa_celiaco",
+    "montotarjeta",
+    "telefono",
+    "pa",
+    "celiaco",
     "url",
     "whatsapp",
 ]
@@ -191,9 +189,9 @@ class GoogleSheetsTable:
     def _map_record_to_row(self, rec, now_str, row_idx=None):
         alim = rec.get("alimentacion", [])
         if isinstance(alim, str):
-            alim_list = [x.strip() for x in alim.split("|")]
+            alim_list = [x.strip().lower() for x in alim.split("|")]
         elif isinstance(alim, list):
-            alim_list = [str(x) for x in alim]
+            alim_list = [str(x).strip().lower() for x in alim]
         else:
             alim_list = []
 
@@ -212,18 +210,39 @@ class GoogleSheetsTable:
         phone_val = str(rec.get("telefono", "")).strip()
 
         item["updated_at"] = updated_at
-        item["nombre"] = str(rec.get("nombre", ""))
-        item["apellido"] = str(rec.get("apellido", ""))
-        item["telefono"] = phone_val
         item["invitacion_id"] = inv_val
         item["invitacion"] = inv_val
+        item["nombre"] = str(rec.get("nombre", ""))
+        item["apellido"] = str(rec.get("apellido", ""))
+        item["dequien"] = str(rec.get("dequien", ""))
+        item["tipo"] = str(rec.get("tipo", ""))
+        item["nivel"] = str(rec.get("nivel", ""))
         item["confirmacion"] = str(rec.get("confirmacion") or rec.get("asistencia", ""))
+        item["montotarjeta"] = str(rec.get("montotarjeta", ""))
+        item["telefono"] = phone_val
 
-        # Dietary preference mapping
-        item["pa_general"] = str(rec.get("pa_general", "si" if "general" in alim_list else ""))
-        item["pa_vegetariano"] = str(rec.get("pa_vegetariano", "si" if "vegetariano" in alim_list else ""))
-        item["pa_vegano"] = str(rec.get("pa_vegano", "si" if "vegano" in alim_list else ""))
-        item["pa_celiaco"] = str(rec.get("pa_celiaco", "si" if "celiaco" in alim_list else ""))
+        # Dietary preference mapping: general, vegetariano, vegano (single column pa/ap)
+        pa_val = str(rec.get("pa") or rec.get("ap") or rec.get("menu") or "").strip().lower()
+        if not pa_val:
+            if str(rec.get("pa_vegano", "")).lower() in ["si", "true", "1"] or "vegano" in alim_list:
+                pa_val = "vegano"
+            elif str(rec.get("pa_vegetariano", "")).lower() in ["si", "true", "1"] or "vegetariano" in alim_list:
+                pa_val = "vegetariano"
+            elif str(rec.get("pa_general", "")).lower() in ["si", "true", "1"] or "general" in alim_list:
+                pa_val = "general"
+
+        celiaco_val = str(rec.get("celiaco") or rec.get("pa_celiaco") or "").strip().lower()
+        if not celiaco_val and "celiaco" in alim_list:
+            celiaco_val = "si"
+
+        item["pa"] = pa_val
+        item["ap"] = pa_val
+        item["celiaco"] = "si" if celiaco_val in ["si", "true", "1"] else ""
+        # Backwards-compatibility aliases for templates
+        item["pa_celiaco"] = item["celiaco"]
+        item["pa_general"] = "si" if pa_val == "general" else ""
+        item["pa_vegetariano"] = "si" if pa_val == "vegetariano" else ""
+        item["pa_vegano"] = "si" if pa_val == "vegano" else ""
 
         if not item.get("url") and inv_val:
             item["url"] = generate_invitation_url(inv_val)
@@ -234,6 +253,7 @@ class GoogleSheetsTable:
             item["whatsapp"] = generate_whatsapp_url(phone_val, item["url"])
         else:
             item["whatsapp"] = str(item.get("whatsapp", ""))
+
 
         # Build row according to FIELDNAMES
         row = []

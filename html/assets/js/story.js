@@ -642,12 +642,16 @@
             nombre: inputNombre ? inputNombre.value.trim() : '',
             apellido: inputApellido ? inputApellido.value.trim() : '',
             confirmacion: asistencia,
+            pa: (asistencia === 'si') ? selectedMenu : '',
+            ap: (asistencia === 'si') ? selectedMenu : '',
+            celiaco: (asistencia === 'si' && isCeliac) ? 'si' : '',
             pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
             pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
             pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
             pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
         };
     }
+
 
     function setAutoSaveState(state, text) {
         const autoSaveStatus = document.getElementById('autoSaveStatus');

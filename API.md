@@ -46,21 +46,20 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 |---|---|---|---|---|
 | A | `id` | `string` | Unique identifier (Deterministic 8-digit HEX) | `"a1b2c3d4"` |
 | B | `updated_at` | `string` | Timestamp of insertion/last update | `"2026-08-11 18:30:00"` |
-| C | `nombre` | `string` | First name | `"Juan"` |
-| D | `apellido` | `string` | Last name | `"Pérez"` |
-| E | `telefono` | `string` | Phone number | `"+5491112345678"` |
-| F | `invitacion_id` | `string` | Invitation note / group code | `"familia_perez"` |
-| G | `cenaobaile` | `string` | Event type / pass | `"cena"` |
-| H | `invitaoreserva` | `string` | Host or reserved | `"invitado"` |
-| I | `precio` | `string` | Ticket price | `""` |
-| J | `pago` | `string` | Payment status | `""` |
-| K | `confirmacion` | `string` | Attendance confirmation (`"si"`, `"no"`, `""`) | `"si"` |
-| L | `pa_general` | `string` | Standard diet flag | `"si"` |
-| M | `pa_vegetariano` | `string` | Vegetarian diet flag | `"si"` |
-| N | `pa_vegano` | `string` | Vegan diet flag | `"si"` |
-| O | `pa_celiaco` | `string` | Celiac diet flag | `"si"` |
-| P | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/i/familia_perez_a1b2c3"` |
-| Q | `whatsapp` | `string` | Direct WhatsApp invitation link (`wa.me`) | `"https://wa.me/5491112345678?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ffamilia_perez_a1b2c3"` |
+| C | `invitacion_id` | `string` | Invitation group slug / token | `"familia_perez"` |
+| D | `nombre` | `string` | First name | `"Juan"` |
+| E | `apellido` | `string` | Last name | `"Pérez"` |
+| F | `dequien` | `string` | Host affiliation | `"novia"` / `"novio"` |
+| G | `tipo` | `string` | Guest type / category | `"amigo"` |
+| H | `nivel` | `string` | Guest priority level | `"1"` |
+| I | `confirmacion` | `string` | Attendance confirmation (`"si"`, `"no"`, `""`) | `"si"` |
+| J | `montotarjeta` | `string` | Ticket/card amount | `""` |
+| K | `telefono` | `string` | Phone number | `"+5491112345678"` |
+| L | `pa` | `string` | Main dietary preference (`"general"`, `"vegetariano"`, `"vegano"`) | `"general"` |
+| M | `celiaco` | `string` | Celiac / Gluten-Free flag (`"si"`, `""`) | `"si"` |
+| N | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/i/familia_perez_a1b2c3"` |
+| O | `whatsapp` | `string` | Direct WhatsApp invitation link (`wa.me`) | `"https://wa.me/5491112345678?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ffamilia_perez_a1b2c3"` |
+
 
 
 
