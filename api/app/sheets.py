@@ -384,21 +384,23 @@ class GoogleSheetsTable:
     def _check_and_consume_update_trigger(self) -> bool:
         try:
             cache_dir = os.path.dirname(self.cache_file_path)
-            trigger_path = os.path.join(cache_dir, "update_now") if cache_dir else "update_now"
-            if os.path.exists(trigger_path):
-                try:
-                    os.remove(trigger_path)
-                except Exception as e:
-                    print(f"Error removing trigger file: {e}")
-                self._log_event(
-                    "SYNC",
-                    "TRIGGER",
-                    "Detected 'update_now' trigger file. Triggering bidirectional sync (flush local writes + pull remote changes)"
-                )
-                return True
+            for fname in ["update_now", "update.now"]:
+                trigger_path = os.path.join(cache_dir, fname) if cache_dir else fname
+                if os.path.exists(trigger_path):
+                    try:
+                        os.remove(trigger_path)
+                    except Exception as e:
+                        print(f"Error removing trigger file: {e}")
+                    self._log_event(
+                        "SYNC",
+                        "TRIGGER",
+                        f"Detected '{fname}' trigger file. Triggering bidirectional sync (flush local writes + pull remote changes)"
+                    )
+                    return True
         except Exception:
             pass
         return False
+
 
 
     def ensure_ids(self):

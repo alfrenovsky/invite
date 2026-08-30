@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DATA_DIR="$SCRIPT_DIR/data"
+
+mkdir -p "$DATA_DIR"
+touch "$DATA_DIR/update_now"
+touch "$DATA_DIR/update.now"
+
+echo "✨ Disparador de sincronización creado en $DATA_DIR/update_now"
+echo "🔄 Sincronizando en ambas direcciones (Subiendo cambios locales y descargando Google Sheets)..."
