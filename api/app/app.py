@@ -162,11 +162,26 @@ def index_page(token=None):
     if is_crawler:
         base_url = os.environ.get("BASE_URL", "https://nos.vamos.acas.ar")
         full_invite_url = f"{base_url}/i/{token}"
+
+        # Read strictly from local JSON cache (0 Google Sheets calls for crawlers)
+        try:
+            cache = table._load_cache()
+            if cache and cache.get("records"):
+                target = str(validated_slug).strip().lower().replace(" ", "_").replace("-", "_")
+                for r in cache["records"]:
+                    inv_slug = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+                    if inv_slug == target and r.get("url"):
+                        full_invite_url = r["url"]
+                        break
+        except Exception:
+            pass
+
         return render_template(
             "og_preview.html",
             invitation_url=full_invite_url,
             base_url=base_url
         )
+
 
     context = get_guest_context(validated_slug)
     if not context:
