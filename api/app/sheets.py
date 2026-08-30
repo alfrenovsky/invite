@@ -288,20 +288,37 @@ class GoogleSheetsTable:
             ws = self._get_worksheet()
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+            # Dynamically resolve current row numbers by matching Column A ("id") in Google Sheets
+            # This ensures that if rows were reordered/sorted in Google Sheets, updates still match the exact row by ID!
+            try:
+                id_col_values = ws.col_values(1)
+                id_to_current_row = {
+                    val.strip(): r
+                    for r, val in enumerate(id_col_values, start=1)
+                    if val and val.strip()
+                }
+            except Exception:
+                id_to_current_row = {}
+
             batch_updates = []
             new_appends = []
 
             for rec in local_records:
-                item, row = self._map_record_to_row(rec, now_str, row_idx=rec.get("_sheet_row"))
-                row_idx = rec.get("_sheet_row")
-                if row_idx and int(row_idx) >= 2:
-                    range_name = f"{rowcol_to_a1(row_idx, 1)}:{rowcol_to_a1(row_idx, len(FIELDNAMES))}"
+                rec_id = str(rec.get("id", "")).strip()
+                current_row = id_to_current_row.get(rec_id, rec.get("_sheet_row"))
+
+                if current_row and int(current_row) >= 2:
+                    rec["_sheet_row"] = current_row
+                    item, row = self._map_record_to_row(rec, now_str, row_idx=current_row)
+                    range_name = f"{rowcol_to_a1(current_row, 1)}:{rowcol_to_a1(current_row, len(FIELDNAMES))}"
                     batch_updates.append({"range": range_name, "values": [row]})
                 else:
+                    item, row = self._map_record_to_row(rec, now_str, row_idx=None)
                     new_appends.append((rec, row))
 
             if batch_updates:
                 ws.batch_update(batch_updates)
+
 
             if new_appends:
                 rows_to_insert = [r for _, r in new_appends]

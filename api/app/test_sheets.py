@@ -167,6 +167,30 @@ class TestGoogleSheetsTable(unittest.TestCase):
         cache_after = self.table._load_cache()
         self.assertEqual(cache_after["records"][0]["_sync_state"], "REMOTE")
 
+    def test_flush_handles_reordered_rows_by_id(self):
+        # 1. Initially guest was on row 2
+        sample_data = [
+            {"id": "abc12345", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si"}
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+        self.table.get_all()
+
+        # 2. Guest updates RSVP locally
+        self.table.update_record("abc12345", {"confirmacion": "no"})
+
+        # 3. Meanwhile, the sheet was sorted/reordered in Google Sheets so 'abc12345' is now on row 5!
+        self.mock_ws.col_values.return_value = ["id", "other_1", "other_2", "other_3", "abc12345"]
+        self.mock_ws.batch_update.reset_mock()
+
+        # 4. Flush runs
+        self.table.flush_local_to_remote()
+
+        # 5. Assert batch_update was sent to Row 5 (range A5:O5), NOT the old row 2!
+        self.assertEqual(self.mock_ws.batch_update.call_count, 1)
+        update_call_args = self.mock_ws.batch_update.call_args[0][0]
+        self.assertTrue(update_call_args[0]["range"].startswith("A5:"))
+
+
     def test_delete_record(self):
         sample_data = [
             {"id": "abc12345", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si", "url": "http://test/i/1", "whatsapp": ""}
