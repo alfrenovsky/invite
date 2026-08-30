@@ -33,9 +33,15 @@
     <meta name="twitter:image" content="{{ (invitation_url.split('/i/')[0] if invitation_url else 'https://nos.vamos.acas.ar') }}/assets/whatsapp.thumb.jpeg" />
 
 
+    <!-- Google Fonts: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+
     <!-- Story Stylesheet (no-cache with auto-versioning) -->
     <link rel="stylesheet" href="/assets/css/story.css?v={{ config_version }}">
 </head>
+
 <body>
     {% include "partials/pull_to_refresh.html" %}
 
