@@ -714,33 +714,54 @@
             
             <!-- Background Selector -->
             <div>
-                <div class="section-title">1. Fondo Cósmico o Foto</div>
+                <div class="section-title">1. Fondos de Assets & Videos</div>
                 <div class="grid-presets">
-                    <button class="preset-btn active" data-bg="space-starfield">
-                        <span>🌌 Estrellas Profundas</span>
-                        <small style="color:#94a3b8">Negro + estrellas blancas/azules</small>
+                    <button class="preset-btn active" data-bg="bg-main">
+                        <span>🖼️ Fondo Principal</span>
+                        <small style="color:#94a3b8">background.jpeg</small>
                     </button>
-                    <button class="preset-btn" data-bg="space-cyan-blue">
-                        <span>🌌 Nebulosa Cyan/Azul</span>
-                        <small style="color:#94a3b8">Gases celestes y azul zafiro</small>
+                    <button class="preset-btn" data-bg="bg-alternate">
+                        <span>🖼️ Fondo Alternativo</span>
+                        <small style="color:#94a3b8">background.alternate.jpeg</small>
                     </button>
-                    <button class="preset-btn" data-bg="space-magenta-violet">
-                        <span>🌌 Nebulosa Magenta</span>
-                        <small style="color:#94a3b8">Polvo fucsia y violeta oscuro</small>
+                    <button class="preset-btn" data-bg="bg-version1">
+                        <span>🖼️ Fondo Versión 1</span>
+                        <small style="color:#94a3b8">background.1.jpeg</small>
                     </button>
                     <button class="preset-btn" data-bg="photo-couple-1">
                         <span>🖼️ Foto Pareja (photo01)</span>
-                        <small style="color:#94a3b8">Foto real con personas</small>
+                        <small style="color:#94a3b8">photo01.jpeg</small>
                     </button>
-                    <button class="preset-btn" data-bg="photo-background">
-                        <span>🖼️ Fondo Actual (background)</span>
-                        <small style="color:#94a3b8">Asset de alta resolución</small>
+                    <button class="preset-btn" data-bg="video-nave">
+                        <span>🎬 Video Nave Espacial</span>
+                        <small style="color:#94a3b8">VideoNave.mp4 (en loop)</small>
                     </button>
-                    <button class="preset-btn" data-bg="custom-url">
+                    <button class="preset-btn" data-bg="video-intro">
+                        <span>🎬 Video Intro</span>
+                        <small style="color:#94a3b8">intro.mp4 (en loop)</small>
+                    </button>
+                    <button class="preset-btn" data-bg="photo-gato-triste">
+                        <span>🐱 Gato Triste</span>
+                        <small style="color:#94a3b8">GatoTriste.jpeg</small>
+                    </button>
+                    <button class="preset-btn" data-bg="space-starfield">
+                        <span>🌌 Estrellas Profundas</span>
+                        <small style="color:#94a3b8">Gradiente cósmico</small>
+                    </button>
+                    <button class="preset-btn" data-bg="space-cyan-blue">
+                        <span>🌌 Nebulosa Cyan</span>
+                        <small style="color:#94a3b8">Gradiente celeste/zafiro</small>
+                    </button>
+                    <button class="preset-btn" data-bg="space-magenta-violet">
+                        <span>🌌 Nebulosa Magenta</span>
+                        <small style="color:#94a3b8">Gradiente fucsia/violeta</small>
+                    </button>
+                    <button class="preset-btn" data-bg="custom-url" style="grid-column: span 2;">
                         <span>🔗 URL Personalizada</span>
-                        <small style="color:#94a3b8">Ingresar link de imagen</small>
+                        <small style="color:#94a3b8">Ingresar link de imagen o video web</small>
                     </button>
                 </div>
+
 
                 <div class="control-group" style="margin-top: 10px;">
                     <div class="control-row">
@@ -1109,6 +1130,34 @@
     <script>
         // Preset Definitions
         const BACKGROUNDS = {
+            'bg-main': {
+                type: 'image',
+                url: '/assets/background.jpeg'
+            },
+            'bg-alternate': {
+                type: 'image',
+                url: '/assets/background.alternate.jpeg'
+            },
+            'bg-version1': {
+                type: 'image',
+                url: '/assets/background.1.jpeg'
+            },
+            'photo-couple-1': {
+                type: 'image',
+                url: '/assets/photo01.jpeg'
+            },
+            'video-nave': {
+                type: 'video',
+                url: '/assets/VideoNave.mp4'
+            },
+            'video-intro': {
+                type: 'video',
+                url: '/assets/intro.mp4'
+            },
+            'photo-gato-triste': {
+                type: 'image',
+                url: '/assets/GatoTriste.jpeg'
+            },
             'space-starfield': {
                 type: 'css',
                 bg: 'radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.12) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(247, 37, 133, 0.12) 0%, transparent 40%), linear-gradient(135deg, #030712 0%, #060913 50%, #020408 100%)'
@@ -1120,16 +1169,9 @@
             'space-magenta-violet': {
                 type: 'css',
                 bg: 'radial-gradient(ellipse at 80% 20%, rgba(247, 37, 133, 0.35) 0%, transparent 55%), radial-gradient(circle at 20% 80%, rgba(114, 9, 183, 0.5) 0%, transparent 55%), linear-gradient(150deg, #090212 0%, #150524 100%)'
-            },
-            'photo-couple-1': {
-                type: 'image',
-                url: '/assets/photo01.jpeg'
-            },
-            'photo-background': {
-                type: 'image',
-                url: '/assets/background.jpeg'
             }
         };
+
 
         const PALETTES = {
             // Festive Wedding Palettes
@@ -1240,6 +1282,8 @@
 
         // Apply Background
         function setBackground(key, customUrl = null) {
+            phoneBg.innerHTML = '';
+            phoneBg.style.background = '';
             if (customUrl) {
                 phoneBg.style.background = `url('${customUrl}') center/cover no-repeat`;
                 return;
@@ -1250,8 +1294,24 @@
                 phoneBg.style.background = config.bg;
             } else if (config.type === 'image') {
                 phoneBg.style.background = `url('${config.url}') center/cover no-repeat`;
+            } else if (config.type === 'video') {
+                const vid = document.createElement('video');
+                vid.src = config.url;
+                vid.autoplay = true;
+                vid.loop = true;
+                vid.muted = true;
+                vid.playsInline = true;
+                vid.style.width = '100%';
+                vid.style.height = '100%';
+                vid.style.objectFit = 'cover';
+                vid.style.position = 'absolute';
+                vid.style.top = '0';
+                vid.style.left = '0';
+                phoneBg.appendChild(vid);
+                vid.play().catch(() => {});
             }
         }
+
 
         // Apply Palette
         function setPalette(key) {
@@ -1455,9 +1515,10 @@
         });
 
         // Initialize default view
-        setBackground('space-starfield');
+        setBackground('bg-main');
         setPalette('stellar-champagne');
     </script>
+
 
 </body>
 </html>
