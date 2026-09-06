@@ -32,6 +32,10 @@
             --button-bg: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
             --button-text: #050b14;
             --bg-dim-opacity: 0.35;
+            --title-color: #ffffff;
+            --title-glow-color: 0, 0, 0;
+            --title-glow-blur: 16px;
+            --title-glow-opacity: 0.95;
         }
 
         * {
@@ -135,7 +139,6 @@
             flex-direction: column;
             gap: 24px;
         }
-
 
         .section-title {
             font-family: 'Syncopate', sans-serif;
@@ -330,7 +333,6 @@
             flex-shrink: 0;
         }
 
-
         /* Background Layer inside Phone */
         .phone-bg-layer {
             position: absolute;
@@ -412,19 +414,42 @@
             text-shadow: 0 2px 6px rgba(0,0,0,0.8);
         }
 
-        /* Slide Content Container */
+        /* Slide Content Container: Top Floating Title + Bottom Framed Box */
         .slide-content-area {
             position: relative;
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            justify-content: space-between;
             height: 100%;
-            overflow-y: auto;
+            overflow: hidden;
+            padding-top: 10px;
+            padding-bottom: 4px;
+        }
+
+        /* Top Unframed Title Area */
+        .slide-top-title-area {
+            text-align: center;
+            padding: 8px 10px 0 10px;
+            margin-bottom: auto;
+        }
+
+        .mock-floating-title {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            line-height: 1.18;
+            color: var(--title-color);
+            text-shadow: 0 0 var(--title-glow-blur) rgba(var(--title-glow-color), var(--title-glow-opacity)),
+                         0 2px 10px rgba(0, 0, 0, var(--title-glow-opacity)),
+                         0 0 calc(var(--title-glow-blur) * 1.8) rgba(var(--title-glow-color), calc(var(--title-glow-opacity) * 0.6));
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+            transition: text-shadow 0.2s, color 0.2s;
         }
 
         /* ==============================================================
-           THE CONFIGURED CONTAINER / CARD (Focus of this lab)
+           THE CONFIGURED CONTAINER / CARD (Anchored at bottom)
            ============================================================== */
         .test-container-box {
             background: rgba(var(--card-bg-color), var(--card-bg-opacity));
@@ -437,7 +462,20 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 var(--card-glow-size) rgba(var(--card-glow-color), var(--card-glow-opacity));
             padding: 16px;
             transition: all 0.25s ease;
+            margin-top: auto;
+            max-height: 70%;
+            overflow-y: auto;
         }
+
+        .test-container-box::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .test-container-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
 
         /* Container Variant Modifiers */
         .variant-gradient-border {
@@ -863,9 +901,76 @@
             </div>
 
 
+            <!-- Top Title & Halo / Glow Controls -->
+            <div>
+                <div class="section-title">3. Título Superior & Halo / Glow</div>
+                <div class="grid-presets">
+                    <button class="preset-btn active" data-title-glow="dark-halo">
+                        <span>🌑 Halo Oscuro</span>
+                        <small style="color:#94a3b8">Sombra negra difusa alta</small>
+                    </button>
+                    <button class="preset-btn" data-title-glow="gold-glow">
+                        <span>✨ Resplandor Oro</span>
+                        <small style="color:#ffd166">Aura cálida champagne</small>
+                    </button>
+                    <button class="preset-btn" data-title-glow="cyan-glow">
+                        <span>🌌 Resplandor Cyan</span>
+                        <small style="color:#00f2fe">Aura cósmica neón</small>
+                    </button>
+                    <button class="preset-btn" data-title-glow="magenta-glow">
+                        <span>🌸 Resplandor Magenta</span>
+                        <small style="color:#f72585">Aura fucsia fiesta</small>
+                    </button>
+                    <button class="preset-btn" data-title-glow="soft-halo">
+                        <span>🌫️ Halo Sutil</span>
+                        <small style="color:#94a3b8">Desenfoque moderado</small>
+                    </button>
+                    <button class="preset-btn" data-title-glow="no-glow">
+                        <span>🚫 Sin Glow</span>
+                        <small style="color:#94a3b8">Texto limpio directo</small>
+                    </button>
+                </div>
+
+                <div class="control-group" style="margin-top: 12px;">
+                    <div class="control-row">
+                        <span class="control-label">Desenfoque / Blur de Halo:</span>
+                        <span class="control-value" id="valTitleBlur">16px</span>
+                    </div>
+                    <input type="range" id="inputTitleBlur" min="0" max="40" value="16">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Opacidad del Halo:</span>
+                        <span class="control-value" id="valTitleGlowOpacity">95%</span>
+                    </div>
+                    <input type="range" id="inputTitleGlowOpacity" min="0" max="100" value="95">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Color de Texto del Título:</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="pickerTitleColor" value="#ffffff">
+                            <span class="control-value" id="valTitleColor">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Color de Halo / Glow:</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="pickerTitleGlowColor" value="#000000">
+                            <span class="control-value" id="valTitleGlowColor">#000000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Container / Card Style Modifiers -->
             <div>
-                <div class="section-title">3. Estilo de Contenedores & Bordes</div>
+                <div class="section-title">4. Estilo de Contenedores & Bordes</div>
                 <div class="grid-presets">
                     <button class="preset-btn active" data-card-style="glass">
                         <span>Glassmorphism Profundo</span>
@@ -888,7 +993,7 @@
 
             <!-- Fine-Tuning Sliders -->
             <div>
-                <div class="section-title">4. Ajuste Preciso de Legibilidad</div>
+                <div class="section-title">5. Ajuste Preciso de Contenedor</div>
                 
                 <div class="control-group">
                     <div class="control-row">
@@ -933,7 +1038,7 @@
 
             <!-- Colors Customizer -->
             <div>
-                <div class="section-title">5. Colores Personalizados</div>
+                <div class="section-title">6. Colores Personalizados</div>
                 
                 <div class="control-group">
                     <div class="control-row">
@@ -1002,24 +1107,30 @@
                 </div>
 
                 <!-- SLIDE VIEW 1: PORTADA -->
-                <div class="slide-content-area" id="viewPortada" style="justify-content: center;">
-                    <div class="test-container-box" id="boxPortada">
+                <div class="slide-content-area" id="viewPortada">
+                    <div class="slide-top-title-area">
                         <span class="mock-tag">NOS CASAMOS</span>
-                        <h2 class="mock-title">CELIA & ALFREDO</h2>
+                        <h1 class="mock-floating-title">CELIA & ALFREDO</h1>
+                    </div>
+
+                    <div class="test-container-box" id="boxPortada">
                         <p class="mock-desc">19 de Marzo de 2027 • Queremos compartir este viaje tan especial junto a vos.</p>
                         
-                        <div style="background: rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px;">
-                            <div style="font-size:0.75rem; color:var(--text-accent); font-weight:700;">INVITACIÓN EXCLUSIVA</div>
-                            <div style="font-size:0.95rem; font-weight:700; color:#fff; margin-top:2px;">Familia Pérez</div>
+                        <div style="background: rgba(255,255,255,0.06); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 4px;">
+                            <div style="font-size:0.75rem; color:var(--text-accent); font-weight:700; letter-spacing:1px;">INVITACIÓN EXCLUSIVA</div>
+                            <div style="font-size:1.05rem; font-weight:700; color:#fff; margin-top:3px;">Familia Pérez</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- SLIDE VIEW 2: FECHA -->
-                <div class="slide-content-area" id="viewFecha" style="display:none; justify-content: center;">
-                    <div class="test-container-box" id="boxFecha">
+                <div class="slide-content-area" id="viewFecha" style="display:none;">
+                    <div class="slide-top-title-area">
                         <span class="mock-tag">LA FECHA</span>
-                        <h2 class="mock-title">VIERNES 19</h2>
+                        <h1 class="mock-floating-title">VIERNES 19</h1>
+                    </div>
+
+                    <div class="test-container-box" id="boxFecha">
                         <p class="mock-desc">Marzo de 2027 — Mendoza, Argentina</p>
                         
                         <div class="countdown-grid">
@@ -1048,13 +1159,16 @@
                 </div>
 
                 <!-- SLIDE VIEW 3: LUGAR -->
-                <div class="slide-content-area" id="viewLugar" style="display:none; justify-content: center;">
-                    <div class="test-container-box" id="boxLugar">
+                <div class="slide-content-area" id="viewLugar" style="display:none;">
+                    <div class="slide-top-title-area">
                         <span class="mock-tag">DÓNDE</span>
-                        <h2 class="mock-title">EL LUGAR</h2>
+                        <h1 class="mock-floating-title">EL LUGAR</h1>
+                    </div>
+
+                    <div class="test-container-box" id="boxLugar">
                         <p class="mock-desc">Celebraremos tanto la ceremonia como la fiesta en el mismo lugar.</p>
                         
-                        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); margin-bottom: 16px;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); margin-bottom: 14px;">
                             <div class="venue-title">Luna India</div>
                             <div class="venue-address">Castro Barros, M5513, Mendoza</div>
                             <div class="venue-badge">🚗 Estacionamiento privado disponible</div>
@@ -1067,11 +1181,13 @@
                 </div>
 
                 <!-- SLIDE VIEW 4: RSVP -->
-                <div class="slide-content-area" id="viewRsvp" style="display:none; justify-content: flex-start;">
-                    <div class="test-container-box" id="boxRsvp">
-                        <span class="mock-tag">RSVP</span>
-                        <h2 class="mock-title" style="font-size:1.35rem;">CONFIRMACIÓN DE GRUPO</h2>
+                <div class="slide-content-area" id="viewRsvp" style="display:none;">
+                    <div class="slide-top-title-area">
+                        <span class="mock-tag">CONFIRMACIÓN</span>
+                        <h1 class="mock-floating-title" style="font-size:1.45rem;">¿VENÍS A FESTEJAR?</h1>
+                    </div>
 
+                    <div class="test-container-box" id="boxRsvp">
                         <p class="mock-desc" style="font-size:0.8rem; margin-bottom:10px;">Confirmá asistencia y menú de tus acompañantes:</p>
 
                         <!-- Guest 1 -->
@@ -1242,13 +1358,51 @@
             }
         };
 
+        const TITLE_GLOW_PRESETS = {
+            'dark-halo': {
+                blur: 16,
+                opacity: 95,
+                glowColor: '#000000',
+                titleColor: '#ffffff'
+            },
+            'gold-glow': {
+                blur: 18,
+                opacity: 80,
+                glowColor: '#ffd166',
+                titleColor: '#ffffff'
+            },
+            'cyan-glow': {
+                blur: 18,
+                opacity: 80,
+                glowColor: '#00f2fe',
+                titleColor: '#ffffff'
+            },
+            'magenta-glow': {
+                blur: 18,
+                opacity: 80,
+                glowColor: '#f72585',
+                titleColor: '#ffffff'
+            },
+            'soft-halo': {
+                blur: 8,
+                opacity: 70,
+                glowColor: '#000000',
+                titleColor: '#ffffff'
+            },
+            'no-glow': {
+                blur: 0,
+                opacity: 0,
+                glowColor: '#000000',
+                titleColor: '#ffffff'
+            }
+        };
 
         // DOM Elements
         const phoneBg = document.getElementById('phoneBg');
         const phoneDimmer = document.getElementById('phoneDimmer');
         const root = document.documentElement;
 
-        // Sliders & Values
+        // Sliders & Values - Containers
         const inputDimmer = document.getElementById('inputDimmer');
         const valDimmer = document.getElementById('valDimmer');
         const inputCardOpacity = document.getElementById('inputCardOpacity');
@@ -1262,7 +1416,17 @@
         const inputGlow = document.getElementById('inputGlow');
         const valGlow = document.getElementById('valGlow');
 
-        // Color Pickers
+        // Sliders & Values - Title & Glow
+        const inputTitleBlur = document.getElementById('inputTitleBlur');
+        const valTitleBlur = document.getElementById('valTitleBlur');
+        const inputTitleGlowOpacity = document.getElementById('inputTitleGlowOpacity');
+        const valTitleGlowOpacity = document.getElementById('valTitleGlowOpacity');
+        const pickerTitleColor = document.getElementById('pickerTitleColor');
+        const valTitleColor = document.getElementById('valTitleColor');
+        const pickerTitleGlowColor = document.getElementById('pickerTitleGlowColor');
+        const valTitleGlowColor = document.getElementById('valTitleGlowColor');
+
+        // Color Pickers - Container & Accents
         const pickerAccent1 = document.getElementById('pickerAccent1');
         const pickerAccent2 = document.getElementById('pickerAccent2');
         const pickerCardBg = document.getElementById('pickerCardBg');
@@ -1445,6 +1609,61 @@
             root.style.setProperty('--card-bg-color', hexToRgb(hex));
         });
 
+        // Title Glow function & events
+        function setTitleGlow(key) {
+            const preset = TITLE_GLOW_PRESETS[key];
+            if (!preset) return;
+
+            inputTitleBlur.value = preset.blur;
+            valTitleBlur.textContent = `${preset.blur}px`;
+            inputTitleGlowOpacity.value = preset.opacity;
+            valTitleGlowOpacity.textContent = `${preset.opacity}%`;
+            pickerTitleGlowColor.value = preset.glowColor;
+            valTitleGlowColor.textContent = preset.glowColor;
+            pickerTitleColor.value = preset.titleColor;
+            valTitleColor.textContent = preset.titleColor;
+
+            root.style.setProperty('--title-glow-blur', `${preset.blur}px`);
+            root.style.setProperty('--title-glow-opacity', (preset.opacity / 100).toFixed(2));
+            root.style.setProperty('--title-glow-color', hexToRgb(preset.glowColor));
+            root.style.setProperty('--title-color', preset.titleColor);
+        }
+
+        document.querySelectorAll('[data-title-glow]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setTitleGlow(btn.getAttribute('data-title-glow'));
+            });
+        });
+
+        inputTitleBlur.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valTitleBlur.textContent = `${val}px`;
+            root.style.setProperty('--title-glow-blur', `${val}px`);
+            document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+        });
+
+        inputTitleGlowOpacity.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valTitleGlowOpacity.textContent = `${val}%`;
+            root.style.setProperty('--title-glow-opacity', (val / 100).toFixed(2));
+            document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+        });
+
+        pickerTitleColor.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valTitleColor.textContent = val;
+            root.style.setProperty('--title-color', val);
+        });
+
+        pickerTitleGlowColor.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valTitleGlowColor.textContent = val;
+            root.style.setProperty('--title-glow-color', hexToRgb(val));
+            document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+        });
+
         // Slide tabs switcher
         const views = {
             portada: document.getElementById('viewPortada'),
@@ -1472,12 +1691,21 @@
         const btnCopyClipboard = document.getElementById('btnCopyClipboard');
 
         btnExportCSS.addEventListener('click', () => {
+            const titleGlowOp = (inputTitleGlowOpacity.value / 100).toFixed(2);
+            const titleGlowRgb = hexToRgb(pickerTitleGlowColor.value);
+            const titleBlur = `${inputTitleBlur.value}px`;
             const code = `/* 🎨 Paleta y Contenedores generados en Laboratorio */
 :root {
   --primary-accent: ${pickerAccent1.value};
   --secondary-accent: ${pickerAccent2.value};
   --text-main: #ffffff;
   --text-muted: #94a3b8;
+
+  /* Título superior flotante con halo/glow de lectura */
+  --title-color: ${pickerTitleColor.value};
+  --title-glow-shadow: 0 0 ${titleBlur} rgba(${titleGlowRgb}, ${titleGlowOp}), 0 2px 8px rgba(0, 0, 0, ${titleGlowOp}), 0 0 calc(${titleBlur} * 1.8) rgba(${titleGlowRgb}, ${(titleGlowOp * 0.6).toFixed(2)});
+
+  /* Contenedor inferior (Card) */
   --card-bg: rgba(${hexToRgb(pickerCardBg.value)}, ${(inputCardOpacity.value / 100).toFixed(2)});
   --card-border: ${inputBorderWidth.value}px solid rgba(${hexToRgb(pickerAccent1.value)}, ${(inputBorderOpacity.value / 100).toFixed(2)});
   --card-radius: 20px;
@@ -1486,7 +1714,14 @@
   --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
 }
 
-/* Regla para contenedores de texto en slides con fondo */
+/* Regla para título superior sin marco */
+.story-slide .slide-top-title-area h1,
+.story-slide .mock-floating-title {
+  color: var(--title-color);
+  text-shadow: var(--title-glow-shadow);
+}
+
+/* Regla para contenedor inferior de contenido y acciones */
 .story-slide .slide-card,
 .story-slide .test-container-box {
   background: var(--card-bg);
@@ -1496,6 +1731,7 @@
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
   padding: 16px 20px;
+  margin-top: auto;
 }`;
             codeExport.textContent = code;
             modalCSS.classList.add('active');
@@ -1517,6 +1753,7 @@
         // Initialize default view
         setBackground('bg-main');
         setPalette('stellar-champagne');
+        setTitleGlow('dark-halo');
     </script>
 
 
