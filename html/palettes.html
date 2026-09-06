@@ -13,30 +13,35 @@
     <style>
         :root {
             /* Live Dynamic Variables */
-            --bg-accent-1: #00f2fe;
-            --bg-accent-2: #f72585;
+            --bg-accent-1: #0088ff;
+            --bg-accent-2: #38bdf8;
             --card-bg-color: 10, 15, 25;
-            --card-bg-opacity: 0.72;
-            --card-border-color: 0, 242, 254;
-            --card-border-opacity: 0.35;
-            --card-border-width: 1px;
+            --card-bg-opacity: 0;
+            --card-border-color: 0, 136, 255;
+            --card-border-opacity: 0;
+            --card-border-width: 0px;
             --card-border-radius: 20px;
-            --card-blur: 16px;
-            --card-glow-color: 0, 242, 254;
-            --card-glow-size: 14px;
-            --card-glow-opacity: 0.22;
+            --card-blur: 0px;
+            --card-glow-color: 0, 136, 255;
+            --card-glow-size: 0px;
+            --card-glow-opacity: 0;
             --text-primary: #ffffff;
-            --text-muted: #94a3b8;
-            --text-accent: #00f2fe;
-            --text-accent-2: #f72585;
-            --text-accent-2-rgb: 247, 37, 133;
-            --button-bg: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-            --button-text: #050b14;
+            --text-muted: #e2e8f0;
+            --text-accent: #0088ff;
+            --text-accent-2: #38bdf8;
+            --text-accent-2-rgb: 56, 189, 248;
+            --button-bg: linear-gradient(135deg, #0088ff 0%, #00d4ff 100%);
+            --button-text: #ffffff;
             --bg-dim-opacity: 0.35;
-            --title-color: #ffffff;
-            --title-glow-color: 0, 0, 0;
-            --title-glow-blur: 16px;
-            --title-glow-opacity: 0.95;
+
+            /* Texto & Glow Azul (Sin recuadros) */
+            --text-color: #ffffff;
+            --glow-color: 0, 136, 255;
+            --glow-blur: 16px;
+            --glow-opacity: 0.85;
+            --glow-text-shadow: 0 0 var(--glow-blur) rgba(var(--glow-color), var(--glow-opacity)),
+                                0 2px 10px rgba(0, 0, 0, var(--glow-opacity)),
+                                0 0 calc(var(--glow-blur) * 1.8) rgba(var(--glow-color), calc(var(--glow-opacity) * 0.6));
         }
 
         * {
@@ -83,14 +88,13 @@
         }
 
         .lab-title .badge {
-            background: rgba(0, 242, 254, 0.15);
-            border: 1px solid rgba(0, 242, 254, 0.4);
-            color: #00f2fe;
+            background: rgba(0, 136, 255, 0.18);
+            border: 1px solid rgba(0, 136, 255, 0.5);
+            color: #38bdf8;
             font-size: 0.72rem;
             padding: 3px 8px;
             border-radius: 20px;
             font-weight: 600;
-            text-transform: uppercase;
         }
 
         .header-actions {
@@ -146,8 +150,7 @@
             font-size: 0.76rem;
             font-weight: 700;
             color: #94a3b8;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -428,7 +431,7 @@
             padding-bottom: 4px;
         }
 
-        /* Top Unframed Title Area */
+        /* Top Floating Title Area */
         .slide-top-title-area {
             text-align: center;
             padding: 8px 10px 0 10px;
@@ -440,28 +443,24 @@
             font-size: 1.65rem;
             font-weight: 700;
             line-height: 1.18;
-            color: var(--title-color);
-            text-shadow: 0 0 var(--title-glow-blur) rgba(var(--title-glow-color), var(--title-glow-opacity)),
-                         0 2px 10px rgba(0, 0, 0, var(--title-glow-opacity)),
-                         0 0 calc(var(--title-glow-blur) * 1.8) rgba(var(--title-glow-color), calc(var(--title-glow-opacity) * 0.6));
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             margin-top: 4px;
             letter-spacing: 0.5px;
             transition: text-shadow 0.2s, color 0.2s;
         }
 
         /* ==============================================================
-           THE CONFIGURED CONTAINER / CARD (Anchored at bottom)
+           SIN RECUADROS: Contenedor Transparente Flotante (Default)
            ============================================================== */
         .test-container-box {
-            background: rgba(var(--card-bg-color), var(--card-bg-opacity));
-            backdrop-filter: blur(var(--card-blur));
-            -webkit-backdrop-filter: blur(var(--card-blur));
-            border-width: var(--card-border-width);
-            border-style: solid;
-            border-color: rgba(var(--card-border-color), var(--card-border-opacity));
-            border-radius: var(--card-border-radius);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 var(--card-glow-size) rgba(var(--card-glow-color), var(--card-glow-opacity));
-            padding: 16px;
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 8px 4px;
             transition: all 0.25s ease;
             margin-top: auto;
             max-height: 70%;
@@ -477,30 +476,45 @@
             border-radius: 4px;
         }
 
+        /* Modos Opcionales de Contenedores */
+        .variant-glass {
+            background: rgba(var(--card-bg-color), 0.72) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(var(--card-border-color), 0.35) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+            padding: 16px !important;
+        }
 
-        /* Container Variant Modifiers */
+        .variant-neon {
+            background: rgba(var(--card-bg-color), 0.75) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 2px solid rgba(var(--glow-color), 0.8) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 0 20px rgba(var(--glow-color), 0.5), 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+            padding: 16px !important;
+        }
+
         .variant-gradient-border {
-            border: 1px solid transparent !important;
-            background: linear-gradient(rgba(var(--card-bg-color), var(--card-bg-opacity)), rgba(var(--card-bg-color), var(--card-bg-opacity))) padding-box,
+            border: 1.5px solid transparent !important;
+            border-radius: 20px !important;
+            background: linear-gradient(rgba(10, 15, 25, 0.8), rgba(10, 15, 25, 0.8)) padding-box,
                         linear-gradient(135deg, var(--text-accent), var(--text-accent-2)) border-box !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            padding: 16px !important;
         }
 
-        .variant-scrim-minimal {
-            background: transparent !important;
-            backdrop-filter: none !important;
-            border: none !important;
-            box-shadow: none !important;
-            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);
-        }
-
-        /* Slide Element Typography & Mockup Items */
+        /* Typography & Mockup Items con Glow Azul */
         .mock-tag {
             font-family: 'Syncopate', sans-serif;
-            font-size: 0.72rem;
+            font-size: 0.76rem;
             font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--text-accent);
-            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             margin-bottom: 4px;
             display: inline-block;
         }
@@ -510,8 +524,8 @@
             font-size: 1.65rem;
             font-weight: 700;
             line-height: 1.15;
-            color: var(--text-primary);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             margin-bottom: 6px;
         }
 
@@ -520,37 +534,39 @@
             font-weight: 700;
         }
 
-
         .mock-desc {
             font-family: 'Syncopate', sans-serif;
             font-weight: 700;
-            font-size: 0.76rem;
+            font-size: 0.78rem;
             letter-spacing: 0.5px;
-            color: var(--text-muted);
+            color: var(--text-color);
             line-height: 1.45;
             margin-bottom: 12px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+            text-shadow: var(--glow-text-shadow);
         }
 
-        /* Location Card Mock */
+        /* Location Mock */
         .venue-title {
             font-family: 'Syncopate', sans-serif;
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            color: #ffffff;
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             margin-bottom: 4px;
         }
 
         .venue-address {
-            font-size: 0.82rem;
-            color: var(--text-muted);
+            font-size: 0.85rem;
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             margin-bottom: 8px;
         }
 
         .venue-badge {
             font-family: 'Syncopate', sans-serif;
-            font-size: 0.68rem;
-            color: var(--text-accent-2);
+            font-size: 0.7rem;
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             font-weight: 700;
             letter-spacing: 0.5px;
         }
@@ -564,27 +580,29 @@
         }
 
         .countdown-box {
-            background: rgba(var(--card-bg-color), 0.6);
-            border: 1px solid rgba(var(--card-border-color), 0.25);
-            border-radius: 12px;
-            padding: 10px 4px;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 8px 4px;
             text-align: center;
         }
 
         .countdown-num {
             font-family: monospace;
-            font-size: 1.4rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            color: var(--text-accent);
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
         }
 
         .countdown-lbl {
             font-family: 'Syncopate', sans-serif;
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             font-weight: 700;
-            color: var(--text-accent-2);
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
             margin-top: 2px;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
         }
 
         /* Action Buttons */
@@ -596,29 +614,32 @@
             width: 100%;
             padding: 13px 18px;
             border-radius: 14px;
-            background: var(--button-bg);
-            color: var(--button-text);
+            background: rgba(var(--glow-color), 0.28);
+            border: 1.5px solid rgba(var(--glow-color), 0.85);
+            color: #ffffff;
             font-family: 'Syncopate', sans-serif;
             font-size: 0.82rem;
             font-weight: 700;
             letter-spacing: 0.5px;
-            border: none;
             cursor: pointer;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 15px rgba(var(--card-glow-color), 0.35);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 16px rgba(var(--glow-color), 0.5);
+            text-shadow: 0 0 10px rgba(var(--glow-color), 0.8);
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
         }
 
         .mock-action-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6), 0 0 20px rgba(var(--card-glow-color), 0.55);
+            background: rgba(var(--glow-color), 0.42);
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6), 0 0 24px rgba(var(--glow-color), 0.7);
         }
 
         /* RSVP Card Mock */
         .mock-rsvp-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
-            padding: 10px 12px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 0;
+            padding: 10px 0;
             margin-bottom: 8px;
         }
 
@@ -632,9 +653,10 @@
         .mock-guest-name {
             font-family: 'Syncopate', sans-serif;
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             letter-spacing: 0.5px;
-            color: #fff;
+            color: var(--text-color);
+            text-shadow: var(--glow-text-shadow);
         }
 
         .mock-status-pill {
@@ -911,92 +933,92 @@
             </div>
 
 
-            <!-- Top Title & Halo / Glow Controls -->
+            <!-- Text & Glow Controls (Sin recuadros) -->
             <div>
-                <div class="section-title">3. Título Superior & Halo / Glow</div>
+                <div class="section-title">3. ✨ Texto & Glow Azul (Sin recuadros)</div>
                 <div class="grid-presets">
-                    <button class="preset-btn active" data-title-glow="dark-halo">
+                    <button class="preset-btn active" data-text-glow="electric-blue">
+                        <span>⚡ Azul Eléctrico</span>
+                        <small style="color:#0088ff">#0088ff (Defecto)</small>
+                    </button>
+                    <button class="preset-btn" data-text-glow="zafiro-blue">
+                        <span>🌌 Azul Zafiro</span>
+                        <small style="color:#0055ff">#0055ff Intenso</small>
+                    </button>
+                    <button class="preset-btn" data-text-glow="cyan-glow">
+                        <span>💎 Azul Neón / Cian</span>
+                        <small style="color:#00d4ff">#00d4ff Brillante</small>
+                    </button>
+                    <button class="preset-btn" data-text-glow="ice-blue">
+                        <span>❄️ Azul Celeste</span>
+                        <small style="color:#38bdf8">#38bdf8 Glaciar</small>
+                    </button>
+                    <button class="preset-btn" data-text-glow="dark-halo">
                         <span>🌑 Halo Oscuro</span>
-                        <small style="color:#94a3b8">Sombra negra difusa alta</small>
+                        <small style="color:#94a3b8">#000000 Contraste</small>
                     </button>
-                    <button class="preset-btn" data-title-glow="gold-glow">
-                        <span>✨ Resplandor Oro</span>
-                        <small style="color:#ffd166">Aura cálida champagne</small>
-                    </button>
-                    <button class="preset-btn" data-title-glow="cyan-glow">
-                        <span>🌌 Resplandor Cyan</span>
-                        <small style="color:#00f2fe">Aura cósmica neón</small>
-                    </button>
-                    <button class="preset-btn" data-title-glow="magenta-glow">
-                        <span>🌸 Resplandor Magenta</span>
-                        <small style="color:#f72585">Aura fucsia fiesta</small>
-                    </button>
-                    <button class="preset-btn" data-title-glow="soft-halo">
-                        <span>🌫️ Halo Sutil</span>
-                        <small style="color:#94a3b8">Desenfoque moderado</small>
-                    </button>
-                    <button class="preset-btn" data-title-glow="no-glow">
+                    <button class="preset-btn" data-text-glow="no-glow">
                         <span>🚫 Sin Glow</span>
-                        <small style="color:#94a3b8">Texto limpio directo</small>
+                        <small style="color:#94a3b8">Texto plano directo</small>
                     </button>
                 </div>
 
-                <div class="control-group" style="margin-top: 12px;">
+                <div class="control-group" style="margin-top: 14px;">
                     <div class="control-row">
-                        <span class="control-label">Desenfoque / Blur de Halo:</span>
-                        <span class="control-value" id="valTitleBlur">16px</span>
-                    </div>
-                    <input type="range" id="inputTitleBlur" min="0" max="40" value="16">
-                </div>
-
-                <div class="control-group">
-                    <div class="control-row">
-                        <span class="control-label">Opacidad del Halo:</span>
-                        <span class="control-value" id="valTitleGlowOpacity">95%</span>
-                    </div>
-                    <input type="range" id="inputTitleGlowOpacity" min="0" max="100" value="95">
-                </div>
-
-                <div class="control-group">
-                    <div class="control-row">
-                        <span class="control-label">Color de Texto del Título:</span>
+                        <span class="control-label">Color de Texto:</span>
                         <div class="color-input-wrapper">
-                            <input type="color" id="pickerTitleColor" value="#ffffff">
-                            <span class="control-value" id="valTitleColor">#ffffff</span>
+                            <input type="color" id="pickerTextColor" value="#ffffff">
+                            <span class="control-value" id="valTextColor">#ffffff</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <div class="control-row">
-                        <span class="control-label">Color de Halo / Glow:</span>
+                        <span class="control-label">Color de Glow:</span>
                         <div class="color-input-wrapper">
-                            <input type="color" id="pickerTitleGlowColor" value="#000000">
-                            <span class="control-value" id="valTitleGlowColor">#000000</span>
+                            <input type="color" id="pickerGlowColor" value="#0088ff">
+                            <span class="control-value" id="valGlowColor">#0088ff</span>
                         </div>
                     </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Píxeles del Glow (Blur):</span>
+                        <span class="control-value" id="valGlowBlur">16px</span>
+                    </div>
+                    <input type="range" id="inputGlowBlur" min="0" max="50" value="16">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Opacidad del Glow:</span>
+                        <span class="control-value" id="valGlowOpacity">85%</span>
+                    </div>
+                    <input type="range" id="inputGlowOpacity" min="0" max="100" value="85">
                 </div>
             </div>
 
-            <!-- Container / Card Style Modifiers -->
+            <!-- Modo Contenedor / Recuadros -->
             <div>
-                <div class="section-title">4. Estilo de Contenedores & Bordes</div>
+                <div class="section-title">4. Modo Contenedor / Recuadros</div>
                 <div class="grid-presets">
-                    <button class="preset-btn active" data-card-style="glass">
-                        <span>Glassmorphism Profundo</span>
-                        <small style="color:#94a3b8">Blur alto + borde fino sutil</small>
+                    <button class="preset-btn active" data-card-style="sin-recuadros">
+                        <span>🫧 Sin Recuadros</span>
+                        <small style="color:#0088ff">Texto flotante (Activo)</small>
+                    </button>
+                    <button class="preset-btn" data-card-style="glass">
+                        <span>🪟 Glassmorphism</span>
+                        <small style="color:#94a3b8">Fondo traslúcido</small>
                     </button>
                     <button class="preset-btn" data-card-style="neon-glow">
-                        <span>Borde Neón / Glow</span>
-                        <small style="color:#94a3b8">Resplandor cyan de borde</small>
+                        <span>⚡ Borde Neón</span>
+                        <small style="color:#94a3b8">Borde iluminado</small>
                     </button>
                     <button class="preset-btn" data-card-style="gradient-border">
-                        <span>Borde en Gradiente</span>
-                        <small style="color:#94a3b8">Línea cyan a magenta</small>
-                    </button>
-                    <button class="preset-btn" data-card-style="scrim-minimal">
-                        <span>Sin Caja (Sólo Sombra)</span>
-                        <small style="color:#94a3b8">Texto con halo difuso oscuro</small>
+                        <span>🌈 Borde Gradiente</span>
+                        <small style="color:#94a3b8">Línea bicolor</small>
                     </button>
                 </div>
             </div>
@@ -1119,16 +1141,16 @@
                 <!-- SLIDE VIEW 1: PORTADA -->
                 <div class="slide-content-area" id="viewPortada">
                     <div class="slide-top-title-area">
-                        <span class="mock-tag">NOS CASAMOS</span>
-                        <h1 class="mock-floating-title">CELIA & ALFREDO</h1>
+                        <span class="mock-tag">Nos casamos</span>
+                        <h1 class="mock-floating-title">Celia & Alfredo</h1>
                     </div>
 
                     <div class="test-container-box" id="boxPortada">
                         <p class="mock-desc">19 de Marzo de 2027 • Queremos compartir este viaje tan especial junto a vos.</p>
                         
-                        <div style="background: rgba(255,255,255,0.06); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(var(--text-accent-2-rgb), 0.35); margin-top: 4px;">
-                            <div style="font-family: 'Syncopate', sans-serif; font-size:0.68rem; color:var(--text-accent-2); font-weight:700; letter-spacing:1.5px;">INVITACIÓN EXCLUSIVA</div>
-                            <div style="font-family: 'Syncopate', sans-serif; font-size:0.95rem; font-weight:700; color:#fff; margin-top:4px; letter-spacing:0.5px;">FAMILIA PÉREZ</div>
+                        <div style="padding: 10px 0; margin-top: 4px;">
+                            <div style="font-family: 'Syncopate', sans-serif; font-size:0.72rem; color:var(--text-color); text-shadow:var(--glow-text-shadow); font-weight:700; letter-spacing:1.2px;">Invitación exclusiva</div>
+                            <div style="font-family: 'Syncopate', sans-serif; font-size:1.15rem; font-weight:700; color:var(--text-color); text-shadow:var(--glow-text-shadow); margin-top:4px; letter-spacing:0.5px;">Familia Pérez</div>
                         </div>
                     </div>
                 </div>
@@ -1136,8 +1158,8 @@
                 <!-- SLIDE VIEW 2: FECHA -->
                 <div class="slide-content-area" id="viewFecha" style="display:none;">
                     <div class="slide-top-title-area">
-                        <span class="mock-tag">LA FECHA</span>
-                        <h1 class="mock-floating-title">VIERNES 19</h1>
+                        <span class="mock-tag">La fecha</span>
+                        <h1 class="mock-floating-title">Viernes 19</h1>
                     </div>
 
                     <div class="test-container-box" id="boxFecha">
@@ -1146,19 +1168,19 @@
                         <div class="countdown-grid">
                             <div class="countdown-box">
                                 <div class="countdown-num">198</div>
-                                <div class="countdown-lbl">DÍAS</div>
+                                <div class="countdown-lbl">Días</div>
                             </div>
                             <div class="countdown-box">
                                 <div class="countdown-num">14</div>
-                                <div class="countdown-lbl">HS</div>
+                                <div class="countdown-lbl">Hs</div>
                             </div>
                             <div class="countdown-box">
                                 <div class="countdown-num">32</div>
-                                <div class="countdown-lbl">MIN</div>
+                                <div class="countdown-lbl">Min</div>
                             </div>
                             <div class="countdown-box">
                                 <div class="countdown-num">09</div>
-                                <div class="countdown-lbl">SEG</div>
+                                <div class="countdown-lbl">Seg</div>
                             </div>
                         </div>
 
@@ -1171,14 +1193,14 @@
                 <!-- SLIDE VIEW 3: LUGAR -->
                 <div class="slide-content-area" id="viewLugar" style="display:none;">
                     <div class="slide-top-title-area">
-                        <span class="mock-tag">DÓNDE</span>
-                        <h1 class="mock-floating-title">EL LUGAR</h1>
+                        <span class="mock-tag">El lugar</span>
+                        <h1 class="mock-floating-title">Luna India</h1>
                     </div>
 
                     <div class="test-container-box" id="boxLugar">
                         <p class="mock-desc">Celebraremos tanto la ceremonia como la fiesta en el mismo lugar.</p>
                         
-                        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 14px; border: 1px solid rgba(var(--text-accent-2-rgb), 0.3); margin-bottom: 14px;">
+                        <div style="padding: 10px 0; margin-bottom: 14px;">
                             <div class="venue-title">Luna India</div>
                             <div class="venue-address">Castro Barros, M5513, Mendoza</div>
                             <div class="venue-badge">🚗 Estacionamiento privado disponible</div>
@@ -1193,8 +1215,8 @@
                 <!-- SLIDE VIEW 4: RSVP -->
                 <div class="slide-content-area" id="viewRsvp" style="display:none;">
                     <div class="slide-top-title-area">
-                        <span class="mock-tag">CONFIRMACIÓN</span>
-                        <h1 class="mock-floating-title" style="font-size:1.45rem;">¿VENÍS A FESTEJAR?</h1>
+                        <span class="mock-tag">Confirmación</span>
+                        <h1 class="mock-floating-title" style="font-size:1.45rem;">¿Venís a festejar?</h1>
                     </div>
 
                     <div class="test-container-box" id="boxRsvp">
@@ -1226,7 +1248,7 @@
                             </div>
                         </div>
 
-                        <div style="font-size:0.75rem; color:#2ecc71; text-align:center; margin-top:8px; font-weight:600;">
+                        <div style="font-size:0.75rem; color:#2ecc71; text-align:center; margin-top:8px; font-weight:600; text-shadow: 0 1px 4px rgba(0,0,0,0.8);">
                             ✓ Cambios guardados automáticamente
                         </div>
                     </div>
@@ -1368,42 +1390,42 @@
             }
         };
 
-        const TITLE_GLOW_PRESETS = {
-            'dark-halo': {
+        const TEXT_GLOW_PRESETS = {
+            'electric-blue': {
+                textColor: '#ffffff',
+                glowColor: '#0088ff',
                 blur: 16,
-                opacity: 95,
-                glowColor: '#000000',
-                titleColor: '#ffffff'
+                opacity: 85
             },
-            'gold-glow': {
+            'zafiro-blue': {
+                textColor: '#ffffff',
+                glowColor: '#0055ff',
                 blur: 18,
-                opacity: 80,
-                glowColor: '#ffd166',
-                titleColor: '#ffffff'
+                opacity: 90
             },
             'cyan-glow': {
-                blur: 18,
-                opacity: 80,
-                glowColor: '#00f2fe',
-                titleColor: '#ffffff'
+                textColor: '#ffffff',
+                glowColor: '#00d4ff',
+                blur: 16,
+                opacity: 80
             },
-            'magenta-glow': {
-                blur: 18,
-                opacity: 80,
-                glowColor: '#f72585',
-                titleColor: '#ffffff'
+            'ice-blue': {
+                textColor: '#ffffff',
+                glowColor: '#38bdf8',
+                blur: 14,
+                opacity: 85
             },
-            'soft-halo': {
-                blur: 8,
-                opacity: 70,
+            'dark-halo': {
+                textColor: '#ffffff',
                 glowColor: '#000000',
-                titleColor: '#ffffff'
+                blur: 16,
+                opacity: 95
             },
             'no-glow': {
-                blur: 0,
-                opacity: 0,
+                textColor: '#ffffff',
                 glowColor: '#000000',
-                titleColor: '#ffffff'
+                blur: 0,
+                opacity: 0
             }
         };
 
@@ -1426,15 +1448,15 @@
         const inputGlow = document.getElementById('inputGlow');
         const valGlow = document.getElementById('valGlow');
 
-        // Sliders & Values - Title & Glow
-        const inputTitleBlur = document.getElementById('inputTitleBlur');
-        const valTitleBlur = document.getElementById('valTitleBlur');
-        const inputTitleGlowOpacity = document.getElementById('inputTitleGlowOpacity');
-        const valTitleGlowOpacity = document.getElementById('valTitleGlowOpacity');
-        const pickerTitleColor = document.getElementById('pickerTitleColor');
-        const valTitleColor = document.getElementById('valTitleColor');
-        const pickerTitleGlowColor = document.getElementById('pickerTitleGlowColor');
-        const valTitleGlowColor = document.getElementById('valTitleGlowColor');
+        // Sliders & Values - Text & Glow Controls
+        const inputGlowBlur = document.getElementById('inputGlowBlur');
+        const valGlowBlur = document.getElementById('valGlowBlur');
+        const inputGlowOpacity = document.getElementById('inputGlowOpacity');
+        const valGlowOpacity = document.getElementById('valGlowOpacity');
+        const pickerTextColor = document.getElementById('pickerTextColor');
+        const valTextColor = document.getElementById('valTextColor');
+        const pickerGlowColor = document.getElementById('pickerGlowColor');
+        const valGlowColor = document.getElementById('valGlowColor');
 
         // Color Pickers - Container & Accents
         const pickerAccent1 = document.getElementById('pickerAccent1');
@@ -1542,21 +1564,30 @@
                 
                 const boxes = document.querySelectorAll('.test-container-box');
                 boxes.forEach(box => {
-                    box.classList.remove('variant-gradient-border', 'variant-scrim-minimal');
-                    if (styleKey === 'gradient-border') {
-                        box.classList.add('variant-gradient-border');
-                    } else if (styleKey === 'scrim-minimal') {
-                        box.classList.add('variant-scrim-minimal');
-                    } else if (styleKey === 'neon-glow') {
-                        inputGlow.value = 24;
-                        valGlow.textContent = '24px';
-                        root.style.setProperty('--card-glow-size', '24px');
-                        root.style.setProperty('--card-glow-opacity', '0.45');
+                    box.classList.remove('variant-gradient-border', 'variant-glass', 'variant-neon');
+                    if (styleKey === 'sin-recuadros') {
+                        box.style.background = 'transparent';
+                        box.style.border = 'none';
+                        box.style.boxShadow = 'none';
+                        box.style.backdropFilter = 'none';
                     } else if (styleKey === 'glass') {
-                        inputGlow.value = 10;
-                        valGlow.textContent = '10px';
-                        root.style.setProperty('--card-glow-size', '10px');
-                        root.style.setProperty('--card-glow-opacity', '0.15');
+                        box.classList.add('variant-glass');
+                        box.style.background = '';
+                        box.style.border = '';
+                        box.style.boxShadow = '';
+                        box.style.backdropFilter = '';
+                    } else if (styleKey === 'neon-glow') {
+                        box.classList.add('variant-neon');
+                        box.style.background = '';
+                        box.style.border = '';
+                        box.style.boxShadow = '';
+                        box.style.backdropFilter = '';
+                    } else if (styleKey === 'gradient-border') {
+                        box.classList.add('variant-gradient-border');
+                        box.style.background = '';
+                        box.style.border = '';
+                        box.style.boxShadow = '';
+                        box.style.backdropFilter = '';
                     }
                 });
             });
@@ -1623,59 +1654,62 @@
             root.style.setProperty('--card-bg-color', hexToRgb(hex));
         });
 
-        // Title Glow function & events
-        function setTitleGlow(key) {
-            const preset = TITLE_GLOW_PRESETS[key];
-            if (!preset) return;
+        // Text & Glow function & events
+        function applyTextGlow(textColor, glowColorHex, blurPx, opacityPct) {
+            const glowRgb = hexToRgb(glowColorHex);
+            const op = (opacityPct / 100).toFixed(2);
+            const opSecondary = (op * 0.6).toFixed(2);
+            
+            root.style.setProperty('--text-color', textColor);
+            root.style.setProperty('--glow-color', glowRgb);
+            root.style.setProperty('--glow-blur', `${blurPx}px`);
+            root.style.setProperty('--glow-opacity', op);
+            
+            const shadowStr = blurPx > 0 
+                ? `0 0 ${blurPx}px rgba(${glowRgb}, ${op}), 0 2px 10px rgba(0, 0, 0, ${op}), 0 0 calc(${blurPx}px * 1.8) rgba(${glowRgb}, ${opSecondary})`
+                : 'none';
+            root.style.setProperty('--glow-text-shadow', shadowStr);
 
-            inputTitleBlur.value = preset.blur;
-            valTitleBlur.textContent = `${preset.blur}px`;
-            inputTitleGlowOpacity.value = preset.opacity;
-            valTitleGlowOpacity.textContent = `${preset.opacity}%`;
-            pickerTitleGlowColor.value = preset.glowColor;
-            valTitleGlowColor.textContent = preset.glowColor;
-            pickerTitleColor.value = preset.titleColor;
-            valTitleColor.textContent = preset.titleColor;
-
-            root.style.setProperty('--title-glow-blur', `${preset.blur}px`);
-            root.style.setProperty('--title-glow-opacity', (preset.opacity / 100).toFixed(2));
-            root.style.setProperty('--title-glow-color', hexToRgb(preset.glowColor));
-            root.style.setProperty('--title-color', preset.titleColor);
+            pickerTextColor.value = textColor;
+            valTextColor.textContent = textColor;
+            pickerGlowColor.value = glowColorHex;
+            valGlowColor.textContent = glowColorHex;
+            inputGlowBlur.value = blurPx;
+            valGlowBlur.textContent = `${blurPx}px`;
+            inputGlowOpacity.value = opacityPct;
+            valGlowOpacity.textContent = `${opacityPct}%`;
         }
 
-        document.querySelectorAll('[data-title-glow]').forEach(btn => {
+        document.querySelectorAll('[data-text-glow]').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('[data-text-glow]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                setTitleGlow(btn.getAttribute('data-title-glow'));
+                const key = btn.getAttribute('data-text-glow');
+                const p = TEXT_GLOW_PRESETS[key];
+                if (p) {
+                    applyTextGlow(p.textColor, p.glowColor, p.blur, p.opacity);
+                }
             });
         });
 
-        inputTitleBlur.addEventListener('input', (e) => {
-            const val = e.target.value;
-            valTitleBlur.textContent = `${val}px`;
-            root.style.setProperty('--title-glow-blur', `${val}px`);
-            document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+        pickerTextColor.addEventListener('input', (e) => {
+            applyTextGlow(e.target.value, pickerGlowColor.value, parseInt(inputGlowBlur.value), parseInt(inputGlowOpacity.value));
+            document.querySelectorAll('[data-text-glow]').forEach(b => b.classList.remove('active'));
         });
 
-        inputTitleGlowOpacity.addEventListener('input', (e) => {
-            const val = e.target.value;
-            valTitleGlowOpacity.textContent = `${val}%`;
-            root.style.setProperty('--title-glow-opacity', (val / 100).toFixed(2));
-            document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+        pickerGlowColor.addEventListener('input', (e) => {
+            applyTextGlow(pickerTextColor.value, e.target.value, parseInt(inputGlowBlur.value), parseInt(inputGlowOpacity.value));
+            document.querySelectorAll('[data-text-glow]').forEach(b => b.classList.remove('active'));
         });
 
-        pickerTitleColor.addEventListener('input', (e) => {
-            const val = e.target.value;
-            valTitleColor.textContent = val;
-            root.style.setProperty('--title-color', val);
+        inputGlowBlur.addEventListener('input', (e) => {
+            applyTextGlow(pickerTextColor.value, pickerGlowColor.value, parseInt(e.target.value), parseInt(inputGlowOpacity.value));
+            document.querySelectorAll('[data-text-glow]').forEach(b => b.classList.remove('active'));
         });
 
-        pickerTitleGlowColor.addEventListener('input', (e) => {
-            const val = e.target.value;
-            valTitleGlowColor.textContent = val;
-            root.style.setProperty('--title-glow-color', hexToRgb(val));
-            document.querySelectorAll('[data-title-glow]').forEach(b => b.classList.remove('active'));
+        inputGlowOpacity.addEventListener('input', (e) => {
+            applyTextGlow(pickerTextColor.value, pickerGlowColor.value, parseInt(inputGlowBlur.value), parseInt(e.target.value));
+            document.querySelectorAll('[data-text-glow]').forEach(b => b.classList.remove('active'));
         });
 
         // Slide tabs switcher
@@ -1705,34 +1739,30 @@
         const btnCopyClipboard = document.getElementById('btnCopyClipboard');
 
         btnExportCSS.addEventListener('click', () => {
-            const titleGlowOp = (inputTitleGlowOpacity.value / 100).toFixed(2);
-            const titleGlowRgb = hexToRgb(pickerTitleGlowColor.value);
-            const titleBlur = `${inputTitleBlur.value}px`;
-            const code = `/* 🎨 Paleta y Contenedores generados en Laboratorio */
+            const glowOp = (inputGlowOpacity.value / 100).toFixed(2);
+            const glowRgb = hexToRgb(pickerGlowColor.value);
+            const glowBlur = `${inputGlowBlur.value}px`;
+            const code = `/* 🎨 Estilo Sin Recuadros: Texto Blanco + Glow Azul */
 :root {
-  --primary-accent: ${pickerAccent1.value};
-  --secondary-accent: ${pickerAccent2.value};
-  --text-main: #ffffff;
-  --text-muted: #94a3b8;
-
-  /* Título superior flotante con halo/glow de lectura */
-  --title-color: ${pickerTitleColor.value};
-  --title-glow-shadow: 0 0 ${titleBlur} rgba(${titleGlowRgb}, ${titleGlowOp}), 0 2px 8px rgba(0, 0, 0, ${titleGlowOp}), 0 0 calc(${titleBlur} * 1.8) rgba(${titleGlowRgb}, ${(titleGlowOp * 0.6).toFixed(2)});
-
-  /* Contenedor inferior (Card) */
-  --card-bg: rgba(${hexToRgb(pickerCardBg.value)}, ${(inputCardOpacity.value / 100).toFixed(2)});
-  --card-border: ${inputBorderWidth.value}px solid rgba(${hexToRgb(pickerAccent1.value)}, ${(inputBorderOpacity.value / 100).toFixed(2)});
-  --card-radius: 20px;
-  --card-blur: ${inputBlur.value}px;
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 ${inputGlow.value}px rgba(${hexToRgb(pickerAccent1.value)}, 0.3);
-  --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
-
   /* Tipografía */
   --font-titles: 'Syncopate', sans-serif;
   --font-body: 'Montserrat', sans-serif;
+
+  /* Texto Blanco con Glow Azul */
+  --text-color: ${pickerTextColor.value};
+  --glow-color: ${glowRgb}; /* ${pickerGlowColor.value} */
+  --glow-blur: ${glowBlur};
+  --glow-opacity: ${glowOp};
+
+  --glow-text-shadow: 0 0 var(--glow-blur) rgba(var(--glow-color), var(--glow-opacity)),
+                      0 2px 10px rgba(0, 0, 0, var(--glow-opacity)),
+                      0 0 calc(var(--glow-blur) * 1.8) rgba(var(--glow-color), calc(var(--glow-opacity) * 0.6));
+
+  /* Atenuación del fondo */
+  --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
 }
 
-/* Regla para títulos y subtítulos en Syncopate Bold */
+/* Tipografía de títulos y textos sin mayúsculas forzadas */
 .story-slide h1,
 .story-slide h2,
 .story-slide h3,
@@ -1740,46 +1770,38 @@
 .story-slide .slide-tag,
 .story-slide .slide-desc,
 .story-slide .venue-title,
-.story-slide .guest-name,
+.story-slide .countdown-num,
+.story-slide .countdown-label,
 .story-slide .action-btn {
   font-family: var(--font-titles);
   font-weight: 700;
+  text-transform: none !important;
 }
 
-/* Distribución armónica de los 2 colores de acento */
+/* Texto en blanco con glow azul */
 .story-slide .slide-tag,
-.story-slide .countdown-num {
-  color: var(--primary-accent);
-}
-
+.story-slide .slide-title,
+.story-slide .slide-desc,
+.story-slide .countdown-num,
 .story-slide .countdown-label,
+.story-slide .venue-title,
+.story-slide .venue-address,
 .story-slide .venue-badge,
-.story-slide .guest-greeting-box h3 {
-  color: var(--secondary-accent);
+.story-slide .guest-name {
+  color: var(--text-color) !important;
+  text-shadow: var(--glow-text-shadow) !important;
 }
 
-.story-slide .action-btn {
-  background: linear-gradient(135deg, var(--primary-accent) 0%, var(--secondary-accent) 100%);
-}
-
-/* Regla para título superior sin marco */
-.story-slide .slide-top-title-area h1,
-.story-slide .mock-floating-title {
-  color: var(--title-color);
-  text-shadow: var(--title-glow-shadow);
-}
-
-/* Regla para contenedor inferior de contenido y acciones */
+/* Sin recuadros / tarjetas */
 .story-slide .slide-card,
-.story-slide .test-container-box {
-  background: var(--card-bg);
-  backdrop-filter: blur(var(--card-blur));
-  -webkit-backdrop-filter: blur(var(--card-blur));
-  border: var(--card-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-  padding: 16px 20px;
-  margin-top: auto;
+.story-slide .countdown-box,
+.story-slide .guest-greeting-box,
+.story-slide .rsvp-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }`;
             codeExport.textContent = code;
             modalCSS.classList.add('active');
@@ -1800,8 +1822,7 @@
 
         // Initialize default view
         setBackground('bg-main');
-        setPalette('stellar-champagne');
-        setTitleGlow('dark-halo');
+        applyTextGlow('#ffffff', '#0088ff', 16, 85);
     </script>
 
 

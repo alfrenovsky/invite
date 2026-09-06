@@ -16,7 +16,7 @@ git push origin "$BRANCH"
 
 # 2. Connect via SSH and pull on the server
 echo "🌐 Connecting to ${REMOTE_HOST}..."
-ssh "$REMOTE_HOST" "cd ${REMOTE_DIR} && echo '⬇️ Pulling latest changes...' && git pull origin ${BRANCH} && docker compose restart web 2>/dev/null || true"
+ssh "$REMOTE_HOST" "cd ${REMOTE_DIR} && echo '⬇️ Pulling latest changes...' && git pull origin ${BRANCH} && docker compose up -d --build 2>/dev/null || true"
 
 
 

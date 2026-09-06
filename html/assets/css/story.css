@@ -466,8 +466,7 @@
             align-self: center;
             font-family: var(--font-titles);
             font-size: 0.76em;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
+            letter-spacing: 1.2px;
             color: var(--accent);
             margin-bottom: 10px;
             font-weight: 700;
@@ -630,10 +629,9 @@
             font-family: var(--font-titles);
             font-size: 0.6em;
             font-weight: 700;
-            letter-spacing: 1.5px;
+            letter-spacing: 0.8px;
             color: var(--accent-2);
             margin-top: 4px;
-            text-transform: uppercase;
         }
 
         .countdown-sep {
