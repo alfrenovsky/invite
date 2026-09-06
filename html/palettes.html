@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio de Paletas & Contenedores — Boda Celia & Alfredo</title>
+    
+    <!-- Google Fonts: Syncopate & Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Montserrat:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Live Dynamic Variables */
+            --bg-accent-1: #00f2fe;
+            --bg-accent-2: #f72585;
+            --card-bg-color: 10, 15, 25;
+            --card-bg-opacity: 0.72;
+            --card-border-color: 0, 242, 254;
+            --card-border-opacity: 0.35;
+            --card-border-width: 1px;
+            --card-border-radius: 20px;
+            --card-blur: 16px;
+            --card-glow-color: 0, 242, 254;
+            --card-glow-size: 14px;
+            --card-glow-opacity: 0.22;
+            --text-primary: #ffffff;
+            --text-muted: #94a3b8;
+            --text-accent: #00f2fe;
+            --text-accent-2: #f72585;
+            --button-bg: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --button-text: #050b14;
+            --bg-dim-opacity: 0.35;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: #05070c;
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header.lab-header {
+            background: rgba(10, 14, 23, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .lab-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .lab-title h1 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+
+        .lab-title .badge {
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            color: #00f2fe;
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action:hover {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: #00f2fe;
+            color: #00f2fe;
+        }
+
+        /* Layout Container */
+        .lab-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 58px);
+            overflow: hidden;
+        }
+
+        /* Left Panel: Controls */
+        .controls-panel {
+            width: 380px;
+            background: #090d16;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section-title {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Buttons Grid */
+        .grid-presets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .preset-btn:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .preset-btn.active {
+            border-color: var(--text-accent);
+            background: rgba(0, 242, 254, 0.1);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+        .preset-colors {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.4);
+        }
+
+        /* Form Controls */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-label {
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .control-value {
+            font-size: 0.78rem;
+            font-family: monospace;
+            color: #94a3b8;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #00f2fe;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+        }
+
+        /* Right Panel: Preview Area */
+        .preview-viewport {
+            flex: 1;
+            background: #030508;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        .preview-toolbar {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            gap: 12px;
+            background: rgba(10, 15, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            padding: 6px 14px;
+            border-radius: 30px;
+            z-index: 100;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        /* Simulated Mobile Phone Frame (390 x 845 px) */
+        .phone-frame {
+            width: 390px;
+            height: 845px;
+            max-height: 90vh;
+            border-radius: 38px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px 18px 24px 18px;
+            transition: transform 0.3s;
+        }
+
+        /* Background Layer inside Phone */
+        .phone-bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background-size: cover;
+            background-position: center;
+            transition: background 0.3s ease;
+        }
+
+        .phone-dimmer-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, var(--bg-dim-opacity));
+            z-index: 2;
+            pointer-events: none;
+            transition: background 0.2s;
+        }
+
+        /* Story Top Bar Simulation */
+        .story-top-bar {
+            position: absolute;
+            top: 14px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .story-progress-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .story-progress-fill {
+            height: 100%;
+            width: 65%;
+            background: #ffffff;
+            box-shadow: 0 0 8px #ffffff;
+        }
+
+        .story-header-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .story-avatar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .story-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--text-accent);
+            background: url('/assets/avatar.jpeg') center/cover no-repeat;
+            background-color: #1a202c;
+        }
+
+        .story-user-name {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        }
+
+        /* Slide Content Container */
+        .slide-content-area {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        /* ==============================================================
+           THE CONFIGURED CONTAINER / CARD (Focus of this lab)
+           ============================================================== */
+        .test-container-box {
+            background: rgba(var(--card-bg-color), var(--card-bg-opacity));
+            backdrop-filter: blur(var(--card-blur));
+            -webkit-backdrop-filter: blur(var(--card-blur));
+            border-width: var(--card-border-width);
+            border-style: solid;
+            border-color: rgba(var(--card-border-color), var(--card-border-opacity));
+            border-radius: var(--card-border-radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 var(--card-glow-size) rgba(var(--card-glow-color), var(--card-glow-opacity));
+            padding: 16px;
+            transition: all 0.25s ease;
+        }
+
+        /* Container Variant Modifiers */
+        .variant-gradient-border {
+            border: 1px solid transparent !important;
+            background: linear-gradient(rgba(var(--card-bg-color), var(--card-bg-opacity)), rgba(var(--card-bg-color), var(--card-bg-opacity))) padding-box,
+                        linear-gradient(135deg, var(--text-accent), var(--text-accent-2)) border-box !important;
+        }
+
+        .variant-scrim-minimal {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Slide Element Typography & Mockup Items */
+        .mock-tag {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-accent);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: inline-block;
+        }
+
+        .mock-title {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            line-height: 1.15;
+            color: var(--text-primary);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+            margin-bottom: 6px;
+        }
+
+        .mock-title strong {
+            color: var(--text-accent);
+            font-weight: 700;
+        }
+
+        .mock-desc {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 12px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Location Card Mock */
+        .venue-title {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .venue-address {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .venue-badge {
+            font-size: 0.74rem;
+            color: var(--text-accent);
+            font-weight: 600;
+        }
+
+        /* Countdown Display Mock */
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .countdown-box {
+            background: rgba(var(--card-bg-color), 0.6);
+            border: 1px solid rgba(var(--card-border-color), 0.25);
+            border-radius: 12px;
+            padding: 10px 4px;
+            text-align: center;
+        }
+
+        .countdown-num {
+            font-family: monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .countdown-lbl {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: var(--text-accent);
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        /* Action Buttons */
+        .mock-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 13px 18px;
+            border-radius: 14px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 15px rgba(var(--card-glow-color), 0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .mock-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6), 0 0 20px rgba(var(--card-glow-color), 0.55);
+        }
+
+        /* RSVP Card Mock */
+        .mock-rsvp-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .mock-guest-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .mock-guest-name {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: #fff;
+        }
+
+        .mock-status-pill {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .mock-radio-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mock-pill-opt {
+            flex: 1;
+            text-align: center;
+            font-size: 0.74rem;
+            padding: 6px 4px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mock-pill-opt.selected {
+            background: rgba(var(--card-border-color), 0.25);
+            border-color: var(--text-accent);
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(var(--card-border-color), 0.3);
+        }
+
+        /* Modal for Exported CSS */
+        .css-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .css-modal.active {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 540px;
+            max-width: 90vw;
+            background: #0d131f;
+            border: 1px solid rgba(0, 242, 254, 0.35);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.95rem;
+            color: #00f2fe;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .code-box {
+            background: #05070d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 14px;
+            font-family: monospace;
+            font-size: 0.84rem;
+            color: #38bdf8;
+            max-height: 320px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            user-select: all;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header class="lab-header">
+        <div class="lab-title">
+            <h1>Celia & Alfredo</h1>
+            <span class="badge">Visual Palette Lab</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-action" id="btnExportCSS">
+                📋 Copiar CSS Generado
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="lab-container">
+        
+        <!-- Controls Panel -->
+        <aside class="controls-panel">
+            
+            <!-- Background Selector -->
+            <div>
+                <div class="section-title">1. Fondo Cósmico o Foto</div>
+                <div class="grid-presets">
+                    <button class="preset-btn active" data-bg="space-starfield">
+                        <span>🌌 Estrellas Profundas</span>
+                        <small style="color:#94a3b8">Negro + estrellas blancas/azules</small>
+                    </button>
+                    <button class="preset-btn" data-bg="space-cyan-blue">
+                        <span>🌌 Nebulosa Cyan/Azul</span>
+                        <small style="color:#94a3b8">Gases celestes y azul zafiro</small>
+                    </button>
+                    <button class="preset-btn" data-bg="space-magenta-violet">
+                        <span>🌌 Nebulosa Magenta</span>
+                        <small style="color:#94a3b8">Polvo fucsia y violeta oscuro</small>
+                    </button>
+                    <button class="preset-btn" data-bg="photo-couple-1">
+                        <span>🖼️ Foto Pareja (photo01)</span>
+                        <small style="color:#94a3b8">Foto real con personas</small>
+                    </button>
+                    <button class="preset-btn" data-bg="photo-background">
+                        <span>🖼️ Fondo Actual (background)</span>
+                        <small style="color:#94a3b8">Asset de alta resolución</small>
+                    </button>
+                    <button class="preset-btn" data-bg="custom-url">
+                        <span>🔗 URL Personalizada</span>
+                        <small style="color:#94a3b8">Ingresar link de imagen</small>
+                    </button>
+                </div>
+
+                <div class="control-group" style="margin-top: 10px;">
+                    <div class="control-row">
+                        <span class="control-label">Atenuación de Fondo (Dimmer):</span>
+                        <span class="control-value" id="valDimmer">35%</span>
+                    </div>
+                    <input type="range" id="inputDimmer" min="0" max="85" value="35">
+                </div>
+            </div>
+
+            <!-- Palette Presets -->
+            <div>
+                <div class="section-title">2. Paletas Cósmicas Predefinidas</div>
+                <div class="grid-presets">
+                    <button class="preset-btn active" data-palette="cyan-magenta">
+                        <span>Cosmic Cyan & Magenta</span>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#00f2fe"></div>
+                            <div class="color-dot" style="background:#f72585"></div>
+                            <div class="color-dot" style="background:#070b14"></div>
+                            <div class="color-dot" style="background:#ffffff"></div>
+                        </div>
+                    </button>
+                    <button class="preset-btn" data-palette="stellar-gold">
+                        <span>Deep Space & Oro</span>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#d4af37"></div>
+                            <div class="color-dot" style="background:#38bdf8"></div>
+                            <div class="color-dot" style="background:#090d16"></div>
+                            <div class="color-dot" style="background:#ffffff"></div>
+                        </div>
+                    </button>
+                    <button class="preset-btn" data-palette="cyber-nova">
+                        <span>Cyber Nova</span>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#4cc9f0"></div>
+                            <div class="color-dot" style="background:#7209b7"></div>
+                            <div class="color-dot" style="background:#03050a"></div>
+                            <div class="color-dot" style="background:#f8f9fa"></div>
+                        </div>
+                    </button>
+                    <button class="preset-btn" data-palette="midnight-ice">
+                        <span>Midnight Ice</span>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#7dd3fc"></div>
+                            <div class="color-dot" style="background:#3b82f6"></div>
+                            <div class="color-dot" style="background:#0b1120"></div>
+                            <div class="color-dot" style="background:#f1f5f9"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Container / Card Style Modifiers -->
+            <div>
+                <div class="section-title">3. Estilo de Contenedores & Bordes</div>
+                <div class="grid-presets">
+                    <button class="preset-btn active" data-card-style="glass">
+                        <span>Glassmorphism Profundo</span>
+                        <small style="color:#94a3b8">Blur alto + borde fino sutil</small>
+                    </button>
+                    <button class="preset-btn" data-card-style="neon-glow">
+                        <span>Borde Neón / Glow</span>
+                        <small style="color:#94a3b8">Resplandor cyan de borde</small>
+                    </button>
+                    <button class="preset-btn" data-card-style="gradient-border">
+                        <span>Borde en Gradiente</span>
+                        <small style="color:#94a3b8">Línea cyan a magenta</small>
+                    </button>
+                    <button class="preset-btn" data-card-style="scrim-minimal">
+                        <span>Sin Caja (Sólo Sombra)</span>
+                        <small style="color:#94a3b8">Texto con halo difuso oscuro</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fine-Tuning Sliders -->
+            <div>
+                <div class="section-title">4. Ajuste Preciso de Legibilidad</div>
+                
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Opacidad Fondo Tarjeta:</span>
+                        <span class="control-value" id="valCardOpacity">72%</span>
+                    </div>
+                    <input type="range" id="inputCardOpacity" min="10" max="95" value="72">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Desenfoque (Blur):</span>
+                        <span class="control-value" id="valBlur">16px</span>
+                    </div>
+                    <input type="range" id="inputBlur" min="0" max="30" value="16">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Grosor de Borde:</span>
+                        <span class="control-value" id="valBorderWidth">1px</span>
+                    </div>
+                    <input type="range" id="inputBorderWidth" min="0" max="4" value="1">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Opacidad del Borde:</span>
+                        <span class="control-value" id="valBorderOpacity">35%</span>
+                    </div>
+                    <input type="range" id="inputBorderOpacity" min="0" max="100" value="35">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Intensidad de Resplandor (Glow):</span>
+                        <span class="control-value" id="valGlow">14px</span>
+                    </div>
+                    <input type="range" id="inputGlow" min="0" max="30" value="14">
+                </div>
+            </div>
+
+            <!-- Colors Customizer -->
+            <div>
+                <div class="section-title">5. Colores Personalizados</div>
+                
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Acento 1 (Cyan / Primario):</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="pickerAccent1" value="#00f2fe">
+                            <span class="control-value" id="valAccent1">#00f2fe</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Acento 2 (Magenta / Secundario):</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="pickerAccent2" value="#f72585">
+                            <span class="control-value" id="valAccent2">#f72585</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <span class="control-label">Color de Fondo de Tarjeta:</span>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="pickerCardBg" value="#0a0f19">
+                            <span class="control-value" id="valCardBg">#0a0f19</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Preview Viewport -->
+        <main class="preview-viewport">
+            
+            <!-- Slide Selector Tabs -->
+            <div class="preview-toolbar">
+                <button class="tab-btn active" data-slide-view="portada">Slide 1: Portada</button>
+                <button class="tab-btn" data-slide-view="fecha">Slide 2: Fecha</button>
+                <button class="tab-btn" data-slide-view="lugar">Slide 3: Lugar</button>
+                <button class="tab-btn" data-slide-view="rsvp">Slide 4: RSVP</button>
+            </div>
+
+            <!-- Phone Mockup Container (390 x 845 px) -->
+            <div class="phone-frame" id="phoneFrame">
+                
+                <!-- Background Layer -->
+                <div class="phone-bg-layer" id="phoneBg"></div>
+                <!-- Dimmer Overlay -->
+                <div class="phone-dimmer-layer" id="phoneDimmer"></div>
+
+                <!-- Story Header -->
+                <div class="story-top-bar">
+                    <div class="story-progress-bar">
+                        <div class="story-progress-fill"></div>
+                    </div>
+                    <div class="story-header-info">
+                        <div class="story-avatar-group">
+                            <div class="story-avatar"></div>
+                            <span class="story-user-name">Celia & Alfredo</span>
+                        </div>
+                        <span style="font-size:0.75rem; color:#94a3b8;">19 MAR 2027</span>
+                    </div>
+                </div>
+
+                <!-- SLIDE VIEW 1: PORTADA -->
+                <div class="slide-content-area" id="viewPortada" style="justify-content: center;">
+                    <div class="test-container-box" id="boxPortada">
+                        <span class="mock-tag">NOS CASAMOS</span>
+                        <h2 class="mock-title">CELIA & <strong>ALFREDO</strong></h2>
+                        <p class="mock-desc">19 de Marzo de 2027 • Queremos compartir este viaje tan especial junto a vos.</p>
+                        
+                        <div style="background: rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px;">
+                            <div style="font-size:0.75rem; color:var(--text-accent); font-weight:700;">INVITACIÓN EXCLUSIVA</div>
+                            <div style="font-size:0.95rem; font-weight:700; color:#fff; margin-top:2px;">Familia Pérez</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE VIEW 2: FECHA -->
+                <div class="slide-content-area" id="viewFecha" style="display:none; justify-content: center;">
+                    <div class="test-container-box" id="boxFecha">
+                        <span class="mock-tag">LA FECHA</span>
+                        <h2 class="mock-title">VIERNES <strong>19</strong></h2>
+                        <p class="mock-desc">Marzo de 2027 — Mendoza, Argentina</p>
+                        
+                        <div class="countdown-grid">
+                            <div class="countdown-box">
+                                <div class="countdown-num">198</div>
+                                <div class="countdown-lbl">DÍAS</div>
+                            </div>
+                            <div class="countdown-box">
+                                <div class="countdown-num">14</div>
+                                <div class="countdown-lbl">HS</div>
+                            </div>
+                            <div class="countdown-box">
+                                <div class="countdown-num">32</div>
+                                <div class="countdown-lbl">MIN</div>
+                            </div>
+                            <div class="countdown-box">
+                                <div class="countdown-num">09</div>
+                                <div class="countdown-lbl">SEG</div>
+                            </div>
+                        </div>
+
+                        <button class="mock-action-btn">
+                            📅 Agendar en Google Calendar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SLIDE VIEW 3: LUGAR -->
+                <div class="slide-content-area" id="viewLugar" style="display:none; justify-content: center;">
+                    <div class="test-container-box" id="boxLugar">
+                        <span class="mock-tag">DÓNDE</span>
+                        <h2 class="mock-title">EL <strong>LUGAR</strong></h2>
+                        <p class="mock-desc">Celebraremos tanto la ceremonia como la fiesta en el mismo lugar.</p>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); margin-bottom: 16px;">
+                            <div class="venue-title">Luna India</div>
+                            <div class="venue-address">Castro Barros, M5513, Mendoza</div>
+                            <div class="venue-badge">🚗 Estacionamiento privado disponible</div>
+                        </div>
+
+                        <button class="mock-action-btn">
+                            📍 Cómo llegar en Google Maps
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SLIDE VIEW 4: RSVP -->
+                <div class="slide-content-area" id="viewRsvp" style="display:none; justify-content: flex-start;">
+                    <div class="test-container-box" id="boxRsvp">
+                        <span class="mock-tag">RSVP</span>
+                        <h2 class="mock-title" style="font-size:1.35rem;">CONFIRMACIÓN DE <strong>GRUPO</strong></h2>
+                        <p class="mock-desc" style="font-size:0.8rem; margin-bottom:10px;">Confirmá asistencia y menú de tus acompañantes:</p>
+
+                        <!-- Guest 1 -->
+                        <div class="mock-rsvp-card">
+                            <div class="mock-guest-row">
+                                <span class="mock-guest-name">👤 Juan Pérez</span>
+                                <span class="mock-status-pill">✓ Asiste</span>
+                            </div>
+                            <div class="mock-radio-group">
+                                <div class="mock-pill-opt selected">🍽️ General</div>
+                                <div class="mock-pill-opt">🥗 Vegetariano</div>
+                                <div class="mock-pill-opt">🌱 Vegano</div>
+                            </div>
+                        </div>
+
+                        <!-- Guest 2 -->
+                        <div class="mock-rsvp-card">
+                            <div class="mock-guest-row">
+                                <span class="mock-guest-name">👤 María González</span>
+                                <span class="mock-status-pill" style="color:#f39c12; border-color:#f39c12; background:rgba(243,156,18,0.2);">⏳ Pendiente</span>
+                            </div>
+                            <div class="mock-radio-group">
+                                <div class="mock-pill-opt selected">🍽️ General</div>
+                                <div class="mock-pill-opt">🥗 Veggie</div>
+                                <div class="mock-pill-opt">🌱 Vegano</div>
+                            </div>
+                        </div>
+
+                        <div style="font-size:0.75rem; color:#2ecc71; text-align:center; margin-top:8px; font-weight:600;">
+                            ✓ Cambios guardados automáticamente
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Export CSS Modal -->
+    <div class="css-modal" id="modalCSS">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Variables CSS de tu Paleta</h3>
+                <button class="modal-close" id="btnCloseModal">✕</button>
+            </div>
+            <p style="font-size:0.82rem; color:#94a3b8; margin-bottom:12px;">Copiá estas variables para aplicarlas a tu hoja de estilos principal:</p>
+            <pre class="code-box" id="codeExport"></pre>
+            <button class="mock-action-btn" id="btnCopyClipboard" style="margin-top:14px;">
+                📋 Copiar al Portapapeles
+            </button>
+        </div>
+    </div>
+
+    <!-- Client Script for Interactive Controls -->
+    <script>
+        // Preset Definitions
+        const BACKGROUNDS = {
+            'space-starfield': {
+                type: 'css',
+                bg: 'radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.12) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(247, 37, 133, 0.12) 0%, transparent 40%), linear-gradient(135deg, #030712 0%, #060913 50%, #020408 100%)'
+            },
+            'space-cyan-blue': {
+                type: 'css',
+                bg: 'radial-gradient(ellipse at top left, rgba(0, 242, 254, 0.35) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(30, 58, 138, 0.6) 0%, transparent 60%), linear-gradient(160deg, #020617 0%, #071329 100%)'
+            },
+            'space-magenta-violet': {
+                type: 'css',
+                bg: 'radial-gradient(ellipse at 80% 20%, rgba(247, 37, 133, 0.35) 0%, transparent 55%), radial-gradient(circle at 20% 80%, rgba(114, 9, 183, 0.5) 0%, transparent 55%), linear-gradient(150deg, #090212 0%, #150524 100%)'
+            },
+            'photo-couple-1': {
+                type: 'image',
+                url: '/assets/photo01.jpeg'
+            },
+            'photo-background': {
+                type: 'image',
+                url: '/assets/background.jpeg'
+            }
+        };
+
+        const PALETTES = {
+            'cyan-magenta': {
+                accent1: '#00f2fe',
+                accent2: '#f72585',
+                cardBg: '#0a0f19',
+                buttonBg: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                buttonText: '#050b14',
+                glowColor: '0, 242, 254'
+            },
+            'stellar-gold': {
+                accent1: '#d4af37',
+                accent2: '#38bdf8',
+                cardBg: '#0c101a',
+                buttonBg: 'linear-gradient(135deg, #d4af37 0%, #f3e5ab 100%)',
+                buttonText: '#1a252f',
+                glowColor: '212, 175, 55'
+            },
+            'cyber-nova': {
+                accent1: '#4cc9f0',
+                accent2: '#7209b7',
+                cardBg: '#050711',
+                buttonBg: 'linear-gradient(135deg, #4cc9f0 0%, #7209b7 100%)',
+                buttonText: '#ffffff',
+                glowColor: '76, 201, 240'
+            },
+            'midnight-ice': {
+                accent1: '#7dd3fc',
+                accent2: '#3b82f6',
+                cardBg: '#0b1120',
+                buttonBg: 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)',
+                buttonText: '#0f172a',
+                glowColor: '125, 211, 252'
+            }
+        };
+
+        // DOM Elements
+        const phoneBg = document.getElementById('phoneBg');
+        const phoneDimmer = document.getElementById('phoneDimmer');
+        const root = document.documentElement;
+
+        // Sliders & Values
+        const inputDimmer = document.getElementById('inputDimmer');
+        const valDimmer = document.getElementById('valDimmer');
+        const inputCardOpacity = document.getElementById('inputCardOpacity');
+        const valCardOpacity = document.getElementById('valCardOpacity');
+        const inputBlur = document.getElementById('inputBlur');
+        const valBlur = document.getElementById('valBlur');
+        const inputBorderWidth = document.getElementById('inputBorderWidth');
+        const valBorderWidth = document.getElementById('valBorderWidth');
+        const inputBorderOpacity = document.getElementById('inputBorderOpacity');
+        const valBorderOpacity = document.getElementById('valBorderOpacity');
+        const inputGlow = document.getElementById('inputGlow');
+        const valGlow = document.getElementById('valGlow');
+
+        // Color Pickers
+        const pickerAccent1 = document.getElementById('pickerAccent1');
+        const pickerAccent2 = document.getElementById('pickerAccent2');
+        const pickerCardBg = document.getElementById('pickerCardBg');
+        const valAccent1 = document.getElementById('valAccent1');
+        const valAccent2 = document.getElementById('valAccent2');
+        const valCardBg = document.getElementById('valCardBg');
+
+        // Helper: Hex to RGB
+        function hexToRgb(hex) {
+            const clean = hex.replace('#', '');
+            const bigint = parseInt(clean, 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `${r}, ${g}, ${b}`;
+        }
+
+        // Apply Background
+        function setBackground(key, customUrl = null) {
+            if (customUrl) {
+                phoneBg.style.background = `url('${customUrl}') center/cover no-repeat`;
+                return;
+            }
+            const config = BACKGROUNDS[key];
+            if (!config) return;
+            if (config.type === 'css') {
+                phoneBg.style.background = config.bg;
+            } else if (config.type === 'image') {
+                phoneBg.style.background = `url('${config.url}') center/cover no-repeat`;
+            }
+        }
+
+        // Apply Palette
+        function setPalette(key) {
+            const p = PALETTES[key];
+            if (!p) return;
+            
+            root.style.setProperty('--text-accent', p.accent1);
+            root.style.setProperty('--text-accent-2', p.accent2);
+            root.style.setProperty('--card-border-color', hexToRgb(p.accent1));
+            root.style.setProperty('--card-glow-color', p.glowColor);
+            root.style.setProperty('--card-bg-color', hexToRgb(p.cardBg));
+            root.style.setProperty('--button-bg', p.buttonBg);
+            root.style.setProperty('--button-text', p.buttonText);
+
+            pickerAccent1.value = p.accent1;
+            valAccent1.textContent = p.accent1;
+            pickerAccent2.value = p.accent2;
+            valAccent2.textContent = p.accent2;
+            pickerCardBg.value = p.cardBg;
+            valCardBg.textContent = p.cardBg;
+        }
+
+        // Background preset click
+        document.querySelectorAll('[data-bg]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-bg]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const bgKey = btn.getAttribute('data-bg');
+                if (bgKey === 'custom-url') {
+                    const url = prompt('Ingresá la URL de una foto o fondo para probar:');
+                    if (url) setBackground(null, url);
+                } else {
+                    setBackground(bgKey);
+                }
+            });
+        });
+
+        // Palette preset click
+        document.querySelectorAll('[data-palette]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-palette]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setPalette(btn.getAttribute('data-palette'));
+            });
+        });
+
+        // Card style preset click
+        document.querySelectorAll('[data-card-style]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-card-style]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const styleKey = btn.getAttribute('data-card-style');
+                
+                const boxes = document.querySelectorAll('.test-container-box');
+                boxes.forEach(box => {
+                    box.classList.remove('variant-gradient-border', 'variant-scrim-minimal');
+                    if (styleKey === 'gradient-border') {
+                        box.classList.add('variant-gradient-border');
+                    } else if (styleKey === 'scrim-minimal') {
+                        box.classList.add('variant-scrim-minimal');
+                    } else if (styleKey === 'neon-glow') {
+                        inputGlow.value = 24;
+                        valGlow.textContent = '24px';
+                        root.style.setProperty('--card-glow-size', '24px');
+                        root.style.setProperty('--card-glow-opacity', '0.45');
+                    } else if (styleKey === 'glass') {
+                        inputGlow.value = 10;
+                        valGlow.textContent = '10px';
+                        root.style.setProperty('--card-glow-size', '10px');
+                        root.style.setProperty('--card-glow-opacity', '0.15');
+                    }
+                });
+            });
+        });
+
+        // Sliders events
+        inputDimmer.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valDimmer.textContent = `${val}%`;
+            root.style.setProperty('--bg-dim-opacity', (val / 100).toFixed(2));
+        });
+
+        inputCardOpacity.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valCardOpacity.textContent = `${val}%`;
+            root.style.setProperty('--card-bg-opacity', (val / 100).toFixed(2));
+        });
+
+        inputBlur.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valBlur.textContent = `${val}px`;
+            root.style.setProperty('--card-blur', `${val}px`);
+        });
+
+        inputBorderWidth.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valBorderWidth.textContent = `${val}px`;
+            root.style.setProperty('--card-border-width', `${val}px`);
+        });
+
+        inputBorderOpacity.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valBorderOpacity.textContent = `${val}%`;
+            root.style.setProperty('--card-border-opacity', (val / 100).toFixed(2));
+        });
+
+        inputGlow.addEventListener('input', (e) => {
+            const val = e.target.value;
+            valGlow.textContent = `${val}px`;
+            root.style.setProperty('--card-glow-size', `${val}px`);
+        });
+
+        // Color Picker events
+        pickerAccent1.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            valAccent1.textContent = hex;
+            root.style.setProperty('--text-accent', hex);
+            root.style.setProperty('--card-border-color', hexToRgb(hex));
+            root.style.setProperty('--card-glow-color', hexToRgb(hex));
+        });
+
+        pickerAccent2.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            valAccent2.textContent = hex;
+            root.style.setProperty('--text-accent-2', hex);
+        });
+
+        pickerCardBg.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            valCardBg.textContent = hex;
+            root.style.setProperty('--card-bg-color', hexToRgb(hex));
+        });
+
+        // Slide tabs switcher
+        const views = {
+            portada: document.getElementById('viewPortada'),
+            fecha: document.getElementById('viewFecha'),
+            lugar: document.getElementById('viewLugar'),
+            rsvp: document.getElementById('viewRsvp')
+        };
+
+        document.querySelectorAll('[data-slide-view]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-slide-view]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const targetView = tab.getAttribute('data-slide-view');
+                Object.keys(views).forEach(key => {
+                    views[key].style.display = (key === targetView) ? 'flex' : 'none';
+                });
+            });
+        });
+
+        // Export CSS Modal
+        const btnExportCSS = document.getElementById('btnExportCSS');
+        const modalCSS = document.getElementById('modalCSS');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const codeExport = document.getElementById('codeExport');
+        const btnCopyClipboard = document.getElementById('btnCopyClipboard');
+
+        btnExportCSS.addEventListener('click', () => {
+            const code = `/* 🎨 Paleta y Contenedores generados en Laboratorio */
+:root {
+  --primary-accent: ${pickerAccent1.value};
+  --secondary-accent: ${pickerAccent2.value};
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --card-bg: rgba(${hexToRgb(pickerCardBg.value)}, ${(inputCardOpacity.value / 100).toFixed(2)});
+  --card-border: ${inputBorderWidth.value}px solid rgba(${hexToRgb(pickerAccent1.value)}, ${(inputBorderOpacity.value / 100).toFixed(2)});
+  --card-radius: 20px;
+  --card-blur: ${inputBlur.value}px;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 ${inputGlow.value}px rgba(${hexToRgb(pickerAccent1.value)}, 0.3);
+  --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
+}
+
+/* Regla para contenedores de texto en slides con fondo */
+.story-slide .slide-card,
+.story-slide .test-container-box {
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 16px 20px;
+}`;
+            codeExport.textContent = code;
+            modalCSS.classList.add('active');
+        });
+
+        btnCloseModal.addEventListener('click', () => {
+            modalCSS.classList.remove('active');
+        });
+
+        btnCopyClipboard.addEventListener('click', () => {
+            navigator.clipboard.writeText(codeExport.textContent).then(() => {
+                btnCopyClipboard.textContent = '✓ ¡Copiado con éxito!';
+                setTimeout(() => {
+                    btnCopyClipboard.textContent = '📋 Copiar al Portapapeles';
+                }, 2000);
+            });
+        });
+
+        // Initialize default view
+        setBackground('space-starfield');
+        setPalette('cyan-magenta');
+    </script>
+</body>
+</html>
