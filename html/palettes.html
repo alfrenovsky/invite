@@ -508,15 +508,15 @@
             padding: 16px !important;
         }
 
-        /* Typography & Mockup Items con Glow Azul */
+        /* Typography & Mockup Items: Syncopate (Titles) + Montserrat (Body) */
         .mock-tag {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 0.76rem;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.82rem;
             font-weight: 700;
-            letter-spacing: 1.2px;
+            letter-spacing: 1.5px;
             color: var(--text-color);
             text-shadow: var(--glow-text-shadow);
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: inline-block;
         }
 
@@ -536,12 +536,12 @@
         }
 
         .mock-desc {
-            font-family: 'Syncopate', sans-serif;
-            font-weight: 700;
-            font-size: 0.78rem;
-            letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 0.88rem;
+            letter-spacing: 0.2px;
             color: var(--text-color);
-            line-height: 1.45;
+            line-height: 1.5;
             margin-bottom: 12px;
             text-shadow: var(--glow-text-shadow);
         }
@@ -557,19 +557,20 @@
         }
 
         .venue-address {
-            font-size: 0.85rem;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.88rem;
             color: var(--text-color);
             text-shadow: var(--glow-text-shadow);
             margin-bottom: 8px;
         }
 
         .venue-badge {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 0.7rem;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.78rem;
             color: var(--text-color);
             text-shadow: var(--glow-text-shadow);
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
         }
 
         /* Countdown Display Mock */
@@ -597,13 +598,13 @@
         }
 
         .countdown-lbl {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 0.6rem;
-            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
             color: var(--text-color);
             text-shadow: var(--glow-text-shadow);
             margin-top: 2px;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.5px;
         }
 
         /* Action Buttons */
@@ -618,10 +619,10 @@
             background: rgba(var(--glow-color), 0.28);
             border: 1.5px solid rgba(var(--glow-color), 0.85);
             color: #ffffff;
-            font-family: 'Syncopate', sans-serif;
-            font-size: 0.82rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
             cursor: pointer;
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 16px rgba(var(--glow-color), 0.5);
             text-shadow: 0 0 10px rgba(var(--glow-color), 0.8);
@@ -652,19 +653,19 @@
         }
 
         .mock-guest-name {
-            font-family: 'Syncopate', sans-serif;
-            font-weight: 700;
-            font-size: 0.82rem;
-            letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
             color: var(--text-color);
             text-shadow: var(--glow-text-shadow);
         }
 
         .mock-status-pill {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
             padding: 3px 8px;
             border-radius: 12px;
             background: rgba(46, 204, 113, 0.2);
@@ -1150,8 +1151,8 @@
                         <p class="mock-desc">19 de Marzo de 2027 • Queremos compartir este viaje tan especial junto a vos.</p>
                         
                         <div style="padding: 10px 0; margin-top: 4px;">
-                            <div style="font-family: 'Syncopate', sans-serif; font-size:0.72rem; color:var(--text-color); text-shadow:var(--glow-text-shadow); font-weight:700; letter-spacing:1.2px;">Invitación exclusiva</div>
-                            <div style="font-family: 'Syncopate', sans-serif; font-size:1.15rem; font-weight:700; color:var(--text-color); text-shadow:var(--glow-text-shadow); margin-top:4px; letter-spacing:0.5px;">Familia Pérez</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size:0.78rem; color:var(--text-color); text-shadow:var(--glow-text-shadow); font-weight:600; letter-spacing:1.2px;">Invitación exclusiva</div>
+                            <div style="font-family: 'Montserrat', sans-serif; font-size:1.25rem; font-weight:700; color:var(--text-color); text-shadow:var(--glow-text-shadow); margin-top:4px; letter-spacing:0.3px;">Familia Pérez</div>
                         </div>
                     </div>
                 </div>
@@ -1764,19 +1765,25 @@
   --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
 }
 
-/* Tipografía de títulos y textos sin mayúsculas forzadas */
+/* Tipografía: Syncopate para Títulos, Montserrat para Cuerpo */
 .story-slide h1,
 .story-slide h2,
 .story-slide h3,
 .story-slide .slide-title,
-.story-slide .slide-tag,
-.story-slide .slide-desc,
-.story-slide .venue-title,
-.story-slide .countdown-num,
-.story-slide .countdown-label,
-.story-slide .action-btn {
+.story-slide .venue-title {
   font-family: var(--font-titles);
   font-weight: 700;
+  text-transform: none !important;
+}
+
+.story-slide .slide-tag,
+.story-slide .slide-desc,
+.story-slide .countdown-label,
+.story-slide .venue-address,
+.story-slide .venue-badge,
+.story-slide .guest-name,
+.story-slide .action-btn {
+  font-family: var(--font-body);
   text-transform: none !important;
 }
 
