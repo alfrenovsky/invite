@@ -476,8 +476,9 @@
 
         .slide-title strong {
             font-weight: 700;
-            color: var(--accent-light);
+            color: inherit;
         }
+
 
         .slide-desc {
             font-size: 1.02em;
