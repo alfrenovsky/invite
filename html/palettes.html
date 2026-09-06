@@ -34,14 +34,15 @@
             --button-text: #ffffff;
             --bg-dim-opacity: 0.35;
 
-            /* Texto & Glow Azul (Sin recuadros) */
+            /* Texto & Glow Azul (Sin recuadros, glow detrás del texto) */
             --text-color: #ffffff;
             --glow-color: 0, 136, 255;
             --glow-blur: 16px;
             --glow-opacity: 0.85;
-            --glow-text-shadow: 0 0 var(--glow-blur) rgba(var(--glow-color), var(--glow-opacity)),
-                                0 2px 10px rgba(0, 0, 0, var(--glow-opacity)),
-                                0 0 calc(var(--glow-blur) * 1.8) rgba(var(--glow-color), calc(var(--glow-opacity) * 0.6));
+            --glow-text-shadow: 0 0 1px #ffffff,
+                                0 2px 5px rgba(0, 0, 0, 0.95),
+                                0 0 var(--glow-blur) rgba(var(--glow-color), var(--glow-opacity)),
+                                0 0 calc(var(--glow-blur) * 2) rgba(var(--glow-color), calc(var(--glow-opacity) * 0.6));
         }
 
         * {
@@ -1666,8 +1667,8 @@
             root.style.setProperty('--glow-opacity', op);
             
             const shadowStr = blurPx > 0 
-                ? `0 0 ${blurPx}px rgba(${glowRgb}, ${op}), 0 2px 10px rgba(0, 0, 0, ${op}), 0 0 calc(${blurPx}px * 1.8) rgba(${glowRgb}, ${opSecondary})`
-                : 'none';
+                ? `0 0 1px #ffffff, 0 2px 5px rgba(0, 0, 0, 0.95), 0 0 ${blurPx}px rgba(${glowRgb}, ${op}), 0 0 calc(${blurPx}px * 2) rgba(${glowRgb}, ${opSecondary})`
+                : '0 2px 5px rgba(0, 0, 0, 0.95)';
             root.style.setProperty('--glow-text-shadow', shadowStr);
 
             pickerTextColor.value = textColor;
@@ -1754,9 +1755,10 @@
   --glow-blur: ${glowBlur};
   --glow-opacity: ${glowOp};
 
-  --glow-text-shadow: 0 0 var(--glow-blur) rgba(var(--glow-color), var(--glow-opacity)),
-                      0 2px 10px rgba(0, 0, 0, var(--glow-opacity)),
-                      0 0 calc(var(--glow-blur) * 1.8) rgba(var(--glow-color), calc(var(--glow-opacity) * 0.6));
+  --glow-text-shadow: 0 0 1px #ffffff,
+                      0 2px 5px rgba(0, 0, 0, 0.95),
+                      0 0 var(--glow-blur) rgba(var(--glow-color), var(--glow-opacity)),
+                      0 0 calc(var(--glow-blur) * 2) rgba(var(--glow-color), calc(var(--glow-opacity) * 0.6));
 
   /* Atenuación del fondo */
   --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
