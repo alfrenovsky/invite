@@ -1722,16 +1722,28 @@
             rsvp: document.getElementById('viewRsvp')
         };
 
+        function switchSlideTab(targetView) {
+            if (!views[targetView]) return;
+            document.querySelectorAll('[data-slide-view]').forEach(t => {
+                t.classList.toggle('active', t.getAttribute('data-slide-view') === targetView);
+            });
+            Object.keys(views).forEach(key => {
+                views[key].style.display = (key === targetView) ? 'flex' : 'none';
+            });
+        }
+
         document.querySelectorAll('[data-slide-view]').forEach(tab => {
             tab.addEventListener('click', () => {
-                document.querySelectorAll('[data-slide-view]').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
                 const targetView = tab.getAttribute('data-slide-view');
-                Object.keys(views).forEach(key => {
-                    views[key].style.display = (key === targetView) ? 'flex' : 'none';
-                });
+                switchSlideTab(targetView);
+                history.replaceState(null, '', `#${targetView}`);
             });
         });
+
+        if (window.location.hash) {
+            const hashView = window.location.hash.replace('#', '');
+            if (views[hashView]) switchSlideTab(hashView);
+        }
 
         // Export CSS Modal
         const btnExportCSS = document.getElementById('btnExportCSS');
