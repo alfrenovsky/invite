@@ -204,9 +204,9 @@
         }
 
         .header-subtitle {
-            font-family: var(--font-body);
-            font-weight: 500;
-            font-size: 0.72em;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.68em;
             letter-spacing: 0.5px;
             color: var(--text-muted);
         }
@@ -464,9 +464,10 @@
         .slide-tag {
             display: inline-block;
             align-self: center;
-            font-family: var(--font-body);
-            font-size: 0.82em;
-            letter-spacing: 1.5px;
+            font-family: var(--font-titles);
+            font-size: 0.76em;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
             color: var(--accent);
             margin-bottom: 10px;
             font-weight: 700;
@@ -490,12 +491,12 @@
 
 
         .slide-desc {
-            font-family: var(--font-body);
-            font-weight: 500;
-            font-size: 0.95em;
-            letter-spacing: 0.2px;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.82em;
+            letter-spacing: 0.5px;
             color: var(--text-muted);
-            line-height: 1.5;
+            line-height: 1.45;
             margin-bottom: 20px;
         }
 
@@ -509,12 +510,12 @@
         }
 
         .guest-greeting-box h3 {
-            font-family: var(--font-body);
+            font-family: var(--font-titles);
             color: var(--accent-2);
             font-size: 1.15em;
             margin-bottom: 6px;
             font-weight: 700;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.5px;
         }
 
         .chips-container {
@@ -577,18 +578,18 @@
         }
 
         .timeline-time {
-            font-family: var(--font-body);
+            font-family: var(--font-titles);
             font-weight: 700;
             color: var(--accent-2);
-            font-size: 0.95em;
-            letter-spacing: 0.3px;
+            font-size: 0.88em;
+            letter-spacing: 0.5px;
         }
 
         .timeline-title {
-            font-family: var(--font-body);
-            font-weight: 600;
-            font-size: 0.92em;
-            letter-spacing: 0.2px;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.88em;
+            letter-spacing: 0.5px;
         }
 
         /* Countdown Timer Styling */
@@ -626,12 +627,13 @@
         }
 
         .countdown-label {
-            font-family: var(--font-body);
-            font-size: 0.72em;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            font-family: var(--font-titles);
+            font-size: 0.6em;
+            font-weight: 700;
+            letter-spacing: 1.5px;
             color: var(--accent-2);
             margin-top: 4px;
+            text-transform: uppercase;
         }
 
         .countdown-sep {
@@ -645,7 +647,7 @@
         /* Buttons & Actions */
 
         .action-btn {
-            font-family: var(--font-body);
+            font-family: var(--font-titles);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -656,8 +658,8 @@
             color: #180f24;
             border: none;
             border-radius: 14px;
-            font-weight: 600;
-            font-size: 0.95em;
+            font-weight: 700;
+            font-size: 0.9em;
             letter-spacing: 0.5px;
             text-decoration: none;
             cursor: pointer;
@@ -770,10 +772,10 @@
         }
 
         .guest-name {
-            font-family: var(--font-body);
-            font-weight: 600;
-            font-size: 0.92em;
-            letter-spacing: 0.3px;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.82em;
+            letter-spacing: 0.5px;
             color: #ffffff;
             white-space: nowrap;
             overflow: hidden;
@@ -781,12 +783,12 @@
         }
 
         .guest-badge {
-            font-family: var(--font-body);
-            font-size: 0.72em;
+            font-family: var(--font-titles);
+            font-size: 0.65em;
             padding: 2px 7px;
             border-radius: 12px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
             white-space: nowrap;
         }
 
@@ -1008,10 +1010,10 @@
             color: #1a252f;
             padding: 10px 20px;
             border-radius: 30px;
-            font-family: var(--font-body);
-            font-weight: 600;
-            font-size: 0.88em;
-            letter-spacing: 0.3px;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4);
             opacity: 0;
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
