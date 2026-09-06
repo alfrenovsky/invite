@@ -2,7 +2,8 @@
 
         :root {
             --primary: #1a252f;
-            --accent: #d4af37;
+            --accent: #ffd166;
+            --accent-2: #ff758f;
             --accent-light: #f3e5ab;
             --accent-dark: #aa8c2c;
             --bg-dark: #0f141a;
@@ -510,7 +511,7 @@
 
         .guest-greeting-box h3 {
             font-family: var(--font-titles);
-            color: var(--accent-light);
+            color: var(--accent-2);
             font-size: 1.15em;
             margin-bottom: 6px;
             font-weight: 700;
@@ -579,7 +580,7 @@
         .timeline-time {
             font-family: var(--font-titles);
             font-weight: 700;
-            color: var(--accent-light);
+            color: var(--accent-2);
             font-size: 0.88em;
             letter-spacing: 0.5px;
         }
@@ -619,7 +620,7 @@
         .countdown-num {
             font-size: 1.7em;
             font-weight: 700;
-            color: var(--accent-light);
+            color: var(--accent);
             line-height: 1;
             font-variant-numeric: tabular-nums;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
@@ -630,7 +631,7 @@
             font-size: 0.6em;
             font-weight: 700;
             letter-spacing: 1.5px;
-            color: var(--text-muted);
+            color: var(--accent-2);
             margin-top: 4px;
             text-transform: uppercase;
         }
@@ -653,8 +654,8 @@
             gap: 8px;
             width: 100%;
             padding: 13px 20px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-            color: #1a252f;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #180f24;
             border: none;
             border-radius: 14px;
             font-weight: 700;
@@ -663,7 +664,7 @@
             text-decoration: none;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 209, 102, 0.3);
             margin-top: 8px;
         }
 
