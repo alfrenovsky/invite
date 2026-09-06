@@ -14,7 +14,9 @@
             --warning: #f39c12;
             --story-width: 390px;
             --story-height: 845px;
-            --font-main: 'Syncopate', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-titles: 'Syncopate', sans-serif;
+            --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-main: var(--font-body);
         }
 
 
@@ -25,11 +27,11 @@
             padding: 0;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-            font-family: var(--font-main);
+            font-family: var(--font-body);
         }
 
         body {
-            font-family: var(--font-main);
+            font-family: var(--font-body);
             font-weight: 700;
 
 
@@ -194,13 +196,17 @@
         }
 
         .header-title {
-            font-size: 0.9em;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            font-family: var(--font-titles);
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         .header-subtitle {
-            font-size: 0.72em;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.68em;
+            letter-spacing: 0.5px;
             color: var(--text-muted);
         }
 
@@ -457,16 +463,18 @@
         .slide-tag {
             display: inline-block;
             align-self: center;
-            font-size: 0.8em;
-            letter-spacing: 3px;
+            font-family: var(--font-titles);
+            font-size: 0.76em;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             color: var(--accent);
             margin-bottom: 10px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .slide-title {
-            font-size: 2.1em;
+            font-family: var(--font-titles);
+            font-size: 1.95em;
             font-weight: 700;
             line-height: 1.2;
             margin-bottom: 12px;
@@ -475,15 +483,19 @@
 
 
         .slide-title strong {
+            font-family: var(--font-titles);
             font-weight: 700;
             color: inherit;
         }
 
 
         .slide-desc {
-            font-size: 1.02em;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.82em;
+            letter-spacing: 0.5px;
             color: var(--text-muted);
-            line-height: 1.5;
+            line-height: 1.45;
             margin-bottom: 20px;
         }
 
@@ -497,10 +509,12 @@
         }
 
         .guest-greeting-box h3 {
+            font-family: var(--font-titles);
             color: var(--accent-light);
-            font-size: 1.3em;
+            font-size: 1.15em;
             margin-bottom: 6px;
-            font-weight: 500;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         .chips-container {
@@ -563,9 +577,18 @@
         }
 
         .timeline-time {
+            font-family: var(--font-titles);
             font-weight: 700;
             color: var(--accent-light);
-            font-size: 0.95em;
+            font-size: 0.88em;
+            letter-spacing: 0.5px;
+        }
+
+        .timeline-title {
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.88em;
+            letter-spacing: 0.5px;
         }
 
         /* Countdown Timer Styling */
@@ -603,8 +626,9 @@
         }
 
         .countdown-label {
-            font-size: 0.62em;
-            font-weight: 600;
+            font-family: var(--font-titles);
+            font-size: 0.6em;
+            font-weight: 700;
             letter-spacing: 1.5px;
             color: var(--text-muted);
             margin-top: 4px;
@@ -622,6 +646,7 @@
         /* Buttons & Actions */
 
         .action-btn {
+            font-family: var(--font-titles);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -633,7 +658,8 @@
             border: none;
             border-radius: 14px;
             font-weight: 700;
-            font-size: 0.98em;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
             text-decoration: none;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -745,8 +771,10 @@
         }
 
         .guest-name {
-            font-weight: 600;
-            font-size: 0.92em;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.82em;
+            letter-spacing: 0.5px;
             color: #ffffff;
             white-space: nowrap;
             overflow: hidden;
@@ -754,10 +782,12 @@
         }
 
         .guest-badge {
-            font-size: 0.70em;
+            font-family: var(--font-titles);
+            font-size: 0.65em;
             padding: 2px 7px;
             border-radius: 12px;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.5px;
             white-space: nowrap;
         }
 
@@ -979,8 +1009,10 @@
             color: #1a252f;
             padding: 10px 20px;
             border-radius: 30px;
-            font-weight: bold;
-            font-size: 0.9em;
+            font-family: var(--font-titles);
+            font-weight: 700;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4);
             opacity: 0;
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);

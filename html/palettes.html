@@ -521,9 +521,12 @@
 
 
         .mock-desc {
-            font-size: 0.86rem;
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 0.76rem;
+            letter-spacing: 0.5px;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.45;
             margin-bottom: 12px;
             text-shadow: 0 1px 4px rgba(0,0,0,0.8);
         }
@@ -544,9 +547,11 @@
         }
 
         .venue-badge {
-            font-size: 0.74rem;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.68rem;
             color: var(--text-accent);
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         /* Countdown Display Mock */
@@ -624,14 +629,18 @@
         }
 
         .mock-guest-name {
+            font-family: 'Syncopate', sans-serif;
             font-weight: 700;
-            font-size: 0.88rem;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
             color: #fff;
         }
 
         .mock-status-pill {
-            font-size: 0.68rem;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.65rem;
             font-weight: 700;
+            letter-spacing: 0.5px;
             padding: 3px 8px;
             border-radius: 12px;
             background: rgba(46, 204, 113, 0.2);
@@ -1117,8 +1126,8 @@
                         <p class="mock-desc">19 de Marzo de 2027 • Queremos compartir este viaje tan especial junto a vos.</p>
                         
                         <div style="background: rgba(255,255,255,0.06); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 4px;">
-                            <div style="font-size:0.75rem; color:var(--text-accent); font-weight:700; letter-spacing:1px;">INVITACIÓN EXCLUSIVA</div>
-                            <div style="font-size:1.05rem; font-weight:700; color:#fff; margin-top:3px;">Familia Pérez</div>
+                            <div style="font-family: 'Syncopate', sans-serif; font-size:0.68rem; color:var(--text-accent); font-weight:700; letter-spacing:1.5px;">INVITACIÓN EXCLUSIVA</div>
+                            <div style="font-family: 'Syncopate', sans-serif; font-size:0.95rem; font-weight:700; color:#fff; margin-top:4px; letter-spacing:0.5px;">FAMILIA PÉREZ</div>
                         </div>
                     </div>
                 </div>
@@ -1712,6 +1721,24 @@
   --card-blur: ${inputBlur.value}px;
   --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 ${inputGlow.value}px rgba(${hexToRgb(pickerAccent1.value)}, 0.3);
   --bg-dim-overlay: rgba(0, 0, 0, ${(inputDimmer.value / 100).toFixed(2)});
+
+  /* Tipografía */
+  --font-titles: 'Syncopate', sans-serif;
+  --font-body: 'Montserrat', sans-serif;
+}
+
+/* Regla para títulos y subtítulos en Syncopate Bold */
+.story-slide h1,
+.story-slide h2,
+.story-slide h3,
+.story-slide .slide-title,
+.story-slide .slide-tag,
+.story-slide .slide-desc,
+.story-slide .venue-title,
+.story-slide .guest-name,
+.story-slide .action-btn {
+  font-family: var(--font-titles);
+  font-weight: 700;
 }
 
 /* Regla para título superior sin marco */
