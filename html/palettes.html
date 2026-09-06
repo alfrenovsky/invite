@@ -750,11 +750,58 @@
                 </div>
             </div>
 
-            <!-- Palette Presets -->
+            <!-- Festive Wedding Palettes -->
             <div>
-                <div class="section-title">2. Paletas Cósmicas Predefinidas</div>
+                <div class="section-title">2A. 🥂 Paletas Festivas de Boda</div>
                 <div class="grid-presets">
-                    <button class="preset-btn active" data-palette="cyan-magenta">
+                    <button class="preset-btn active" data-palette="stellar-champagne">
+                        <span>✨ Stellar Champagne</span>
+                        <small style="color:#ffd166">Oro cálido & Rose Gold</small>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#ffd166"></div>
+                            <div class="color-dot" style="background:#ff758f"></div>
+                            <div class="color-dot" style="background:#100c1c"></div>
+                            <div class="color-dot" style="background:#ffffff"></div>
+                        </div>
+                    </button>
+                    <button class="preset-btn" data-palette="supernova-fiesta">
+                        <span>🎉 Supernova Fiesta</span>
+                        <small style="color:#ff758f">Fucsia fiesta & Oro solar</small>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#f72585"></div>
+                            <div class="color-dot" style="background:#ffbe0b"></div>
+                            <div class="color-dot" style="background:#140a1e"></div>
+                            <div class="color-dot" style="background:#ffffff"></div>
+                        </div>
+                    </button>
+                    <button class="preset-btn" data-palette="cosmic-glamour">
+                        <span>💎 Cosmic Glamour</span>
+                        <small style="color:#d4af37">Oro alianza & Amatista</small>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#d4af37"></div>
+                            <div class="color-dot" style="background:#c77dff"></div>
+                            <div class="color-dot" style="background:#0e0a18"></div>
+                            <div class="color-dot" style="background:#ffffff"></div>
+                        </div>
+                    </button>
+                    <button class="preset-btn" data-palette="aurora-nupcial">
+                        <span>🌌 Aurora Nupcial</span>
+                        <small style="color:#e0aaff">Lila estelar & Rosa suave</small>
+                        <div class="preset-colors">
+                            <div class="color-dot" style="background:#e0aaff"></div>
+                            <div class="color-dot" style="background:#ffccd5"></div>
+                            <div class="color-dot" style="background:#0d0c18"></div>
+                            <div class="color-dot" style="background:#ffffff"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Existing Cosmic Palettes -->
+            <div>
+                <div class="section-title">2B. 🚀 Paletas Espaciales & Sci-Fi</div>
+                <div class="grid-presets">
+                    <button class="preset-btn" data-palette="cyan-magenta">
                         <span>Cosmic Cyan & Magenta</span>
                         <div class="preset-colors">
                             <div class="color-dot" style="background:#00f2fe"></div>
@@ -792,6 +839,7 @@
                     </button>
                 </div>
             </div>
+
 
             <!-- Container / Card Style Modifiers -->
             <div>
@@ -1082,6 +1130,40 @@
         };
 
         const PALETTES = {
+            // Festive Wedding Palettes
+            'stellar-champagne': {
+                accent1: '#ffd166',
+                accent2: '#ff758f',
+                cardBg: '#100c1c',
+                buttonBg: 'linear-gradient(135deg, #ffd166 0%, #ff758f 100%)',
+                buttonText: '#180f24',
+                glowColor: '255, 209, 102'
+            },
+            'supernova-fiesta': {
+                accent1: '#f72585',
+                accent2: '#ffbe0b',
+                cardBg: '#140a1e',
+                buttonBg: 'linear-gradient(135deg, #f72585 0%, #ffbe0b 100%)',
+                buttonText: '#ffffff',
+                glowColor: '247, 37, 133'
+            },
+            'cosmic-glamour': {
+                accent1: '#d4af37',
+                accent2: '#c77dff',
+                cardBg: '#0e0a18',
+                buttonBg: 'linear-gradient(135deg, #d4af37 0%, #9d4edd 100%)',
+                buttonText: '#ffffff',
+                glowColor: '212, 175, 55'
+            },
+            'aurora-nupcial': {
+                accent1: '#e0aaff',
+                accent2: '#ffccd5',
+                cardBg: '#0d0c18',
+                buttonBg: 'linear-gradient(135deg, #e0aaff 0%, #ffccd5 100%)',
+                buttonText: '#100b20',
+                glowColor: '224, 170, 255'
+            },
+            // Existing Cosmic / Sci-Fi Palettes
             'cyan-magenta': {
                 accent1: '#00f2fe',
                 accent2: '#f72585',
@@ -1115,6 +1197,7 @@
                 glowColor: '125, 211, 252'
             }
         };
+
 
         // DOM Elements
         const phoneBg = document.getElementById('phoneBg');
@@ -1371,7 +1454,8 @@
 
         // Initialize default view
         setBackground('space-starfield');
-        setPalette('cyan-magenta');
+        setPalette('stellar-champagne');
     </script>
+
 </body>
 </html>
