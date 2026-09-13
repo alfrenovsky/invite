@@ -153,6 +153,9 @@ All API routes are proxied through Nginx:
 7. **Rate Limiting**: Nginx rate-limits API requests at 20 req/s with a burst of 30 to prevent API exhaustion.
 8. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
 9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+10. **NEVER DEPLOY**: this is my job.
+11. **DONT WASTE TOKENS**: Dont do a log of thing i didnt ask without
+    asking me first
 
 
 

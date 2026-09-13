@@ -6,7 +6,6 @@
     const tapRight = document.getElementById('tapRight');
     const btnDesktopPrev = document.getElementById('btnDesktopPrev');
     const btnDesktopNext = document.getElementById('btnDesktopNext');
-    const btnPause = document.getElementById('btnPause');
     const isMobileDevice = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                            (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches && window.screen.width <= 768);
     const isDesktop = !isMobileDevice;
@@ -30,7 +29,7 @@
     let currentIndex = 0;
 
 
-    let isAutoplay = false;
+    let isAutoplay = true;
     let isPaused = false;
     let slideStartTime = 0;
     let elapsedTimeOnSlide = 0;
@@ -84,6 +83,7 @@
     window.addEventListener('hashchange', () => {
         const targetIdx = getTargetIndexFromHash();
         if (targetIdx !== currentIndex) {
+            stopAutoplay();
             goToSlide(targetIdx);
         }
     });
@@ -100,6 +100,7 @@
             slot.innerHTML = '<div class="progress-bar-fill"></div>';
             slot.addEventListener('click', (e) => {
                 e.stopPropagation();
+                stopAutoplay();
                 goToSlide(idx);
             });
             progressContainer.appendChild(slot);
@@ -359,7 +360,15 @@
         startSlideTimer();
     }
 
-    function nextSlide() {
+    function stopAutoplay() {
+        if (!isAutoplay) return;
+        isAutoplay = false;
+        clearTimers();
+        updateProgressDisplay(100);
+    }
+
+    function nextSlide(fromUser = false) {
+        if (fromUser) stopAutoplay();
         if (currentIndex < slides.length - 1) {
             goToSlide(currentIndex + 1);
         } else {
@@ -368,6 +377,7 @@
     }
 
     function prevSlide() {
+        stopAutoplay();
         if (currentIndex > 0) {
             goToSlide(currentIndex - 1);
         } else {
@@ -375,37 +385,14 @@
         }
     }
 
-    function togglePlayPause() {
-        isAutoplay = !isAutoplay;
-        if (btnPause) {
-            btnPause.textContent = isAutoplay ? '⏸' : '▶';
-            btnPause.title = isAutoplay ? 'Pausar avance automático' : 'Iniciar avance automático';
-        }
-        const activeSlide = slides[currentIndex];
-        const activeVideo = activeSlide ? activeSlide.querySelector('video') : null;
-        const activeAudio = activeSlide ? activeSlide.querySelector('audio') : null;
-        if (isAutoplay) {
-            if (activeVideo) activeVideo.play().catch(() => {});
-            if (activeAudio) activeAudio.play().catch(() => {});
-            startSlideTimer();
-        } else {
-            if (activeVideo) activeVideo.pause();
-            if (activeAudio) activeAudio.pause();
-            clearTimers();
-            updateProgressDisplay(100);
-        }
-    }
-
-
     // ==============================================================
-
     // 👆 Tap & Desktop Button Handlers
     // ==============================================================
     let isSwiping = false;
 
     function handleTap(direction) {
         if (isSwiping || isPullingToRefresh) return;
-        if (direction === 'next') nextSlide();
+        if (direction === 'next') nextSlide(true);
         else prevSlide();
     }
 
@@ -421,14 +408,8 @@
             handleTap('next');
         });
     }
-    if (btnDesktopPrev) btnDesktopPrev.addEventListener('click', prevSlide);
-    if (btnDesktopNext) btnDesktopNext.addEventListener('click', nextSlide);
-    if (btnPause) {
-        btnPause.addEventListener('click', (e) => {
-            e.stopPropagation();
-            togglePlayPause();
-        });
-    }
+    if (btnDesktopPrev) btnDesktopPrev.addEventListener('click', () => prevSlide());
+    if (btnDesktopNext) btnDesktopNext.addEventListener('click', () => nextSlide(true));
 
     // ==============================================================
     // 🔄 Mobile Pull to Refresh & Horizontal Swipe Engine
@@ -555,7 +536,7 @@
             const minSwipeDistance = 25;
             if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(touchStartY - touchEndY) * 0.65 && duration < 750) {
                 if (diffX > 0) {
-                    nextSlide();
+                    nextSlide(true);
                 } else {
                     prevSlide();
                 }
@@ -580,7 +561,7 @@
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         if (e.key === 'ArrowRight' || e.key === ' ') {
             e.preventDefault();
-            nextSlide();
+            nextSlide(true);
         } else if (e.key === 'ArrowLeft') {
             e.preventDefault();
             prevSlide();
@@ -828,6 +809,7 @@
                 e.stopPropagation();
                 const rsvpIdx = slides.findIndex(s => s.getAttribute('data-slide-id') === 'rsvp');
                 if (rsvpIdx !== -1) {
+                    stopAutoplay();
                     goToSlide(rsvpIdx);
                 }
             };
@@ -838,6 +820,7 @@
             s.onclick = (e) => {
                 if (idx !== currentIndex) {
                     e.stopPropagation();
+                    stopAutoplay();
                     goToSlide(idx);
                 }
             };
@@ -998,6 +981,250 @@
                 inputApellido.addEventListener('blur', () => flushAutoSave());
             }
         });
+
+        // Initialize Left Typography Color Picker
+        initTypographyColorPicker();
+    }
+
+    // ==============================================================
+    // 🎨 Typography Color & Glow Picker Controller
+    // ==============================================================
+    function initTypographyColorPicker() {
+        const panel = document.getElementById('typographyColorPanel');
+        if (!panel) return;
+
+        const btnToggle = document.getElementById('btnToggleTcp');
+        const tcpHeader = document.getElementById('tcpHeader');
+        const btnReset = document.getElementById('btnResetTcp');
+        const btnCopy = document.getElementById('btnCopyTcpCss');
+
+        function hexToRgb(hex) {
+            const clean = (hex || '').replace('#', '').trim();
+            if (clean.length === 3) {
+                const r = parseInt(clean[0] + clean[0], 16);
+                const g = parseInt(clean[1] + clean[1], 16);
+                const b = parseInt(clean[2] + clean[2], 16);
+                return `${r}, ${g}, ${b}`;
+            }
+            if (clean.length >= 6) {
+                const bigint = parseInt(clean.substring(0, 6), 16);
+                const r = (bigint >> 16) & 255;
+                const g = (bigint >> 8) & 255;
+                const b = bigint & 255;
+                return `${r}, ${g}, ${b}`;
+            }
+            return '0, 136, 255';
+        }
+
+        const DEFAULTS = {
+            tag: { color: '#ffffff', glowColor: '#0088ff', glowRadius: 0, glowOpacity: 0 },
+            title: { color: '#80c3ff', glowColor: '#0088ff', glowRadius: 17, glowOpacity: 100 },
+            desc: { color: '#ffffff', glowColor: '#0088ff', glowRadius: 0, glowOpacity: 0 }
+        };
+
+        const STORAGE_KEY = 'wedding_story_tcp_glow_config_v2';
+
+        const sections = {
+            tag: {
+                pickerColor: document.getElementById('pickerSlideTag'),
+                hexColor: document.getElementById('hexSlideTag'),
+                pickerGlow: document.getElementById('pickerSlideTagGlow'),
+                hexGlow: document.getElementById('hexSlideTagGlow'),
+                sliderRadius: document.getElementById('sliderSlideTagRadius'),
+                valRadius: document.getElementById('valSlideTagRadius'),
+                sliderOpacity: document.getElementById('sliderSlideTagOpacity'),
+                valOpacity: document.getElementById('valSlideTagOpacity'),
+                prefix: '--slide-tag'
+            },
+            title: {
+                pickerColor: document.getElementById('pickerSlideTitle'),
+                hexColor: document.getElementById('hexSlideTitle'),
+                pickerGlow: document.getElementById('pickerSlideTitleGlow'),
+                hexGlow: document.getElementById('hexSlideTitleGlow'),
+                sliderRadius: document.getElementById('sliderSlideTitleRadius'),
+                valRadius: document.getElementById('valSlideTitleRadius'),
+                sliderOpacity: document.getElementById('sliderSlideTitleOpacity'),
+                valOpacity: document.getElementById('valSlideTitleOpacity'),
+                prefix: '--slide-title'
+            },
+            desc: {
+                pickerColor: document.getElementById('pickerSlideDesc'),
+                hexColor: document.getElementById('hexSlideDesc'),
+                pickerGlow: document.getElementById('pickerSlideDescGlow'),
+                hexGlow: document.getElementById('hexSlideDescGlow'),
+                sliderRadius: document.getElementById('sliderSlideDescRadius'),
+                valRadius: document.getElementById('valSlideDescRadius'),
+                sliderOpacity: document.getElementById('sliderSlideDescOpacity'),
+                valOpacity: document.getElementById('valSlideDescOpacity'),
+                prefix: '--slide-desc'
+            }
+        };
+
+        let state = JSON.parse(JSON.stringify(DEFAULTS));
+
+        function applySection(key, save = true) {
+            const sec = sections[key];
+            const data = state[key];
+            if (!sec || !data) return;
+
+            // Update UI elements
+            if (sec.pickerColor) sec.pickerColor.value = data.color;
+            if (sec.hexColor) sec.hexColor.value = data.color.toUpperCase();
+            if (sec.pickerGlow) sec.pickerGlow.value = data.glowColor;
+            if (sec.hexGlow) sec.hexGlow.value = data.glowColor.toUpperCase();
+            if (sec.sliderRadius) sec.sliderRadius.value = data.glowRadius;
+            if (sec.valRadius) sec.valRadius.textContent = `${data.glowRadius}px`;
+            if (sec.sliderOpacity) sec.sliderOpacity.value = data.glowOpacity;
+            if (sec.valOpacity) sec.valOpacity.textContent = `${data.glowOpacity}%`;
+
+            // Update CSS variables
+            const root = document.documentElement;
+            root.style.setProperty(`${sec.prefix}-color`, data.color);
+            root.style.setProperty(`${sec.prefix}-glow-color`, data.glowColor);
+            root.style.setProperty(`${sec.prefix}-glow-rgb`, hexToRgb(data.glowColor));
+            root.style.setProperty(`${sec.prefix}-glow-radius`, `${data.glowRadius}px`);
+            root.style.setProperty(`${sec.prefix}-glow-opacity`, (data.glowOpacity / 100).toFixed(2));
+
+            if (save) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                } catch (e) {}
+            }
+        }
+
+        function applyAll(save = true) {
+            applySection('tag', false);
+            applySection('title', false);
+            applySection('desc', false);
+            if (save) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                } catch (e) {}
+            }
+        }
+
+        // Restore saved settings
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                ['tag', 'title', 'desc'].forEach(k => {
+                    if (parsed[k]) Object.assign(state[k], parsed[k]);
+                });
+            }
+        } catch (e) {}
+
+        applyAll(false);
+
+        // Bind interactive events for each section
+        Object.keys(sections).forEach(key => {
+            const sec = sections[key];
+            if (!sec) return;
+
+            // Text Color Picker & Hex
+            if (sec.pickerColor) {
+                sec.pickerColor.addEventListener('input', () => {
+                    state[key].color = sec.pickerColor.value;
+                    if (sec.hexColor) sec.hexColor.value = sec.pickerColor.value.toUpperCase();
+                    applySection(key);
+                });
+            }
+            if (sec.hexColor) {
+                sec.hexColor.addEventListener('input', () => {
+                    let val = sec.hexColor.value.trim();
+                    if (!val.startsWith('#')) val = '#' + val;
+                    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                        state[key].color = val;
+                        if (sec.pickerColor) sec.pickerColor.value = val;
+                        applySection(key);
+                    }
+                });
+            }
+
+            // Glow Color Picker & Hex
+            if (sec.pickerGlow) {
+                sec.pickerGlow.addEventListener('input', () => {
+                    state[key].glowColor = sec.pickerGlow.value;
+                    if (sec.hexGlow) sec.hexGlow.value = sec.pickerGlow.value.toUpperCase();
+                    applySection(key);
+                });
+            }
+            if (sec.hexGlow) {
+                sec.hexGlow.addEventListener('input', () => {
+                    let val = sec.hexGlow.value.trim();
+                    if (!val.startsWith('#')) val = '#' + val;
+                    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                        state[key].glowColor = val;
+                        if (sec.pickerGlow) sec.pickerGlow.value = val;
+                        applySection(key);
+                    }
+                });
+            }
+
+            // Glow Radius Slider
+            if (sec.sliderRadius) {
+                sec.sliderRadius.addEventListener('input', () => {
+                    const val = parseInt(sec.sliderRadius.value, 10) || 0;
+                    state[key].glowRadius = val;
+                    if (sec.valRadius) sec.valRadius.textContent = `${val}px`;
+                    applySection(key);
+                });
+            }
+
+            // Glow Opacity Slider
+            if (sec.sliderOpacity) {
+                sec.sliderOpacity.addEventListener('input', () => {
+                    const val = parseInt(sec.sliderOpacity.value, 10) || 0;
+                    state[key].glowOpacity = val;
+                    if (sec.valOpacity) sec.valOpacity.textContent = `${val}%`;
+                    applySection(key);
+                });
+            }
+        });
+
+        // Reset
+        if (btnReset) {
+            btnReset.addEventListener('click', (e) => {
+                e.stopPropagation();
+                state = JSON.parse(JSON.stringify(DEFAULTS));
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch (e) {}
+                applyAll(false);
+                showToast('Tipografía y Glow restablecidos por defecto');
+            });
+        }
+
+        // Copy CSS
+        if (btnCopy) {
+            btnCopy.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cssSnippet = `:root {\n    /* Tag */\n    --slide-tag-color: ${state.tag.color};\n    --slide-tag-glow-color: ${state.tag.glowColor};\n    --slide-tag-glow-rgb: ${hexToRgb(state.tag.glowColor)};\n    --slide-tag-glow-radius: ${state.tag.glowRadius}px;\n    --slide-tag-glow-opacity: ${(state.tag.glowOpacity / 100).toFixed(2)};\n\n    /* Title */\n    --slide-title-color: ${state.title.color};\n    --slide-title-glow-color: ${state.title.glowColor};\n    --slide-title-glow-rgb: ${hexToRgb(state.title.glowColor)};\n    --slide-title-glow-radius: ${state.title.glowRadius}px;\n    --slide-title-glow-opacity: ${(state.title.glowOpacity / 100).toFixed(2)};\n\n    /* Description */\n    --slide-desc-color: ${state.desc.color};\n    --slide-desc-glow-color: ${state.desc.glowColor};\n    --slide-desc-glow-rgb: ${hexToRgb(state.desc.glowColor)};\n    --slide-desc-glow-radius: ${state.desc.glowRadius}px;\n    --slide-desc-glow-opacity: ${(state.desc.glowOpacity / 100).toFixed(2)};\n}`;
+                navigator.clipboard.writeText(cssSnippet).then(() => {
+                    showToast('¡CSS con Glow copiado al portapapeles!');
+                }).catch(() => {
+                    prompt('Copia este CSS:', cssSnippet);
+                });
+            });
+        }
+
+        // Toggle minimize/expand
+        function togglePanel(e) {
+            if (e) e.stopPropagation();
+            panel.classList.toggle('is-minimized');
+            if (btnToggle) {
+                btnToggle.textContent = panel.classList.contains('is-minimized') ? '🎨' : '−';
+            }
+        }
+
+        if (btnToggle) btnToggle.addEventListener('click', togglePanel);
+        if (tcpHeader) {
+            tcpHeader.addEventListener('click', (e) => {
+                if (panel.classList.contains('is-minimized')) {
+                    togglePanel(e);
+                }
+            });
+        }
     }
 
     // Page exit listeners

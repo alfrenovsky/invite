@@ -1,0 +1,138 @@
+<!-- Left Typography Color & Glow Picker Panel (Starts Minimized) -->
+<aside class="typography-color-panel is-minimized" id="typographyColorPanel" aria-label="Selector de Color y Glow de Tipografía">
+    <div class="tcp-header" id="tcpHeader">
+        <div class="tcp-title">
+            <span class="tcp-icon">🎨</span>
+            <span class="tcp-heading-text">Tipografía & Glow</span>
+        </div>
+        <button class="tcp-toggle-btn" id="btnToggleTcp" title="Minimizar / Expandir" type="button">🎨</button>
+    </div>
+
+    <div class="tcp-body" id="tcpBody">
+        <!-- 1. SLIDE TAG SECTION -->
+        <div class="tcp-section">
+            <div class="tcp-section-title">
+                <span class="tcp-element-name">Tag / Etiqueta</span>
+                <span class="tcp-target-class">.slide-tag</span>
+            </div>
+
+            <div class="tcp-row">
+                <label class="tcp-sublabel" for="pickerSlideTag">Color Texto:</label>
+                <div class="tcp-input-row">
+                    <input type="color" class="tcp-color-input" id="pickerSlideTag" value="#ffffff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideTag" value="#ffffff" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tcp-row">
+                <label class="tcp-sublabel" for="pickerSlideTagGlow">Color Glow:</label>
+                <div class="tcp-input-row">
+                    <input type="color" class="tcp-color-input" id="pickerSlideTagGlow" value="#0088ff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideTagGlow" value="#0088ff" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tcp-slider-row">
+                <div class="tcp-slider-header">
+                    <span class="tcp-sublabel">Radio Glow:</span>
+                    <span class="tcp-slider-val" id="valSlideTagRadius">0px</span>
+                </div>
+                <input type="range" class="tcp-slider" id="sliderSlideTagRadius" min="0" max="40" step="1" value="0">
+            </div>
+
+            <div class="tcp-slider-row">
+                <div class="tcp-slider-header">
+                    <span class="tcp-sublabel">Opacidad Glow:</span>
+                    <span class="tcp-slider-val" id="valSlideTagOpacity">0%</span>
+                </div>
+                <input type="range" class="tcp-slider" id="sliderSlideTagOpacity" min="0" max="100" step="5" value="0">
+            </div>
+        </div>
+
+        <!-- 2. SLIDE TITLE SECTION -->
+        <div class="tcp-section">
+            <div class="tcp-section-title">
+                <span class="tcp-element-name">Título</span>
+                <span class="tcp-target-class">.slide-title</span>
+            </div>
+
+            <div class="tcp-row">
+                <label class="tcp-sublabel" for="pickerSlideTitle">Color Texto:</label>
+                <div class="tcp-input-row">
+                    <input type="color" class="tcp-color-input" id="pickerSlideTitle" value="#80c3ff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideTitle" value="#80c3ff" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tcp-row">
+                <label class="tcp-sublabel" for="pickerSlideTitleGlow">Color Glow:</label>
+                <div class="tcp-input-row">
+                    <input type="color" class="tcp-color-input" id="pickerSlideTitleGlow" value="#0088ff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideTitleGlow" value="#0088ff" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tcp-slider-row">
+                <div class="tcp-slider-header">
+                    <span class="tcp-sublabel">Radio Glow:</span>
+                    <span class="tcp-slider-val" id="valSlideTitleRadius">17px</span>
+                </div>
+                <input type="range" class="tcp-slider" id="sliderSlideTitleRadius" min="0" max="40" step="1" value="17">
+            </div>
+
+            <div class="tcp-slider-row">
+                <div class="tcp-slider-header">
+                    <span class="tcp-sublabel">Opacidad Glow:</span>
+                    <span class="tcp-slider-val" id="valSlideTitleOpacity">100%</span>
+                </div>
+                <input type="range" class="tcp-slider" id="sliderSlideTitleOpacity" min="0" max="100" step="5" value="100">
+            </div>
+        </div>
+
+        <!-- 3. SLIDE DESCRIPTION SECTION -->
+        <div class="tcp-section">
+            <div class="tcp-section-title">
+                <span class="tcp-element-name">Descripción</span>
+                <span class="tcp-target-class">.slide-desc</span>
+            </div>
+
+            <div class="tcp-row">
+                <label class="tcp-sublabel" for="pickerSlideDesc">Color Texto:</label>
+                <div class="tcp-input-row">
+                    <input type="color" class="tcp-color-input" id="pickerSlideDesc" value="#ffffff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideDesc" value="#ffffff" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tcp-row">
+                <label class="tcp-sublabel" for="pickerSlideDescGlow">Color Glow:</label>
+                <div class="tcp-input-row">
+                    <input type="color" class="tcp-color-input" id="pickerSlideDescGlow" value="#0088ff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideDescGlow" value="#0088ff" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tcp-slider-row">
+                <div class="tcp-slider-header">
+                    <span class="tcp-sublabel">Radio Glow:</span>
+                    <span class="tcp-slider-val" id="valSlideDescRadius">0px</span>
+                </div>
+                <input type="range" class="tcp-slider" id="sliderSlideDescRadius" min="0" max="40" step="1" value="0">
+            </div>
+
+            <div class="tcp-slider-row">
+                <div class="tcp-slider-header">
+                    <span class="tcp-sublabel">Opacidad Glow:</span>
+                    <span class="tcp-slider-val" id="valSlideDescOpacity">0%</span>
+                </div>
+                <input type="range" class="tcp-slider" id="sliderSlideDescOpacity" min="0" max="100" step="5" value="0">
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="tcp-actions">
+            <button class="tcp-btn" id="btnResetTcp" type="button" title="Restablecer">↺ Reset</button>
+            <button class="tcp-btn tcp-btn-primary" id="btnCopyTcpCss" type="button" title="Copiar bloque CSS">📋 Copiar CSS</button>
+        </div>
+    </div>
+</aside>

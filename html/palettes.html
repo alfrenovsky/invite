@@ -824,13 +824,13 @@
                         <span>🌌 Nebulosa Cyan</span>
                         <small style="color:#94a3b8">Gradiente celeste/zafiro</small>
                     </button>
-                    <button class="preset-btn" data-bg="space-magenta-violet">
-                        <span>🌌 Nebulosa Magenta</span>
-                        <small style="color:#94a3b8">Gradiente fucsia/violeta</small>
+                    <button class="preset-btn" data-bg="bg-white">
+                        <span>⚪ Fondo Blanco</span>
+                        <small style="color:#94a3b8">#ffffff sólido de prueba</small>
                     </button>
-                    <button class="preset-btn" data-bg="custom-url" style="grid-column: span 2;">
+                    <button class="preset-btn" data-bg="custom-url">
                         <span>🔗 URL Personalizada</span>
-                        <small style="color:#94a3b8">Ingresar link de imagen o video web</small>
+                        <small style="color:#94a3b8">Ingresar link web</small>
                     </button>
                 </div>
 
@@ -1319,6 +1319,10 @@
             'space-magenta-violet': {
                 type: 'css',
                 bg: 'radial-gradient(ellipse at 80% 20%, rgba(247, 37, 133, 0.35) 0%, transparent 55%), radial-gradient(circle at 20% 80%, rgba(114, 9, 183, 0.5) 0%, transparent 55%), linear-gradient(150deg, #090212 0%, #150524 100%)'
+            },
+            'bg-white': {
+                type: 'css',
+                bg: '#ffffff'
             }
         };
 
@@ -1488,6 +1492,11 @@
             }
             const config = BACKGROUNDS[key];
             if (!config) return;
+            if (key === 'bg-white') {
+                inputDimmer.value = 0;
+                valDimmer.textContent = '0%';
+                root.style.setProperty('--bg-dim-opacity', '0');
+            }
             if (config.type === 'css') {
                 phoneBg.style.background = config.bg;
             } else if (config.type === 'image') {
