@@ -239,6 +239,11 @@
                 }
             }
         });
+
+        // En slide de RSVP desactivar tap-zones para garantizar cero interferencias con el formulario
+        const isRsvpSlide = (currentSlideId === 'rsvp');
+        if (tapLeft) tapLeft.style.pointerEvents = isRsvpSlide ? 'none' : 'auto';
+        if (tapRight) tapRight.style.pointerEvents = isRsvpSlide ? 'none' : 'auto';
     }
 
     function updateStoryScale() {

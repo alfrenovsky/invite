@@ -394,10 +394,27 @@
         }
 
 
-        /* Tap Zones: Disabled to prevent interfering with links and forms */
+        /* Tap Zones: Navegación por toques en bordes laterales estrechos */
         .tap-zone {
-            display: none !important;
-            pointer-events: none !important;
+            display: block !important;
+            position: absolute;
+            top: 72px; /* Debajo de top-bar */
+            bottom: 24px;
+            width: 14%; /* Solo bien al borde */
+            max-width: 52px;
+            z-index: 350; /* Por encima del cuerpo del slide (300) pero detrás de botones, stickers y formularios (500+) */
+            pointer-events: auto !important;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+
+        .tap-left {
+            left: 0;
+        }
+
+        .tap-right {
+            right: 0;
         }
 
         /* Interactive content wrapper */
