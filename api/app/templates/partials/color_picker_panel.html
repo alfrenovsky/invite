@@ -9,7 +9,7 @@
     </div>
 
     <div class="tcp-body" id="tcpBody">
-        <!-- 1. SLIDE TAG SECTION -->
+        <!-- 1. SLIDE TAG SECTION (No Glow) -->
         <div class="tcp-section">
             <div class="tcp-section-title">
                 <span class="tcp-element-name">Tag / Etiqueta</span>
@@ -23,33 +23,9 @@
                     <input type="text" class="tcp-hex-input" id="hexSlideTag" value="#ffffff" maxlength="7" spellcheck="false">
                 </div>
             </div>
-
-            <div class="tcp-row">
-                <label class="tcp-sublabel" for="pickerSlideTagGlow">Color Glow:</label>
-                <div class="tcp-input-row">
-                    <input type="color" class="tcp-color-input" id="pickerSlideTagGlow" value="#0088ff">
-                    <input type="text" class="tcp-hex-input" id="hexSlideTagGlow" value="#0088ff" maxlength="7" spellcheck="false">
-                </div>
-            </div>
-
-            <div class="tcp-slider-row">
-                <div class="tcp-slider-header">
-                    <span class="tcp-sublabel">Radio Glow:</span>
-                    <span class="tcp-slider-val" id="valSlideTagRadius">0px</span>
-                </div>
-                <input type="range" class="tcp-slider" id="sliderSlideTagRadius" min="0" max="40" step="1" value="0">
-            </div>
-
-            <div class="tcp-slider-row">
-                <div class="tcp-slider-header">
-                    <span class="tcp-sublabel">Opacidad Glow:</span>
-                    <span class="tcp-slider-val" id="valSlideTagOpacity">0%</span>
-                </div>
-                <input type="range" class="tcp-slider" id="sliderSlideTagOpacity" min="0" max="100" step="5" value="0">
-            </div>
         </div>
 
-        <!-- 2. SLIDE TITLE SECTION -->
+        <!-- 2. SLIDE TITLE SECTION (With Glow Controls) -->
         <div class="tcp-section">
             <div class="tcp-section-title">
                 <span class="tcp-element-name">Título</span>
@@ -89,7 +65,7 @@
             </div>
         </div>
 
-        <!-- 3. SLIDE DESCRIPTION SECTION -->
+        <!-- 3. SLIDE DESCRIPTION SECTION (No Glow + Font Selector) -->
         <div class="tcp-section">
             <div class="tcp-section-title">
                 <span class="tcp-element-name">Descripción</span>
@@ -99,33 +75,17 @@
             <div class="tcp-row">
                 <label class="tcp-sublabel" for="pickerSlideDesc">Color Texto:</label>
                 <div class="tcp-input-row">
-                    <input type="color" class="tcp-color-input" id="pickerSlideDesc" value="#ffffff">
-                    <input type="text" class="tcp-hex-input" id="hexSlideDesc" value="#ffffff" maxlength="7" spellcheck="false">
+                    <input type="color" class="tcp-color-input" id="pickerSlideDesc" value="#b8deff">
+                    <input type="text" class="tcp-hex-input" id="hexSlideDesc" value="#B8DEFF" maxlength="7" spellcheck="false">
                 </div>
             </div>
 
             <div class="tcp-row">
-                <label class="tcp-sublabel" for="pickerSlideDescGlow">Color Glow:</label>
-                <div class="tcp-input-row">
-                    <input type="color" class="tcp-color-input" id="pickerSlideDescGlow" value="#0088ff">
-                    <input type="text" class="tcp-hex-input" id="hexSlideDescGlow" value="#0088ff" maxlength="7" spellcheck="false">
-                </div>
-            </div>
-
-            <div class="tcp-slider-row">
-                <div class="tcp-slider-header">
-                    <span class="tcp-sublabel">Radio Glow:</span>
-                    <span class="tcp-slider-val" id="valSlideDescRadius">0px</span>
-                </div>
-                <input type="range" class="tcp-slider" id="sliderSlideDescRadius" min="0" max="40" step="1" value="0">
-            </div>
-
-            <div class="tcp-slider-row">
-                <div class="tcp-slider-header">
-                    <span class="tcp-sublabel">Opacidad Glow:</span>
-                    <span class="tcp-slider-val" id="valSlideDescOpacity">0%</span>
-                </div>
-                <input type="range" class="tcp-slider" id="sliderSlideDescOpacity" min="0" max="100" step="5" value="0">
+                <label class="tcp-sublabel" for="selectSlideDescFont">Fuente:</label>
+                <select class="tcp-select" id="selectSlideDescFont">
+                    <option value="montserrat" selected>Montserrat</option>
+                    <option value="syncopate">Syncopate</option>
+                </select>
             </div>
         </div>
 

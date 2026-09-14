@@ -152,12 +152,6 @@
 
         const currentSlide = slides[index];
         const currentSlideId = currentSlide ? currentSlide.getAttribute('data-slide-id') : null;
-        const isInteractiveSlide = (currentSlideId === 'rsvp' || currentSlideId === 'triste' || index === slides.length - 1);
-
-        if (tapLeft && tapRight) {
-            tapLeft.style.display = isInteractiveSlide ? 'none' : 'block';
-            tapRight.style.display = isInteractiveSlide ? 'none' : 'block';
-        }
 
         slides.forEach((s, idx) => {
             const video = s.querySelector('video');
@@ -1017,23 +1011,17 @@
         }
 
         const DEFAULTS = {
-            tag: { color: '#ffffff', glowColor: '#0088ff', glowRadius: 0, glowOpacity: 0 },
+            tag: { color: '#ffffff' },
             title: { color: '#80c3ff', glowColor: '#0088ff', glowRadius: 17, glowOpacity: 100 },
-            desc: { color: '#ffffff', glowColor: '#0088ff', glowRadius: 0, glowOpacity: 0 }
+            desc: { color: '#b8deff', font: 'montserrat' }
         };
 
-        const STORAGE_KEY = 'wedding_story_tcp_glow_config_v2';
+        const STORAGE_KEY = 'wedding_story_tcp_glow_config_v4';
 
         const sections = {
             tag: {
                 pickerColor: document.getElementById('pickerSlideTag'),
                 hexColor: document.getElementById('hexSlideTag'),
-                pickerGlow: document.getElementById('pickerSlideTagGlow'),
-                hexGlow: document.getElementById('hexSlideTagGlow'),
-                sliderRadius: document.getElementById('sliderSlideTagRadius'),
-                valRadius: document.getElementById('valSlideTagRadius'),
-                sliderOpacity: document.getElementById('sliderSlideTagOpacity'),
-                valOpacity: document.getElementById('valSlideTagOpacity'),
                 prefix: '--slide-tag'
             },
             title: {
@@ -1050,12 +1038,7 @@
             desc: {
                 pickerColor: document.getElementById('pickerSlideDesc'),
                 hexColor: document.getElementById('hexSlideDesc'),
-                pickerGlow: document.getElementById('pickerSlideDescGlow'),
-                hexGlow: document.getElementById('hexSlideDescGlow'),
-                sliderRadius: document.getElementById('sliderSlideDescRadius'),
-                valRadius: document.getElementById('valSlideDescRadius'),
-                sliderOpacity: document.getElementById('sliderSlideDescOpacity'),
-                valOpacity: document.getElementById('valSlideDescOpacity'),
+                selectFont: document.getElementById('selectSlideDescFont'),
                 prefix: '--slide-desc'
             }
         };
@@ -1067,23 +1050,34 @@
             const data = state[key];
             if (!sec || !data) return;
 
-            // Update UI elements
+            const root = document.documentElement;
+
+            // Color inputs
             if (sec.pickerColor) sec.pickerColor.value = data.color;
             if (sec.hexColor) sec.hexColor.value = data.color.toUpperCase();
-            if (sec.pickerGlow) sec.pickerGlow.value = data.glowColor;
-            if (sec.hexGlow) sec.hexGlow.value = data.glowColor.toUpperCase();
-            if (sec.sliderRadius) sec.sliderRadius.value = data.glowRadius;
-            if (sec.valRadius) sec.valRadius.textContent = `${data.glowRadius}px`;
-            if (sec.sliderOpacity) sec.sliderOpacity.value = data.glowOpacity;
-            if (sec.valOpacity) sec.valOpacity.textContent = `${data.glowOpacity}%`;
-
-            // Update CSS variables
-            const root = document.documentElement;
             root.style.setProperty(`${sec.prefix}-color`, data.color);
-            root.style.setProperty(`${sec.prefix}-glow-color`, data.glowColor);
-            root.style.setProperty(`${sec.prefix}-glow-rgb`, hexToRgb(data.glowColor));
-            root.style.setProperty(`${sec.prefix}-glow-radius`, `${data.glowRadius}px`);
-            root.style.setProperty(`${sec.prefix}-glow-opacity`, (data.glowOpacity / 100).toFixed(2));
+
+            // Title-specific glow controls
+            if (key === 'title') {
+                if (sec.pickerGlow) sec.pickerGlow.value = data.glowColor;
+                if (sec.hexGlow) sec.hexGlow.value = data.glowColor.toUpperCase();
+                if (sec.sliderRadius) sec.sliderRadius.value = data.glowRadius;
+                if (sec.valRadius) sec.valRadius.textContent = `${data.glowRadius}px`;
+                if (sec.sliderOpacity) sec.sliderOpacity.value = data.glowOpacity;
+                if (sec.valOpacity) sec.valOpacity.textContent = `${data.glowOpacity}%`;
+
+                root.style.setProperty(`${sec.prefix}-glow-color`, data.glowColor);
+                root.style.setProperty(`${sec.prefix}-glow-rgb`, hexToRgb(data.glowColor));
+                root.style.setProperty(`${sec.prefix}-glow-radius`, `${data.glowRadius}px`);
+                root.style.setProperty(`${sec.prefix}-glow-opacity`, (data.glowOpacity / 100).toFixed(2));
+            }
+
+            // Desc-specific font selector
+            if (key === 'desc' && sec.selectFont) {
+                sec.selectFont.value = data.font || 'syncopate';
+                const fontVal = (data.font === 'montserrat') ? 'var(--font-body)' : 'var(--font-titles)';
+                root.style.setProperty('--slide-desc-font', fontVal);
+            }
 
             if (save) {
                 try {
@@ -1141,7 +1135,7 @@
                 });
             }
 
-            // Glow Color Picker & Hex
+            // Glow controls (Title only)
             if (sec.pickerGlow) {
                 sec.pickerGlow.addEventListener('input', () => {
                     state[key].glowColor = sec.pickerGlow.value;
@@ -1160,8 +1154,6 @@
                     }
                 });
             }
-
-            // Glow Radius Slider
             if (sec.sliderRadius) {
                 sec.sliderRadius.addEventListener('input', () => {
                     const val = parseInt(sec.sliderRadius.value, 10) || 0;
@@ -1170,13 +1162,19 @@
                     applySection(key);
                 });
             }
-
-            // Glow Opacity Slider
             if (sec.sliderOpacity) {
                 sec.sliderOpacity.addEventListener('input', () => {
                     const val = parseInt(sec.sliderOpacity.value, 10) || 0;
                     state[key].glowOpacity = val;
                     if (sec.valOpacity) sec.valOpacity.textContent = `${val}%`;
+                    applySection(key);
+                });
+            }
+
+            // Font Selector (Desc only)
+            if (sec.selectFont) {
+                sec.selectFont.addEventListener('change', () => {
+                    state[key].font = sec.selectFont.value;
                     applySection(key);
                 });
             }
@@ -1191,7 +1189,7 @@
                     localStorage.removeItem(STORAGE_KEY);
                 } catch (e) {}
                 applyAll(false);
-                showToast('Tipografía y Glow restablecidos por defecto');
+                showToast('Tipografía y estilos restablecidos por defecto');
             });
         }
 
@@ -1199,9 +1197,10 @@
         if (btnCopy) {
             btnCopy.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const cssSnippet = `:root {\n    /* Tag */\n    --slide-tag-color: ${state.tag.color};\n    --slide-tag-glow-color: ${state.tag.glowColor};\n    --slide-tag-glow-rgb: ${hexToRgb(state.tag.glowColor)};\n    --slide-tag-glow-radius: ${state.tag.glowRadius}px;\n    --slide-tag-glow-opacity: ${(state.tag.glowOpacity / 100).toFixed(2)};\n\n    /* Title */\n    --slide-title-color: ${state.title.color};\n    --slide-title-glow-color: ${state.title.glowColor};\n    --slide-title-glow-rgb: ${hexToRgb(state.title.glowColor)};\n    --slide-title-glow-radius: ${state.title.glowRadius}px;\n    --slide-title-glow-opacity: ${(state.title.glowOpacity / 100).toFixed(2)};\n\n    /* Description */\n    --slide-desc-color: ${state.desc.color};\n    --slide-desc-glow-color: ${state.desc.glowColor};\n    --slide-desc-glow-rgb: ${hexToRgb(state.desc.glowColor)};\n    --slide-desc-glow-radius: ${state.desc.glowRadius}px;\n    --slide-desc-glow-opacity: ${(state.desc.glowOpacity / 100).toFixed(2)};\n}`;
+                const fontDescVal = state.desc.font === 'montserrat' ? 'var(--font-body)' : 'var(--font-titles)';
+                const cssSnippet = `:root {\n    /* Tag (sin glow) */\n    --slide-tag-color: ${state.tag.color};\n\n    /* Title (con glow) */\n    --slide-title-color: ${state.title.color};\n    --slide-title-glow-color: ${state.title.glowColor};\n    --slide-title-glow-rgb: ${hexToRgb(state.title.glowColor)};\n    --slide-title-glow-radius: ${state.title.glowRadius}px;\n    --slide-title-glow-opacity: ${(state.title.glowOpacity / 100).toFixed(2)};\n\n    /* Description (sin glow, fuente configurable) */\n    --slide-desc-color: ${state.desc.color};\n    --slide-desc-font: ${fontDescVal};\n}`;
                 navigator.clipboard.writeText(cssSnippet).then(() => {
-                    showToast('¡CSS con Glow copiado al portapapeles!');
+                    showToast('¡CSS copiado al portapapeles!');
                 }).catch(() => {
                     prompt('Copia este CSS:', cssSnippet);
                 });
