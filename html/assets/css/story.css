@@ -1150,6 +1150,7 @@
         /* 🎨 Left Typography Color & Glow Picker Panel                    */
         /* ============================================================== */
         .typography-color-panel {
+            display: none !important;
             position: fixed;
             left: 20px;
             top: 50%;
@@ -1514,5 +1515,129 @@
             line-height: 1;
             text-transform: uppercase;
         }
+
+        /* Instagram-like Countdown Sticker */
+        .countdown-sticker {
+            display: block;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 10px 12px 11px 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            max-width: 312px;
+            width: 100%;
+            margin: 0 auto;
+            color: #1a1a1a;
+            user-select: none;
+            text-align: left;
+            position: relative;
+            text-decoration: none !important;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .countdown-sticker:hover,
+        .countdown-sticker:active {
+            transform: scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+        }
+
+        .countdown-sticker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 2px;
+        }
+
+        .countdown-sticker-title {
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-weight: 700;
+            font-size: 1.45em;
+            letter-spacing: 0.5px;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .countdown-sticker-arrow {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1.5px solid #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+
+        .countdown-sticker-arrow svg {
+            width: 11px;
+            height: 11px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+            margin-left: 1px;
+        }
+
+        .countdown-sticker-grid {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1px;
+        }
+
+        .countdown-sticker-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .countdown-sticker-digits {
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .countdown-sticker-digit {
+            background: #eff2f6;
+            border-radius: 6px;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 1.65em;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1;
+            padding: 5px 0 4px 0;
+            width: 22px;
+            text-align: center;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,0.04);
+        }
+
+        .countdown-sticker-sep {
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #374151;
+            line-height: 1;
+            align-self: center;
+            margin-top: -11px;
+            padding: 0 1px;
+        }
+
+        .countdown-sticker-label {
+            font-family: var(--font-body) !important;
+            font-size: 0.65em;
+            font-weight: 600;
+            color: #4b5563;
+            margin-top: 4px;
+            text-align: center;
+            text-transform: lowercase;
+            letter-spacing: -0.2px;
+        }
+
 
 

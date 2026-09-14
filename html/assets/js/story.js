@@ -55,26 +55,27 @@
         const rawHash = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
         if (!rawHash) return 0;
 
-        // Check if numeric 1-indexed (#1, #2, #3...)
-        const num = parseInt(rawHash, 10);
-        if (!isNaN(num) && num >= 1 && num <= slides.length) {
-            return num - 1;
-        }
-
-        // Check if matching slide slug/id (#rsvp, #intro, etc.)
+        // Check if matching slide slug/id (#lugar, #portada, #rsvp, #intro, etc.)
         const foundIdx = slides.findIndex(s => {
             const sid = (s.getAttribute('data-slide-id') || '').toLowerCase();
             return sid === rawHash;
         });
         if (foundIdx !== -1) return foundIdx;
 
+        // Fallback: check if numeric 1-indexed (#1, #2, #3...)
+        const num = parseInt(rawHash, 10);
+        if (!isNaN(num) && num >= 1 && num <= slides.length) {
+            return num - 1;
+        }
+
         return 0;
     }
 
     function updateUrlHash(index) {
         if (!slides || slides.length === 0) return;
-        const slideNumber = index + 1;
-        const targetHash = '#' + slideNumber;
+        const currentSlide = slides[index];
+        const slideId = currentSlide ? currentSlide.getAttribute('data-slide-id') : null;
+        const targetHash = '#' + (slideId || (index + 1));
         if (window.location.hash !== targetHash) {
             history.replaceState(null, '', targetHash);
         }
@@ -570,35 +571,100 @@
     }
 
     // Live Countdown
-    const TARGET_DATE = new Date('2027-03-19T18:00:00-03:00').getTime();
-    function updateCountdown() {
-        const now = new Date().getTime();
-        const distance = TARGET_DATE - now;
+    const TARGET_DATE_OBJ = new Date('2027-03-19T18:00:00-03:00');
+    const TARGET_DATE = TARGET_DATE_OBJ.getTime();
 
+    function getCalendarMonthsAndDays(nowDate, targetDate) {
+        if (nowDate >= targetDate) return { months: 0, days: 0 };
+        let temp = new Date(nowDate.getTime());
+        let months = 0;
+        while (true) {
+            let nextMonth = new Date(temp.getFullYear(), temp.getMonth() + 1, temp.getDate(), temp.getHours(), temp.getMinutes(), temp.getSeconds());
+            if (nextMonth <= targetDate) {
+                temp = nextMonth;
+                months++;
+            } else {
+                break;
+            }
+        }
+        let diffMs = targetDate - temp;
+        let days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        return { months, days };
+    }
+
+    function updateCountdown() {
+        const now = new Date();
+        const nowMs = now.getTime();
+        const distance = TARGET_DATE - nowMs;
+
+        // Classic slide countdown elements (fecha_lugar slide)
         const elDays = document.getElementById('cdDays');
         const elHours = document.getElementById('cdHours');
         const elMins = document.getElementById('cdMins');
         const elSecs = document.getElementById('cdSecs');
 
-        if (!elDays || !elHours || !elMins || !elSecs) return;
+        // Sticker countdown elements (lugar slide)
+        const sM1 = document.getElementById('cdStickerMonth1');
+        const sM2 = document.getElementById('cdStickerMonth2');
+        const sD1 = document.getElementById('cdStickerDay1');
+        const sD2 = document.getElementById('cdStickerDay2');
+        const sH1 = document.getElementById('cdStickerHour1');
+        const sH2 = document.getElementById('cdStickerHour2');
+        const sMin1 = document.getElementById('cdStickerMin1');
+        const sMin2 = document.getElementById('cdStickerMin2');
+        const sS1 = document.getElementById('cdStickerSec1');
+        const sS2 = document.getElementById('cdStickerSec2');
 
         if (distance <= 0) {
-            elDays.textContent = '00';
-            elHours.textContent = '00';
-            elMins.textContent = '00';
-            elSecs.textContent = '00';
+            if (elDays && elHours && elMins && elSecs) {
+                elDays.textContent = '00';
+                elHours.textContent = '00';
+                elMins.textContent = '00';
+                elSecs.textContent = '00';
+            }
+            if (sM1 && sM2 && sD1 && sD2 && sH1 && sH2 && sMin1 && sMin2 && sS1 && sS2) {
+                sM1.textContent = '0'; sM2.textContent = '0';
+                sD1.textContent = '0'; sD2.textContent = '0';
+                sH1.textContent = '0'; sH2.textContent = '0';
+                sMin1.textContent = '0'; sMin2.textContent = '0';
+                sS1.textContent = '0'; sS2.textContent = '0';
+            }
             return;
         }
 
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        // Standard total days/hours/mins/secs
+        const totalDays = Math.floor(distance / (1000 * 60 * 60 * 24));
         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        elDays.textContent = String(days).padStart(2, '0');
-        elHours.textContent = String(hours).padStart(2, '0');
-        elMins.textContent = String(minutes).padStart(2, '0');
-        elSecs.textContent = String(seconds).padStart(2, '0');
+        if (elDays && elHours && elMins && elSecs) {
+            elDays.textContent = String(totalDays).padStart(2, '0');
+            elHours.textContent = String(hours).padStart(2, '0');
+            elMins.textContent = String(minutes).padStart(2, '0');
+            elSecs.textContent = String(seconds).padStart(2, '0');
+        }
+
+        // Sticker: months + remaining days
+        if (sM1 && sM2 && sD1 && sD2 && sH1 && sH2 && sMin1 && sMin2 && sS1 && sS2) {
+            const { months, days: remDays } = getCalendarMonthsAndDays(now, TARGET_DATE_OBJ);
+            const strMonths = String(months).padStart(2, '0');
+            const strDays = String(remDays).padStart(2, '0');
+            const strHours = String(hours).padStart(2, '0');
+            const strMins = String(minutes).padStart(2, '0');
+            const strSecs = String(seconds).padStart(2, '0');
+
+            sM1.textContent = strMonths[0];
+            sM2.textContent = strMonths[1];
+            sD1.textContent = strDays[0];
+            sD2.textContent = strDays[1];
+            sH1.textContent = strHours[0];
+            sH2.textContent = strHours[1];
+            sMin1.textContent = strMins[0];
+            sMin2.textContent = strMins[1];
+            sS1.textContent = strSecs[0];
+            sS2.textContent = strSecs[1];
+        }
     }
 
     // ==============================================================
@@ -835,14 +901,20 @@
             };
         }
 
-        // Google Calendar Button
+        // Google Calendar Buttons & Stickers
+        const containerEl = document.getElementById("storyContainer");
+        const inviteUrl = (containerEl && containerEl.dataset.inviteUrl) || window.location.href;
+        const detailsText = `Casamiento Celia Muzaber y Alfredo Rezinovsky\n${inviteUrl}`;
+        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Boda+Celia+y+Alfredo&dates=20270319T210000Z/20270320T070000Z&location=Luna+India%3A+Castro+Barros%2C+M5513%2C+Mendoza&details=${encodeURIComponent(detailsText)}`;
+
         const btnCal = document.getElementById('btnGoogleCalendar');
         if (btnCal) {
-            const containerEl = document.getElementById("storyContainer");
-            const inviteUrl = (containerEl && containerEl.dataset.inviteUrl) || window.location.href;
-            const detailsText = `Casamiento Celia Muzaber y Alfredo Rezinovsky\n${inviteUrl}`;
-            const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Boda+Celia+y+Alfredo&dates=20270319T210000Z/20270320T070000Z&location=Luna+India%3A+Castro+Barros%2C+M5513%2C+Mendoza&details=${encodeURIComponent(detailsText)}`;
             btnCal.href = calUrl;
+        }
+
+        const stickerCal = document.getElementById('storyCountdownSticker');
+        if (stickerCal) {
+            stickerCal.href = calUrl;
         }
 
         // Live Countdown
