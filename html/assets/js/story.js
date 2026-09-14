@@ -605,25 +605,19 @@
 
 
         // Sticker countdown elements (lugar slide)
-        const sM1 = document.getElementById('cdStickerMonth1');
-        const sM2 = document.getElementById('cdStickerMonth2');
-        const sD1 = document.getElementById('cdStickerDay1');
-        const sD2 = document.getElementById('cdStickerDay2');
-        const sH1 = document.getElementById('cdStickerHour1');
-        const sH2 = document.getElementById('cdStickerHour2');
-        const sMin1 = document.getElementById('cdStickerMin1');
-        const sMin2 = document.getElementById('cdStickerMin2');
-        const sS1 = document.getElementById('cdStickerSec1');
-        const sS2 = document.getElementById('cdStickerSec2');
+        const sMonth = document.getElementById('cdStickerMonth');
+        const sDay = document.getElementById('cdStickerDay');
+        const sHour = document.getElementById('cdStickerHour');
+        const sMin = document.getElementById('cdStickerMin');
+        const sSec = document.getElementById('cdStickerSec');
 
         if (distance <= 0) {
-
-            if (sM1 && sM2 && sD1 && sD2 && sH1 && sH2 && sMin1 && sMin2 && sS1 && sS2) {
-                sM1.textContent = '0'; sM2.textContent = '0';
-                sD1.textContent = '0'; sD2.textContent = '0';
-                sH1.textContent = '0'; sH2.textContent = '0';
-                sMin1.textContent = '0'; sMin2.textContent = '0';
-                sS1.textContent = '0'; sS2.textContent = '0';
+            if (sMonth && sDay && sHour && sMin && sSec) {
+                sMonth.textContent = '00';
+                sDay.textContent = '00';
+                sHour.textContent = '00';
+                sMin.textContent = '00';
+                sSec.textContent = '00';
             }
             return;
         }
@@ -634,27 +628,14 @@
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-
-
         // Sticker: months + remaining days
-        if (sM1 && sM2 && sD1 && sD2 && sH1 && sH2 && sMin1 && sMin2 && sS1 && sS2) {
+        if (sMonth && sDay && sHour && sMin && sSec) {
             const { months, days: remDays } = getCalendarMonthsAndDays(now, TARGET_DATE_OBJ);
-            const strMonths = String(months).padStart(2, '0');
-            const strDays = String(remDays).padStart(2, '0');
-            const strHours = String(hours).padStart(2, '0');
-            const strMins = String(minutes).padStart(2, '0');
-            const strSecs = String(seconds).padStart(2, '0');
-
-            sM1.textContent = strMonths[0];
-            sM2.textContent = strMonths[1];
-            sD1.textContent = strDays[0];
-            sD2.textContent = strDays[1];
-            sH1.textContent = strHours[0];
-            sH2.textContent = strHours[1];
-            sMin1.textContent = strMins[0];
-            sMin2.textContent = strMins[1];
-            sS1.textContent = strSecs[0];
-            sS2.textContent = strSecs[1];
+            sMonth.textContent = String(months).padStart(2, '0');
+            sDay.textContent = String(remDays).padStart(2, '0');
+            sHour.textContent = String(hours).padStart(2, '0');
+            sMin.textContent = String(minutes).padStart(2, '0');
+            sSec.textContent = String(seconds).padStart(2, '0');
         }
     }
 
