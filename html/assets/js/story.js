@@ -602,11 +602,7 @@
         const nowMs = now.getTime();
         const distance = TARGET_DATE - nowMs;
 
-        // Classic slide countdown elements (fecha_lugar slide)
-        const elDays = document.getElementById('cdDays');
-        const elHours = document.getElementById('cdHours');
-        const elMins = document.getElementById('cdMins');
-        const elSecs = document.getElementById('cdSecs');
+
 
         // Sticker countdown elements (lugar slide)
         const sM1 = document.getElementById('cdStickerMonth1');
@@ -621,12 +617,7 @@
         const sS2 = document.getElementById('cdStickerSec2');
 
         if (distance <= 0) {
-            if (elDays && elHours && elMins && elSecs) {
-                elDays.textContent = '00';
-                elHours.textContent = '00';
-                elMins.textContent = '00';
-                elSecs.textContent = '00';
-            }
+
             if (sM1 && sM2 && sD1 && sD2 && sH1 && sH2 && sMin1 && sMin2 && sS1 && sS2) {
                 sM1.textContent = '0'; sM2.textContent = '0';
                 sD1.textContent = '0'; sD2.textContent = '0';
@@ -643,12 +634,7 @@
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        if (elDays && elHours && elMins && elSecs) {
-            elDays.textContent = String(totalDays).padStart(2, '0');
-            elHours.textContent = String(hours).padStart(2, '0');
-            elMins.textContent = String(minutes).padStart(2, '0');
-            elSecs.textContent = String(seconds).padStart(2, '0');
-        }
+
 
         // Sticker: months + remaining days
         if (sM1 && sM2 && sD1 && sD2 && sH1 && sH2 && sMin1 && sMin2 && sS1 && sS2) {

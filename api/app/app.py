@@ -42,20 +42,7 @@ SLIDES_CONFIG = [
         "duration": 10000,
         "enabled": True,
     },
-    {
-        "id": "intro",
-        "title": "Bienvenida",
-        "template": "slides/intro.html",
-        "duration": 7000,
-        "enabled": True,
-    },
-    {
-        "id": "fecha_lugar",
-        "title": "Cuándo",
-        "template": "slides/fecha_lugar.html",
-        "duration": 7000,
-        "enabled": True,
-    },
+
     {
         "id": "itinerario",
         "title": "Itinerario",
