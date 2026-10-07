@@ -1,0 +1,58 @@
+[
+  {
+    "id": "portada",
+    "title": "Portada",
+    "template": "slides/portada.html",
+    "duration": 6000,
+    "enabled": true,
+    "background": "photo01.jpeg"
+  },
+  {
+    "id": "lugar",
+    "title": "Lugar",
+    "template": "slides/lugar.html",
+    "duration": 7000,
+    "enabled": true,
+    "background": "fiesta.jpeg"
+  },
+  {
+    "id": "video",
+    "title": "Video",
+    "template": "slides/video.html",
+    "duration": 10000,
+    "enabled": true,
+    "background": ""
+  },
+  {
+    "id": "itinerario",
+    "title": "Itinerario",
+    "template": "slides/itinerario.html",
+    "duration": 7000,
+    "enabled": true,
+    "background": "background.jpeg"
+  },
+  {
+    "id": "regalos",
+    "title": "Regalos",
+    "template": "slides/regalos.html",
+    "duration": 7000,
+    "enabled": true,
+    "background": "background.1.jpeg"
+  },
+  {
+    "id": "rsvp",
+    "title": "Confirmación",
+    "template": "slides/rsvp.html",
+    "duration": 0,
+    "enabled": true,
+    "background": "background.alternate.jpeg"
+  },
+  {
+    "id": "triste",
+    "title": "¡Qué pena!",
+    "template": "slides/triste.html",
+    "duration": 0,
+    "enabled": true,
+    "background": "GatoTriste.jpeg"
+  }
+]

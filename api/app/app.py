@@ -1,6 +1,9 @@
 import os
 import time
-from flask import Flask, request, jsonify, render_template
+import json
+import re
+from flask import Flask, request, jsonify, render_template, abort
+from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token
 
 
@@ -18,15 +21,16 @@ def add_cache_headers(response):
     return response
 
 
+SLIDES_JSON_PATH = os.path.join(os.path.dirname(__file__), "slides.json")
 
-
-SLIDES_CONFIG = [
+SLIDES_CONFIG_DEFAULT = [
     {
         "id": "portada",
         "title": "Portada",
         "template": "slides/portada.html",
         "duration": 6000,
         "enabled": True,
+        "background": "photo01.jpeg",
     },
     {
         "id": "lugar",
@@ -34,6 +38,7 @@ SLIDES_CONFIG = [
         "template": "slides/lugar.html",
         "duration": 7000,
         "enabled": True,
+        "background": "fiesta.jpeg",
     },
     {
         "id": "video",
@@ -41,14 +46,15 @@ SLIDES_CONFIG = [
         "template": "slides/video.html",
         "duration": 10000,
         "enabled": True,
+        "background": "",
     },
-
     {
         "id": "itinerario",
         "title": "Itinerario",
         "template": "slides/itinerario.html",
         "duration": 7000,
         "enabled": True,
+        "background": "background.jpeg",
     },
     {
         "id": "regalos",
@@ -56,6 +62,7 @@ SLIDES_CONFIG = [
         "template": "slides/regalos.html",
         "duration": 7000,
         "enabled": True,
+        "background": "background.1.jpeg",
     },
     {
         "id": "rsvp",
@@ -63,6 +70,7 @@ SLIDES_CONFIG = [
         "template": "slides/rsvp.html",
         "duration": 0,
         "enabled": True,
+        "background": "background.alternate.jpeg",
     },
     {
         "id": "triste",
@@ -70,8 +78,62 @@ SLIDES_CONFIG = [
         "template": "slides/triste.html",
         "duration": 0,
         "enabled": True,
+        "background": "GatoTriste.jpeg",
     },
 ]
+
+
+def load_slides():
+    if os.path.exists(SLIDES_JSON_PATH):
+        try:
+            with open(SLIDES_JSON_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return SLIDES_CONFIG_DEFAULT
+
+
+def save_slides(slides_list):
+    with open(SLIDES_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(slides_list, f, indent=2, ensure_ascii=False)
+
+
+def get_backgrounds_dir():
+    candidates = [
+        "/app/backgrounds",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../html/assets/backgrounds")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "backgrounds")),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    target = candidates[0]
+    os.makedirs(target, exist_ok=True)
+    return target
+
+
+def get_backgrounds_list():
+    bg_dir = get_backgrounds_dir()
+    if not os.path.exists(bg_dir):
+        return []
+    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
+    files = []
+    try:
+        for fname in sorted(os.listdir(bg_dir)):
+            ext = os.path.splitext(fname)[1].lower()
+            if ext in valid_exts and not fname.startswith("."):
+                files.append(fname)
+    except Exception:
+        pass
+    return files
+
+
+def is_dev_mode():
+    return bool(
+        app.debug
+        or os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+        or os.environ.get("ENV", "").lower() in ("dev", "development")
+    )
 
 
 def get_guest_context(validated_slug):
@@ -105,7 +167,7 @@ def get_guest_context(validated_slug):
             invitation_url = g["url"]
             break
 
-    active_slides = [s for s in SLIDES_CONFIG if s.get("enabled", True)]
+    active_slides = [s for s in load_slides() if s.get("enabled", True)]
 
 
 
@@ -192,7 +254,7 @@ def get_slides_manifest(token):
 
     active_slides = []
     order = 1
-    for s in SLIDES_CONFIG:
+    for s in load_slides():
         if s.get("enabled", True):
             active_slides.append({
                 "id": s["id"],
@@ -222,7 +284,7 @@ def get_single_slide(token, slide_id):
     if not context:
         return render_template("blank.html"), 404
 
-    slide = next((s for s in SLIDES_CONFIG if s["id"] == slide_id and s.get("enabled", True)), None)
+    slide = next((s for s in load_slides() if s["id"] == slide_id and s.get("enabled", True)), None)
     if not slide:
         return "Slide no encontrada o deshabilitada", 404
 
@@ -243,6 +305,154 @@ def form_page():
         if res:
             guest = res["data"]
     return render_template("form.html", guest=guest)
+
+
+# ---------------------------------------------------------
+# DEVELOPMENT PANEL (Unauthenticated, Dev Mode Only)
+# ---------------------------------------------------------
+
+@app.get("/panel")
+def panel_view():
+    if not is_dev_mode():
+        abort(404)
+    slides = load_slides()
+    backgrounds = get_backgrounds_list()
+    return render_template("panel.html", slides=slides, backgrounds=backgrounds)
+
+
+@app.post("/panel/upload-background")
+def panel_upload_background():
+    if not is_dev_mode():
+        abort(404)
+
+    if "background_file" not in request.files:
+        return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
+
+    file = request.files["background_file"]
+    if not file or not file.filename:
+        return jsonify({"ok": False, "error": "Archivo no seleccionado"}), 400
+
+    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
+    _, orig_ext = os.path.splitext(file.filename)
+    orig_ext = orig_ext.lower()
+    if orig_ext not in valid_exts:
+        return jsonify({"ok": False, "error": f"Formato no permitido: {orig_ext}. Usa JPG, PNG, WEBP, GIF, SVG o AVIF."}), 400
+
+    custom_name = request.form.get("background_name", "").strip()
+    if custom_name:
+        base_name, user_ext = os.path.splitext(custom_name)
+        ext = user_ext.lower() if user_ext else orig_ext
+        clean_base = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", base_name)
+        filename = f"{clean_base}{ext}"
+    else:
+        filename = secure_filename(file.filename)
+        if not filename:
+            filename = f"bg_{int(time.time())}{orig_ext}"
+
+    bg_dir = get_backgrounds_dir()
+    os.makedirs(bg_dir, exist_ok=True)
+    save_path = os.path.join(bg_dir, filename)
+    file.save(save_path)
+
+    return jsonify({"ok": True, "filename": filename, "message": "Fondo subido correctamente"})
+
+
+@app.post("/panel/slide/<slide_id>")
+def panel_update_slide(slide_id):
+    if not is_dev_mode():
+        abort(404)
+
+    slides = load_slides()
+    target_slide = next((s for s in slides if s["id"] == slide_id), None)
+    if not target_slide:
+        return jsonify({"ok": False, "error": f"Slide {slide_id} no encontrado"}), 404
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict()
+
+    if "background" in data:
+        target_slide["background"] = data["background"].strip()
+
+    for key, val in data.items():
+        if key not in ("slide_id", "background"):
+            target_slide[key] = val
+
+    save_slides(slides)
+    return jsonify({"ok": True, "slide": target_slide, "message": "Slide actualizado"})
+
+
+@app.post("/panel/slides")
+def panel_save_all_slides():
+    if not is_dev_mode():
+        abort(404)
+
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, list):
+        return jsonify({"ok": False, "error": "Se esperaba una lista de slides"}), 400
+
+    save_slides(data)
+    return jsonify({"ok": True, "slides": data, "message": "Todos los slides guardados"})
+
+
+@app.post("/panel/rename-background")
+def panel_rename_background():
+    if not is_dev_mode():
+        abort(404)
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict()
+
+    old_name = data.get("old_name", "").strip()
+    new_name = data.get("new_name", "").strip()
+
+    if not old_name or not new_name:
+        return jsonify({"ok": False, "error": "Se requieren el nombre actual y el nuevo nombre"}), 400
+
+    bg_dir = get_backgrounds_dir()
+    old_path = os.path.join(bg_dir, old_name)
+    if not os.path.isfile(old_path):
+        return jsonify({"ok": False, "error": f"El archivo '{old_name}' no existe"}), 404
+
+    base_name, user_ext = os.path.splitext(new_name)
+    _, orig_ext = os.path.splitext(old_name)
+    ext = user_ext.lower() if user_ext else orig_ext.lower()
+
+    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
+    if ext not in valid_exts:
+        return jsonify({"ok": False, "error": f"Extensión no permitida: {ext}. Usa JPG, PNG, WEBP, GIF, SVG o AVIF."}), 400
+
+    clean_base = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", base_name)
+    sanitized_new_name = f"{clean_base}{ext}"
+
+    new_path = os.path.join(bg_dir, sanitized_new_name)
+    if sanitized_new_name != old_name and os.path.exists(new_path):
+        return jsonify({"ok": False, "error": f"Ya existe un archivo con el nombre '{sanitized_new_name}'"}), 400
+
+    if sanitized_new_name != old_name:
+        os.rename(old_path, new_path)
+
+        # Update slides.json if any slide was using old_name
+        slides = load_slides()
+        modified = False
+        for slide in slides:
+            if slide.get("background") == old_name:
+                slide["background"] = sanitized_new_name
+                modified = True
+        if modified:
+            save_slides(slides)
+
+    return jsonify({
+        "ok": True,
+        "old_name": old_name,
+        "new_name": sanitized_new_name,
+        "message": f"Fondo renombrado a '{sanitized_new_name}'"
+    })
+
+
 
 
 from functools import wraps

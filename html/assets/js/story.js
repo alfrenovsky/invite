@@ -1054,40 +1054,119 @@
             return '0, 136, 255';
         }
 
+        const BUILTIN_FONTS = {
+            'syncopate': { label: 'Syncopate', family: "'Syncopate', sans-serif" },
+            'montserrat': { label: 'Montserrat', family: "'Montserrat', sans-serif" }
+        };
+        const fontRegistry = Object.assign({}, BUILTIN_FONTS);
+
         const DEFAULTS = {
-            tag: { color: '#ffffff' },
-            title: { color: '#80c3ff', glowColor: '#0088ff', glowRadius: 17, glowOpacity: 100 },
-            desc: { color: '#b8deff', font: 'montserrat' }
+            tag: { color: '#ffffff', size: 0.76, font: 'syncopate' },
+            title: { color: '#80c3ff', size: 1.95, font: 'syncopate', glowColor: '#0088ff', glowRadius: 17, glowOpacity: 100 },
+            desc: { color: '#b8deff', size: 1.20, font: 'montserrat' }
         };
 
-        const STORAGE_KEY = 'wedding_story_tcp_glow_config_v4';
+        const STORAGE_KEY = 'wedding_story_tcp_glow_config_v5';
 
         const sections = {
             tag: {
                 pickerColor: document.getElementById('pickerSlideTag'),
                 hexColor: document.getElementById('hexSlideTag'),
+                sliderSize: document.getElementById('sliderSlideTagSize'),
+                valSize: document.getElementById('valSlideTagSize'),
+                selectFont: document.getElementById('selectSlideTagFont'),
+                triggerFont: document.getElementById('triggerSlideTagFont'),
+                nameFont: document.getElementById('nameSlideTagFont'),
                 prefix: '--slide-tag'
             },
             title: {
                 pickerColor: document.getElementById('pickerSlideTitle'),
                 hexColor: document.getElementById('hexSlideTitle'),
+                sliderSize: document.getElementById('sliderSlideTitleSize'),
+                valSize: document.getElementById('valSlideTitleSize'),
                 pickerGlow: document.getElementById('pickerSlideTitleGlow'),
                 hexGlow: document.getElementById('hexSlideTitleGlow'),
                 sliderRadius: document.getElementById('sliderSlideTitleRadius'),
                 valRadius: document.getElementById('valSlideTitleRadius'),
                 sliderOpacity: document.getElementById('sliderSlideTitleOpacity'),
                 valOpacity: document.getElementById('valSlideTitleOpacity'),
+                selectFont: document.getElementById('selectSlideTitleFont'),
+                triggerFont: document.getElementById('triggerSlideTitleFont'),
+                nameFont: document.getElementById('nameSlideTitleFont'),
                 prefix: '--slide-title'
             },
             desc: {
                 pickerColor: document.getElementById('pickerSlideDesc'),
                 hexColor: document.getElementById('hexSlideDesc'),
+                sliderSize: document.getElementById('sliderSlideDescSize'),
+                valSize: document.getElementById('valSlideDescSize'),
                 selectFont: document.getElementById('selectSlideDescFont'),
+                triggerFont: document.getElementById('triggerSlideDescFont'),
+                nameFont: document.getElementById('nameSlideDescFont'),
                 prefix: '--slide-desc'
             }
         };
 
         let state = JSON.parse(JSON.stringify(DEFAULTS));
+
+        function populateFontSelectors() {
+            const fontIds = Object.keys(fontRegistry);
+            ['tag', 'title', 'desc'].forEach(key => {
+                const sec = sections[key];
+                if (!sec) return;
+                const currentVal = state[key].font || (sec.selectFont ? sec.selectFont.value : 'syncopate');
+                if (sec.selectFont) {
+                    sec.selectFont.innerHTML = '';
+                    fontIds.forEach(id => {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = fontRegistry[id].label;
+                        if (id === currentVal) opt.selected = true;
+                        sec.selectFont.appendChild(opt);
+                    });
+                    if (currentVal && fontRegistry[currentVal]) {
+                        sec.selectFont.value = currentVal;
+                    }
+                }
+                if (sec.nameFont && fontRegistry[currentVal]) {
+                    sec.nameFont.textContent = fontRegistry[currentVal].label;
+                }
+            });
+        }
+
+        async function loadDynamicFonts() {
+            try {
+                const res = await fetch('/assets/fonts/');
+                if (!res.ok) return;
+                const files = await res.json();
+                const fontExtensions = ['.ttf', '.otf', '.woff', '.woff2'];
+                const fontFiles = files.filter(f => f.type === 'file' && fontExtensions.some(ext => f.name.toLowerCase().endsWith(ext)));
+
+                for (const file of fontFiles) {
+                    const rawName = file.name.replace(/\.(ttf|otf|woff2?)$/i, '');
+                    const fontId = rawName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+                    const familyName = rawName;
+
+                    if (!fontRegistry[fontId]) {
+                        try {
+                            const fontFace = new FontFace(familyName, `url("/assets/fonts/${encodeURIComponent(file.name)}")`);
+                            await fontFace.load();
+                            document.fonts.add(fontFace);
+                        } catch (err) {
+                            console.warn('FontFace load error:', file.name, err);
+                        }
+                        fontRegistry[fontId] = {
+                            label: rawName,
+                            family: `'${familyName}', sans-serif`
+                        };
+                    }
+                }
+                populateFontSelectors();
+                applyAll(false);
+            } catch (e) {
+                console.warn('Dynamic fonts fetch error:', e);
+            }
+        }
 
         function applySection(key, save = true) {
             const sec = sections[key];
@@ -1097,9 +1176,34 @@
             const root = document.documentElement;
 
             // Color inputs
-            if (sec.pickerColor) sec.pickerColor.value = data.color;
-            if (sec.hexColor) sec.hexColor.value = data.color.toUpperCase();
-            root.style.setProperty(`${sec.prefix}-color`, data.color);
+            if (sec.pickerColor && data.color) {
+                sec.pickerColor.value = data.color;
+                if (sec.hexColor) sec.hexColor.value = data.color.toUpperCase();
+                root.style.setProperty(`${sec.prefix}-color`, data.color);
+            }
+
+            // Size slider
+            if (sec.sliderSize && data.size != null) {
+                sec.sliderSize.value = data.size;
+                const sizeStr = `${parseFloat(data.size).toFixed(2)}em`;
+                if (sec.valSize) sec.valSize.textContent = sizeStr;
+                root.style.setProperty(`${sec.prefix}-size`, sizeStr);
+            }
+
+            // Font selector & custom trigger
+            if (data.font) {
+                const fontDef = fontRegistry[data.font];
+                const familyVal = fontDef ? fontDef.family : "'Syncopate', sans-serif";
+                const labelVal = fontDef ? fontDef.label : data.font;
+
+                if (sec.selectFont) sec.selectFont.value = data.font;
+                if (sec.nameFont) sec.nameFont.textContent = labelVal;
+
+                root.style.setProperty(`${sec.prefix}-font`, familyVal);
+                if (key === 'title') {
+                    root.style.setProperty('--font-titles', familyVal);
+                }
+            }
 
             // Title-specific glow controls
             if (key === 'title') {
@@ -1114,13 +1218,6 @@
                 root.style.setProperty(`${sec.prefix}-glow-rgb`, hexToRgb(data.glowColor));
                 root.style.setProperty(`${sec.prefix}-glow-radius`, `${data.glowRadius}px`);
                 root.style.setProperty(`${sec.prefix}-glow-opacity`, (data.glowOpacity / 100).toFixed(2));
-            }
-
-            // Desc-specific font selector
-            if (key === 'desc' && sec.selectFont) {
-                sec.selectFont.value = data.font || 'syncopate';
-                const fontVal = (data.font === 'montserrat') ? 'var(--font-body)' : 'var(--font-titles)';
-                root.style.setProperty('--slide-desc-font', fontVal);
             }
 
             if (save) {
@@ -1152,7 +1249,256 @@
             }
         } catch (e) {}
 
+        let activeFontMenuKey = null;
+        let floatingFontMenu = null;
+        let isKeyboardNavigating = false;
+        let keyboardNavTimeout = null;
+
+        function scrollOptionIntoView(container, item) {
+            if (!container || !item) return;
+            const cRect = container.getBoundingClientRect();
+            const iRect = item.getBoundingClientRect();
+            if (iRect.bottom > cRect.bottom) {
+                container.scrollTop += (iRect.bottom - cRect.bottom);
+            } else if (iRect.top < cRect.top) {
+                container.scrollTop -= (cRect.top - iRect.top);
+            }
+        }
+
+        function getOrCreateFloatingMenu() {
+            if (!floatingFontMenu) {
+                floatingFontMenu = document.createElement('div');
+                floatingFontMenu.className = 'tcp-font-menu';
+                floatingFontMenu.style.display = 'none';
+                document.body.appendChild(floatingFontMenu);
+
+                let lastPointerX = -1;
+                let lastPointerY = -1;
+
+                // Track mouse movement over menu
+                floatingFontMenu.addEventListener('mousemove', (e) => {
+                    lastPointerX = e.clientX;
+                    lastPointerY = e.clientY;
+                    const opt = e.target.closest('.tcp-font-option');
+                    if (opt && opt.dataset.fontId && activeFontMenuKey) {
+                        highlightOption(opt);
+                        previewFont(activeFontMenuKey, opt.dataset.fontId);
+                    }
+                });
+
+                floatingFontMenu.addEventListener('mouseleave', () => {
+                    lastPointerX = -1;
+                    lastPointerY = -1;
+                });
+
+                // Live preview on scroll inside the dropdown menu (synchronized with cursor)
+                let scrollTimeout = null;
+                const handleMenuScroll = () => {
+                    if (!activeFontMenuKey || isKeyboardNavigating) return;
+                    let opt = null;
+                    if (lastPointerX >= 0 && lastPointerY >= 0) {
+                        const el = document.elementFromPoint(lastPointerX, lastPointerY);
+                        if (el && floatingFontMenu.contains(el)) {
+                            opt = el.closest('.tcp-font-option');
+                        }
+                    }
+                    if (!opt) {
+                        const items = Array.from(floatingFontMenu.querySelectorAll('.tcp-font-option'));
+                        if (!items.length) return;
+                        const menuRect = floatingFontMenu.getBoundingClientRect();
+                        const centerY = menuRect.top + menuRect.height / 2;
+                        let minDiff = Infinity;
+                        items.forEach(item => {
+                            const r = item.getBoundingClientRect();
+                            const diff = Math.abs((r.top + r.height / 2) - centerY);
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                opt = item;
+                            }
+                        });
+                    }
+                    if (opt && opt.dataset.fontId) {
+                        highlightOption(opt);
+                        previewFont(activeFontMenuKey, opt.dataset.fontId);
+                    }
+                };
+
+                floatingFontMenu.addEventListener('scroll', () => {
+                    cancelAnimationFrame(scrollTimeout);
+                    scrollTimeout = requestAnimationFrame(handleMenuScroll);
+                }, { passive: true });
+
+                // Confirm on click
+                floatingFontMenu.addEventListener('click', (e) => {
+                    const opt = e.target.closest('.tcp-font-option');
+                    if (opt && opt.dataset.fontId && activeFontMenuKey) {
+                        selectFont(activeFontMenuKey, opt.dataset.fontId);
+                        closeFontMenu();
+                    }
+                });
+            }
+            return floatingFontMenu;
+        }
+
+        function highlightOption(targetOpt) {
+            if (!floatingFontMenu) return;
+            floatingFontMenu.querySelectorAll('.tcp-font-option').forEach(opt => {
+                opt.classList.toggle('is-highlighted', opt === targetOpt);
+            });
+        }
+
+        function previewFont(key, fontId) {
+            state[key].font = fontId;
+            applySection(key, false);
+        }
+
+        function selectFont(key, fontId) {
+            state[key].font = fontId;
+            applySection(key, true);
+        }
+
+        function closeFontMenu() {
+            if (floatingFontMenu) {
+                floatingFontMenu.style.display = 'none';
+            }
+            if (activeFontMenuKey && sections[activeFontMenuKey] && sections[activeFontMenuKey].triggerFont) {
+                sections[activeFontMenuKey].triggerFont.classList.remove('is-active');
+            }
+            activeFontMenuKey = null;
+        }
+
+        function openFontMenu(key) {
+            if (activeFontMenuKey === key) {
+                closeFontMenu();
+                return;
+            }
+            closeFontMenu();
+
+            const sec = sections[key];
+            if (!sec || !sec.triggerFont) return;
+
+            activeFontMenuKey = key;
+            sec.triggerFont.classList.add('is-active');
+
+            const menu = getOrCreateFloatingMenu();
+            menu.innerHTML = '';
+
+            const fontIds = Object.keys(fontRegistry);
+            const currentFontId = state[key].font;
+
+            let selectedOptEl = null;
+
+            fontIds.forEach(id => {
+                const fontDef = fontRegistry[id];
+                const opt = document.createElement('div');
+                opt.className = 'tcp-font-option' + (id === currentFontId ? ' is-selected is-highlighted' : '');
+                opt.dataset.fontId = id;
+                opt.style.fontFamily = fontDef.family;
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'tcp-option-label';
+                labelSpan.textContent = fontDef.label;
+                opt.appendChild(labelSpan);
+
+                if (id === currentFontId) {
+                    const checkSpan = document.createElement('span');
+                    checkSpan.className = 'tcp-check';
+                    checkSpan.textContent = '✓';
+                    opt.appendChild(checkSpan);
+                    selectedOptEl = opt;
+                }
+
+                menu.appendChild(opt);
+            });
+
+            // Position menu
+            const rect = sec.triggerFont.getBoundingClientRect();
+            let top = rect.bottom + 4;
+            if (top + 220 > window.innerHeight) {
+                top = Math.max(10, rect.top - 224);
+            }
+            let left = rect.left;
+            if (left + 190 > window.innerWidth) {
+                left = window.innerWidth - 195;
+            }
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
+            menu.style.width = '180px';
+            menu.style.display = 'block';
+
+            if (selectedOptEl) {
+                scrollOptionIntoView(menu, selectedOptEl);
+            }
+        }
+
+        // Close menu on click outside
+        document.addEventListener('click', (e) => {
+            if (!activeFontMenuKey) return;
+            const sec = sections[activeFontMenuKey];
+            if (sec && sec.triggerFont && sec.triggerFont.contains(e.target)) return;
+            if (floatingFontMenu && floatingFontMenu.contains(e.target)) return;
+            closeFontMenu();
+        });
+
+        // Keyboard ArrowUp / ArrowDown navigation to scroll fonts live
+        document.addEventListener('keydown', (e) => {
+            if (!activeFontMenuKey) {
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.classList && activeEl.classList.contains('tcp-font-trigger')) {
+                    const sectionPicker = activeEl.closest('.tcp-font-picker');
+                    if (sectionPicker && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                        e.preventDefault();
+                        openFontMenu(sectionPicker.dataset.section);
+                        return;
+                    }
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                isKeyboardNavigating = true;
+                clearTimeout(keyboardNavTimeout);
+                keyboardNavTimeout = setTimeout(() => {
+                    isKeyboardNavigating = false;
+                }, 300);
+
+                const fontIds = Object.keys(fontRegistry);
+                if (fontIds.length <= 1) return;
+
+                let curIdx = fontIds.indexOf(state[activeFontMenuKey].font);
+                if (curIdx === -1) curIdx = 0;
+
+                const delta = e.key === 'ArrowDown' ? 1 : -1;
+                let nextIdx = curIdx + delta;
+                if (nextIdx < 0) nextIdx = 0;
+                if (nextIdx >= fontIds.length) nextIdx = fontIds.length - 1;
+
+                if (curIdx !== nextIdx) {
+                    const nextId = fontIds[nextIdx];
+                    previewFont(activeFontMenuKey, nextId);
+
+                    if (floatingFontMenu) {
+                        const targetOpt = floatingFontMenu.querySelector(`.tcp-font-option[data-font-id="${nextId}"]`);
+                        if (targetOpt) {
+                            highlightOption(targetOpt);
+                            scrollOptionIntoView(floatingFontMenu, targetOpt);
+                        }
+                    }
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                selectFont(activeFontMenuKey, state[activeFontMenuKey].font);
+                closeFontMenu();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeFontMenu();
+            }
+        });
+
+        populateFontSelectors();
         applyAll(false);
+        loadDynamicFonts();
 
         // Bind interactive events for each section
         Object.keys(sections).forEach(key => {
@@ -1175,6 +1521,49 @@
                         state[key].color = val;
                         if (sec.pickerColor) sec.pickerColor.value = val;
                         applySection(key);
+                    }
+                });
+            }
+
+            // Size Slider
+            if (sec.sliderSize) {
+                sec.sliderSize.addEventListener('input', () => {
+                    const val = parseFloat(sec.sliderSize.value) || 1.0;
+                    state[key].size = val;
+                    if (sec.valSize) sec.valSize.textContent = `${val.toFixed(2)}em`;
+                    applySection(key);
+                });
+            }
+
+            // Custom Font Trigger
+            if (sec.triggerFont) {
+                sec.triggerFont.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openFontMenu(key);
+                });
+
+                // Mouse wheel / trackpad scroll over trigger cycles fonts live
+                sec.triggerFont.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const fontIds = Object.keys(fontRegistry);
+                    if (fontIds.length <= 1) return;
+                    let curIdx = fontIds.indexOf(state[key].font);
+                    if (curIdx === -1) curIdx = 0;
+                    const delta = e.deltaY > 0 ? 1 : -1;
+                    let nextIdx = curIdx + delta;
+                    if (nextIdx < 0) nextIdx = 0;
+                    if (nextIdx >= fontIds.length) nextIdx = fontIds.length - 1;
+                    if (curIdx !== nextIdx) {
+                        selectFont(key, fontIds[nextIdx]);
+                    }
+                }, { passive: false });
+            }
+
+            // Hidden select sync (in case changed directly)
+            if (sec.selectFont) {
+                sec.selectFont.addEventListener('change', () => {
+                    if (state[key].font !== sec.selectFont.value) {
+                        selectFont(key, sec.selectFont.value);
                     }
                 });
             }
@@ -1214,14 +1603,6 @@
                     applySection(key);
                 });
             }
-
-            // Font Selector (Desc only)
-            if (sec.selectFont) {
-                sec.selectFont.addEventListener('change', () => {
-                    state[key].font = sec.selectFont.value;
-                    applySection(key);
-                });
-            }
         });
 
         // Reset
@@ -1232,6 +1613,7 @@
                 try {
                     localStorage.removeItem(STORAGE_KEY);
                 } catch (e) {}
+                populateFontSelectors();
                 applyAll(false);
                 showToast('Tipografía y estilos restablecidos por defecto');
             });
@@ -1241,8 +1623,16 @@
         if (btnCopy) {
             btnCopy.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const fontDescVal = state.desc.font === 'montserrat' ? 'var(--font-body)' : 'var(--font-titles)';
-                const cssSnippet = `:root {\n    /* Tag (sin glow) */\n    --slide-tag-color: ${state.tag.color};\n\n    /* Title (con glow) */\n    --slide-title-color: ${state.title.color};\n    --slide-title-glow-color: ${state.title.glowColor};\n    --slide-title-glow-rgb: ${hexToRgb(state.title.glowColor)};\n    --slide-title-glow-radius: ${state.title.glowRadius}px;\n    --slide-title-glow-opacity: ${(state.title.glowOpacity / 100).toFixed(2)};\n\n    /* Description (sin glow, fuente configurable) */\n    --slide-desc-color: ${state.desc.color};\n    --slide-desc-font: ${fontDescVal};\n}`;
+                const getFontFamily = (key) => {
+                    const f = fontRegistry[state[key].font];
+                    return f ? f.family : "'Syncopate', sans-serif";
+                };
+
+                const tagSize = `${parseFloat(state.tag.size).toFixed(2)}em`;
+                const titleSize = `${parseFloat(state.title.size).toFixed(2)}em`;
+                const descSize = `${parseFloat(state.desc.size).toFixed(2)}em`;
+
+                const cssSnippet = `:root {\n    /* Tag (sin glow) */\n    --slide-tag-color: ${state.tag.color};\n    --slide-tag-size: ${tagSize};\n    --slide-tag-font: ${getFontFamily('tag')};\n\n    /* Title (con glow) */\n    --slide-title-color: ${state.title.color};\n    --slide-title-size: ${titleSize};\n    --slide-title-font: ${getFontFamily('title')};\n    --slide-title-glow-color: ${state.title.glowColor};\n    --slide-title-glow-rgb: ${hexToRgb(state.title.glowColor)};\n    --slide-title-glow-radius: ${state.title.glowRadius}px;\n    --slide-title-glow-opacity: ${(state.title.glowOpacity / 100).toFixed(2)};\n\n    /* Description (sin glow) */\n    --slide-desc-color: ${state.desc.color};\n    --slide-desc-size: ${descSize};\n    --slide-desc-font: ${getFontFamily('desc')};\n}`;
                 navigator.clipboard.writeText(cssSnippet).then(() => {
                     showToast('¡CSS copiado al portapapeles!');
                 }).catch(() => {

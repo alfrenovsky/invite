@@ -336,6 +336,38 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_invalid = client.get("/i/familia_perez_invalid/slides")
                 self.assertEqual(res_invalid.status_code, 403)
 
+    def test_panel_route_dev_mode_and_production_protection(self):
+        from app import app
+        with app.test_client() as client:
+            # 1. Dev mode active -> 200 OK
+            with patch("app.is_dev_mode", return_value=True):
+                res = client.get("/panel")
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(b"Panel de Control", res.data)
+
+                # Slide update in dev mode
+                res_slide = client.post("/panel/slide/portada", data={"background": "photo01.jpeg"})
+                self.assertEqual(res_slide.status_code, 200)
+                self.assertTrue(res_slide.get_json()["ok"])
+
+                # Rename background validation in dev mode
+                res_rename = client.post("/panel/rename-background", json={"old_name": "inexistente.jpeg", "new_name": "nuevo.jpeg"})
+                self.assertEqual(res_rename.status_code, 404)
+
+            # 2. Production mode (dev mode False) -> 404 Not Found
+            with patch("app.is_dev_mode", return_value=False):
+                res = client.get("/panel")
+                self.assertEqual(res.status_code, 404)
+
+                res_post = client.post("/panel/slide/portada", data={"background": "photo01.jpeg"})
+                self.assertEqual(res_post.status_code, 404)
+
+                res_upload = client.post("/panel/upload-background")
+                self.assertEqual(res_upload.status_code, 404)
+
+                res_rename_prod = client.post("/panel/rename-background", json={"old_name": "test.jpeg", "new_name": "nuevo.jpeg"})
+                self.assertEqual(res_rename_prod.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

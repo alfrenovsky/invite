@@ -1,5 +1,21 @@
-
         @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Montserrat:ital,wght@0,300..800;1,300..800&display=swap');
+
+        @font-face {
+            font-family: 'FoundationTitlesHand';
+            src: url('/assets/FoundationTitlesHand-SemiBold-v0.85.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Aveny T';
+            src: url('/assets/fonts/aveny-t-medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             --primary: #1a252f;
             --accent: #ffd166;
@@ -18,11 +34,16 @@
             --font-titles: 'Syncopate', sans-serif;
             --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-main: var(--font-body);
+            --font-sticker: 'Aveny T', 'Barlow Condensed', sans-serif;
             /* Tag */
             --slide-tag-color: #ffffff;
+            --slide-tag-size: 0.76em;
+            --slide-tag-font: var(--font-titles);
 
             /* Title */
             --slide-title-color: #80c3ff;
+            --slide-title-size: 1.95em;
+            --slide-title-font: var(--font-titles);
             --slide-title-glow-color: #0088ff;
             --slide-title-glow-rgb: 0, 136, 255;
             --slide-title-glow-radius: 17px;
@@ -30,6 +51,7 @@
 
             /* Description */
             --slide-desc-color: #b8deff;
+            --slide-desc-size: 1.20em;
             --slide-desc-font: var(--font-body);
 
             /* Location Sticker */
@@ -483,8 +505,8 @@
         .slide-tag {
             display: inline-block;
             align-self: center;
-            font-family: var(--font-titles);
-            font-size: 0.76em;
+            font-family: var(--slide-tag-font, var(--font-titles));
+            font-size: var(--slide-tag-size, 0.76em) !important;
             letter-spacing: 2.5px;
             text-transform: uppercase;
             color: var(--slide-tag-color, #ffffff) !important;
@@ -494,8 +516,8 @@
         }
 
         .slide-title {
-            font-family: var(--font-titles);
-            font-size: 1.95em;
+            font-family: var(--slide-title-font, var(--font-titles));
+            font-size: var(--slide-title-size, 1.95em) !important;
             font-weight: 700;
             line-height: 1.2;
             margin-bottom: 12px;
@@ -507,16 +529,16 @@
 
 
         .slide-title strong {
-            font-family: var(--font-titles);
+            font-family: var(--slide-title-font, var(--font-titles));
             font-weight: 700;
             color: inherit;
         }
 
 
         .slide-desc {
-            font-family: var(--slide-desc-font, var(--font-titles)) !important;
+            font-family: var(--slide-desc-font, var(--font-body)) !important;
             font-weight: 700;
-            font-size: 1.2em;
+            font-size: var(--slide-desc-size, 1.20em) !important;
             letter-spacing: 0.5px;
             color: var(--slide-desc-color, #ffffff) !important;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95) !important;
@@ -1167,7 +1189,6 @@
         /* 🎨 Left Typography Color & Glow Picker Panel                    */
         /* ============================================================== */
         .typography-color-panel {
-            display: none !important;
             position: fixed;
             left: 20px;
             top: 50%;
@@ -1389,6 +1410,121 @@
             color: #ffffff;
         }
 
+        /* Custom Font Picker Trigger & Floating Menu */
+        .tcp-font-picker {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tcp-select-hidden {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+
+        .tcp-font-trigger {
+            width: 130px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 0.76em;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            text-align: left;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+            user-select: none;
+        }
+
+        .tcp-font-trigger:hover,
+        .tcp-font-trigger.is-active {
+            border-color: var(--accent);
+            background: rgba(0, 0, 0, 0.65);
+        }
+
+        .tcp-font-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100px;
+        }
+
+        .tcp-font-arrow {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-left: 4px;
+            transition: transform 0.2s;
+        }
+
+        .tcp-font-trigger.is-active .tcp-font-arrow {
+            transform: rotate(180deg);
+        }
+
+        .tcp-font-menu {
+            position: fixed;
+            z-index: 999999;
+            width: 180px;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #141c24;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 8px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            padding: 4px 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+        }
+
+        .tcp-font-menu::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .tcp-font-menu::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 2px;
+        }
+
+        .tcp-font-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            font-size: 0.78em;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: background 0.1s, color 0.1s;
+            user-select: none;
+        }
+
+        .tcp-font-option:hover,
+        .tcp-font-option.is-highlighted {
+            background: rgba(255, 209, 102, 0.2);
+            color: #ffd166;
+        }
+
+        .tcp-font-option.is-selected {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .tcp-option-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tcp-check {
+            font-size: 0.85em;
+            color: var(--accent);
+        }
+
         .tcp-slider-row {
             display: flex;
             flex-direction: column;
@@ -1524,7 +1660,7 @@
         }
 
         .location-sticker-text {
-            font-family: 'Barlow Condensed', sans-serif !important;
+            font-family: var(--font-sticker) !important;
             font-weight: 700;
             font-size: 1.8em;
             letter-spacing: 0.5px;
@@ -1568,7 +1704,7 @@
         }
 
         .countdown-sticker-title {
-            font-family: 'Barlow Condensed', sans-serif !important;
+            font-family: var(--font-sticker) !important;
             font-weight: 700;
             font-size: 1.45em;
             letter-spacing: 0.5px;
@@ -1616,7 +1752,7 @@
         .countdown-sticker-box {
             background: #eff2f6;
             border-radius: 8px;
-            font-family: 'Barlow Condensed', sans-serif !important;
+            font-family: var(--font-sticker) !important;
             font-size: 2.05em;
             font-weight: 700;
             color: #111827;
@@ -1631,7 +1767,7 @@
         }
 
         .countdown-sticker-sep {
-            font-family: 'Barlow Condensed', sans-serif !important;
+            font-family: var(--font-sticker) !important;
             font-size: 1.5em;
             font-weight: 700;
             color: #374151;

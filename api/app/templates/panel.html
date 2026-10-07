@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control — Modo Desarrollo</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f15;
+            --card-bg: rgba(22, 30, 42, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover-border: rgba(99, 179, 237, 0.35);
+            --accent: #d4af37;
+            --accent-glow: rgba(212, 175, 55, 0.25);
+            --blue: #3182ce;
+            --blue-hover: #2b6cb0;
+            --text-main: #f7fafc;
+            --text-muted: #a0aec0;
+            --danger: #e53e3e;
+            --success: #38a169;
+            --radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(49, 130, 206, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            padding: 30px 20px 80px;
+        }
+
+        .panel-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* Top Header */
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 36px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-title {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .dev-badge {
+            display: inline-block;
+            background: rgba(229, 62, 62, 0.15);
+            color: #fc8181;
+            border: 1px solid rgba(229, 62, 62, 0.4);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Section Layout */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+        }
+        .section-title span.count {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: var(--text-muted);
+        }
+
+        .grid-two-col {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 28px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card container */
+        .panel-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Upload Form */
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .form-group label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(11, 15, 21, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
+        }
+
+        .file-upload-box {
+            position: relative;
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .file-upload-box:hover {
+            border-color: var(--accent);
+            background: rgba(212, 175, 55, 0.03);
+        }
+
+        .file-upload-box input[type="file"] {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-box-icon {
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+        }
+
+        .upload-box-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .selected-file-name {
+            font-size: 0.82rem;
+            color: var(--accent);
+            margin-top: 6px;
+            word-break: break-all;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background: var(--blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* Backgrounds Gallery */
+        .bg-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .bg-gallery::-webkit-scrollbar {
+            width: 6px;
+        }
+        .bg-gallery::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+        }
+
+        .bg-card {
+            background: rgba(11, 15, 21, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .bg-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--card-hover-border);
+        }
+
+        .bg-thumb-wrap {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .bg-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .bg-card:hover .bg-thumb {
+            transform: scale(1.05);
+        }
+
+        .bg-info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            background: rgba(15, 20, 26, 0.9);
+            gap: 4px;
+        }
+
+        .bg-name {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: monospace;
+            flex: 1;
+        }
+
+        .btn-rename-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 4px;
+            font-size: 0.78rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+            opacity: 0.7;
+        }
+
+        .btn-rename-icon:hover {
+            opacity: 1;
+            color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .bg-rename-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 6px 8px;
+            background: rgba(15, 20, 26, 0.95);
+            border-top: 1px solid var(--card-border);
+        }
+
+        .rename-input {
+            width: 100%;
+            padding: 4px 6px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--blue);
+            border-radius: 4px;
+            color: #fff;
+            font-family: monospace;
+            font-size: 0.74rem;
+            outline: none;
+        }
+
+        .rename-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .btn-rename-save, .btn-rename-cancel {
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-rename-save {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .btn-rename-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        /* Slides Forms Section */
+        .slides-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 22px;
+        }
+
+        @media (max-width: 480px) {
+            .slides-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .slide-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .slide-card:hover {
+            border-color: var(--card-hover-border);
+        }
+
+        .slide-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 12px;
+        }
+
+        .slide-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slide-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .slide-badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-family: monospace;
+            padding: 3px 7px;
+            border-radius: 6px;
+        }
+
+        /* Slide preview & form */
+        .slide-body {
+            display: flex;
+            gap: 16px;
+        }
+
+        .slide-preview-box {
+            width: 100px;
+            height: 140px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background-color: #121820;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .slide-preview-empty {
+            font-size: 0.68rem;
+            color: #64748b;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .slide-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .slide-form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-save-slide {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: #ffd978;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.84rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-save-slide:hover {
+            background: var(--accent);
+            color: #0b0f15;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .save-indicator {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            height: 16px;
+            color: var(--success);
+            display: none;
+        }
+
+        /* Toast notifications */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a202c;
+            border: 1px solid var(--accent);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            font-size: 0.88rem;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="panel-container">
+    <!-- Header -->
+    <header class="panel-header">
+        <div class="header-title-group">
+            <h1 class="header-title">Panel de Control</h1>
+            <span class="dev-badge">Modo Desarrollo</span>
+        </div>
+    </header>
+
+    <!-- Top Two Columns: Upload & Backgrounds Gallery -->
+    <div class="grid-two-col">
+        <!-- Upload New Background Form -->
+        <section class="panel-card">
+            <h2 class="section-title">
+                <span>Subir Fondo</span>
+            </h2>
+            <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Archivo de Imagen</label>
+                    <div class="file-upload-box" id="fileDropBox">
+                        <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif" required>
+                        <div class="upload-box-icon">📁</div>
+                        <div class="upload-box-text">Arrastrá o hacé clic para elegir archivo</div>
+                        <div class="selected-file-name" id="selectedFileName"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="bgNameInput">Nombre personalizado (opcional)</label>
+                    <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. iglesia_atardecer">
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnUploadSubmit">
+                    <span>⬆ Subir Fondo</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Backgrounds List / Gallery -->
+        <section class="panel-card">
+            <h2 class="section-title">
+                <span>Fondos Disponibles</span>
+                <span class="count">{{ backgrounds|length }}</span>
+            </h2>
+
+            {% if backgrounds %}
+                <div class="bg-gallery">
+                    {% for bg in backgrounds %}
+                        <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}">
+                            <div class="bg-thumb-wrap">
+                                <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
+                            </div>
+                            <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
+                                <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
+                                <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar foto">✏️</button>
+                            </div>
+                            <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
+                                <input type="text" class="rename-input" id="renameInput_{{ loop.index }}" value="{{ bg }}">
+                                <div class="rename-actions">
+                                    <button type="button" class="btn-rename-save" onclick="saveRename('{{ loop.index }}', '{{ bg }}')" title="Guardar">✓</button>
+                                    <button type="button" class="btn-rename-cancel" onclick="cancelRename('{{ loop.index }}')" title="Cancelar">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <!-- Slides Configuration Section -->
+    <section>
+        <h2 class="section-title">
+            <span>Configuración de Slides</span>
+            <span class="count">{{ slides|length }}</span>
+        </h2>
+
+        <div class="slides-grid">
+            {% for slide in slides %}
+                <div class="slide-card" id="slideCard_{{ slide.id }}">
+                    <div class="slide-header">
+                        <div class="slide-title-wrap">
+                            <span class="slide-title">{{ slide.title or slide.id }}</span>
+                        </div>
+                        <span class="slide-badge">{{ slide.id }}</span>
+                    </div>
+
+                    <div class="slide-body">
+                        <!-- Preview Thumbnail for this slide -->
+                        <div class="slide-preview-box" id="previewBox_{{ slide.id }}"
+                             {% if slide.background %}style="background-image: url('/assets/backgrounds/{{ slide.background }}');"{% endif %}>
+                            <span class="slide-preview-empty" id="previewEmpty_{{ slide.id }}"
+                                  {% if slide.background %}style="display: none;"{% endif %}>
+                                Sin fondo
+                            </span>
+                        </div>
+
+                        <!-- Form for this slide -->
+                        <form class="slide-form" id="formSlide_{{ slide.id }}" action="/panel/slide/{{ slide.id }}" method="POST">
+                            <input type="hidden" name="slide_id" value="{{ slide.id }}">
+
+                            <div class="slide-form-fields">
+                                <div class="form-group">
+                                    <label for="selectBg_{{ slide.id }}">Fondo</label>
+                                    <select name="background" id="selectBg_{{ slide.id }}" class="form-select bg-selector" data-slide-id="{{ slide.id }}">
+                                        {% if not slide.background %}
+                                            <option value="" selected>(Sin fondo / Default)</option>
+                                        {% else %}
+                                            <option value="">(Sin fondo / Default)</option>
+                                        {% endif %}
+                                        {% for bg in backgrounds %}
+                                            {% if slide.background == bg %}
+                                                <option value="{{ bg }}" selected>{{ bg }}</option>
+                                            {% else %}
+                                                <option value="{{ bg }}">{{ bg }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Ready for future parameters here -->
+                            </div>
+
+                            <div>
+                                <button type="submit" class="btn-save-slide" id="btnSave_{{ slide.id }}">
+                                    <span>💾 Guardar</span>
+                                </button>
+                                <div class="save-indicator" id="indicator_{{ slide.id }}">✓ Guardado</div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<!-- Global Notification Toast -->
+<div class="toast-notify" id="toastNotify">
+    <span id="toastMsg">Cambios guardados con éxito</span>
+</div>
+
+<script>
+    // File input selection preview
+    const fileInput = document.getElementById('bgFileInput');
+    const selectedFileName = document.getElementById('selectedFileName');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                selectedFileName.textContent = this.files[0].name;
+            } else {
+                selectedFileName.textContent = '';
+            }
+        });
+    }
+
+    // Dynamic Preview on Dropdown Change
+    document.querySelectorAll('.bg-selector').forEach(select => {
+        select.addEventListener('change', function() {
+            const slideId = this.getAttribute('data-slide-id');
+            const bgName = this.value;
+            const previewBox = document.getElementById('previewBox_' + slideId);
+            const previewEmpty = document.getElementById('previewEmpty_' + slideId);
+
+            if (bgName) {
+                previewBox.style.backgroundImage = "url('/assets/backgrounds/" + encodeURIComponent(bgName) + "')";
+                if (previewEmpty) previewEmpty.style.display = 'none';
+            } else {
+                previewBox.style.backgroundImage = 'none';
+                if (previewEmpty) previewEmpty.style.display = 'block';
+            }
+        });
+    });
+
+    // Rename handlers
+    function startRename(index, oldName) {
+        const infoRow = document.getElementById('bgInfoRow_' + index);
+        const renameBox = document.getElementById('bgRenameBox_' + index);
+        if (infoRow && renameBox) {
+            infoRow.style.display = 'none';
+            renameBox.style.display = 'flex';
+            const input = document.getElementById('renameInput_' + index);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }
+    }
+
+    function cancelRename(index) {
+        const infoRow = document.getElementById('bgInfoRow_' + index);
+        const renameBox = document.getElementById('bgRenameBox_' + index);
+        if (infoRow && renameBox) {
+            renameBox.style.display = 'none';
+            infoRow.style.display = 'flex';
+        }
+    }
+
+    async function saveRename(index, oldName) {
+        const input = document.getElementById('renameInput_' + index);
+        const newName = input ? input.value.trim() : '';
+        if (!newName || newName === oldName) {
+            cancelRename(index);
+            return;
+        }
+
+        try {
+            const res = await fetch('/panel/rename-background', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_name: oldName, new_name: newName })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                const finalName = data.new_name;
+                showToast(data.message || 'Fondo renombrado');
+
+                // Update text and title
+                const nameText = document.getElementById('bgNameText_' + index);
+                if (nameText) {
+                    nameText.textContent = finalName;
+                    nameText.title = finalName;
+                }
+                if (input) input.value = finalName;
+
+                // Update card attributes and image
+                const card = document.getElementById('bgCard_' + index);
+                if (card) {
+                    card.setAttribute('data-filename', finalName);
+                    const thumb = card.querySelector('.bg-thumb');
+                    if (thumb) thumb.src = '/assets/backgrounds/' + encodeURIComponent(finalName);
+
+                    const renameBtn = card.querySelector('.btn-rename-icon');
+                    if (renameBtn) renameBtn.setAttribute('onclick', "startRename('" + index + "', '" + finalName + "')");
+                    const saveBtn = card.querySelector('.btn-rename-save');
+                    if (saveBtn) saveBtn.setAttribute('onclick', "saveRename('" + index + "', '" + finalName + "')");
+                }
+
+                // Update options in slide selector dropdowns
+                document.querySelectorAll('.bg-selector option').forEach(opt => {
+                    if (opt.value === oldName) {
+                        opt.value = finalName;
+                        opt.textContent = finalName;
+                    }
+                });
+
+                // Update any active preview box pointing to old name
+                document.querySelectorAll('.slide-preview-box').forEach(box => {
+                    const currentBg = box.style.backgroundImage;
+                    if (currentBg && currentBg.includes(encodeURIComponent(oldName))) {
+                        box.style.backgroundImage = "url('/assets/backgrounds/" + encodeURIComponent(finalName) + "')";
+                    }
+                });
+
+                cancelRename(index);
+            } else {
+                showToast(data.error || 'Error al renombrar fondo', true);
+            }
+        } catch (err) {
+            showToast('Error de red al renombrar fondo', true);
+        }
+    }
+
+    // AJAX submit for slide forms
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toastNotify');
+        const toastMsg = document.getElementById('toastMsg');
+        toastMsg.textContent = msg;
+        toast.style.borderColor = isError ? 'var(--danger)' : 'var(--accent)';
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    document.querySelectorAll('.slide-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const slideId = this.querySelector('input[name="slide_id"]').value;
+            const btn = document.getElementById('btnSave_' + slideId);
+            const indicator = document.getElementById('indicator_' + slideId);
+            
+            const formData = new FormData(this);
+            btn.disabled = true;
+            btn.innerHTML = '<span>Guardando...</span>';
+
+            try {
+                const res = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Slide "' + (data.slide.title || slideId) + '" actualizado correctamente');
+                    if (indicator) {
+                        indicator.style.display = 'block';
+                        setTimeout(() => { indicator.style.display = 'none'; }, 2500);
+                    }
+                } else {
+                    showToast(data.error || 'Error al guardar el slide', true);
+                }
+            } catch (err) {
+                showToast('Error de conexión al guardar', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾 Guardar</span>';
+            }
+        });
+    });
+
+    // Upload form via AJAX with page refresh
+    const uploadForm = document.getElementById('uploadBgForm');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnUploadSubmit');
+            const formData = new FormData(this);
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span>Subiendo...</span>';
+
+            try {
+                const res = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Fondo subido: ' + data.filename);
+                    setTimeout(() => { window.location.reload(); }, 900);
+                } else {
+                    showToast(data.error || 'Error al subir fondo', true);
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>⬆ Subir Fondo</span>';
+                }
+            } catch (err) {
+                showToast('Error de red al subir fondo', true);
+                btn.disabled = false;
+                btn.innerHTML = '<span>⬆ Subir Fondo</span>';
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

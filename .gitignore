@@ -1,6 +1,8 @@
 secrets
 .env
 project.env
+.venv/
+.vscode/
 html/whatsapp.thumb.jpg
 logs.txt
 

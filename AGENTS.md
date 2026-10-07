@@ -142,8 +142,7 @@ All API routes are proxied through Nginx:
 
 ## 🤖 Guidelines for AI Agents
 
-0. DONT MODIFY ANITHING BEFORE CONFIRMATION. ON ANY NO IMPRATIVE
-   QUESTION: PLAN, SUGGEST, DISCUSS, THEN IMPLEMENT.
+0. **Always in Plan Mode**: DONT MODIFY ANYTHING BEFORE CONFIRMATION. Always plan, suggest, discuss, and proceed only after explicit user confirmation.
 1. **API Contracts & Security**: Preserve response structures (`{"ok": true, "data": ...}`). Administrative endpoints (`GET /invitados`, `POST /invitados`, `DELETE`) require the `API_KEY` (via header `X-API-Key`, `Authorization: Bearer`, or query param `?api_key=`).
 2. **Concurrency Safety & Caching**: Interactions with Google Sheets in `api/app/sheets.py` use a persistent JSON cache (`/data/sheet_cache.json`) with `TTL_READ = 10m` and `TTL_WRITE = 2m`. All operations are synchronized via `threading.RLock()`. Writes are stored locally as `LOCAL` and batched to Google Sheets via `ws.batch_update()` in single HTTPS calls.
 3. **Anti-Forgery Link Protection**: Keep invitation tokens formatted as `{invitacion_id}_{check_code}` (6 hex characters generated with `sha256(f"{invitacion_id}:{INVITATION_SALT}")[:6]`).
@@ -154,8 +153,8 @@ All API routes are proxied through Nginx:
 8. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
 9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
 10. **NEVER DEPLOY**: this is my job.
-11. **DONT WASTE TOKENS**: Dont do a log of thing i didnt ask without
-    asking me first
+11. **DONT WASTE TOKENS**: Dont do a log of thing i didnt ask without asking me first.
+12. **Atomic Commits**: Create atomic git commits containing only one single feature, change, or fix per commit.
 
 
 
