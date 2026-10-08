@@ -800,7 +800,7 @@
         /* Split Editor Layout */
         .slide-split-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 360px;
+            grid-template-columns: minmax(0, 1fr) auto;
             gap: 28px;
             align-items: start;
         }
@@ -961,14 +961,17 @@
             font-family: inherit;
         }
 
-        /* Right Column: Live Mockup */
+        /* Right Column: Live Sticky 98vh Mockup */
         .preview-sticky-wrap {
             position: sticky;
-            top: 24px;
+            top: 1vh;
+            height: 98vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            justify-content: flex-start;
+            gap: 8px;
+            z-index: 50;
         }
 
         .preview-header-info {
@@ -977,6 +980,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 4px;
+            flex-shrink: 0;
         }
 
         .preview-title {
@@ -989,8 +993,9 @@
         }
 
         .story-preview-viewport {
-            width: 320px;
-            height: 693px;
+            height: calc(98vh - 38px);
+            width: calc((98vh - 38px) * 0.461538);
+            max-width: 100%;
             position: relative;
             border-radius: 28px;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(212, 175, 55, 0.25);
@@ -1005,13 +1010,15 @@
         .story-preview-viewport .story-container {
             width: 390px;
             height: 845px;
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             flex-shrink: 0;
             transform-origin: top left;
-            transform: scale(0.8205128);
+            transform: scale(var(--story-preview-scale, 0.85));
             user-select: none;
         }
 
@@ -1745,16 +1752,19 @@
                             <span>💾 Guardar Slide</span>
                         </button>
                     </div>
+
+                    <p class="preview-hint" style="margin-top: 14px;">
+                        🎯 <strong>(0%, 0%)</strong> es el centro exacto del slide. Rango: <code>-60%</code> a <code>60%</code> en horizontal y vertical. Los cambios se actualizan en vivo al editar.
+                    </p>
                 </section>
             </div>
 
-            <!-- Right Column: Live 9:16 Preview Mockup -->
+            <!-- Right Column: Live Sticky 98vh Preview Mockup -->
             <div class="preview-sticky-wrap">
                 <div class="preview-header-info">
                     <span class="preview-title">
                         <span>📱 Previsualización en Vivo</span>
                     </span>
-                    <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">story-container (390×845)</span>
                 </div>
 
                 <div class="story-preview-viewport" id="storyPreviewViewport">
@@ -1809,10 +1819,6 @@
                         </div>
                     </div>
                 </div>
-
-                <p class="preview-hint">
-                    🎯 <strong>(0%, 0%)</strong> es el centro exacto del slide. Rango: <code>-60%</code> a <code>60%</code> en horizontal y vertical. Los cambios se actualizan en vivo al editar.
-                </p>
             </div>
         </div>
     </div>
@@ -2074,6 +2080,7 @@
             renderStylesEditor();
         } else {
             window.location.hash = 'slides';
+            setTimeout(updateStoryPreviewScale, 30);
         }
     }
 
@@ -2739,7 +2746,23 @@
                 });
             }
         }
+
+        updateStoryPreviewScale();
     }
+
+    function updateStoryPreviewScale() {
+        const viewport = document.getElementById('storyPreviewViewport');
+        const container = document.getElementById('storyContainer');
+        if (!viewport || !container) return;
+        const h = viewport.clientHeight;
+        if (h > 0) {
+            const scale = h / 845;
+            container.style.setProperty('--story-preview-scale', scale.toFixed(5));
+        }
+    }
+
+    window.addEventListener('resize', updateStoryPreviewScale);
+    window.addEventListener('DOMContentLoaded', updateStoryPreviewScale);
 
     // -------------------------------------------------------------
     // SLIDE CRUD OPERATIONS
