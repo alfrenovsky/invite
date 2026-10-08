@@ -23,7 +23,7 @@
         {% for el in (slide.elements if slide else []) or [] %}
             {% if el.type == 'text' %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }}"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); transform: translate(-50%, -50%);">
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%);">
                     {{ el.content }}
                 </div>
             {% endif %}

@@ -970,31 +970,13 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            gap: 8px;
+            gap: 0;
             z-index: 50;
         }
 
-        .preview-header-info {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 4px;
-            flex-shrink: 0;
-        }
-
-        .preview-title {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: #cbd5e0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
         .story-preview-viewport {
-            height: calc(98vh - 38px);
-            width: calc((98vh - 38px) * 0.461538);
+            height: 98vh;
+            width: calc(98vh * 0.461538);
             max-width: 100%;
             position: relative;
             border-radius: 28px;
@@ -1761,12 +1743,6 @@
 
             <!-- Right Column: Live Sticky 98vh Preview Mockup -->
             <div class="preview-sticky-wrap">
-                <div class="preview-header-info">
-                    <span class="preview-title">
-                        <span>📱 Previsualización en Vivo</span>
-                    </span>
-                </div>
-
                 <div class="story-preview-viewport" id="storyPreviewViewport">
                     <div class="story-container" id="storyContainer">
                         <!-- Top Bar: Progress & Meta Header -->
@@ -2561,12 +2537,13 @@
             });
             card.appendChild(styleGroup);
 
-            // Position controls: Horizontal X & Vertical Y (-60% to 60%, 0 is center)
+            // Position controls: Horizontal X, Vertical Y & Width W
             const posRow = document.createElement('div');
             posRow.className = 'pos-control-row';
 
             const currX = el.x !== undefined ? el.x : 0;
             const currY = el.y !== undefined ? el.y : 0;
+            const currW = el.w !== undefined ? el.w : 88;
 
             posRow.innerHTML = `
                 <!-- Horizontal X -->
@@ -2590,6 +2567,18 @@
                     <div class="pos-input-group">
                         <input type="range" class="pos-range-slider" id="sliderY_${idx}" min="-60" max="60" step="1" value="${currY}">
                         <input type="number" class="pos-num-input" id="numY_${idx}" min="-60" max="60" step="1" value="${currY}">
+                    </div>
+                </div>
+
+                <!-- Ancho del Cuadro (W) -->
+                <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 4px;">
+                    <div class="pos-slider-header">
+                        <span>Ancho del Cuadro (% del slide)</span>
+                        <span class="pos-val-badge" id="badgeW_${idx}">${currW}%</span>
+                    </div>
+                    <div class="pos-input-group">
+                        <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW}">
+                        <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW}">
                     </div>
                 </div>
             `;
@@ -2632,6 +2621,25 @@
             sliderY.oninput = (e) => syncY(e.target.value);
             numY.oninput = (e) => syncY(e.target.value);
 
+            // Bind W (Width %)
+            const sliderW = posRow.querySelector(`#sliderW_${idx}`);
+            const numW = posRow.querySelector(`#numW_${idx}`);
+            const badgeW = posRow.querySelector(`#badgeW_${idx}`);
+
+            const syncW = (val) => {
+                let parsed = parseInt(val, 10);
+                if (isNaN(parsed)) parsed = 88;
+                parsed = Math.max(10, Math.min(100, parsed));
+                el.w = parsed;
+                sliderW.value = parsed;
+                numW.value = parsed;
+                badgeW.textContent = `${parsed}%`;
+                updateLivePreview();
+            };
+
+            sliderW.oninput = (e) => syncW(e.target.value);
+            numW.oninput = (e) => syncW(e.target.value);
+
             card.appendChild(posRow);
             container.appendChild(card);
         });
@@ -2648,7 +2656,8 @@
             content: 'Nuevo texto',
             style: 'body',
             x: 0,
-            y: 0
+            y: 0,
+            w: 88
         });
 
         renderElementsList();
@@ -2737,8 +2746,11 @@
                         textDiv.className = `slide-el slide-el-${el.style || 'body'} preview-text-el style-${el.style || 'body'}`;
                         const posX = el.x !== undefined ? el.x : 0;
                         const posY = el.y !== undefined ? el.y : 0;
+                        const widthVal = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 88;
                         textDiv.style.left = `calc(50% + ${posX}%)`;
                         textDiv.style.top = `calc(50% + ${posY}%)`;
+                        textDiv.style.width = `${widthVal}%`;
+                        textDiv.style.maxWidth = `${widthVal}%`;
                         textDiv.style.transform = 'translate(-50%, -50%)';
                         textDiv.textContent = el.content || '';
                         overlay.appendChild(textDiv);
