@@ -1284,7 +1284,7 @@
             display: inline-block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 10px 14px 12px 14px;
+            padding: 6px 12px 6px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             max-width: 95%;
             width: max-content;
@@ -1309,7 +1309,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 3px;
+            margin-bottom: 0px;
             padding: 0 2px;
             gap: 12px;
         }
@@ -1321,15 +1321,15 @@
             letter-spacing: 0.5px;
             color: #1a1a1a;
             text-transform: uppercase !important;
-            line-height: 1;
+            line-height: 0.95;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .countdown-sticker-arrow {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             border: 1.5px solid #d1d5db;
             display: flex;
@@ -1340,8 +1340,8 @@
         }
 
         .countdown-sticker-arrow svg {
-            width: 11px;
-            height: 11px;
+            width: 10px;
+            height: 10px;
             stroke: currentColor;
             stroke-width: 2.2;
             fill: none;
@@ -1373,7 +1373,7 @@
             font-weight: 500;
             color: #111827;
             line-height: 1.1;
-            padding: 6px 4px 3px 4px;
+            padding: 4px 3px 2px 3px;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -1397,7 +1397,7 @@
             color: #374151;
             line-height: 1;
             align-self: center;
-            margin-top: -12px;
+            margin-top: -10px;
             padding: 0 1px;
         }
 
@@ -1406,7 +1406,7 @@
             font-size: 0.72rem;
             font-weight: 500;
             color: #4b5563;
-            margin-top: 4px;
+            margin-top: 2px;
             text-align: center;
             text-transform: uppercase !important;
             letter-spacing: 0.5px;
