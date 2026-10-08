@@ -1302,7 +1302,7 @@
             display: inline-block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 5px 12px 3px 12px;
+            padding: 0 12px 0 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             max-width: 95%;
             width: max-content;
@@ -1319,7 +1319,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: -4px;
+            margin-bottom: -6px;
             padding: 0 2px;
             gap: 12px;
         }
@@ -1331,15 +1331,17 @@
             letter-spacing: 0.5px;
             color: #1a1a1a;
             text-transform: uppercase !important;
-            line-height: 0.95;
+            line-height: 0.75;
+            display: inline-block;
+            margin-top: -2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .story-preview-viewport .countdown-sticker-arrow {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             border: 1.5px solid #d1d5db;
             display: flex;
@@ -1350,8 +1352,8 @@
         }
 
         .story-preview-viewport .countdown-sticker-arrow svg {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             stroke: currentColor;
             stroke-width: 2.2;
             fill: none;
@@ -3119,6 +3121,20 @@
                 const parts = fullTarget.split('T');
                 const initialDate = parts[0] || '2027-03-19';
                 const initialTime = (parts[1] || '18:00').substring(0, 5);
+                const timeParts = initialTime.split(':');
+                const initialHour = (timeParts[0] || '18').padStart(2, '0');
+                const initialMinute = (timeParts[1] || '00').padStart(2, '0');
+
+                let hourOptions = '';
+                for (let h = 0; h < 24; h++) {
+                    const hs = String(h).padStart(2, '0');
+                    hourOptions += `<option value="${hs}" ${hs === initialHour ? 'selected' : ''}>${hs} hs</option>`;
+                }
+                let minOptions = '';
+                for (let m = 0; m < 60; m++) {
+                    const ms = String(m).padStart(2, '0');
+                    minOptions += `<option value="${ms}" ${ms === initialMinute ? 'selected' : ''}>${ms} min</option>`;
+                }
 
                 const dtRow = document.createElement('div');
                 dtRow.className = 'pos-control-row';
@@ -3135,40 +3151,41 @@
                     </div>
                     <div class="pos-slider-wrap">
                         <div class="pos-slider-header">
-                            <span>🕒 Selector de Hora</span>
+                            <span>🕒 Hora (24 hs)</span>
                         </div>
                         <div style="display: flex; gap: 6px; align-items: center;">
-                            <input type="time" class="form-input el-time-picker" value="${escapeHtml(initialTime)}" style="padding: 8px 10px; flex: 1;" onclick="try{this.showPicker()}catch(e){}">
-                            <button type="button" class="btn-ctrl btn-ctrl-secondary btn-open-time" style="padding: 8px 11px; font-size: 1.05rem; line-height: 1; border-color: rgba(255,255,255,0.2);" title="Abrir Reloj">🕒</button>
+                            <select class="form-select el-hour-select" style="padding: 8px 6px; flex: 1; text-align: center; font-weight: 500;">
+                                ${hourOptions}
+                            </select>
+                            <span style="font-weight: bold; color: var(--text-muted); font-size: 1.1rem;">:</span>
+                            <select class="form-select el-min-select" style="padding: 8px 6px; flex: 1; text-align: center; font-weight: 500;">
+                                ${minOptions}
+                            </select>
                         </div>
                     </div>
                 `;
                 const datePicker = dtRow.querySelector('.el-date-picker');
-                const timePicker = dtRow.querySelector('.el-time-picker');
                 const btnOpenDate = dtRow.querySelector('.btn-open-date');
-                const btnOpenTime = dtRow.querySelector('.btn-open-time');
+                const hourSelect = dtRow.querySelector('.el-hour-select');
+                const minSelect = dtRow.querySelector('.el-min-select');
 
                 if (btnOpenDate) {
                     btnOpenDate.onclick = () => {
                         try { datePicker.showPicker(); } catch (err) { datePicker.focus(); }
                     };
                 }
-                if (btnOpenTime) {
-                    btnOpenTime.onclick = () => {
-                        try { timePicker.showPicker(); } catch (err) { timePicker.focus(); }
-                    };
-                }
 
                 const syncTargetDate = () => {
                     const d = datePicker.value || '2027-03-19';
-                    const t = timePicker.value || '18:00';
-                    el.target_date = `${d}T${t}`;
+                    const h = hourSelect.value || '18';
+                    const m = minSelect.value || '00';
+                    el.target_date = `${d}T${h}:${m}`;
                     updateLivePreview();
                 };
                 datePicker.oninput = syncTargetDate;
                 datePicker.onchange = syncTargetDate;
-                timePicker.oninput = syncTargetDate;
-                timePicker.onchange = syncTargetDate;
+                hourSelect.onchange = syncTargetDate;
+                minSelect.onchange = syncTargetDate;
                 card.appendChild(dtRow);
 
                 // Precision selector

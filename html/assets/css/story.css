@@ -1284,7 +1284,7 @@
             display: inline-block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 5px 12px 3px 12px;
+            padding: 0 12px 0 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             max-width: 95%;
             width: max-content;
@@ -1309,7 +1309,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: -4px;
+            margin-bottom: -6px;
             padding: 0 2px;
             gap: 12px;
         }
@@ -1321,15 +1321,17 @@
             letter-spacing: 0.5px;
             color: #1a1a1a;
             text-transform: uppercase !important;
-            line-height: 0.95;
+            line-height: 0.75;
+            display: inline-block;
+            margin-top: -2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .countdown-sticker-arrow {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             border: 1.5px solid #d1d5db;
             display: flex;
@@ -1340,8 +1342,8 @@
         }
 
         .countdown-sticker-arrow svg {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             stroke: currentColor;
             stroke-width: 2.2;
             fill: none;
