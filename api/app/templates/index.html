@@ -28,13 +28,37 @@
 
     <!-- Google Fonts: Syncopate, Montserrat & Barlow Condensed -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Montserrat:ital,wght@0,300..800;1,300..800&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
-
-
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- Story Stylesheet (no-cache with auto-versioning) -->
     <link rel="stylesheet" href="/assets/css/story.css?v={{ config_version }}">
+
+    {% if styles %}
+    <style>
+        :root {
+            --el-title-color: {{ styles.title.color }};
+            --el-title-size: {{ styles.title.fontSize }}px;
+            --el-title-weight: {{ styles.title.fontWeight }};
+            --el-title-spacing: {{ styles.title.letterSpacing }}em;
+            --el-title-line-height: {{ styles.title.lineHeight }};
+            --el-title-transform: {{ styles.title.textTransform }};
+
+            --el-tag-color: {{ styles.tag.color }};
+            --el-tag-size: {{ styles.tag.fontSize }}px;
+            --el-tag-weight: {{ styles.tag.fontWeight }};
+            --el-tag-spacing: {{ styles.tag.letterSpacing }}em;
+            --el-tag-line-height: {{ styles.tag.lineHeight }};
+            --el-tag-transform: {{ styles.tag.textTransform }};
+
+            --el-body-color: {{ styles.body.color }};
+            --el-body-size: {{ styles.body.fontSize }}px;
+            --el-body-weight: {{ styles.body.fontWeight }};
+            --el-body-spacing: {{ styles.body.letterSpacing }}em;
+            --el-body-line-height: {{ styles.body.lineHeight }};
+            --el-body-transform: {{ styles.body.textTransform }};
+        }
+    </style>
+    {% endif %}
 </head>
 
 

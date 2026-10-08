@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0b0f15;
@@ -23,6 +23,28 @@
             --danger: #e53e3e;
             --success: #38a169;
             --radius: 14px;
+
+            /* Story Typography Tokens */
+            --el-title-color: {{ styles.title.color if styles else '#ffffff' }};
+            --el-title-size: {{ styles.title.fontSize if styles else 38 }}px;
+            --el-title-weight: {{ styles.title.fontWeight if styles else 800 }};
+            --el-title-spacing: {{ styles.title.letterSpacing if styles else -0.06 }}em;
+            --el-title-line-height: {{ styles.title.lineHeight if styles else 0.9 }};
+            --el-title-transform: {{ styles.title.textTransform if styles else 'uppercase' }};
+
+            --el-tag-color: {{ styles.tag.color if styles else '#d4af37' }};
+            --el-tag-size: {{ styles.tag.fontSize if styles else 14 }}px;
+            --el-tag-weight: {{ styles.tag.fontWeight if styles else 600 }};
+            --el-tag-spacing: {{ styles.tag.letterSpacing if styles else 0.15 }}em;
+            --el-tag-line-height: {{ styles.tag.lineHeight if styles else 1.2 }};
+            --el-tag-transform: {{ styles.tag.textTransform if styles else 'uppercase' }};
+
+            --el-body-color: {{ styles.body.color if styles else '#f0f4f8' }};
+            --el-body-size: {{ styles.body.fontSize if styles else 18 }}px;
+            --el-body-weight: {{ styles.body.fontWeight if styles else 500 }};
+            --el-body-spacing: {{ styles.body.letterSpacing if styles else 0.0 }}em;
+            --el-body-line-height: {{ styles.body.lineHeight if styles else 1.4 }};
+            --el-body-transform: {{ styles.body.textTransform if styles else 'none' }};
         }
 
         * {
@@ -1091,26 +1113,298 @@
             pointer-events: auto;
             user-select: none;
             transition: transform 0.05s ease-out;
+            font-family: 'Montserrat', sans-serif;
         }
 
         .preview-text-el.style-title {
-            font-family: 'Syncopate', sans-serif;
-            font-weight: 700;
-            font-size: 1.12rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: var(--el-title-weight, 800);
+            font-size: calc(var(--el-title-size, 38px) * 0.75);
+            text-transform: var(--el-title-transform, uppercase);
+            letter-spacing: var(--el-title-spacing, -0.06em);
+            color: var(--el-title-color, #ffffff);
+            line-height: var(--el-title-line-height, 0.9);
             text-shadow: 0 3px 14px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.85);
-            line-height: 1.25;
+        }
+
+        .preview-text-el.style-tag {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: var(--el-tag-weight, 600);
+            font-size: calc(var(--el-tag-size, 14px) * 0.85);
+            text-transform: var(--el-tag-transform, uppercase);
+            letter-spacing: var(--el-tag-spacing, 0.15em);
+            color: var(--el-tag-color, #d4af37);
+            line-height: var(--el-tag-line-height, 1.2);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .preview-text-el.style-body {
             font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-            font-size: 0.88rem;
-            color: #f0f4f8;
-            line-height: 1.4;
+            font-weight: var(--el-body-weight, 500);
+            font-size: calc(var(--el-body-size, 18px) * 0.8);
+            text-transform: var(--el-body-transform, none);
+            letter-spacing: var(--el-body-spacing, 0em);
+            color: var(--el-body-color, #f0f4f8);
+            line-height: var(--el-body-line-height, 1.4);
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.85);
+        }
+
+        /* Styles Tuner Tab Layout & Controls */
+        .styles-split-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 960px) {
+            .styles-split-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .font-fixed-badge {
+            font-size: 0.74rem;
+            font-weight: 700;
+            background: rgba(49, 130, 206, 0.16);
+            color: #63b3ed;
+            border: 1px solid rgba(49, 130, 206, 0.4);
+            padding: 4px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.4px;
+        }
+
+        .styles-subnav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 22px;
+            background: rgba(14, 20, 30, 0.6);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+        }
+
+        .styles-subtab-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .styles-subtab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .styles-subtab-btn.active {
+            background: rgba(212, 175, 55, 0.16);
+            border-color: var(--accent);
+            color: #ffd978;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+        }
+
+        .style-prop-row {
+            margin-bottom: 18px;
+        }
+
+        .style-prop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #cbd5e0;
+        }
+
+        .style-prop-badge {
+            font-family: monospace;
+            font-size: 0.76rem;
+            color: var(--accent);
+            background: rgba(212, 175, 55, 0.12);
+            padding: 2px 7px;
+            border-radius: 6px;
+        }
+
+        .color-picker-combo {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-swatch-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 44px;
+            height: 40px;
+            padding: 0;
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .color-swatch-input::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-swatch-input::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+
+        .color-hex-input {
+            flex: 1;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+
+        .gpt-poster-callout {
+            margin-top: 24px;
+            padding: 16px 18px;
+            background: rgba(49, 130, 206, 0.08);
+            border: 1px solid rgba(99, 179, 237, 0.25);
+            border-radius: 12px;
+        }
+
+        .gpt-callout-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #90cdf4;
+            font-size: 0.88rem;
+            margin-bottom: 8px;
+        }
+
+        .gpt-callout-desc {
+            font-size: 0.8rem;
+            color: #cbd5e0;
+            line-height: 1.45;
+            margin-bottom: 10px;
+        }
+
+        .gpt-callout-list {
+            margin-left: 18px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .gpt-callout-list strong {
+            color: #e2e8f0;
+        }
+
+        .gpt-callout-list code {
+            color: #ffd978;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        .btn-apply-poster-preset {
+            width: 100%;
+            padding: 9px 14px;
+            background: rgba(49, 130, 206, 0.2);
+            border: 1px solid rgba(99, 179, 237, 0.4);
+            border-radius: 8px;
+            color: #90cdf4;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-apply-poster-preset:hover {
+            background: rgba(49, 130, 206, 0.35);
+            border-color: #63b3ed;
+            color: #fff;
+        }
+
+        .style-single-preview-box {
+            background: radial-gradient(circle at center, rgba(30, 42, 60, 0.7) 0%, rgba(10, 15, 22, 0.95) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 34px 20px;
+            min-height: 170px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.6);
+        }
+
+        .sample-text-target {
+            outline: none;
+            cursor: text;
+            width: 100%;
+            word-break: break-word;
+            white-space: pre-wrap;
+            transition: all 0.1s ease-out;
+        }
+
+        .style-composite-card {
+            background: linear-gradient(180deg, rgba(16, 23, 34, 0.95) 0%, rgba(8, 12, 18, 0.98) 100%);
+            border: 2px solid rgba(212, 175, 55, 0.25);
+            border-radius: 18px;
+            padding: 36px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 14px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-composite-tag {
+            font-family: 'Montserrat', sans-serif;
+            font-size: var(--el-tag-size, 14px);
+            font-weight: var(--el-tag-weight, 600);
+            letter-spacing: var(--el-tag-spacing, 0.15em);
+            line-height: var(--el-tag-line-height, 1.2);
+            text-transform: var(--el-tag-transform, uppercase);
+            color: var(--el-tag-color, #d4af37);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .preview-composite-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: var(--el-title-size, 38px);
+            font-weight: var(--el-title-weight, 800);
+            letter-spacing: var(--el-title-spacing, -0.06em);
+            line-height: var(--el-title-line-height, 0.9);
+            text-transform: var(--el-title-transform, uppercase);
+            color: var(--el-title-color, #ffffff);
+            text-shadow: 0 3px 18px rgba(0, 0, 0, 0.9);
+        }
+
+        .preview-composite-body {
+            font-family: 'Montserrat', sans-serif;
+            font-size: var(--el-body-size, 18px);
+            font-weight: var(--el-body-weight, 500);
+            letter-spacing: var(--el-body-spacing, 0em);
+            line-height: var(--el-body-line-height, 1.4);
+            text-transform: var(--el-body-transform, none);
+            color: var(--el-body-color, #f0f4f8);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+            max-width: 90%;
         }
 
         .preview-hint {
@@ -1167,6 +1461,10 @@
                 <span class="tab-icon">🖼️</span>
                 <span class="tab-label">Fondos y Videos</span>
                 <span class="tab-badge" id="bgNavBadge">{{ backgrounds|length }}</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab="tab-styles" id="tabBtnStyles" onclick="switchTab('tab-styles')">
+                <span class="tab-icon">🎨</span>
+                <span class="tab-label">Estilos</span>
             </button>
         </div>
         <div class="panel-nav-actions">
@@ -1320,7 +1618,7 @@
                 <section class="panel-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <h3 class="section-title" style="margin-bottom: 0;">
-                            <span>Elementos de Texto</span>
+                            <span>Elementos</span>
                             <span class="count" id="elementsCountBadge">0</span>
                         </h3>
                         <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
@@ -1372,6 +1670,194 @@
             </div>
         </div>
     </div>
+
+    <!-- TAB: Styles Tuner & Live Typography Preview -->
+    <div id="tab-styles" class="tab-pane">
+        <div class="styles-split-grid">
+            <!-- Left Column: Styles Editor & Controls -->
+            <div class="styles-editor-col">
+                <section class="panel-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                        <h2 class="section-title" style="margin-bottom: 0;">
+                            <span>Afinador de Estilos</span>
+                        </h2>
+                        <span class="font-fixed-badge">Fuente: Montserrat</span>
+                    </div>
+
+                    <!-- Sub-nav: select style to tune (Title, Tag, Body) -->
+                    <div class="styles-subnav" role="tablist">
+                        <button type="button" class="styles-subtab-btn active" id="subtabBtnTitle" onclick="switchStyleSubTab('title')">
+                            <span>🔤 Título</span>
+                        </button>
+                        <button type="button" class="styles-subtab-btn" id="subtabBtnTag" onclick="switchStyleSubTab('tag')">
+                            <span>🏷️ Tag</span>
+                        </button>
+                        <button type="button" class="styles-subtab-btn" id="subtabBtnBody" onclick="switchStyleSubTab('body')">
+                            <span>📄 Cuerpo</span>
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Controls Form for active style -->
+                    <div class="styles-form-fields" id="stylesFormFields">
+                        <!-- Color picker row -->
+                        <div class="style-prop-row">
+                            <div class="style-prop-header">
+                                <label for="styleColorPicker">Color del Texto</label>
+                                <span class="style-prop-badge" id="styleColorValBadge">#FFFFFF</span>
+                            </div>
+                            <div class="color-picker-combo">
+                                <input type="color" id="styleColorPicker" class="color-swatch-input" oninput="onColorPickerChange(this.value)">
+                                <input type="text" id="styleColorHex" class="form-input color-hex-input" placeholder="#FFFFFF" oninput="onColorHexChange(this.value)">
+                            </div>
+                        </div>
+
+                        <!-- Font Size row -->
+                        <div class="style-prop-row">
+                            <div class="style-prop-header">
+                                <label for="styleFontSizeSlider">Tamaño de Fuente (px)</label>
+                                <span class="style-prop-badge" id="styleFontSizeBadge">38px</span>
+                            </div>
+                            <div class="pos-input-group">
+                                <input type="range" class="pos-range-slider" id="styleFontSizeSlider" min="10" max="80" step="1" value="38" oninput="onFontSizeChange(this.value)">
+                                <input type="number" class="pos-num-input" id="styleFontSizeNum" min="10" max="80" step="1" value="38" oninput="onFontSizeChange(this.value)">
+                            </div>
+                        </div>
+
+                        <!-- Font Weight row -->
+                        <div class="style-prop-row">
+                            <div class="style-prop-header">
+                                <label for="styleFontWeightSelect">Grosor de Fuente (Weight)</label>
+                                <span class="style-prop-badge" id="styleFontWeightBadge">800 - ExtraBold</span>
+                            </div>
+                            <select id="styleFontWeightSelect" class="form-select" onchange="onFontWeightChange(this.value)">
+                                <option value="300">300 — Light (Fina)</option>
+                                <option value="400">400 — Regular (Normal)</option>
+                                <option value="500">500 — Medium (Media)</option>
+                                <option value="600">600 — SemiBold (Semi Negrita)</option>
+                                <option value="700">700 — Bold (Negrita)</option>
+                                <option value="800">800 — ExtraBold (Estilo Póster)</option>
+                                <option value="900">900 — Black (Ultra Pesada)</option>
+                            </select>
+                        </div>
+
+                        <!-- Letter Spacing row -->
+                        <div class="style-prop-row">
+                            <div class="style-prop-header">
+                                <label for="styleLetterSpacingSlider">Espaciado entre Letras (Letter-Spacing)</label>
+                                <span class="style-prop-badge" id="styleLetterSpacingBadge">-0.06em</span>
+                            </div>
+                            <div class="pos-input-group">
+                                <input type="range" class="pos-range-slider" id="styleLetterSpacingSlider" min="-0.12" max="0.30" step="0.01" value="-0.06" oninput="onLetterSpacingChange(this.value)">
+                                <input type="number" class="pos-num-input" id="styleLetterSpacingNum" min="-0.12" max="0.30" step="0.01" value="-0.06" oninput="onLetterSpacingChange(this.value)">
+                            </div>
+                            <span class="sub-label-hint">Valores negativos (-0.05 a -0.08) compactan los caracteres logrando el estilo bloque.</span>
+                        </div>
+
+                        <!-- Line Height row -->
+                        <div class="style-prop-row">
+                            <div class="style-prop-header">
+                                <label for="styleLineHeightSlider">Interlineado (Line-Height)</label>
+                                <span class="style-prop-badge" id="styleLineHeightBadge">0.90</span>
+                            </div>
+                            <div class="pos-input-group">
+                                <input type="range" class="pos-range-slider" id="styleLineHeightSlider" min="0.70" max="2.00" step="0.05" value="0.90" oninput="onLineHeightChange(this.value)">
+                                <input type="number" class="pos-num-input" id="styleLineHeightNum" min="0.70" max="2.00" step="0.05" value="0.90" oninput="onLineHeightChange(this.value)">
+                            </div>
+                            <span class="sub-label-hint">0.85 - 0.95 compacta los títulos multilínea sin espacio vertical desperdiciado.</span>
+                        </div>
+
+                        <!-- Text Transform row -->
+                        <div class="style-prop-row">
+                            <div class="style-prop-header">
+                                <label>Transformación de Texto</label>
+                                <span class="style-prop-badge" id="styleTransformBadge">MAYÚSCULAS</span>
+                            </div>
+                            <div class="style-picker-group">
+                                <button type="button" class="style-opt-btn active" id="btnTransformUpper" onclick="setStyleTransform('uppercase')">
+                                    MAYÚSCULAS (uppercase)
+                                </button>
+                                <button type="button" class="style-opt-btn" id="btnTransformNone" onclick="setStyleTransform('none')">
+                                    Normal (sin forzar)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GPT Poster Explanation Callout -->
+                    <div class="gpt-poster-callout">
+                        <div class="gpt-callout-header">
+                            <span class="gpt-callout-icon">💡</span>
+                            <strong>¿Cómo lograr la tipografía estilo póster de <code>gpt.html</code>?</strong>
+                        </div>
+                        <p class="gpt-callout-desc">
+                            En <code>gpt.html</code> el texto impactante y monolítico se consigue combinando 4 parámetros en la fuente <strong>Montserrat</strong>:
+                        </p>
+                        <ul class="gpt-callout-list">
+                            <li><strong>Grosor (Weight):</strong> <code>800</code> o <code>900</code> (ExtraBold / Black).</li>
+                            <li><strong>Letter-Spacing:</strong> Negativo, entre <code>-0.05em</code> y <code>-0.08em</code> (recomendado: <code>-0.06em</code>). Las letras se pegan entre sí como un solo bloque.</li>
+                            <li><strong>Line-Height:</strong> Muy compacto (entre <code>0.85</code> y <code>0.90</code>). Elimina las franjas vacías entre renglones.</li>
+                            <li><strong>Transformación:</strong> <code>MAYÚSCULAS</code> (uppercase). Las mayúsculas tienen altura homogénea, creando una silueta rectangular limpia.</li>
+                        </ul>
+                        <button type="button" class="btn-apply-poster-preset" onclick="applyGptPosterPreset()">
+                            ⚡ Aplicar Preset Póster de gpt.html al Título
+                        </button>
+                    </div>
+
+                    <!-- Save Actions -->
+                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--card-border);">
+                        <div class="save-indicator" id="stylesSaveIndicator">✓ Guardado</div>
+                        <button type="button" class="btn-ctrl" onclick="resetStylesToDefault()" title="Volver a los valores por defecto">
+                            <span>↺ Restablecer Defaults</span>
+                        </button>
+                        <button type="button" class="btn-save-slide" id="btnSaveStyles" onclick="saveStyles()">
+                            <span>💾 Guardar Estilos</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Live Previews -->
+            <div class="styles-preview-col">
+                <!-- Single Active Style Preview -->
+                <section class="panel-card" style="margin-bottom: 24px;">
+                    <div class="preview-header-info" style="margin-bottom: 12px;">
+                        <span class="preview-title">
+                            <span>👁️ Vista Previa: <span id="previewActiveStyleName" style="color: var(--accent);">Título</span></span>
+                        </span>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">En vivo</span>
+                    </div>
+
+                    <div class="style-single-preview-box" id="styleSinglePreviewBox">
+                        <div id="singlePreviewSampleText" class="sample-text-target" contenteditable="true" spellcheck="false" title="Hacé clic para escribir tu propio texto de prueba">
+                            CELIA & ALFREDO
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                        ✏️ <em>Podés hacer clic en el texto para editar la frase de muestra.</em>
+                    </p>
+                </section>
+
+                <!-- Composite Real-World Invitation Preview -->
+                <section class="panel-card">
+                    <div class="preview-header-info" style="margin-bottom: 12px;">
+                        <span class="preview-title">
+                            <span>📱 Composición Completa (Tag + Título + Cuerpo)</span>
+                        </span>
+                        <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">Jerarquía visual</span>
+                    </div>
+
+                    <div class="style-composite-card" id="styleCompositeCard">
+                        <span class="preview-composite-tag" id="compositeTagText">NUESTRA BODA</span>
+                        <h2 class="preview-composite-title" id="compositeTitleText">CELIA & ALFREDO</h2>
+                        <p class="preview-composite-body" id="compositeBodyText">¡Queremos compartir este día tan especial con vos!</p>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                        Muestra cómo armonizan los 3 estilos juntos en la invitación.
+                    </p>
+                </section>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Crear Nuevo Slide -->
@@ -1404,7 +1890,9 @@
     // State
     let slidesData = {{ slides|tojson }};
     let backgroundsData = {{ backgrounds|tojson }};
+    let stylesData = {{ styles|tojson if styles else '{}' }};
     let currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
+    let activeStyleKey = 'title'; // 'title' | 'tag' | 'body'
 
     function isVideoFile(filename) {
         return /\.(mp4|webm|mov|m4v)$/i.test(filename || '');
@@ -1423,7 +1911,7 @@
     }
 
     // -------------------------------------------------------------
-    // TAB SWITCHING (Slides vs Backgrounds)
+    // TAB SWITCHING (Slides vs Backgrounds vs Styles)
     // -------------------------------------------------------------
     function switchTab(tabId) {
         document.querySelectorAll('.nav-tab').forEach(btn => {
@@ -1435,6 +1923,9 @@
         localStorage.setItem('panel_active_tab', tabId);
         if (tabId === 'tab-backgrounds') {
             window.location.hash = 'fondos';
+        } else if (tabId === 'tab-styles') {
+            window.location.hash = 'estilos';
+            renderStylesEditor();
         } else {
             window.location.hash = 'slides';
         }
@@ -1445,8 +1936,289 @@
         const savedTab = localStorage.getItem('panel_active_tab');
         if (hash === '#fondos' || (!hash && savedTab === 'tab-backgrounds')) {
             switchTab('tab-backgrounds');
+        } else if (hash === '#estilos' || (!hash && savedTab === 'tab-styles')) {
+            switchTab('tab-styles');
         } else {
             switchTab('tab-slides');
+        }
+    }
+
+    // -------------------------------------------------------------
+    // STYLES TUNER & LIVE TYPOGRAPHY ENGINE
+    // -------------------------------------------------------------
+    const DEFAULT_STYLES_PRESET = {
+        title: {
+            color: "#ffffff",
+            fontSize: 38,
+            fontWeight: 800,
+            letterSpacing: -0.06,
+            lineHeight: 0.9,
+            textTransform: "uppercase"
+        },
+        tag: {
+            color: "#d4af37",
+            fontSize: 14,
+            fontWeight: 600,
+            letterSpacing: 0.15,
+            lineHeight: 1.2,
+            textTransform: "uppercase"
+        },
+        body: {
+            color: "#f0f4f8",
+            fontSize: 18,
+            fontWeight: 500,
+            letterSpacing: 0.0,
+            lineHeight: 1.4,
+            textTransform: "none"
+        }
+    };
+
+    function switchStyleSubTab(key) {
+        if (!['title', 'tag', 'body'].includes(key)) return;
+        activeStyleKey = key;
+        document.querySelectorAll('.styles-subtab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.id === ('subtabBtn' + key.charAt(0).toUpperCase() + key.slice(1)));
+        });
+        renderStylesEditor();
+    }
+
+    function renderStylesEditor() {
+        if (!stylesData[activeStyleKey]) {
+            stylesData[activeStyleKey] = Object.assign({}, DEFAULT_STYLES_PRESET[activeStyleKey]);
+        }
+        const s = stylesData[activeStyleKey];
+
+        // Update active style name label
+        const nameLabel = document.getElementById('previewActiveStyleName');
+        if (nameLabel) {
+            nameLabel.textContent = activeStyleKey === 'title' ? 'Título' : (activeStyleKey === 'tag' ? 'Tag' : 'Cuerpo');
+        }
+
+        // Color
+        const colorPicker = document.getElementById('styleColorPicker');
+        const colorHex = document.getElementById('styleColorHex');
+        const colorBadge = document.getElementById('styleColorValBadge');
+        if (colorPicker) colorPicker.value = s.color || '#ffffff';
+        if (colorHex) colorHex.value = (s.color || '#ffffff').toUpperCase();
+        if (colorBadge) colorBadge.textContent = (s.color || '#ffffff').toUpperCase();
+
+        // Font Size
+        const sizeSlider = document.getElementById('styleFontSizeSlider');
+        const sizeNum = document.getElementById('styleFontSizeNum');
+        const sizeBadge = document.getElementById('styleFontSizeBadge');
+        if (sizeSlider) sizeSlider.value = s.fontSize || 20;
+        if (sizeNum) sizeNum.value = s.fontSize || 20;
+        if (sizeBadge) sizeBadge.textContent = `${s.fontSize || 20}px`;
+
+        // Font Weight
+        const weightSelect = document.getElementById('styleFontWeightSelect');
+        const weightBadge = document.getElementById('styleFontWeightBadge');
+        if (weightSelect) weightSelect.value = s.fontWeight || 500;
+        if (weightBadge) {
+            const opt = weightSelect ? weightSelect.options[weightSelect.selectedIndex] : null;
+            weightBadge.textContent = opt ? opt.text.split(' — ')[0] : `${s.fontWeight}`;
+        }
+
+        // Letter Spacing
+        const spacingSlider = document.getElementById('styleLetterSpacingSlider');
+        const spacingNum = document.getElementById('styleLetterSpacingNum');
+        const spacingBadge = document.getElementById('styleLetterSpacingBadge');
+        const spacingVal = s.letterSpacing !== undefined ? s.letterSpacing : 0;
+        if (spacingSlider) spacingSlider.value = spacingVal;
+        if (spacingNum) spacingNum.value = spacingVal;
+        if (spacingBadge) spacingBadge.textContent = `${spacingVal}em`;
+
+        // Line Height
+        const lhSlider = document.getElementById('styleLineHeightSlider');
+        const lhNum = document.getElementById('styleLineHeightNum');
+        const lhBadge = document.getElementById('styleLineHeightBadge');
+        const lhVal = s.lineHeight !== undefined ? s.lineHeight : 1.2;
+        if (lhSlider) lhSlider.value = lhVal;
+        if (lhNum) lhNum.value = lhVal;
+        if (lhBadge) lhBadge.textContent = Number(lhVal).toFixed(2);
+
+        // Text Transform
+        const btnUpper = document.getElementById('btnTransformUpper');
+        const btnNone = document.getElementById('btnTransformNone');
+        const transformBadge = document.getElementById('styleTransformBadge');
+        const isUpper = s.textTransform === 'uppercase';
+        if (btnUpper) btnUpper.classList.toggle('active', isUpper);
+        if (btnNone) btnNone.classList.toggle('active', !isUpper);
+        if (transformBadge) transformBadge.textContent = isUpper ? 'MAYÚSCULAS' : 'Normal';
+
+        // Sample text for single preview
+        const sampleEl = document.getElementById('singlePreviewSampleText');
+        if (sampleEl) {
+            if (activeStyleKey === 'title') {
+                sampleEl.textContent = sampleEl.textContent.trim() || 'CELIA & ALFREDO';
+            } else if (activeStyleKey === 'tag') {
+                sampleEl.textContent = sampleEl.textContent.trim() || 'NUESTRA BODA';
+            } else {
+                sampleEl.textContent = sampleEl.textContent.trim() || '¡Queremos compartir este día tan especial con vos!';
+            }
+        }
+
+        applyStylesToDOM(stylesData);
+    }
+
+    function onColorPickerChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        stylesData[activeStyleKey].color = val;
+        document.getElementById('styleColorHex').value = val.toUpperCase();
+        document.getElementById('styleColorValBadge').textContent = val.toUpperCase();
+        applyStylesToDOM(stylesData);
+    }
+
+    function onColorHexChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        let clean = val.trim();
+        if (clean && !clean.startsWith('#')) clean = '#' + clean;
+        stylesData[activeStyleKey].color = clean;
+        document.getElementById('styleColorValBadge').textContent = clean.toUpperCase();
+        if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+            document.getElementById('styleColorPicker').value = clean;
+        }
+        applyStylesToDOM(stylesData);
+    }
+
+    function onFontSizeChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        const num = Math.max(10, Math.min(100, parseInt(val, 10) || 16));
+        stylesData[activeStyleKey].fontSize = num;
+        document.getElementById('styleFontSizeSlider').value = num;
+        document.getElementById('styleFontSizeNum').value = num;
+        document.getElementById('styleFontSizeBadge').textContent = `${num}px`;
+        applyStylesToDOM(stylesData);
+    }
+
+    function onFontWeightChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        const num = parseInt(val, 10) || 400;
+        stylesData[activeStyleKey].fontWeight = num;
+        const sel = document.getElementById('styleFontWeightSelect');
+        const opt = sel ? sel.options[sel.selectedIndex] : null;
+        document.getElementById('styleFontWeightBadge').textContent = opt ? opt.text.split(' — ')[0] : `${num}`;
+        applyStylesToDOM(stylesData);
+    }
+
+    function onLetterSpacingChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        const num = parseFloat(parseFloat(val).toFixed(2)) || 0;
+        stylesData[activeStyleKey].letterSpacing = num;
+        document.getElementById('styleLetterSpacingSlider').value = num;
+        document.getElementById('styleLetterSpacingNum').value = num;
+        document.getElementById('styleLetterSpacingBadge').textContent = `${num}em`;
+        applyStylesToDOM(stylesData);
+    }
+
+    function onLineHeightChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        const num = parseFloat(parseFloat(val).toFixed(2)) || 1.2;
+        stylesData[activeStyleKey].lineHeight = num;
+        document.getElementById('styleLineHeightSlider').value = num;
+        document.getElementById('styleLineHeightNum').value = num;
+        document.getElementById('styleLineHeightBadge').textContent = Number(num).toFixed(2);
+        applyStylesToDOM(stylesData);
+    }
+
+    function setStyleTransform(mode) {
+        if (!stylesData[activeStyleKey]) return;
+        stylesData[activeStyleKey].textTransform = mode;
+        const isUpper = mode === 'uppercase';
+        document.getElementById('btnTransformUpper').classList.toggle('active', isUpper);
+        document.getElementById('btnTransformNone').classList.toggle('active', !isUpper);
+        document.getElementById('styleTransformBadge').textContent = isUpper ? 'MAYÚSCULAS' : 'Normal';
+        applyStylesToDOM(stylesData);
+    }
+
+    function applyGptPosterPreset() {
+        if (!stylesData.title) stylesData.title = {};
+        stylesData.title.fontWeight = 800;
+        stylesData.title.fontSize = 42;
+        stylesData.title.letterSpacing = -0.06;
+        stylesData.title.lineHeight = 0.90;
+        stylesData.title.textTransform = 'uppercase';
+        stylesData.title.color = '#ffffff';
+
+        activeStyleKey = 'title';
+        document.querySelectorAll('.styles-subtab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.id === 'subtabBtnTitle');
+        });
+        renderStylesEditor();
+        showToast('⚡ Preset de póster (gpt.html) aplicado a Título');
+    }
+
+    function resetStylesToDefault() {
+        if (!confirm('¿Restablecer todos los estilos a los valores por defecto?')) return;
+        stylesData = JSON.parse(JSON.stringify(DEFAULT_STYLES_PRESET));
+        renderStylesEditor();
+        showToast('↺ Estilos restablecidos a valores por defecto');
+    }
+
+    function applyStylesToDOM(s) {
+        if (!s) return;
+        const root = document.documentElement;
+
+        // Apply CSS variables to root
+        ['title', 'tag', 'body'].forEach(k => {
+            const item = s[k];
+            if (!item) return;
+            if (item.color) root.style.setProperty(`--el-${k}-color`, item.color);
+            if (item.fontSize) root.style.setProperty(`--el-${k}-size`, `${item.fontSize}px`);
+            if (item.fontWeight) root.style.setProperty(`--el-${k}-weight`, item.fontWeight);
+            if (item.letterSpacing !== undefined) root.style.setProperty(`--el-${k}-spacing`, `${item.letterSpacing}em`);
+            if (item.lineHeight !== undefined) root.style.setProperty(`--el-${k}-line-height`, item.lineHeight);
+            if (item.textTransform) root.style.setProperty(`--el-${k}-transform`, item.textTransform);
+        });
+
+        // Update single preview element
+        const singleEl = document.getElementById('singlePreviewSampleText');
+        const activeItem = s[activeStyleKey];
+        if (singleEl && activeItem) {
+            singleEl.style.fontFamily = "'Montserrat', sans-serif";
+            singleEl.style.color = activeItem.color || '#fff';
+            singleEl.style.fontSize = `${activeItem.fontSize || 20}px`;
+            singleEl.style.fontWeight = activeItem.fontWeight || 500;
+            singleEl.style.letterSpacing = `${activeItem.letterSpacing || 0}em`;
+            singleEl.style.lineHeight = activeItem.lineHeight || 1.2;
+            singleEl.style.textTransform = activeItem.textTransform || 'none';
+        }
+
+        // Live preview on 9:16 phone mockup also benefits directly from CSS root variables
+        updateLivePreview();
+    }
+
+    async function saveStyles() {
+        const btn = document.getElementById('btnSaveStyles');
+        const indicator = document.getElementById('stylesSaveIndicator');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Guardando...</span>';
+        }
+
+        try {
+            const res = await fetch('/panel/styles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stylesData)
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast('✓ Estilos de tipografía guardados correctamente');
+                if (indicator) {
+                    indicator.classList.add('visible');
+                    setTimeout(() => indicator.classList.remove('visible'), 2500);
+                }
+            } else {
+                showToast(data.error || 'Error al guardar estilos', true);
+            }
+        } catch (err) {
+            showToast('Error de red al guardar estilos', true);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾 Guardar Estilos</span>';
+            }
         }
     }
 
@@ -1553,7 +2325,7 @@
         if (slide.elements.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.88rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px dashed var(--card-border);">
-                    No hay elementos de texto en este slide.<br>
+                    No hay elementos en este slide.<br>
                     Hacé clic en <strong>"+ Agregar Texto"</strong> para sumar uno.
                 </div>
             `;
@@ -1570,7 +2342,7 @@
             header.className = 'element-header';
             header.innerHTML = `
                 <span class="element-title">
-                    <span>#${idx + 1} Elemento de Texto</span>
+                    <span>#${idx + 1} Elemento</span>
                 </span>
                 <button type="button" class="btn-del-el" onclick="removeTextElement(${idx})" title="Eliminar este elemento">
                     🗑️ Eliminar
@@ -1592,34 +2364,33 @@
             };
             card.appendChild(textGroup);
 
-            // Style selector (Title vs Body)
+            // Style selector: Title, Tag, Body (No font names in buttons)
+            const currentStyle = el.style || 'body';
             const styleGroup = document.createElement('div');
             styleGroup.className = 'form-group';
             styleGroup.innerHTML = `
-                <label>Estilo de Tipografía</label>
+                <label>Estilo</label>
                 <div class="style-picker-group">
-                    <button type="button" class="style-opt-btn ${el.style === 'title' ? 'active' : ''}" data-style="title">
-                        🔤 Título (Syncopate)
+                    <button type="button" class="style-opt-btn ${currentStyle === 'title' ? 'active' : ''}" data-style="title">
+                        🔤 Título
                     </button>
-                    <button type="button" class="style-opt-btn ${el.style !== 'title' ? 'active' : ''}" data-style="body">
-                        📄 Cuerpo (Montserrat)
+                    <button type="button" class="style-opt-btn ${currentStyle === 'tag' ? 'active' : ''}" data-style="tag">
+                        🏷️ Tag
+                    </button>
+                    <button type="button" class="style-opt-btn ${currentStyle === 'body' ? 'active' : ''}" data-style="body">
+                        📄 Cuerpo
                     </button>
                 </div>
             `;
-            const titleBtn = styleGroup.querySelector('[data-style="title"]');
-            const bodyBtn = styleGroup.querySelector('[data-style="body"]');
-            titleBtn.onclick = () => {
-                el.style = 'title';
-                titleBtn.classList.add('active');
-                bodyBtn.classList.remove('active');
-                updateLivePreview();
-            };
-            bodyBtn.onclick = () => {
-                el.style = 'body';
-                bodyBtn.classList.add('active');
-                titleBtn.classList.remove('active');
-                updateLivePreview();
-            };
+            const optBtns = styleGroup.querySelectorAll('.style-opt-btn');
+            optBtns.forEach(btn => {
+                btn.onclick = () => {
+                    const chosenStyle = btn.getAttribute('data-style');
+                    el.style = chosenStyle;
+                    optBtns.forEach(b => b.classList.toggle('active', b === btn));
+                    updateLivePreview();
+                };
+            });
             card.appendChild(styleGroup);
 
             // Position controls: Horizontal X & Vertical Y (-60% to 60%, 0 is center)
@@ -2135,6 +2906,7 @@
         if (currentSlideId) {
             selectSlide(currentSlideId);
         }
+        renderStylesEditor();
     });
 </script>
 

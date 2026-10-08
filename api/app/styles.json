@@ -1,0 +1,26 @@
+{
+  "title": {
+    "color": "#ffffff",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": -0.06,
+    "lineHeight": 0.9,
+    "textTransform": "uppercase"
+  },
+  "tag": {
+    "color": "#d4af37",
+    "fontSize": 14,
+    "fontWeight": 600,
+    "letterSpacing": 0.15,
+    "lineHeight": 1.2,
+    "textTransform": "uppercase"
+  },
+  "body": {
+    "color": "#f0f4f8",
+    "fontSize": 18,
+    "fontWeight": 500,
+    "letterSpacing": 0.0,
+    "lineHeight": 1.4,
+    "textTransform": "none"
+  }
+}

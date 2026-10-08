@@ -22,6 +22,7 @@ def add_cache_headers(response):
 
 
 SLIDES_JSON_PATH = os.path.join(os.path.dirname(__file__), "slides.json")
+STYLES_JSON_PATH = os.path.join(os.path.dirname(__file__), "styles.json")
 
 SLIDES_CONFIG_DEFAULT = [
     {
@@ -103,6 +104,54 @@ def load_slides():
 def save_slides(slides_list):
     with open(SLIDES_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(slides_list, f, indent=2, ensure_ascii=False)
+
+
+DEFAULT_STYLES = {
+    "title": {
+        "color": "#ffffff",
+        "fontSize": 38,
+        "fontWeight": 800,
+        "letterSpacing": -0.06,
+        "lineHeight": 0.9,
+        "textTransform": "uppercase",
+    },
+    "tag": {
+        "color": "#d4af37",
+        "fontSize": 14,
+        "fontWeight": 600,
+        "letterSpacing": 0.15,
+        "lineHeight": 1.2,
+        "textTransform": "uppercase",
+    },
+    "body": {
+        "color": "#f0f4f8",
+        "fontSize": 18,
+        "fontWeight": 500,
+        "letterSpacing": 0.0,
+        "lineHeight": 1.4,
+        "textTransform": "none",
+    },
+}
+
+
+def load_styles():
+    if os.path.exists(STYLES_JSON_PATH):
+        try:
+            with open(STYLES_JSON_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                styles = {k: dict(v) for k, v in DEFAULT_STYLES.items()}
+                for k, v in data.items():
+                    if k in styles and isinstance(v, dict):
+                        styles[k].update(v)
+                return styles
+        except Exception:
+            pass
+    return {k: dict(v) for k, v in DEFAULT_STYLES.items()}
+
+
+def save_styles(styles_dict):
+    with open(STYLES_JSON_PATH, "w", encoding="utf-8") as f:
+        json.dump(styles_dict, f, indent=2, ensure_ascii=False)
 
 
 def get_backgrounds_dir():
@@ -195,6 +244,7 @@ def get_guest_context(validated_slug):
         "all_rejected": all_rejected,
         "any_confirmed": any_confirmed,
         "active_slides": active_slides,
+        "styles": load_styles(),
         "config_version": int(time.time()),
     }
 
@@ -329,7 +379,19 @@ def panel_view():
         abort(404)
     slides = load_slides()
     backgrounds = get_backgrounds_list()
-    return render_template("panel.html", slides=slides, backgrounds=backgrounds)
+    styles = load_styles()
+    return render_template("panel.html", slides=slides, backgrounds=backgrounds, styles=styles)
+
+
+@app.post("/panel/styles")
+def panel_save_styles():
+    if not is_dev_mode():
+        abort(404)
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not data or not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+    save_styles(data)
+    return jsonify({"ok": True, "styles": data, "message": "Estilos guardados correctamente"})
 
 
 @app.post("/panel/upload-background")

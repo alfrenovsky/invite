@@ -338,22 +338,35 @@
         }
 
         .slide-el-title {
-            font-family: 'Syncopate', sans-serif;
-            font-weight: 700;
-            font-size: clamp(1.2rem, 4.5vw, 1.8rem);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: var(--el-title-weight, 800);
+            font-size: var(--el-title-size, clamp(1.6rem, 6vw, 2.4rem));
+            text-transform: var(--el-title-transform, uppercase);
+            letter-spacing: var(--el-title-spacing, -0.06em);
+            color: var(--el-title-color, #ffffff);
+            line-height: var(--el-title-line-height, 0.9);
             text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.8);
-            line-height: 1.25;
+        }
+
+        .slide-el-tag {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: var(--el-tag-weight, 600);
+            font-size: var(--el-tag-size, clamp(0.75rem, 2.8vw, 0.95rem));
+            text-transform: var(--el-tag-transform, uppercase);
+            letter-spacing: var(--el-tag-spacing, 0.15em);
+            color: var(--el-tag-color, #d4af37);
+            line-height: var(--el-tag-line-height, 1.2);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .slide-el-body {
             font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-            font-size: clamp(0.95rem, 3.2vw, 1.2rem);
-            color: #f0f4f8;
-            line-height: 1.45;
+            font-weight: var(--el-body-weight, 500);
+            font-size: var(--el-body-size, clamp(0.95rem, 3.2vw, 1.15rem));
+            text-transform: var(--el-body-transform, none);
+            letter-spacing: var(--el-body-spacing, 0em);
+            color: var(--el-body-color, #f0f4f8);
+            line-height: var(--el-body-line-height, 1.4);
             text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
