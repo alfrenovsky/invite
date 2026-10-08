@@ -61,51 +61,12 @@
             color: var(--text-main);
             font-family: 'Montserrat', sans-serif;
             min-height: 100vh;
-            padding: 30px 20px 80px;
+            padding: 14px 20px 40px;
         }
 
         .panel-container {
             max-width: 1280px;
             margin: 0 auto;
-        }
-
-        /* Top Header */
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 36px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .header-title-group {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .header-title {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 1.4rem;
-            letter-spacing: 1px;
-            color: #fff;
-            text-transform: uppercase;
-        }
-
-        .dev-badge {
-            display: inline-block;
-            background: rgba(229, 62, 62, 0.15);
-            color: #fc8181;
-            border: 1px solid rgba(229, 62, 62, 0.4);
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
         }
 
         /* Section Layout */
@@ -603,7 +564,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 16px;
-            margin-bottom: 28px;
+            margin-bottom: 18px;
             background: rgba(18, 24, 38, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
@@ -677,28 +638,23 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Slides Manager Bar (Menu, Reorder, CRUD) */
-        .slides-manager-header {
+        /* Slides Manager Card (inside left editor column) */
+        .slides-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 14px;
-            margin-bottom: 22px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-            padding: 12px 18px;
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
         .slides-chips-container {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 8px;
-            overflow-x: auto;
             max-width: 100%;
-            padding: 4px 2px;
-            scrollbar-width: thin;
+            padding: 2px 0;
         }
 
         .slide-chip {
@@ -1546,14 +1502,6 @@
 <body>
 
 <div class="panel-container">
-    <!-- Header -->
-    <header class="panel-header">
-        <div class="header-title-group">
-            <h1 class="header-title">Panel de Control</h1>
-            <span class="dev-badge">Modo Desarrollo</span>
-        </div>
-    </header>
-
     <!-- Top Navigation Tabs Menu -->
     <nav class="panel-nav-bar">
         <div class="panel-nav-tabs">
@@ -1652,34 +1600,36 @@
 
     <!-- TAB: Slides Manager & Live Split Editor -->
     <div id="tab-slides" class="tab-pane active">
-        <!-- Slides Menu, Reorder & CRUD Bar -->
-        <div class="slides-manager-header">
-            <div style="display: flex; align-items: center; gap: 10px; overflow-x: auto; flex: 1; min-width: 240px;">
-                <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0;">Slides:</span>
-                <div class="slides-chips-container" id="slidesChipsContainer">
-                    <!-- Populated dynamically by JS -->
-                </div>
-            </div>
-            <div class="slide-manager-actions">
-                <button type="button" class="btn-ctrl" id="btnMoveSlideUp" onclick="moveSlide(-1)" title="Mover slide hacia arriba en el orden">
-                    <span>▲ Subir</span>
-                </button>
-                <button type="button" class="btn-ctrl" id="btnMoveSlideDown" onclick="moveSlide(1)" title="Mover slide hacia abajo en el orden">
-                    <span>▼ Bajar</span>
-                </button>
-                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnNewSlide" onclick="openNewSlideModal()" title="Crear nuevo slide">
-                    <span>+ Nuevo Slide</span>
-                </button>
-                <button type="button" class="btn-ctrl btn-ctrl-danger" id="btnDeleteSlide" onclick="deleteCurrentSlide()" title="Eliminar slide actual">
-                    <span>🗑️ Eliminar</span>
-                </button>
-            </div>
-        </div>
-
         <!-- Split Grid: Left Editor & Right Live 9:16 Preview -->
         <div class="slide-split-grid">
             <!-- Left Column: Slide Config & Elements CRUD -->
             <div class="editor-form-col">
+                <!-- Slides Selection & Manager -->
+                <section class="panel-card">
+                    <div class="slides-card-header">
+                        <h3 class="section-title" style="margin-bottom: 0;">
+                            <span>Slides</span>
+                            <span class="count" id="slidesSectionBadge">{{ slides|length }}</span>
+                        </h3>
+                        <div class="slide-manager-actions">
+                            <button type="button" class="btn-ctrl" id="btnMoveSlideUp" onclick="moveSlide(-1)" title="Mover slide hacia arriba en el orden">
+                                <span>▲ Subir</span>
+                            </button>
+                            <button type="button" class="btn-ctrl" id="btnMoveSlideDown" onclick="moveSlide(1)" title="Mover slide hacia abajo en el orden">
+                                <span>▼ Bajar</span>
+                            </button>
+                            <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnNewSlide" onclick="openNewSlideModal()" title="Crear nuevo slide">
+                                <span>+ Nuevo</span>
+                            </button>
+                            <button type="button" class="btn-ctrl btn-ctrl-danger" id="btnDeleteSlide" onclick="deleteCurrentSlide()" title="Eliminar slide actual">
+                                <span>🗑️</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="slides-chips-container" id="slidesChipsContainer">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </section>
                 <!-- Slide Basic Settings -->
                 <section class="panel-card">
                     <h3 class="section-title" style="margin-bottom: 14px;">
@@ -2402,6 +2352,8 @@
 
         const countBadge = document.getElementById('slidesCountBadge');
         if (countBadge) countBadge.textContent = slidesData.length;
+        const sectionBadge = document.getElementById('slidesSectionBadge');
+        if (sectionBadge) sectionBadge.textContent = slidesData.length;
     }
 
     function selectSlide(slideId) {
