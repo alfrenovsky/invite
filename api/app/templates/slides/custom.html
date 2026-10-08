@@ -1,0 +1,21 @@
+<!-- SLIDE PERSONALIZADO -->
+<div class="story-slide" data-slide-id="{{ slide.id }}" data-duration="{{ slide.duration if slide.duration is not none else 7000 }}"
+     {% if slide.background and not slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+       style="background-image: url('/assets/backgrounds/{{ slide.background }}'); background-size: cover; background-position: center;"
+     {% endif %}>
+
+    {% if slide.background and slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+        <video class="story-video-bg" src="/assets/backgrounds/{{ slide.background }}" muted loop playsinline autoplay></video>
+    {% endif %}
+
+    <div class="slide-elements-layer">
+        {% for el in slide.elements or [] %}
+            {% if el.type == 'text' %}
+                <div class="slide-el slide-el-{{ el.style or 'body' }}"
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); transform: translate(-50%, -50%);">
+                    {{ el.content }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>

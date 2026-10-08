@@ -84,13 +84,20 @@ SLIDES_CONFIG_DEFAULT = [
 
 
 def load_slides():
+    slides = []
     if os.path.exists(SLIDES_JSON_PATH):
         try:
             with open(SLIDES_JSON_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
+                slides = json.load(f)
         except Exception:
-            pass
-    return SLIDES_CONFIG_DEFAULT
+            slides = []
+    if not slides:
+        slides = [dict(s) for s in SLIDES_CONFIG_DEFAULT]
+
+    for s in slides:
+        if "elements" not in s or not isinstance(s["elements"], list):
+            s["elements"] = []
+    return slides
 
 
 def save_slides(slides_list):
@@ -404,6 +411,62 @@ def panel_save_all_slides():
 
     save_slides(data)
     return jsonify({"ok": True, "slides": data, "message": "Todos los slides guardados"})
+
+
+@app.post("/panel/slides/new")
+def panel_create_slide():
+    if not is_dev_mode():
+        abort(404)
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict()
+
+    title = (data.get("title") or "").strip()
+    raw_id = (data.get("id") or "").strip()
+    if not raw_id:
+        slug = re.sub(r"[^a-zA-Z0-9_]", "_", title.lower()) if title else f"slide_{int(time.time())}"
+        raw_id = slug or f"slide_{int(time.time())}"
+
+    slides = load_slides()
+    slide_id = raw_id
+    counter = 1
+    while any(s["id"] == slide_id for s in slides):
+        slide_id = f"{raw_id}_{counter}"
+        counter += 1
+
+    try:
+        duration = int(data.get("duration", 7000))
+    except (ValueError, TypeError):
+        duration = 7000
+
+    new_slide = {
+        "id": slide_id,
+        "title": title or slide_id,
+        "template": "slides/custom.html",
+        "duration": duration,
+        "enabled": True,
+        "background": data.get("background", ""),
+        "elements": data.get("elements", []) if isinstance(data.get("elements"), list) else [],
+    }
+    slides.append(new_slide)
+    save_slides(slides)
+    return jsonify({"ok": True, "slide": new_slide, "message": f"Slide '{slide_id}' creado correctamente"})
+
+
+@app.post("/panel/slide/<slide_id>/delete")
+def panel_delete_slide(slide_id):
+    if not is_dev_mode():
+        abort(404)
+
+    slides = load_slides()
+    filtered = [s for s in slides if s["id"] != slide_id]
+    if len(filtered) == len(slides):
+        return jsonify({"ok": False, "error": f"Slide '{slide_id}' no encontrado"}), 404
+
+    save_slides(filtered)
+    return jsonify({"ok": True, "slide_id": slide_id, "message": f"Slide '{slide_id}' eliminado"})
 
 
 @app.post("/panel/rename-background")

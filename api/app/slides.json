@@ -5,7 +5,25 @@
     "template": "slides/portada.html",
     "duration": 8500,
     "enabled": true,
-    "background": "AyCenMaal.jpeg"
+    "background": "photo01.jpeg",
+    "elements": [
+      {
+        "id": "el_1791458669060",
+        "type": "text",
+        "content": "NOS CASAMOS",
+        "style": "body",
+        "x": -1,
+        "y": 32
+      },
+      {
+        "id": "el_1791458721214",
+        "type": "text",
+        "content": "Celia & Alfredo",
+        "style": "title",
+        "x": 0,
+        "y": 39
+      }
+    ]
   },
   {
     "id": "lugar",
@@ -13,7 +31,8 @@
     "template": "slides/lugar.html",
     "duration": 7000,
     "enabled": true,
-    "background": "fiesta.jpeg"
+    "background": "fiesta.jpeg",
+    "elements": []
   },
   {
     "id": "video",
@@ -21,7 +40,8 @@
     "template": "slides/video.html",
     "duration": 10000,
     "enabled": true,
-    "background": "intro.mp4"
+    "background": "intro.mp4",
+    "elements": []
   },
   {
     "id": "itinerario",
@@ -29,7 +49,8 @@
     "template": "slides/itinerario.html",
     "duration": 7000,
     "enabled": true,
-    "background": "background.jpeg"
+    "background": "background.jpeg",
+    "elements": []
   },
   {
     "id": "regalos",
@@ -37,7 +58,8 @@
     "template": "slides/regalos.html",
     "duration": 7000,
     "enabled": true,
-    "background": "background.1.jpeg"
+    "background": "background.1.jpeg",
+    "elements": []
   },
   {
     "id": "rsvp",
@@ -45,7 +67,8 @@
     "template": "slides/rsvp.html",
     "duration": 0,
     "enabled": true,
-    "background": "background.alternate.jpeg"
+    "background": "background.alternate.jpeg",
+    "elements": []
   },
   {
     "id": "triste",
@@ -53,6 +76,7 @@
     "template": "slides/triste.html",
     "duration": 0,
     "enabled": true,
-    "background": "GatoTriste.jpeg"
+    "background": "GatoTriste.jpeg",
+    "elements": []
   }
 ]

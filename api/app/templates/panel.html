@@ -573,6 +573,575 @@
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+
+        /* Navigation Bar */
+        .panel-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            background: rgba(18, 24, 38, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 8px 14px;
+        }
+
+        .panel-nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: rgba(49, 130, 206, 0.18);
+            border-color: rgba(99, 179, 237, 0.45);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(49, 130, 206, 0.25);
+        }
+
+        .tab-badge {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .nav-tab.active .tab-badge {
+            background: rgba(99, 179, 237, 0.35);
+            color: #fff;
+        }
+
+        .panel-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-nav-link {
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+            transition: all 0.2s;
+        }
+
+        .btn-nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-nav-preview {
+            background: rgba(212, 175, 55, 0.12);
+            color: #ffd978;
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-nav-preview:hover {
+            background: var(--accent);
+            color: #0b0f15;
+            border-color: var(--accent);
+            box-shadow: 0 0 14px var(--accent-glow);
+        }
+
+        /* Tab Panes */
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slides Manager Bar (Menu, Reorder, CRUD) */
+        .slides-manager-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 22px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+        }
+
+        .slides-chips-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            max-width: 100%;
+            padding: 4px 2px;
+            scrollbar-width: thin;
+        }
+
+        .slide-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 7px 13px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .slide-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .slide-chip.active {
+            background: rgba(212, 175, 55, 0.18);
+            border-color: rgba(212, 175, 55, 0.5);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .slide-chip-num {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.35);
+            padding: 1px 6px;
+            border-radius: 999px;
+        }
+
+        .slide-chip.active .slide-chip-num {
+            color: #ffd978;
+        }
+
+        .slide-manager-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-ctrl {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-ctrl:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-ctrl:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .btn-ctrl-primary {
+            background: rgba(49, 130, 206, 0.2);
+            border-color: rgba(49, 130, 206, 0.5);
+            color: #90cdf4;
+        }
+
+        .btn-ctrl-primary:hover:not(:disabled) {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .btn-ctrl-danger {
+            background: rgba(229, 62, 62, 0.15);
+            border-color: rgba(229, 62, 62, 0.4);
+            color: #feb2b2;
+        }
+
+        .btn-ctrl-danger:hover:not(:disabled) {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* Split Editor Layout */
+        .slide-split-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 28px;
+            align-items: start;
+        }
+
+        @media (max-width: 1050px) {
+            .slide-split-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Column */
+        .editor-form-col {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .element-card {
+            background: rgba(14, 20, 30, 0.65);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+            transition: border-color 0.2s;
+        }
+
+        .element-card:hover {
+            border-color: var(--card-hover-border);
+        }
+
+        .element-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .element-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #cbd5e0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-del-el {
+            background: rgba(229, 62, 62, 0.12);
+            border: 1px solid rgba(229, 62, 62, 0.3);
+            color: #fc8181;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-del-el:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .style-picker-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .style-opt-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .style-opt-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .style-opt-btn.active {
+            background: rgba(212, 175, 55, 0.16);
+            border-color: var(--accent);
+            color: #ffd978;
+        }
+
+        .pos-control-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .pos-control-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pos-slider-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pos-slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .pos-val-badge {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            padding: 2px 7px;
+            border-radius: 6px;
+            color: #ffd978;
+            font-family: monospace;
+            font-size: 0.82rem;
+        }
+
+        .pos-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pos-range-slider {
+            flex: 1;
+            accent-color: var(--accent);
+            cursor: pointer;
+            height: 6px;
+            border-radius: 3px;
+            background: #2d3748;
+        }
+
+        .pos-num-input {
+            width: 64px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 0.82rem;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        /* Right Column: Live Mockup */
+        .preview-sticky-wrap {
+            position: sticky;
+            top: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .preview-header-info {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+        }
+
+        .preview-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #cbd5e0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .phone-mockup {
+            width: 320px;
+            height: 568px; /* 9:16 vertical ratio */
+            background: #000;
+            border-radius: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(212, 175, 55, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phone-speaker-notch {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            z-index: 50;
+        }
+
+        .phone-bg-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1;
+        }
+
+        .phone-bg-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            display: none;
+        }
+
+        .phone-center-guide-x {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.12);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .phone-center-guide-y {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            border-left: 1px dashed rgba(255, 255, 255, 0.12);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .phone-elements-overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .preview-text-el {
+            position: absolute;
+            text-align: center;
+            max-width: 86%;
+            word-break: break-word;
+            white-space: pre-wrap;
+            pointer-events: auto;
+            user-select: none;
+            transition: transform 0.05s ease-out;
+        }
+
+        .preview-text-el.style-title {
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 1.12rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            text-shadow: 0 3px 14px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.85);
+            line-height: 1.25;
+        }
+
+        .preview-text-el.style-body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 0.88rem;
+            color: #f0f4f8;
+            line-height: 1.4;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.85);
+        }
+
+        .preview-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.4;
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -586,153 +1155,244 @@
         </div>
     </header>
 
-    <!-- Top Two Columns: Upload & Backgrounds Gallery -->
-    <div class="grid-two-col">
-        <!-- Upload New Background Form -->
-        <section class="panel-card">
-            <h2 class="section-title">
-                <span>Subir Fondo / Video</span>
-            </h2>
-            <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label>Archivo de Imagen o Video</label>
-                    <div class="file-upload-box" id="fileDropBox">
-                        <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v" required>
-                        <div class="upload-box-icon">📁</div>
-                        <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
-                        <div class="selected-file-name" id="selectedFileName"></div>
-                    </div>
-                </div>
+    <!-- Top Navigation Tabs Menu -->
+    <nav class="panel-nav-bar">
+        <div class="panel-nav-tabs">
+            <button type="button" class="nav-tab active" data-tab="tab-slides" id="tabBtnSlides" onclick="switchTab('tab-slides')">
+                <span class="tab-icon">🎞️</span>
+                <span class="tab-label">Slides</span>
+                <span class="tab-badge" id="slidesCountBadge">{{ slides|length }}</span>
+            </button>
+            <button type="button" class="nav-tab" data-tab="tab-backgrounds" id="tabBtnBackgrounds" onclick="switchTab('tab-backgrounds')">
+                <span class="tab-icon">🖼️</span>
+                <span class="tab-label">Fondos y Videos</span>
+                <span class="tab-badge" id="bgNavBadge">{{ backgrounds|length }}</span>
+            </button>
+        </div>
+        <div class="panel-nav-actions">
+            <a href="/invitados-view" class="btn-nav-link" title="Ver lista de confirmación de invitados">
+                <span>📋 Invitados</span>
+            </a>
+            <a href="/" target="_blank" class="btn-nav-link btn-nav-preview" title="Abrir historia en nueva pestaña">
+                <span>↗️ Ver Invitación</span>
+            </a>
+        </div>
+    </nav>
 
-                <div class="form-group">
-                    <label for="bgNameInput">Nombre personalizado (opcional)</label>
-                    <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. video_intro o iglesia_atardecer">
-                </div>
-
-                <button type="submit" class="btn-submit" id="btnUploadSubmit">
-                    <span>⬆ Subir Fondo / Video</span>
-                </button>
-            </form>
-        </section>
-
-        <!-- Backgrounds List / Gallery -->
-        <section class="panel-card">
-            <h2 class="section-title">
-                <span>Fondos y Videos Disponibles</span>
-                <span class="count" id="bgCountBadge">{{ backgrounds|length }}</span>
-            </h2>
-
-            {% if backgrounds %}
-                <div class="bg-gallery" id="bgGallery">
-                    {% for bg in backgrounds %}
-                        {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-                        <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}" data-is-video="{{ 'true' if is_vid else 'false' }}">
-                            <div class="bg-thumb-wrap">
-                                {% if is_vid %}
-                                    <video src="/assets/backgrounds/{{ bg }}" class="bg-thumb" muted loop playsinline autoplay></video>
-                                    <span class="media-badge">🎬 Video</span>
-                                {% else %}
-                                    <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
-                                {% endif %}
-                            </div>
-                            <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
-                                <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
-                                <div class="bg-btn-group">
-                                    <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar archivo">✏️</button>
-                                    <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteBackground('{{ loop.index }}', '{{ bg }}')" title="Eliminar archivo">🗑️</button>
-                                </div>
-                            </div>
-                            <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
-                                <input type="text" class="rename-input" id="renameInput_{{ loop.index }}" value="{{ bg }}">
-                                <div class="rename-actions">
-                                    <button type="button" class="btn-rename-save" onclick="saveRename('{{ loop.index }}', '{{ bg }}')" title="Guardar">✓</button>
-                                    <button type="button" class="btn-rename-cancel" onclick="cancelRename('{{ loop.index }}')" title="Cancelar">✕</button>
-                                </div>
-                            </div>
+    <!-- TAB: Fondos y Videos (Already Done) -->
+    <div id="tab-backgrounds" class="tab-pane">
+        <!-- Top Two Columns: Upload & Backgrounds Gallery -->
+        <div class="grid-two-col">
+            <!-- Upload New Background Form -->
+            <section class="panel-card">
+                <h2 class="section-title">
+                    <span>Subir Fondo / Video</span>
+                </h2>
+                <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Archivo de Imagen o Video</label>
+                        <div class="file-upload-box" id="fileDropBox">
+                            <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v" required>
+                            <div class="upload-box-icon">📁</div>
+                            <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
+                            <div class="selected-file-name" id="selectedFileName"></div>
                         </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p id="noBgMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
-            {% endif %}
-        </section>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bgNameInput">Nombre personalizado (opcional)</label>
+                        <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. video_intro o iglesia_atardecer">
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btnUploadSubmit">
+                        <span>⬆ Subir Fondo / Video</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Backgrounds List / Gallery -->
+            <section class="panel-card">
+                <h2 class="section-title">
+                    <span>Fondos y Videos Disponibles</span>
+                    <span class="count" id="bgCountBadge">{{ backgrounds|length }}</span>
+                </h2>
+
+                {% if backgrounds %}
+                    <div class="bg-gallery" id="bgGallery">
+                        {% for bg in backgrounds %}
+                            {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                            <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}" data-is-video="{{ 'true' if is_vid else 'false' }}">
+                                <div class="bg-thumb-wrap">
+                                    {% if is_vid %}
+                                        <video src="/assets/backgrounds/{{ bg }}" class="bg-thumb" muted loop playsinline autoplay></video>
+                                        <span class="media-badge">🎬 Video</span>
+                                    {% else %}
+                                        <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
+                                    {% endif %}
+                                </div>
+                                <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
+                                    <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
+                                    <div class="bg-btn-group">
+                                        <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar archivo">✏️</button>
+                                        <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteBackground('{{ loop.index }}', '{{ bg }}')" title="Eliminar archivo">🗑️</button>
+                                    </div>
+                                </div>
+                                <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
+                                    <input type="text" class="rename-input" id="renameInput_{{ loop.index }}" value="{{ bg }}">
+                                    <div class="rename-actions">
+                                        <button type="button" class="btn-rename-save" onclick="saveRename('{{ loop.index }}', '{{ bg }}')" title="Guardar">✓</button>
+                                        <button type="button" class="btn-rename-cancel" onclick="cancelRename('{{ loop.index }}')" title="Cancelar">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p id="noBgMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
+                {% endif %}
+            </section>
+        </div>
     </div>
 
-    <!-- Slides Configuration Section -->
-    <section>
-        <h2 class="section-title">
-            <span>Configuración de Slides</span>
-            <span class="count">{{ slides|length }}</span>
-        </h2>
+    <!-- TAB: Slides Manager & Live Split Editor -->
+    <div id="tab-slides" class="tab-pane active">
+        <!-- Slides Menu, Reorder & CRUD Bar -->
+        <div class="slides-manager-header">
+            <div style="display: flex; align-items: center; gap: 10px; overflow-x: auto; flex: 1; min-width: 240px;">
+                <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); flex-shrink: 0;">Slides:</span>
+                <div class="slides-chips-container" id="slidesChipsContainer">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+            <div class="slide-manager-actions">
+                <button type="button" class="btn-ctrl" id="btnMoveSlideUp" onclick="moveSlide(-1)" title="Mover slide hacia arriba en el orden">
+                    <span>▲ Subir</span>
+                </button>
+                <button type="button" class="btn-ctrl" id="btnMoveSlideDown" onclick="moveSlide(1)" title="Mover slide hacia abajo en el orden">
+                    <span>▼ Bajar</span>
+                </button>
+                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnNewSlide" onclick="openNewSlideModal()" title="Crear nuevo slide">
+                    <span>+ Nuevo Slide</span>
+                </button>
+                <button type="button" class="btn-ctrl btn-ctrl-danger" id="btnDeleteSlide" onclick="deleteCurrentSlide()" title="Eliminar slide actual">
+                    <span>🗑️ Eliminar</span>
+                </button>
+            </div>
+        </div>
 
-        <div class="slides-grid">
-            {% for slide in slides %}
-                <div class="slide-card" id="slideCard_{{ slide.id }}">
-                    <div class="slide-header">
-                        <div class="slide-title-wrap">
-                            <span class="slide-title">{{ slide.title or slide.id }}</span>
+        <!-- Split Grid: Left Editor & Right Live 9:16 Preview -->
+        <div class="slide-split-grid">
+            <!-- Left Column: Slide Config & Elements CRUD -->
+            <div class="editor-form-col">
+                <!-- Slide Basic Settings -->
+                <section class="panel-card">
+                    <h3 class="section-title" style="margin-bottom: 14px;">
+                        <span>Configuración del Slide</span>
+                        <span class="count" id="activeSlideBadgeId"></span>
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                        <div class="form-group">
+                            <label for="slideTitleInput">Título del Slide</label>
+                            <input type="text" class="form-input" id="slideTitleInput" placeholder="ej. Portada, Fiesta, etc.">
                         </div>
-                        <span class="slide-badge">{{ slide.id }}</span>
+                        <div class="form-group">
+                            <label for="slideDurationInput">
+                                <span>Duración (ms)</span>
+                                <span class="sub-label-hint">0 = sin auto-avance</span>
+                            </label>
+                            <input type="number" class="form-input" id="slideDurationInput" min="0" step="500" value="7000">
+                        </div>
                     </div>
 
-                    <div class="slide-body">
-                        <!-- Preview Thumbnail for this slide (Image or Video) -->
-                        {% set slide_is_vid = slide.background and slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-                        <div class="slide-preview-box" id="previewBox_{{ slide.id }}"
-                             {% if slide.background and not slide_is_vid %}style="background-image: url('/assets/backgrounds/{{ slide.background }}');"{% endif %}>
-                            <video id="previewVideo_{{ slide.id }}" class="slide-preview-video" muted loop playsinline autoplay
-                                   {% if not slide_is_vid %}style="display: none;"{% endif %}
-                                   {% if slide_is_vid %}src="/assets/backgrounds/{{ slide.background }}"{% endif %}></video>
-                            <span class="slide-preview-empty" id="previewEmpty_{{ slide.id }}"
-                                  {% if slide.background %}style="display: none;"{% endif %}>
-                                Sin fondo
-                            </span>
-                        </div>
+                    <div class="form-group">
+                        <label for="slideBgSelect">Fondo / Video</label>
+                        <select id="slideBgSelect" class="form-select">
+                            <option value="">(Sin fondo / Default)</option>
+                            {% for bg in backgrounds %}
+                                <option value="{{ bg }}">{{ bg }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </section>
 
-                        <!-- Form for this slide -->
-                        <form class="slide-form" id="formSlide_{{ slide.id }}" action="/panel/slide/{{ slide.id }}" method="POST">
-                            <input type="hidden" name="slide_id" value="{{ slide.id }}">
+                <!-- Elements CRUD Section -->
+                <section class="panel-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 class="section-title" style="margin-bottom: 0;">
+                            <span>Elementos de Texto</span>
+                            <span class="count" id="elementsCountBadge">0</span>
+                        </h3>
+                        <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
+                            <span>+ Agregar Texto</span>
+                        </button>
+                    </div>
 
-                            <div class="slide-form-fields">
-                                <div class="form-group">
-                                    <label for="selectBg_{{ slide.id }}">Fondo / Video</label>
-                                    <select name="background" id="selectBg_{{ slide.id }}" class="form-select bg-selector" data-slide-id="{{ slide.id }}">
-                                        {% if not slide.background %}
-                                            <option value="" selected>(Sin fondo / Default)</option>
-                                        {% else %}
-                                            <option value="">(Sin fondo / Default)</option>
-                                        {% endif %}
-                                        {% for bg in backgrounds %}
-                                            {% if slide.background == bg %}
-                                                <option value="{{ bg }}" selected>{{ bg }}</option>
-                                            {% else %}
-                                                <option value="{{ bg }}">{{ bg }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </select>
-                                </div>
+                    <div id="elementsListContainer">
+                        <!-- Populated dynamically by JS -->
+                    </div>
 
-                                <div class="form-group">
-                                    <label for="inputDuration_{{ slide.id }}">
-                                        <span>Duración (ms)</span>
-                                        <span class="sub-label-hint">0 = sin auto-avance</span>
-                                    </label>
-                                    <input type="number" name="duration" id="inputDuration_{{ slide.id }}" class="form-input" value="{{ slide.duration if slide.duration is not none else 7000 }}" min="0" step="500">
-                                </div>
-                            </div>
+                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--card-border);">
+                        <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
+                        <button type="button" class="btn-save-slide" id="btnSaveActiveSlide" onclick="saveActiveSlide()">
+                            <span>💾 Guardar Slide</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
 
-                            <div>
-                                <button type="submit" class="btn-save-slide" id="btnSave_{{ slide.id }}">
-                                    <span>💾 Guardar</span>
-                                </button>
-                                <div class="save-indicator" id="indicator_{{ slide.id }}">✓ Guardado</div>
-                            </div>
-                        </form>
+            <!-- Right Column: Live 9:16 Preview Mockup -->
+            <div class="preview-sticky-wrap">
+                <div class="preview-header-info">
+                    <span class="preview-title">
+                        <span>📱 Previsualización en Vivo</span>
+                    </span>
+                    <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">9:16 vertical</span>
+                </div>
+
+                <div class="phone-mockup" id="phoneMockup">
+                    <div class="phone-speaker-notch"></div>
+                    <!-- Faint center crosshair guides -->
+                    <div class="phone-center-guide-x" title="Línea central vertical (Y = 0)"></div>
+                    <div class="phone-center-guide-y" title="Línea central horizontal (X = 0)"></div>
+
+                    <!-- Background layer -->
+                    <div class="phone-bg-layer" id="phoneBgLayer"></div>
+                    <video class="phone-bg-video" id="phoneBgVideo" muted loop playsinline autoplay></video>
+
+                    <!-- Real-time elements overlay -->
+                    <div class="phone-elements-overlay" id="phoneElementsOverlay">
+                        <!-- Populated dynamically by JS -->
                     </div>
                 </div>
-            {% endfor %}
+
+                <p class="preview-hint">
+                    🎯 <strong>(0%, 0%)</strong> es el centro exacto del slide. Rango: <code>-60%</code> a <code>60%</code> en horizontal y vertical. Los cambios se actualizan en vivo al editar.
+                </p>
+            </div>
         </div>
-    </section>
+    </div>
+</div>
+
+<!-- Modal: Crear Nuevo Slide -->
+<div id="newSlideModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+        <h3 class="section-title" style="margin-bottom: 16px;">
+            <span>+ Nuevo Slide</span>
+        </h3>
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label for="newSlideTitle">Título del Slide</label>
+            <input type="text" class="form-input" id="newSlideTitle" placeholder="ej. Fiesta, Regalos, etc.">
+        </div>
+        <div class="form-group" style="margin-bottom: 18px;">
+            <label for="newSlideId">Identificador / Slug (opcional)</label>
+            <input type="text" class="form-input" id="newSlideId" placeholder="ej. fiesta">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-ctrl" onclick="closeNewSlideModal()">Cancelar</button>
+            <button type="button" class="btn-ctrl btn-ctrl-primary" onclick="confirmCreateSlide()">Crear Slide</button>
+        </div>
+    </div>
 </div>
 
 <!-- Global Notification Toast -->
@@ -741,11 +1401,533 @@
 </div>
 
 <script>
+    // State
+    let slidesData = {{ slides|tojson }};
+    let backgroundsData = {{ backgrounds|tojson }};
+    let currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
+
     function isVideoFile(filename) {
         return /\.(mp4|webm|mov|m4v)$/i.test(filename || '');
     }
 
-    // File input selection preview
+    // Toast
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toastNotify');
+        const toastMsg = document.getElementById('toastMsg');
+        toastMsg.textContent = msg;
+        toast.style.borderColor = isError ? 'var(--danger)' : 'var(--accent)';
+        toast.style.display = 'flex';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    // -------------------------------------------------------------
+    // TAB SWITCHING (Slides vs Backgrounds)
+    // -------------------------------------------------------------
+    function switchTab(tabId) {
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+        });
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('active', pane.id === tabId);
+        });
+        localStorage.setItem('panel_active_tab', tabId);
+        if (tabId === 'tab-backgrounds') {
+            window.location.hash = 'fondos';
+        } else {
+            window.location.hash = 'slides';
+        }
+    }
+
+    function initActiveTab() {
+        const hash = window.location.hash;
+        const savedTab = localStorage.getItem('panel_active_tab');
+        if (hash === '#fondos' || (!hash && savedTab === 'tab-backgrounds')) {
+            switchTab('tab-backgrounds');
+        } else {
+            switchTab('tab-slides');
+        }
+    }
+
+    // -------------------------------------------------------------
+    // SLIDES MANAGER & LIVE SPLIT EDITOR
+    // -------------------------------------------------------------
+    function getCurrentSlide() {
+        return slidesData.find(s => s.id === currentSlideId) || null;
+    }
+
+    function renderSlideChips() {
+        const container = document.getElementById('slidesChipsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        slidesData.forEach((slide, idx) => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'slide-chip' + (slide.id === currentSlideId ? ' active' : '');
+            chip.onclick = () => selectSlide(slide.id);
+
+            const numSpan = document.createElement('span');
+            numSpan.className = 'slide-chip-num';
+            numSpan.textContent = idx + 1;
+
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = slide.title || slide.id;
+
+            chip.appendChild(numSpan);
+            chip.appendChild(titleSpan);
+            container.appendChild(chip);
+        });
+
+        // Update reorder buttons
+        const currIdx = slidesData.findIndex(s => s.id === currentSlideId);
+        const btnUp = document.getElementById('btnMoveSlideUp');
+        const btnDown = document.getElementById('btnMoveSlideDown');
+        const btnDel = document.getElementById('btnDeleteSlide');
+
+        if (btnUp) btnUp.disabled = (currIdx <= 0);
+        if (btnDown) btnDown.disabled = (currIdx < 0 || currIdx >= slidesData.length - 1);
+        if (btnDel) btnDel.disabled = (slidesData.length <= 1);
+
+        const countBadge = document.getElementById('slidesCountBadge');
+        if (countBadge) countBadge.textContent = slidesData.length;
+    }
+
+    function selectSlide(slideId) {
+        currentSlideId = slideId;
+        renderSlideChips();
+        loadSlideIntoForm();
+        updateLivePreview();
+    }
+
+    function loadSlideIntoForm() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+
+        if (!Array.isArray(slide.elements)) {
+            slide.elements = [];
+        }
+
+        const badgeId = document.getElementById('activeSlideBadgeId');
+        if (badgeId) badgeId.textContent = slide.id;
+
+        const titleInput = document.getElementById('slideTitleInput');
+        if (titleInput) {
+            titleInput.value = slide.title || '';
+            titleInput.oninput = () => {
+                slide.title = titleInput.value;
+                renderSlideChips();
+            };
+        }
+
+        const durationInput = document.getElementById('slideDurationInput');
+        if (durationInput) {
+            durationInput.value = slide.duration !== undefined ? slide.duration : 7000;
+            durationInput.oninput = () => {
+                slide.duration = parseInt(durationInput.value, 10) || 0;
+            };
+        }
+
+        const bgSelect = document.getElementById('slideBgSelect');
+        if (bgSelect) {
+            bgSelect.value = slide.background || '';
+            bgSelect.onchange = () => {
+                slide.background = bgSelect.value;
+                updateLivePreview();
+            };
+        }
+
+        renderElementsList();
+    }
+
+    function renderElementsList() {
+        const slide = getCurrentSlide();
+        const container = document.getElementById('elementsListContainer');
+        const countBadge = document.getElementById('elementsCountBadge');
+        if (!slide || !container) return;
+
+        if (countBadge) countBadge.textContent = slide.elements.length;
+        container.innerHTML = '';
+
+        if (slide.elements.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.88rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px dashed var(--card-border);">
+                    No hay elementos de texto en este slide.<br>
+                    Hacé clic en <strong>"+ Agregar Texto"</strong> para sumar uno.
+                </div>
+            `;
+            return;
+        }
+
+        slide.elements.forEach((el, idx) => {
+            const card = document.createElement('div');
+            card.className = 'element-card';
+            card.id = 'elCard_' + idx;
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'element-header';
+            header.innerHTML = `
+                <span class="element-title">
+                    <span>#${idx + 1} Elemento de Texto</span>
+                </span>
+                <button type="button" class="btn-del-el" onclick="removeTextElement(${idx})" title="Eliminar este elemento">
+                    🗑️ Eliminar
+                </button>
+            `;
+            card.appendChild(header);
+
+            // Text Content input
+            const textGroup = document.createElement('div');
+            textGroup.className = 'form-group';
+            textGroup.innerHTML = `
+                <label>Contenido del Texto</label>
+                <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
+            `;
+            const textarea = textGroup.querySelector('textarea');
+            textarea.oninput = (e) => {
+                el.content = e.target.value;
+                updateLivePreview();
+            };
+            card.appendChild(textGroup);
+
+            // Style selector (Title vs Body)
+            const styleGroup = document.createElement('div');
+            styleGroup.className = 'form-group';
+            styleGroup.innerHTML = `
+                <label>Estilo de Tipografía</label>
+                <div class="style-picker-group">
+                    <button type="button" class="style-opt-btn ${el.style === 'title' ? 'active' : ''}" data-style="title">
+                        🔤 Título (Syncopate)
+                    </button>
+                    <button type="button" class="style-opt-btn ${el.style !== 'title' ? 'active' : ''}" data-style="body">
+                        📄 Cuerpo (Montserrat)
+                    </button>
+                </div>
+            `;
+            const titleBtn = styleGroup.querySelector('[data-style="title"]');
+            const bodyBtn = styleGroup.querySelector('[data-style="body"]');
+            titleBtn.onclick = () => {
+                el.style = 'title';
+                titleBtn.classList.add('active');
+                bodyBtn.classList.remove('active');
+                updateLivePreview();
+            };
+            bodyBtn.onclick = () => {
+                el.style = 'body';
+                bodyBtn.classList.add('active');
+                titleBtn.classList.remove('active');
+                updateLivePreview();
+            };
+            card.appendChild(styleGroup);
+
+            // Position controls: Horizontal X & Vertical Y (-60% to 60%, 0 is center)
+            const posRow = document.createElement('div');
+            posRow.className = 'pos-control-row';
+
+            const currX = el.x !== undefined ? el.x : 0;
+            const currY = el.y !== undefined ? el.y : 0;
+
+            posRow.innerHTML = `
+                <!-- Horizontal X -->
+                <div class="pos-slider-wrap">
+                    <div class="pos-slider-header">
+                        <span>Posición Horizontal (X)</span>
+                        <span class="pos-val-badge" id="badgeX_${idx}">${currX}%</span>
+                    </div>
+                    <div class="pos-input-group">
+                        <input type="range" class="pos-range-slider" id="sliderX_${idx}" min="-60" max="60" step="1" value="${currX}">
+                        <input type="number" class="pos-num-input" id="numX_${idx}" min="-60" max="60" step="1" value="${currX}">
+                    </div>
+                </div>
+
+                <!-- Vertical Y -->
+                <div class="pos-slider-wrap">
+                    <div class="pos-slider-header">
+                        <span>Posición Vertical (Y)</span>
+                        <span class="pos-val-badge" id="badgeY_${idx}">${currY}%</span>
+                    </div>
+                    <div class="pos-input-group">
+                        <input type="range" class="pos-range-slider" id="sliderY_${idx}" min="-60" max="60" step="1" value="${currY}">
+                        <input type="number" class="pos-num-input" id="numY_${idx}" min="-60" max="60" step="1" value="${currY}">
+                    </div>
+                </div>
+            `;
+
+            // Bind X
+            const sliderX = posRow.querySelector(`#sliderX_${idx}`);
+            const numX = posRow.querySelector(`#numX_${idx}`);
+            const badgeX = posRow.querySelector(`#badgeX_${idx}`);
+
+            const syncX = (val) => {
+                let parsed = parseInt(val, 10);
+                if (isNaN(parsed)) parsed = 0;
+                parsed = Math.max(-60, Math.min(60, parsed));
+                el.x = parsed;
+                sliderX.value = parsed;
+                numX.value = parsed;
+                badgeX.textContent = `${parsed}%`;
+                updateLivePreview();
+            };
+
+            sliderX.oninput = (e) => syncX(e.target.value);
+            numX.oninput = (e) => syncX(e.target.value);
+
+            // Bind Y
+            const sliderY = posRow.querySelector(`#sliderY_${idx}`);
+            const numY = posRow.querySelector(`#numY_${idx}`);
+            const badgeY = posRow.querySelector(`#badgeY_${idx}`);
+
+            const syncY = (val) => {
+                let parsed = parseInt(val, 10);
+                if (isNaN(parsed)) parsed = 0;
+                parsed = Math.max(-60, Math.min(60, parsed));
+                el.y = parsed;
+                sliderY.value = parsed;
+                numY.value = parsed;
+                badgeY.textContent = `${parsed}%`;
+                updateLivePreview();
+            };
+
+            sliderY.oninput = (e) => syncY(e.target.value);
+            numY.oninput = (e) => syncY(e.target.value);
+
+            card.appendChild(posRow);
+            container.appendChild(card);
+        });
+    }
+
+    function addTextElement() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        if (!Array.isArray(slide.elements)) slide.elements = [];
+
+        slide.elements.push({
+            id: 'el_' + Date.now(),
+            type: 'text',
+            content: 'Nuevo texto',
+            style: 'body',
+            x: 0,
+            y: 0
+        });
+
+        renderElementsList();
+        updateLivePreview();
+    }
+
+    function removeTextElement(index) {
+        const slide = getCurrentSlide();
+        if (!slide || !Array.isArray(slide.elements)) return;
+
+        slide.elements.splice(index, 1);
+        renderElementsList();
+        updateLivePreview();
+    }
+
+    function escapeHtml(text) {
+        return (text || '').replace(/&/g, '&amp;')
+                           .replace(/</g, '&lt;')
+                           .replace(/>/g, '&gt;')
+                           .replace(/"/g, '&quot;')
+                           .replace(/'/g, '&#039;');
+    }
+
+    // -------------------------------------------------------------
+    // LIVE PREVIEW ENGINE (9:16 vertical mockup)
+    // -------------------------------------------------------------
+    function updateLivePreview() {
+        const slide = getCurrentSlide();
+        const bgLayer = document.getElementById('phoneBgLayer');
+        const bgVideo = document.getElementById('phoneBgVideo');
+        const overlay = document.getElementById('phoneElementsOverlay');
+        if (!slide || !bgLayer || !bgVideo || !overlay) return;
+
+        // Background
+        const bg = slide.background || '';
+        if (bg) {
+            if (isVideoFile(bg)) {
+                bgLayer.style.backgroundImage = 'none';
+                const videoSrc = '/assets/backgrounds/' + encodeURIComponent(bg);
+                if (bgVideo.getAttribute('src') !== videoSrc) {
+                    bgVideo.src = videoSrc;
+                }
+                bgVideo.style.display = 'block';
+                bgVideo.play().catch(() => {});
+            } else {
+                bgVideo.pause();
+                bgVideo.style.display = 'none';
+                bgLayer.style.backgroundImage = `url('/assets/backgrounds/${encodeURIComponent(bg)}')`;
+            }
+        } else {
+            bgVideo.pause();
+            bgVideo.style.display = 'none';
+            bgLayer.style.backgroundImage = 'none';
+        }
+
+        // Render live overlay elements
+        overlay.innerHTML = '';
+        if (Array.isArray(slide.elements)) {
+            slide.elements.forEach(el => {
+                if (el.type === 'text') {
+                    const textDiv = document.createElement('div');
+                    textDiv.className = `preview-text-el style-${el.style || 'body'}`;
+                    const posX = el.x !== undefined ? el.x : 0;
+                    const posY = el.y !== undefined ? el.y : 0;
+                    textDiv.style.left = `calc(50% + ${posX}%)`;
+                    textDiv.style.top = `calc(50% + ${posY}%)`;
+                    textDiv.style.transform = 'translate(-50%, -50%)';
+                    textDiv.textContent = el.content || '';
+                    overlay.appendChild(textDiv);
+                }
+            });
+        }
+    }
+
+    // -------------------------------------------------------------
+    // SLIDE CRUD OPERATIONS
+    // -------------------------------------------------------------
+    async function saveActiveSlide() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+
+        const btn = document.getElementById('btnSaveActiveSlide');
+        const indicator = document.getElementById('splitSaveIndicator');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Guardando...</span>';
+        }
+
+        try {
+            const res = await fetch(`/panel/slide/${encodeURIComponent(slide.id)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(slide)
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(`Slide "${slide.title || slide.id}" guardado con éxito`);
+                if (indicator) {
+                    indicator.style.display = 'block';
+                    setTimeout(() => { indicator.style.display = 'none'; }, 2500);
+                }
+            } else {
+                showToast(data.error || 'Error al guardar el slide', true);
+            }
+        } catch (err) {
+            showToast('Error de red al guardar el slide', true);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾 Guardar Slide</span>';
+            }
+        }
+    }
+
+    async function moveSlide(direction) {
+        const currIdx = slidesData.findIndex(s => s.id === currentSlideId);
+        if (currIdx < 0) return;
+        const targetIdx = currIdx + direction;
+        if (targetIdx < 0 || targetIdx >= slidesData.length) return;
+
+        const temp = slidesData[currIdx];
+        slidesData[currIdx] = slidesData[targetIdx];
+        slidesData[targetIdx] = temp;
+
+        renderSlideChips();
+
+        try {
+            const res = await fetch('/panel/slides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(slidesData)
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast('Orden de slides actualizado');
+            } else {
+                showToast(data.error || 'Error al reordenar slides', true);
+            }
+        } catch (err) {
+            showToast('Error de red al actualizar orden', true);
+        }
+    }
+
+    function openNewSlideModal() {
+        const modal = document.getElementById('newSlideModal');
+        const titleInput = document.getElementById('newSlideTitle');
+        const idInput = document.getElementById('newSlideId');
+        if (titleInput) titleInput.value = '';
+        if (idInput) idInput.value = '';
+        if (modal) modal.style.display = 'flex';
+        if (titleInput) titleInput.focus();
+    }
+
+    function closeNewSlideModal() {
+        const modal = document.getElementById('newSlideModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    async function confirmCreateSlide() {
+        const titleInput = document.getElementById('newSlideTitle');
+        const idInput = document.getElementById('newSlideId');
+        const title = titleInput ? titleInput.value.trim() : '';
+        const id = idInput ? idInput.value.trim() : '';
+
+        try {
+            const res = await fetch('/panel/slides/new', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, id })
+            });
+            const data = await res.json();
+            if (data.ok && data.slide) {
+                slidesData.push(data.slide);
+                closeNewSlideModal();
+                selectSlide(data.slide.id);
+                showToast(`Slide "${data.slide.title || data.slide.id}" creado`);
+            } else {
+                showToast(data.error || 'Error al crear slide', true);
+            }
+        } catch (err) {
+            showToast('Error de red al crear slide', true);
+        }
+    }
+
+    async function deleteCurrentSlide() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        if (slidesData.length <= 1) {
+            showToast('No podés eliminar el único slide restante', true);
+            return;
+        }
+
+        if (!confirm(`¿Eliminar permanentemente el slide "${slide.title || slide.id}"?`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/panel/slide/${encodeURIComponent(slide.id)}/delete`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.ok) {
+                const currIdx = slidesData.findIndex(s => s.id === slide.id);
+                slidesData.splice(currIdx, 1);
+                const nextSlide = slidesData[currIdx] || slidesData[currIdx - 1] || slidesData[0];
+                selectSlide(nextSlide.id);
+                showToast(`Slide "${slide.title || slide.id}" eliminado`);
+            } else {
+                showToast(data.error || 'Error al eliminar slide', true);
+            }
+        } catch (err) {
+            showToast('Error de red al eliminar slide', true);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // BACKGROUND MANAGEMENT HANDLERS (Already Done)
+    // -------------------------------------------------------------
     const fileInput = document.getElementById('bgFileInput');
     const selectedFileName = document.getElementById('selectedFileName');
     if (fileInput) {
@@ -758,45 +1940,6 @@
         });
     }
 
-    // Dynamic Preview on Dropdown Change (handles Images and Videos)
-    document.querySelectorAll('.bg-selector').forEach(select => {
-        select.addEventListener('change', function() {
-            const slideId = this.getAttribute('data-slide-id');
-            const bgName = this.value;
-            const previewBox = document.getElementById('previewBox_' + slideId);
-            const previewVideo = document.getElementById('previewVideo_' + slideId);
-            const previewEmpty = document.getElementById('previewEmpty_' + slideId);
-
-            if (bgName) {
-                if (previewEmpty) previewEmpty.style.display = 'none';
-                if (isVideoFile(bgName)) {
-                    previewBox.style.backgroundImage = 'none';
-                    if (previewVideo) {
-                        previewVideo.src = '/assets/backgrounds/' + encodeURIComponent(bgName);
-                        previewVideo.style.display = 'block';
-                        previewVideo.play().catch(() => {});
-                    }
-                } else {
-                    if (previewVideo) {
-                        previewVideo.pause();
-                        previewVideo.style.display = 'none';
-                        previewVideo.src = '';
-                    }
-                    previewBox.style.backgroundImage = "url('/assets/backgrounds/" + encodeURIComponent(bgName) + "')";
-                }
-            } else {
-                previewBox.style.backgroundImage = 'none';
-                if (previewVideo) {
-                    previewVideo.pause();
-                    previewVideo.style.display = 'none';
-                    previewVideo.src = '';
-                }
-                if (previewEmpty) previewEmpty.style.display = 'block';
-            }
-        });
-    });
-
-    // Rename handlers
     function startRename(index, oldName) {
         const infoRow = document.getElementById('bgInfoRow_' + index);
         const renameBox = document.getElementById('bgRenameBox_' + index);
@@ -839,7 +1982,6 @@
                 const finalName = data.new_name;
                 showToast(data.message || 'Archivo renombrado');
 
-                // Update text and title
                 const nameText = document.getElementById('bgNameText_' + index);
                 if (nameText) {
                     nameText.textContent = finalName;
@@ -847,7 +1989,6 @@
                 }
                 if (input) input.value = finalName;
 
-                // Update card attributes and thumb
                 const card = document.getElementById('bgCard_' + index);
                 if (card) {
                     card.setAttribute('data-filename', finalName);
@@ -874,21 +2015,21 @@
                     if (saveBtn) saveBtn.setAttribute('onclick', "saveRename('" + index + "', '" + finalName + "')");
                 }
 
-                // Update options in slide selector dropdowns
-                document.querySelectorAll('.bg-selector option').forEach(opt => {
-                    if (opt.value === oldName) {
+                // Update select dropdown in slide editor
+                const bgSelect = document.getElementById('slideBgSelect');
+                if (bgSelect) {
+                    const opt = bgSelect.querySelector(`option[value="${oldName}"]`);
+                    if (opt) {
                         opt.value = finalName;
                         opt.textContent = finalName;
                     }
-                });
+                }
 
-                // Update preview thumbnails
-                document.querySelectorAll('.slide-card').forEach(slideCard => {
-                    const selector = slideCard.querySelector('.bg-selector');
-                    if (selector && selector.value === finalName) {
-                        selector.dispatchEvent(new Event('change'));
-                    }
+                // Update slidesData if current slide was using it
+                slidesData.forEach(s => {
+                    if (s.background === oldName) s.background = finalName;
                 });
+                updateLivePreview();
 
                 cancelRename(index);
             } else {
@@ -899,7 +2040,6 @@
         }
     }
 
-    // Delete background handler
     async function deleteBackground(index, filename) {
         if (!confirm(`¿Eliminar "${filename}" permanentemente?`)) {
             return;
@@ -915,29 +2055,38 @@
             if (data.ok) {
                 showToast(data.message || 'Archivo eliminado');
 
-                // Remove card from DOM
                 const card = document.getElementById('bgCard_' + index);
                 if (card) card.remove();
 
-                // Update count in header
                 const countBadge = document.getElementById('bgCountBadge');
                 if (countBadge) {
                     const currentCount = parseInt(countBadge.textContent) || 0;
                     countBadge.textContent = Math.max(0, currentCount - 1);
                 }
+                const bgNavBadge = document.getElementById('bgNavBadge');
+                if (bgNavBadge) {
+                    const currentCount = parseInt(bgNavBadge.textContent) || 0;
+                    bgNavBadge.textContent = Math.max(0, currentCount - 1);
+                }
 
-                // Remove option from all slide selectors
-                document.querySelectorAll('.bg-selector').forEach(select => {
-                    const option = select.querySelector(`option[value="${filename}"]`);
-                    if (option) {
-                        const isSelected = option.selected;
-                        option.remove();
+                // Remove from select dropdown
+                const bgSelect = document.getElementById('slideBgSelect');
+                if (bgSelect) {
+                    const opt = bgSelect.querySelector(`option[value="${filename}"]`);
+                    if (opt) {
+                        const isSelected = opt.selected;
+                        opt.remove();
                         if (isSelected) {
-                            select.value = "";
-                            select.dispatchEvent(new Event('change'));
+                            bgSelect.value = '';
                         }
                     }
+                }
+
+                // Update slidesData
+                slidesData.forEach(s => {
+                    if (s.background === filename) s.background = '';
                 });
+                updateLivePreview();
             } else {
                 showToast(data.error || 'Error al eliminar archivo', true);
             }
@@ -945,53 +2094,6 @@
             showToast('Error de red al eliminar archivo', true);
         }
     }
-
-    // AJAX submit for slide forms
-    function showToast(msg, isError = false) {
-        const toast = document.getElementById('toastNotify');
-        const toastMsg = document.getElementById('toastMsg');
-        toastMsg.textContent = msg;
-        toast.style.borderColor = isError ? 'var(--danger)' : 'var(--accent)';
-        toast.style.display = 'flex';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
-    }
-
-    document.querySelectorAll('.slide-form').forEach(form => {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const slideId = this.querySelector('input[name="slide_id"]').value;
-            const btn = document.getElementById('btnSave_' + slideId);
-            const indicator = document.getElementById('indicator_' + slideId);
-            
-            const formData = new FormData(this);
-            btn.disabled = true;
-            btn.innerHTML = '<span>Guardando...</span>';
-
-            try {
-                const res = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showToast('Slide "' + (data.slide.title || slideId) + '" actualizado correctamente');
-                    if (indicator) {
-                        indicator.style.display = 'block';
-                        setTimeout(() => { indicator.style.display = 'none'; }, 2500);
-                    }
-                } else {
-                    showToast(data.error || 'Error al guardar el slide', true);
-                }
-            } catch (err) {
-                showToast('Error de conexión al guardar', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>💾 Guardar</span>';
-            }
-        });
-    });
 
     // Upload form via AJAX with page refresh
     const uploadForm = document.getElementById('uploadBgForm');
@@ -1025,6 +2127,15 @@
             }
         });
     }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        initActiveTab();
+        renderSlideChips();
+        if (currentSlideId) {
+            selectSlide(currentSlideId);
+        }
+    });
 </script>
 
 </body>
