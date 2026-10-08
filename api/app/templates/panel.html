@@ -1300,7 +1300,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 3px;
             padding: 0 2px;
             gap: 12px;
         }
@@ -1350,8 +1350,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 40px;
+            width: 44px;
+            min-width: 44px;
             padding: 0 1px;
+            flex-shrink: 0;
         }
 
         .story-preview-viewport .countdown-sticker-box {
@@ -1362,11 +1364,20 @@
             font-weight: 500;
             color: #111827;
             line-height: 1.1;
-            padding: 6px 5px 3px 5px;
+            padding: 6px 4px 3px 4px;
             width: 100%;
-            min-width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            letter-spacing: 0.5px;
+            letter-spacing: 0;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,0.04);
+        }
+
+        .story-preview-viewport .countdown-digit {
+            display: inline-block;
+            width: 0.52em;
+            text-align: center;
             font-variant-numeric: tabular-nums;
         }
 
@@ -3084,39 +3095,61 @@
                 };
                 card.appendChild(titleGroup);
 
-                // Date & Precision Row
+                // Date & Time pickers
+                const fullTarget = el.target_date || '2027-03-19T18:00';
+                const parts = fullTarget.split('T');
+                const initialDate = parts[0] || '2027-03-19';
+                const initialTime = (parts[1] || '18:00').substring(0, 5);
+
                 const dtRow = document.createElement('div');
                 dtRow.className = 'pos-control-row';
+                dtRow.style.marginBottom = '12px';
                 dtRow.innerHTML = `
                     <div class="pos-slider-wrap">
                         <div class="pos-slider-header">
-                            <span>Fecha y Hora Objetivo</span>
+                            <span>📅 Selector de Fecha</span>
                         </div>
-                        <input type="datetime-local" class="form-input el-target-date" value="${escapeHtml(el.target_date || '2027-03-19T18:00')}" style="padding: 8px 10px;">
+                        <input type="date" class="form-input el-date-picker" value="${escapeHtml(initialDate)}" style="padding: 8px 10px;">
                     </div>
                     <div class="pos-slider-wrap">
                         <div class="pos-slider-header">
-                            <span>Nivel Máximo de Detalle</span>
+                            <span>🕒 Selector de Hora</span>
                         </div>
-                        <select class="form-select el-precision-select" style="padding: 8px 10px;">
-                            <option value="seconds" ${(!el.precision || el.precision === 'seconds') ? 'selected' : ''}>⏱️ Hasta Segundos</option>
-                            <option value="minutes" ${el.precision === 'minutes' ? 'selected' : ''}>🕒 Hasta Minutos</option>
-                            <option value="hours" ${el.precision === 'hours' ? 'selected' : ''}>⏳ Hasta Horas</option>
-                            <option value="days" ${el.precision === 'days' ? 'selected' : ''}>📅 Hasta Días</option>
-                        </select>
+                        <input type="time" class="form-input el-time-picker" value="${escapeHtml(initialTime)}" style="padding: 8px 10px;">
                     </div>
                 `;
-                const dtInput = dtRow.querySelector('.el-target-date');
-                dtInput.oninput = (e) => {
-                    el.target_date = e.target.value;
+                const datePicker = dtRow.querySelector('.el-date-picker');
+                const timePicker = dtRow.querySelector('.el-time-picker');
+                const syncTargetDate = () => {
+                    const d = datePicker.value || '2027-03-19';
+                    const t = timePicker.value || '18:00';
+                    el.target_date = `${d}T${t}`;
                     updateLivePreview();
                 };
-                const precSelect = dtRow.querySelector('.el-precision-select');
+                datePicker.oninput = syncTargetDate;
+                datePicker.onchange = syncTargetDate;
+                timePicker.oninput = syncTargetDate;
+                timePicker.onchange = syncTargetDate;
+                card.appendChild(dtRow);
+
+                // Precision selector
+                const precGroup = document.createElement('div');
+                precGroup.className = 'form-group';
+                precGroup.innerHTML = `
+                    <label>Nivel Máximo de Detalle</label>
+                    <select class="form-select el-precision-select" style="padding: 8px 10px; width: 100%;">
+                        <option value="seconds" ${(!el.precision || el.precision === 'seconds') ? 'selected' : ''}>⏱️ Hasta Segundos</option>
+                        <option value="minutes" ${el.precision === 'minutes' ? 'selected' : ''}>🕒 Hasta Minutos</option>
+                        <option value="hours" ${el.precision === 'hours' ? 'selected' : ''}>⏳ Hasta Horas</option>
+                        <option value="days" ${el.precision === 'days' ? 'selected' : ''}>📅 Hasta Días</option>
+                    </select>
+                `;
+                const precSelect = precGroup.querySelector('.el-precision-select');
                 precSelect.onchange = (e) => {
                     el.precision = e.target.value;
                     updateLivePreview();
                 };
-                card.appendChild(dtRow);
+                card.appendChild(precGroup);
             } else if (isLocation) {
                 // Location Content Input
                 const textGroup = document.createElement('div');
@@ -3669,9 +3702,10 @@
                             if (uIdx > 0) {
                                 gridHtml += `<div class="countdown-sticker-sep">:</div>`;
                             }
+                            const digitsHtml = String(u.value).split('').map(d => `<span class="countdown-digit">${d}</span>`).join('');
                             gridHtml += `
                                 <div class="countdown-sticker-unit" data-unit="${u.key}">
-                                    <div class="countdown-sticker-box">${u.value}</div>
+                                    <div class="countdown-sticker-box">${digitsHtml}</div>
                                     <span class="countdown-sticker-label">${u.label}</span>
                                 </div>
                             `;

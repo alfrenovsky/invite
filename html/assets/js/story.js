@@ -689,9 +689,10 @@
                 if (idx > 0) {
                     html += `<div class="countdown-sticker-sep">:</div>`;
                 }
+                const digitsHtml = String(u.value).split('').map(d => `<span class="countdown-digit">${d}</span>`).join('');
                 html += `
                     <div class="countdown-sticker-unit" data-unit="${u.key}">
-                        <div class="countdown-sticker-box">${u.value}</div>
+                        <div class="countdown-sticker-box">${digitsHtml}</div>
                         <span class="countdown-sticker-label">${u.label}</span>
                     </div>
                 `;
@@ -708,11 +709,12 @@
 
         if (distance <= 0) {
             if (sMonth && sDay && sHour && sMin && sSec) {
-                sMonth.textContent = '00';
-                sDay.textContent = '00';
-                sHour.textContent = '00';
-                sMin.textContent = '00';
-                sSec.textContent = '00';
+                const zeroDigits = '<span class="countdown-digit">0</span><span class="countdown-digit">0</span>';
+                sMonth.innerHTML = zeroDigits;
+                sDay.innerHTML = zeroDigits;
+                sHour.innerHTML = zeroDigits;
+                sMin.innerHTML = zeroDigits;
+                sSec.innerHTML = zeroDigits;
             }
             return;
         }
@@ -723,11 +725,12 @@
 
         if (sMonth && sDay && sHour && sMin && sSec) {
             const { months, days: remDays } = getCalendarMonthsAndDays(now, TARGET_DATE_OBJ);
-            sMonth.textContent = String(months).padStart(2, '0');
-            sDay.textContent = String(remDays).padStart(2, '0');
-            sHour.textContent = String(hours).padStart(2, '0');
-            sMin.textContent = String(minutes).padStart(2, '0');
-            sSec.textContent = String(seconds).padStart(2, '0');
+            const formatDigits = (val) => String(val).padStart(2, '0').split('').map(d => `<span class="countdown-digit">${d}</span>`).join('');
+            sMonth.innerHTML = formatDigits(months);
+            sDay.innerHTML = formatDigits(remDays);
+            sHour.innerHTML = formatDigits(hours);
+            sMin.innerHTML = formatDigits(minutes);
+            sSec.innerHTML = formatDigits(seconds);
         }
     }
 

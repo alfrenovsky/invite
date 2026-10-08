@@ -1309,7 +1309,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 3px;
             padding: 0 2px;
             gap: 12px;
         }
@@ -1359,8 +1359,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 40px;
+            width: 44px;
+            min-width: 44px;
             padding: 0 1px;
+            flex-shrink: 0;
         }
 
         .countdown-sticker-box {
@@ -1371,12 +1373,20 @@
             font-weight: 500;
             color: #111827;
             line-height: 1.1;
-            padding: 6px 5px 3px 5px;
+            padding: 6px 4px 3px 4px;
             width: 100%;
-            min-width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            letter-spacing: 0.5px;
+            letter-spacing: 0;
             box-shadow: inset 0 1px 1px rgba(0,0,0,0.04);
+        }
+
+        .countdown-digit {
+            display: inline-block;
+            width: 0.52em;
+            text-align: center;
             font-variant-numeric: tabular-nums;
         }
 
