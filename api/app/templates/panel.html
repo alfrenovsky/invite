@@ -180,6 +180,25 @@
             box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
         }
 
+        .form-input[type="date"],
+        .form-input[type="time"] {
+            color-scheme: dark;
+            cursor: pointer;
+        }
+
+        .form-input[type="date"]::-webkit-calendar-picker-indicator,
+        .form-input[type="time"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(1);
+            opacity: 0.9;
+            padding: 2px;
+        }
+
+        .form-input[type="date"]::-webkit-calendar-picker-indicator:hover,
+        .form-input[type="time"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
         .file-upload-box {
             position: relative;
             border: 2px dashed rgba(255, 255, 255, 0.15);
@@ -1283,7 +1302,7 @@
             display: inline-block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 6px 12px 6px 12px;
+            padding: 5px 12px 3px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             max-width: 95%;
             width: max-content;
@@ -1300,7 +1319,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0px;
+            margin-bottom: -4px;
             padding: 0 2px;
             gap: 12px;
         }
@@ -1364,7 +1383,7 @@
             font-weight: 500;
             color: #111827;
             line-height: 1.1;
-            padding: 4px 3px 2px 3px;
+            padding: 3px 3px 2px 3px;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -1388,7 +1407,7 @@
             color: #374151;
             line-height: 1;
             align-self: center;
-            margin-top: -10px;
+            margin-top: -11px;
             padding: 0 1px;
         }
 
@@ -1401,7 +1420,7 @@
             text-align: center;
             text-transform: uppercase !important;
             letter-spacing: 0.5px;
-            line-height: 1;
+            line-height: 0.9;
         }
 
         .story-preview-viewport .slide-rsvp-preview {
@@ -3109,17 +3128,37 @@
                         <div class="pos-slider-header">
                             <span>📅 Selector de Fecha</span>
                         </div>
-                        <input type="date" class="form-input el-date-picker" value="${escapeHtml(initialDate)}" style="padding: 8px 10px;">
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="date" class="form-input el-date-picker" value="${escapeHtml(initialDate)}" style="padding: 8px 10px; flex: 1;" onclick="try{this.showPicker()}catch(e){}">
+                            <button type="button" class="btn-ctrl btn-ctrl-secondary btn-open-date" style="padding: 8px 11px; font-size: 1.05rem; line-height: 1; border-color: rgba(255,255,255,0.2);" title="Abrir Calendario">📅</button>
+                        </div>
                     </div>
                     <div class="pos-slider-wrap">
                         <div class="pos-slider-header">
                             <span>🕒 Selector de Hora</span>
                         </div>
-                        <input type="time" class="form-input el-time-picker" value="${escapeHtml(initialTime)}" style="padding: 8px 10px;">
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="time" class="form-input el-time-picker" value="${escapeHtml(initialTime)}" style="padding: 8px 10px; flex: 1;" onclick="try{this.showPicker()}catch(e){}">
+                            <button type="button" class="btn-ctrl btn-ctrl-secondary btn-open-time" style="padding: 8px 11px; font-size: 1.05rem; line-height: 1; border-color: rgba(255,255,255,0.2);" title="Abrir Reloj">🕒</button>
+                        </div>
                     </div>
                 `;
                 const datePicker = dtRow.querySelector('.el-date-picker');
                 const timePicker = dtRow.querySelector('.el-time-picker');
+                const btnOpenDate = dtRow.querySelector('.btn-open-date');
+                const btnOpenTime = dtRow.querySelector('.btn-open-time');
+
+                if (btnOpenDate) {
+                    btnOpenDate.onclick = () => {
+                        try { datePicker.showPicker(); } catch (err) { datePicker.focus(); }
+                    };
+                }
+                if (btnOpenTime) {
+                    btnOpenTime.onclick = () => {
+                        try { timePicker.showPicker(); } catch (err) { timePicker.focus(); }
+                    };
+                }
+
                 const syncTargetDate = () => {
                     const d = datePicker.value || '2027-03-19';
                     const t = timePicker.value || '18:00';
