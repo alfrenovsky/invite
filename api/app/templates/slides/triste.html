@@ -24,8 +24,10 @@
                      style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%);">{{ el.content | trim }}</div>
             {% elif el.type == 'location' %}
                 {% set map_target = el.url if el.url else ('https://www.google.com/maps/search/?api=1&query=' ~ (el.content | urlencode)) %}
+                {% set loc_rot = el.rotate if (el.rotate is defined and el.rotate is not none) else 0 %}
+                {% set loc_zoom = (el.zoom if (el.zoom is defined and el.zoom is not none) else 100) / 100 %}
                 <div class="slide-el slide-el-location"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%);">
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
                     <a href="{{ map_target }}" target="_blank" rel="noopener noreferrer" class="instagram-location-sticker" aria-label="Ver {{ el.content }} en Google Maps">
                         <svg class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="20" height="20" xml:space="preserve">
                             <g style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">

@@ -3011,6 +3011,8 @@
             const currX = el.x !== undefined ? el.x : 0;
             const currY = el.y !== undefined ? el.y : 0;
             const currW = el.w !== undefined ? el.w : (isLocation ? '' : 88);
+            const currRot = el.rotate !== undefined ? el.rotate : 0;
+            const currZoom = el.zoom !== undefined ? el.zoom : 100;
 
             posRow.innerHTML = `
                 <!-- Horizontal X -->
@@ -3048,6 +3050,32 @@
                         <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
                     </div>
                 </div>
+
+                ${isLocation ? `
+                <!-- Rotación -->
+                <div class="pos-slider-wrap" style="margin-top: 4px;">
+                    <div class="pos-slider-header">
+                        <span>Rotación</span>
+                        <span class="pos-val-badge" id="badgeRot_${idx}">${currRot}°</span>
+                    </div>
+                    <div class="pos-input-group">
+                        <input type="range" class="pos-range-slider" id="sliderRot_${idx}" min="-45" max="45" step="1" value="${currRot}">
+                        <input type="number" class="pos-num-input" id="numRot_${idx}" min="-45" max="45" step="1" value="${currRot}">
+                    </div>
+                </div>
+
+                <!-- Zoom / Escala -->
+                <div class="pos-slider-wrap" style="margin-top: 4px;">
+                    <div class="pos-slider-header">
+                        <span>Zoom / Escala</span>
+                        <span class="pos-val-badge" id="badgeZoom_${idx}">${currZoom}%</span>
+                    </div>
+                    <div class="pos-input-group">
+                        <input type="range" class="pos-range-slider" id="sliderZoom_${idx}" min="50" max="200" step="5" value="${currZoom}">
+                        <input type="number" class="pos-num-input" id="numZoom_${idx}" min="50" max="200" step="5" value="${currZoom}">
+                    </div>
+                </div>
+                ` : ''}
             `;
 
             // Bind X
@@ -3123,6 +3151,46 @@
             sliderW.oninput = (e) => syncW(e.target.value);
             numW.oninput = (e) => syncW(e.target.value);
 
+            if (isLocation) {
+                // Bind Rot
+                const sliderRot = posRow.querySelector(`#sliderRot_${idx}`);
+                const numRot = posRow.querySelector(`#numRot_${idx}`);
+                const badgeRot = posRow.querySelector(`#badgeRot_${idx}`);
+
+                const syncRot = (val) => {
+                    let parsed = parseInt(val, 10);
+                    if (isNaN(parsed)) parsed = 0;
+                    parsed = Math.max(-45, Math.min(45, parsed));
+                    el.rotate = parsed;
+                    sliderRot.value = parsed;
+                    numRot.value = parsed;
+                    badgeRot.textContent = `${parsed}°`;
+                    updateLivePreview();
+                };
+
+                sliderRot.oninput = (e) => syncRot(e.target.value);
+                numRot.oninput = (e) => syncRot(e.target.value);
+
+                // Bind Zoom
+                const sliderZoom = posRow.querySelector(`#sliderZoom_${idx}`);
+                const numZoom = posRow.querySelector(`#numZoom_${idx}`);
+                const badgeZoom = posRow.querySelector(`#badgeZoom_${idx}`);
+
+                const syncZoom = (val) => {
+                    let parsed = parseInt(val, 10);
+                    if (isNaN(parsed)) parsed = 100;
+                    parsed = Math.max(50, Math.min(200, parsed));
+                    el.zoom = parsed;
+                    sliderZoom.value = parsed;
+                    numZoom.value = parsed;
+                    badgeZoom.textContent = `${parsed}%`;
+                    updateLivePreview();
+                };
+
+                sliderZoom.oninput = (e) => syncZoom(e.target.value);
+                numZoom.oninput = (e) => syncZoom(e.target.value);
+            }
+
             card.appendChild(posRow);
             container.appendChild(card);
         });
@@ -3160,7 +3228,9 @@
             style: 'classic',
             x: 0,
             y: 0,
-            w: null
+            w: null,
+            rotate: 0,
+            zoom: 100
         });
 
         renderElementsList();
@@ -3266,13 +3336,16 @@
                         locDiv.className = 'slide-el slide-el-location preview-location-el';
                         const posX = el.x !== undefined ? el.x : 0;
                         const posY = el.y !== undefined ? el.y : 0;
+                        const rotVal = el.rotate !== undefined ? el.rotate : 0;
+                        const zoomVal = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : (el.scale !== undefined ? el.scale * 100 : 100);
                         locDiv.style.left = `calc(50% + ${posX}%)`;
                         locDiv.style.top = `calc(50% + ${posY}%)`;
                         if (el.w) {
                             locDiv.style.width = `${el.w}%`;
                             locDiv.style.maxWidth = `${el.w}%`;
                         }
-                        locDiv.style.transform = 'translate(-50%, -50%)';
+                        locDiv.style.transform = `translate(-50%, -50%) rotate(${rotVal}deg) scale(${zoomVal / 100})`;
+                        locDiv.style.transformOrigin = 'center center';
                         locDiv.innerHTML = `
                             <div class="instagram-location-sticker">
                                 <svg class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="20" height="20" xml:space="preserve">
