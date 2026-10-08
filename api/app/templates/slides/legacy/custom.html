@@ -12,9 +12,7 @@
         {% for el in slide.elements or [] %}
             {% if el.type == 'text' %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }}"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); transform: translate(-50%, -50%);">
-                    {{ el.content }}
-                </div>
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); transform: translate(-50%, -50%);">{{ el.content | trim }}</div>
             {% endif %}
         {% endfor %}
     </div>

@@ -334,7 +334,7 @@
             max-width: 88%;
             word-break: break-word;
             pointer-events: auto;
-            white-space: pre-wrap;
+            white-space: pre-line;
         }
 
         .slide-el-title {
