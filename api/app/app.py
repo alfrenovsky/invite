@@ -112,16 +112,21 @@ def get_backgrounds_dir():
     return target
 
 
+VALID_MEDIA_EXTS = {
+    ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif",
+    ".mp4", ".webm", ".mov", ".m4v"
+}
+
+
 def get_backgrounds_list():
     bg_dir = get_backgrounds_dir()
     if not os.path.exists(bg_dir):
         return []
-    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
     files = []
     try:
         for fname in sorted(os.listdir(bg_dir)):
             ext = os.path.splitext(fname)[1].lower()
-            if ext in valid_exts and not fname.startswith("."):
+            if ext in VALID_MEDIA_EXTS and not fname.startswith("."):
                 files.append(fname)
     except Exception:
         pass
@@ -332,11 +337,10 @@ def panel_upload_background():
     if not file or not file.filename:
         return jsonify({"ok": False, "error": "Archivo no seleccionado"}), 400
 
-    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
     _, orig_ext = os.path.splitext(file.filename)
     orig_ext = orig_ext.lower()
-    if orig_ext not in valid_exts:
-        return jsonify({"ok": False, "error": f"Formato no permitido: {orig_ext}. Usa JPG, PNG, WEBP, GIF, SVG o AVIF."}), 400
+    if orig_ext not in VALID_MEDIA_EXTS:
+        return jsonify({"ok": False, "error": f"Formato no permitido: {orig_ext}. Usa formatos de imagen o video (JPG, PNG, WEBP, MP4, WEBM, MOV)."}), 400
 
     custom_name = request.form.get("background_name", "").strip()
     if custom_name:
@@ -375,8 +379,14 @@ def panel_update_slide(slide_id):
     if "background" in data:
         target_slide["background"] = data["background"].strip()
 
+    if "duration" in data:
+        try:
+            target_slide["duration"] = int(data["duration"])
+        except (ValueError, TypeError):
+            pass
+
     for key, val in data.items():
-        if key not in ("slide_id", "background"):
+        if key not in ("slide_id", "background", "duration"):
             target_slide[key] = val
 
     save_slides(slides)
@@ -421,9 +431,8 @@ def panel_rename_background():
     _, orig_ext = os.path.splitext(old_name)
     ext = user_ext.lower() if user_ext else orig_ext.lower()
 
-    valid_exts = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
-    if ext not in valid_exts:
-        return jsonify({"ok": False, "error": f"Extensión no permitida: {ext}. Usa JPG, PNG, WEBP, GIF, SVG o AVIF."}), 400
+    if ext not in VALID_MEDIA_EXTS:
+        return jsonify({"ok": False, "error": f"Extensión no permitida: {ext}."}), 400
 
     clean_base = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", base_name)
     sanitized_new_name = f"{clean_base}{ext}"
@@ -450,6 +459,51 @@ def panel_rename_background():
         "old_name": old_name,
         "new_name": sanitized_new_name,
         "message": f"Fondo renombrado a '{sanitized_new_name}'"
+    })
+
+
+@app.post("/panel/delete-background")
+def panel_delete_background():
+    if not is_dev_mode():
+        abort(404)
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict()
+
+    filename = data.get("filename", "").strip()
+    if not filename:
+        return jsonify({"ok": False, "error": "Nombre de archivo no especificado"}), 400
+
+    # Security check: avoid directory traversal
+    if ".." in filename or "/" in filename or "\\" in filename:
+        return jsonify({"ok": False, "error": "Nombre de archivo inválido"}), 400
+
+    bg_dir = get_backgrounds_dir()
+    file_path = os.path.join(bg_dir, filename)
+    if not os.path.isfile(file_path):
+        return jsonify({"ok": False, "error": f"El archivo '{filename}' no existe"}), 404
+
+    try:
+        os.remove(file_path)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Error al eliminar archivo: {str(e)}"}), 500
+
+    # Clean up slides.json if any slide was using this background
+    slides = load_slides()
+    modified = False
+    for slide in slides:
+        if slide.get("background") == filename:
+            slide["background"] = ""
+            modified = True
+    if modified:
+        save_slides(slides)
+
+    return jsonify({
+        "ok": True,
+        "filename": filename,
+        "message": f"Fondo '{filename}' eliminado correctamente"
     })
 
 

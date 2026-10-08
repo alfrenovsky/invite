@@ -147,6 +147,17 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sub-label-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
         }
 
         .form-input, .form-select {
@@ -235,9 +246,9 @@
         /* Backgrounds Gallery */
         .bg-gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
             gap: 16px;
-            max-height: 480px;
+            max-height: 520px;
             overflow-y: auto;
             padding-right: 6px;
         }
@@ -257,7 +268,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: transform 0.2s, border-color 0.2s, opacity 0.2s;
         }
 
         .bg-card:hover {
@@ -268,7 +279,7 @@
         .bg-thumb-wrap {
             position: relative;
             width: 100%;
-            height: 100px;
+            aspect-ratio: 9 / 16;
             background: #000;
             overflow: hidden;
         }
@@ -282,6 +293,22 @@
 
         .bg-card:hover .bg-thumb {
             transform: scale(1.05);
+        }
+
+        .media-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            backdrop-filter: blur(4px);
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            z-index: 2;
         }
 
         .bg-info-row {
@@ -303,6 +330,12 @@
             flex: 1;
         }
 
+        .bg-btn-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
         .btn-rename-icon {
             background: transparent;
             border: none;
@@ -319,6 +352,12 @@
             opacity: 1;
             color: var(--accent);
             background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-delete-icon:hover {
+            opacity: 1;
+            color: var(--danger);
+            background: rgba(229, 62, 62, 0.15);
         }
 
         .bg-rename-box {
@@ -435,9 +474,9 @@
 
         .slide-preview-box {
             width: 100px;
-            height: 140px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            height: 178px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             background-color: #121820;
             background-size: cover;
             background-position: center;
@@ -447,7 +486,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .slide-preview-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         .slide-preview-empty {
@@ -455,6 +503,7 @@
             color: #64748b;
             text-align: center;
             padding: 8px;
+            z-index: 2;
         }
 
         .slide-form {
@@ -542,26 +591,26 @@
         <!-- Upload New Background Form -->
         <section class="panel-card">
             <h2 class="section-title">
-                <span>Subir Fondo</span>
+                <span>Subir Fondo / Video</span>
             </h2>
             <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label>Archivo de Imagen</label>
+                    <label>Archivo de Imagen o Video</label>
                     <div class="file-upload-box" id="fileDropBox">
-                        <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif" required>
+                        <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v" required>
                         <div class="upload-box-icon">📁</div>
-                        <div class="upload-box-text">Arrastrá o hacé clic para elegir archivo</div>
+                        <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
                         <div class="selected-file-name" id="selectedFileName"></div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="bgNameInput">Nombre personalizado (opcional)</label>
-                    <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. iglesia_atardecer">
+                    <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. video_intro o iglesia_atardecer">
                 </div>
 
                 <button type="submit" class="btn-submit" id="btnUploadSubmit">
-                    <span>⬆ Subir Fondo</span>
+                    <span>⬆ Subir Fondo / Video</span>
                 </button>
             </form>
         </section>
@@ -569,20 +618,29 @@
         <!-- Backgrounds List / Gallery -->
         <section class="panel-card">
             <h2 class="section-title">
-                <span>Fondos Disponibles</span>
-                <span class="count">{{ backgrounds|length }}</span>
+                <span>Fondos y Videos Disponibles</span>
+                <span class="count" id="bgCountBadge">{{ backgrounds|length }}</span>
             </h2>
 
             {% if backgrounds %}
-                <div class="bg-gallery">
+                <div class="bg-gallery" id="bgGallery">
                     {% for bg in backgrounds %}
-                        <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}">
+                        {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                        <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}" data-is-video="{{ 'true' if is_vid else 'false' }}">
                             <div class="bg-thumb-wrap">
-                                <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
+                                {% if is_vid %}
+                                    <video src="/assets/backgrounds/{{ bg }}" class="bg-thumb" muted loop playsinline autoplay></video>
+                                    <span class="media-badge">🎬 Video</span>
+                                {% else %}
+                                    <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
+                                {% endif %}
                             </div>
                             <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
                                 <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
-                                <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar foto">✏️</button>
+                                <div class="bg-btn-group">
+                                    <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar archivo">✏️</button>
+                                    <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteBackground('{{ loop.index }}', '{{ bg }}')" title="Eliminar archivo">🗑️</button>
+                                </div>
                             </div>
                             <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
                                 <input type="text" class="rename-input" id="renameInput_{{ loop.index }}" value="{{ bg }}">
@@ -595,7 +653,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <p style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
+                <p id="noBgMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
             {% endif %}
         </section>
     </div>
@@ -618,9 +676,13 @@
                     </div>
 
                     <div class="slide-body">
-                        <!-- Preview Thumbnail for this slide -->
+                        <!-- Preview Thumbnail for this slide (Image or Video) -->
+                        {% set slide_is_vid = slide.background and slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
                         <div class="slide-preview-box" id="previewBox_{{ slide.id }}"
-                             {% if slide.background %}style="background-image: url('/assets/backgrounds/{{ slide.background }}');"{% endif %}>
+                             {% if slide.background and not slide_is_vid %}style="background-image: url('/assets/backgrounds/{{ slide.background }}');"{% endif %}>
+                            <video id="previewVideo_{{ slide.id }}" class="slide-preview-video" muted loop playsinline autoplay
+                                   {% if not slide_is_vid %}style="display: none;"{% endif %}
+                                   {% if slide_is_vid %}src="/assets/backgrounds/{{ slide.background }}"{% endif %}></video>
                             <span class="slide-preview-empty" id="previewEmpty_{{ slide.id }}"
                                   {% if slide.background %}style="display: none;"{% endif %}>
                                 Sin fondo
@@ -633,7 +695,7 @@
 
                             <div class="slide-form-fields">
                                 <div class="form-group">
-                                    <label for="selectBg_{{ slide.id }}">Fondo</label>
+                                    <label for="selectBg_{{ slide.id }}">Fondo / Video</label>
                                     <select name="background" id="selectBg_{{ slide.id }}" class="form-select bg-selector" data-slide-id="{{ slide.id }}">
                                         {% if not slide.background %}
                                             <option value="" selected>(Sin fondo / Default)</option>
@@ -650,7 +712,13 @@
                                     </select>
                                 </div>
 
-                                <!-- Ready for future parameters here -->
+                                <div class="form-group">
+                                    <label for="inputDuration_{{ slide.id }}">
+                                        <span>Duración (ms)</span>
+                                        <span class="sub-label-hint">0 = sin auto-avance</span>
+                                    </label>
+                                    <input type="number" name="duration" id="inputDuration_{{ slide.id }}" class="form-input" value="{{ slide.duration if slide.duration is not none else 7000 }}" min="0" step="500">
+                                </div>
                             </div>
 
                             <div>
@@ -673,6 +741,10 @@
 </div>
 
 <script>
+    function isVideoFile(filename) {
+        return /\.(mp4|webm|mov|m4v)$/i.test(filename || '');
+    }
+
     // File input selection preview
     const fileInput = document.getElementById('bgFileInput');
     const selectedFileName = document.getElementById('selectedFileName');
@@ -686,19 +758,39 @@
         });
     }
 
-    // Dynamic Preview on Dropdown Change
+    // Dynamic Preview on Dropdown Change (handles Images and Videos)
     document.querySelectorAll('.bg-selector').forEach(select => {
         select.addEventListener('change', function() {
             const slideId = this.getAttribute('data-slide-id');
             const bgName = this.value;
             const previewBox = document.getElementById('previewBox_' + slideId);
+            const previewVideo = document.getElementById('previewVideo_' + slideId);
             const previewEmpty = document.getElementById('previewEmpty_' + slideId);
 
             if (bgName) {
-                previewBox.style.backgroundImage = "url('/assets/backgrounds/" + encodeURIComponent(bgName) + "')";
                 if (previewEmpty) previewEmpty.style.display = 'none';
+                if (isVideoFile(bgName)) {
+                    previewBox.style.backgroundImage = 'none';
+                    if (previewVideo) {
+                        previewVideo.src = '/assets/backgrounds/' + encodeURIComponent(bgName);
+                        previewVideo.style.display = 'block';
+                        previewVideo.play().catch(() => {});
+                    }
+                } else {
+                    if (previewVideo) {
+                        previewVideo.pause();
+                        previewVideo.style.display = 'none';
+                        previewVideo.src = '';
+                    }
+                    previewBox.style.backgroundImage = "url('/assets/backgrounds/" + encodeURIComponent(bgName) + "')";
+                }
             } else {
                 previewBox.style.backgroundImage = 'none';
+                if (previewVideo) {
+                    previewVideo.pause();
+                    previewVideo.style.display = 'none';
+                    previewVideo.src = '';
+                }
                 if (previewEmpty) previewEmpty.style.display = 'block';
             }
         });
@@ -745,7 +837,7 @@
             const data = await res.json();
             if (data.ok) {
                 const finalName = data.new_name;
-                showToast(data.message || 'Fondo renombrado');
+                showToast(data.message || 'Archivo renombrado');
 
                 // Update text and title
                 const nameText = document.getElementById('bgNameText_' + index);
@@ -755,15 +847,29 @@
                 }
                 if (input) input.value = finalName;
 
-                // Update card attributes and image
+                // Update card attributes and thumb
                 const card = document.getElementById('bgCard_' + index);
                 if (card) {
                     card.setAttribute('data-filename', finalName);
-                    const thumb = card.querySelector('.bg-thumb');
-                    if (thumb) thumb.src = '/assets/backgrounds/' + encodeURIComponent(finalName);
+                    const thumbWrap = card.querySelector('.bg-thumb-wrap');
+                    if (thumbWrap) {
+                        const isVid = isVideoFile(finalName);
+                        if (isVid) {
+                            thumbWrap.innerHTML = `
+                                <video src="/assets/backgrounds/${encodeURIComponent(finalName)}" class="bg-thumb" muted loop playsinline autoplay></video>
+                                <span class="media-badge">🎬 Video</span>
+                            `;
+                        } else {
+                            thumbWrap.innerHTML = `
+                                <img src="/assets/backgrounds/${encodeURIComponent(finalName)}" alt="${finalName}" class="bg-thumb" loading="lazy">
+                            `;
+                        }
+                    }
 
                     const renameBtn = card.querySelector('.btn-rename-icon');
                     if (renameBtn) renameBtn.setAttribute('onclick', "startRename('" + index + "', '" + finalName + "')");
+                    const deleteBtn = card.querySelector('.btn-delete-icon');
+                    if (deleteBtn) deleteBtn.setAttribute('onclick', "deleteBackground('" + index + "', '" + finalName + "')");
                     const saveBtn = card.querySelector('.btn-rename-save');
                     if (saveBtn) saveBtn.setAttribute('onclick', "saveRename('" + index + "', '" + finalName + "')");
                 }
@@ -776,20 +882,67 @@
                     }
                 });
 
-                // Update any active preview box pointing to old name
-                document.querySelectorAll('.slide-preview-box').forEach(box => {
-                    const currentBg = box.style.backgroundImage;
-                    if (currentBg && currentBg.includes(encodeURIComponent(oldName))) {
-                        box.style.backgroundImage = "url('/assets/backgrounds/" + encodeURIComponent(finalName) + "')";
+                // Update preview thumbnails
+                document.querySelectorAll('.slide-card').forEach(slideCard => {
+                    const selector = slideCard.querySelector('.bg-selector');
+                    if (selector && selector.value === finalName) {
+                        selector.dispatchEvent(new Event('change'));
                     }
                 });
 
                 cancelRename(index);
             } else {
-                showToast(data.error || 'Error al renombrar fondo', true);
+                showToast(data.error || 'Error al renombrar archivo', true);
             }
         } catch (err) {
-            showToast('Error de red al renombrar fondo', true);
+            showToast('Error de red al renombrar archivo', true);
+        }
+    }
+
+    // Delete background handler
+    async function deleteBackground(index, filename) {
+        if (!confirm(`¿Eliminar "${filename}" permanentemente?`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/panel/delete-background', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(data.message || 'Archivo eliminado');
+
+                // Remove card from DOM
+                const card = document.getElementById('bgCard_' + index);
+                if (card) card.remove();
+
+                // Update count in header
+                const countBadge = document.getElementById('bgCountBadge');
+                if (countBadge) {
+                    const currentCount = parseInt(countBadge.textContent) || 0;
+                    countBadge.textContent = Math.max(0, currentCount - 1);
+                }
+
+                // Remove option from all slide selectors
+                document.querySelectorAll('.bg-selector').forEach(select => {
+                    const option = select.querySelector(`option[value="${filename}"]`);
+                    if (option) {
+                        const isSelected = option.selected;
+                        option.remove();
+                        if (isSelected) {
+                            select.value = "";
+                            select.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+            } else {
+                showToast(data.error || 'Error al eliminar archivo', true);
+            }
+        } catch (err) {
+            showToast('Error de red al eliminar archivo', true);
         }
     }
 
@@ -858,17 +1011,17 @@
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    showToast('Fondo subido: ' + data.filename);
+                    showToast('Archivo subido: ' + data.filename);
                     setTimeout(() => { window.location.reload(); }, 900);
                 } else {
-                    showToast(data.error || 'Error al subir fondo', true);
+                    showToast(data.error || 'Error al subir archivo', true);
                     btn.disabled = false;
-                    btn.innerHTML = '<span>⬆ Subir Fondo</span>';
+                    btn.innerHTML = '<span>⬆ Subir Fondo / Video</span>';
                 }
             } catch (err) {
-                showToast('Error de red al subir fondo', true);
+                showToast('Error de red al subir archivo', true);
                 btn.disabled = false;
-                btn.innerHTML = '<span>⬆ Subir Fondo</span>';
+                btn.innerHTML = '<span>⬆ Subir Fondo / Video</span>';
             }
         });
     }

@@ -3,9 +3,9 @@
     "id": "portada",
     "title": "Portada",
     "template": "slides/portada.html",
-    "duration": 6000,
+    "duration": 8500,
     "enabled": true,
-    "background": "photo01.jpeg"
+    "background": "AyCenMaal.jpeg"
   },
   {
     "id": "lugar",
@@ -21,7 +21,7 @@
     "template": "slides/video.html",
     "duration": 10000,
     "enabled": true,
-    "background": ""
+    "background": "intro.mp4"
   },
   {
     "id": "itinerario",

@@ -139,8 +139,8 @@
         if (/^background_video/i.test(filename) || /^background/i.test(filename)) {
             return 'background';
         }
-        // videoSomething (case insensitive) -> play once, advance to next slide on finish
-        if (/^video/i.test(filename) || /^intro/i.test(filename)) {
+        // videoSomething (case insensitive) or video slide -> play once, advance to next slide on finish
+        if (/^video/i.test(filename) || /^intro/i.test(filename) || (videoElement && videoElement.closest && videoElement.closest('.video-slide'))) {
             return 'single';
         }
         return 'other';

@@ -345,14 +345,19 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Panel de Control", res.data)
 
-                # Slide update in dev mode
-                res_slide = client.post("/panel/slide/portada", data={"background": "photo01.jpeg"})
+                # Slide update with duration in dev mode
+                res_slide = client.post("/panel/slide/portada", data={"background": "photo01.jpeg", "duration": 8500})
                 self.assertEqual(res_slide.status_code, 200)
                 self.assertTrue(res_slide.get_json()["ok"])
+                self.assertEqual(res_slide.get_json()["slide"]["duration"], 8500)
 
                 # Rename background validation in dev mode
                 res_rename = client.post("/panel/rename-background", json={"old_name": "inexistente.jpeg", "new_name": "nuevo.jpeg"})
                 self.assertEqual(res_rename.status_code, 404)
+
+                # Delete background validation in dev mode
+                res_del = client.post("/panel/delete-background", json={"filename": "inexistente.jpeg"})
+                self.assertEqual(res_del.status_code, 404)
 
             # 2. Production mode (dev mode False) -> 404 Not Found
             with patch("app.is_dev_mode", return_value=False):
@@ -367,6 +372,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
                 res_rename_prod = client.post("/panel/rename-background", json={"old_name": "test.jpeg", "new_name": "nuevo.jpeg"})
                 self.assertEqual(res_rename_prod.status_code, 404)
+
+                res_del_prod = client.post("/panel/delete-background", json={"filename": "test.jpeg"})
+                self.assertEqual(res_del_prod.status_code, 404)
 
 
 if __name__ == "__main__":
