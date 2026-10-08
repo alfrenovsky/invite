@@ -1,18 +1,14 @@
 [
   {
-    "id": "portada",
-    "title": "Portada",
-    "template": "slides/custom.html",
+    "background": "AyCenMaal.jpeg",
     "duration": 8500,
-    "enabled": true,
-    "background": "photo01.jpeg",
     "elements": [
       {
         "content": "NOS CASAMOS",
         "id": "el_1791458669060",
         "style": "body",
         "type": "text",
-        "x": 0,
+        "x": -1,
         "y": 32
       },
       {
@@ -23,60 +19,64 @@
         "x": 0,
         "y": 39
       }
-    ]
+    ],
+    "enabled": true,
+    "id": "portada",
+    "template": "slides/custom.html",
+    "title": "Portada"
   },
   {
-    "id": "lugar",
-    "title": "Lugar",
-    "template": "slides/custom.html",
-    "duration": 7000,
-    "enabled": true,
     "background": "fiesta.jpeg",
-    "elements": []
+    "duration": 7000,
+    "elements": [],
+    "enabled": true,
+    "id": "lugar",
+    "template": "slides/custom.html",
+    "title": "Lugar"
   },
   {
-    "id": "video",
-    "title": "Video",
-    "template": "slides/custom.html",
-    "duration": 10000,
-    "enabled": true,
     "background": "intro.mp4",
-    "elements": []
+    "duration": 10000,
+    "elements": [],
+    "enabled": true,
+    "id": "video",
+    "template": "slides/custom.html",
+    "title": "Video"
   },
   {
-    "id": "itinerario",
-    "title": "Itinerario",
-    "template": "slides/custom.html",
-    "duration": 7000,
-    "enabled": true,
     "background": "background.jpeg",
-    "elements": []
-  },
-  {
-    "id": "regalos",
-    "title": "Regalos",
-    "template": "slides/custom.html",
     "duration": 7000,
+    "elements": [],
     "enabled": true,
+    "id": "itinerario",
+    "template": "slides/custom.html",
+    "title": "Itinerario"
+  },
+  {
     "background": "background.1.jpeg",
-    "elements": []
+    "duration": 7000,
+    "elements": [],
+    "enabled": true,
+    "id": "regalos",
+    "template": "slides/custom.html",
+    "title": "Regalos"
   },
   {
-    "id": "rsvp",
-    "title": "Confirmación",
-    "template": "slides/rsvp.html",
-    "duration": 0,
-    "enabled": true,
     "background": "background.alternate.jpeg",
-    "elements": []
+    "duration": 0,
+    "elements": [],
+    "enabled": true,
+    "id": "rsvp",
+    "template": "slides/rsvp.html",
+    "title": "Confirmación"
   },
   {
-    "id": "triste",
-    "title": "¡Qué pena!",
-    "template": "slides/triste.html",
-    "duration": 0,
-    "enabled": true,
     "background": "GatoTriste.jpeg",
-    "elements": []
+    "duration": 0,
+    "elements": [],
+    "enabled": true,
+    "id": "triste",
+    "template": "slides/triste.html",
+    "title": "¡Qué pena!"
   }
 ]
