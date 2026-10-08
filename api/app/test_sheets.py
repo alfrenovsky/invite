@@ -376,6 +376,25 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_del_prod = client.post("/panel/delete-background", json={"filename": "test.jpeg"})
                 self.assertEqual(res_del_prod.status_code, 404)
 
+    def test_rsvp_special_slide_preservation_and_protection(self):
+        from app import app, ensure_rsvp_slide
+        with app.test_client() as client:
+            with patch("app.is_dev_mode", return_value=True):
+                # 1. Attempting to delete RSVP slide via API must be rejected with 400
+                res_del = client.post("/panel/slide/rsvp/delete")
+                self.assertEqual(res_del.status_code, 400)
+                data = res_del.get_json()
+                self.assertFalse(data["ok"])
+                self.assertIn("especial", data["error"].lower())
+
+                # 2. ensure_rsvp_slide restores RSVP if missing in a list
+                slides_without_rsvp = [{"id": "portada", "title": "Portada"}]
+                fixed = ensure_rsvp_slide(slides_without_rsvp)
+                self.assertTrue(any(s["id"] == "rsvp" for s in fixed))
+                rsvp_item = next(s for s in fixed if s["id"] == "rsvp")
+                self.assertEqual(rsvp_item["template"], "slides/rsvp.html")
+                self.assertTrue(rsvp_item["enabled"])
+
 
 if __name__ == "__main__":
     unittest.main()

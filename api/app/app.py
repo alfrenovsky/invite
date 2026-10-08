@@ -84,6 +84,33 @@ SLIDES_CONFIG_DEFAULT = [
 ]
 
 
+SPECIAL_RSVP_SLIDE = {
+    "id": "rsvp",
+    "title": "Confirmación",
+    "template": "slides/rsvp.html",
+    "duration": 0,
+    "enabled": True,
+    "background": "background.alternate.jpeg",
+    "elements": [],
+}
+
+
+def ensure_rsvp_slide(slides):
+    """Guarantees that the special RSVP slide is kept and enabled regardless of json content."""
+    rsvp_found = False
+    for s in slides:
+        if s.get("id") == "rsvp":
+            rsvp_found = True
+            s["template"] = "slides/rsvp.html"
+            s["enabled"] = True
+            if "elements" not in s or not isinstance(s["elements"], list):
+                s["elements"] = []
+            break
+    if not rsvp_found:
+        slides.append(dict(SPECIAL_RSVP_SLIDE))
+    return slides
+
+
 def load_slides():
     slides = []
     if os.path.exists(SLIDES_JSON_PATH):
@@ -98,10 +125,15 @@ def load_slides():
     for s in slides:
         if "elements" not in s or not isinstance(s["elements"], list):
             s["elements"] = []
+
+    # RSVP is a special slide that must always be kept
+    ensure_rsvp_slide(slides)
     return slides
 
 
 def save_slides(slides_list):
+    # Ensure RSVP is preserved before saving
+    ensure_rsvp_slide(slides_list)
     with open(SLIDES_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(slides_list, f, indent=2, ensure_ascii=False)
 
@@ -229,6 +261,8 @@ def get_guest_context(validated_slug):
             break
 
     active_slides = [s for s in load_slides() if s.get("enabled", True)]
+    if not any(s.get("id") == "rsvp" for s in active_slides):
+        active_slides.append(dict(SPECIAL_RSVP_SLIDE))
 
 
 
@@ -521,6 +555,9 @@ def panel_create_slide():
 def panel_delete_slide(slide_id):
     if not is_dev_mode():
         abort(404)
+
+    if slide_id == "rsvp":
+        return jsonify({"ok": False, "error": "El slide de Confirmación (RSVP) es especial y no puede eliminarse"}), 400
 
     slides = load_slides()
     filtered = [s for s in slides if s["id"] != slide_id]
