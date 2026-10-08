@@ -9,6 +9,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@700&display=swap" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'Aveny T';
+            src: url('/assets/fonts/aveny-t-medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             --bg-color: #0b0f15;
             --card-bg: rgba(22, 30, 42, 0.75);
@@ -1212,6 +1220,54 @@
             text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
+        .story-preview-viewport .slide-el-location,
+        .preview-location-el {
+            position: absolute;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            user-select: none;
+            width: auto;
+        }
+
+        .story-preview-viewport .instagram-location-sticker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #ffffff;
+            color: #0488db;
+            padding: 7px 16px 7px 12px;
+            border-radius: 12px;
+            text-decoration: none !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.12);
+            user-select: none;
+            cursor: pointer;
+            transition: transform 0.18s ease;
+            max-width: 100%;
+        }
+
+        .story-preview-viewport .instagram-location-sticker .location-pin-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            display: block;
+        }
+
+        .story-preview-viewport .instagram-location-sticker .location-sticker-text {
+            font-family: 'Aveny T', sans-serif !important;
+            font-weight: 500;
+            font-size: 19px;
+            letter-spacing: 0.5px;
+            color: #0488db;
+            line-height: 1.1;
+            text-transform: uppercase !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .story-preview-viewport .slide-rsvp-preview {
             position: absolute;
             inset: 0;
@@ -1624,9 +1680,14 @@
                                 <span>Elementos</span>
                                 <span class="count" id="elementsCountBadge">0</span>
                             </h3>
-                            <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
-                                <span>+ Agregar Texto</span>
-                            </button>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
+                                    <span>+ Agregar Texto</span>
+                                </button>
+                                <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddLocationElement" onclick="addLocationElement()" style="border-color: rgba(4, 136, 219, 0.45); color: #63b3ed;">
+                                    <span>📍 Agregar Ubicación</span>
+                                </button>
+                            </div>
                         </div>
 
                         <div id="elementsListContainer">
@@ -2853,61 +2914,95 @@
             card.className = 'element-card';
             card.id = 'elCard_' + idx;
 
+            const isLocation = el.type === 'location';
+
             // Header
             const header = document.createElement('div');
             header.className = 'element-header';
             header.innerHTML = `
-                <span class="element-title">
-                    <span>#${idx + 1} Elemento</span>
+                <span class="element-title" style="${isLocation ? 'color: #63b3ed;' : ''}">
+                    <span>${isLocation ? '📍 #' + (idx + 1) + ' Ubicación (Instagram Sticker)' : '#' + (idx + 1) + ' Elemento de Texto'}</span>
                 </span>
-                <button type="button" class="btn-del-el" onclick="removeTextElement(${idx})" title="Eliminar este elemento">
+                <button type="button" class="btn-del-el" onclick="removeElement(${idx})" title="Eliminar este elemento">
                     🗑️ Eliminar
                 </button>
             `;
             card.appendChild(header);
 
-            // Text Content input
-            const textGroup = document.createElement('div');
-            textGroup.className = 'form-group';
-            textGroup.innerHTML = `
-                <label>Contenido del Texto</label>
-                <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
-            `;
-            const textarea = textGroup.querySelector('textarea');
-            textarea.oninput = (e) => {
-                el.content = e.target.value;
-                updateLivePreview();
-            };
-            card.appendChild(textGroup);
-
-            // Style selector: Title, Tag, Body (No font names in buttons)
-            const currentStyle = el.style || 'body';
-            const styleGroup = document.createElement('div');
-            styleGroup.className = 'form-group';
-            styleGroup.innerHTML = `
-                <label>Estilo</label>
-                <div class="style-picker-group">
-                    <button type="button" class="style-opt-btn ${currentStyle === 'title' ? 'active' : ''}" data-style="title">
-                        🔤 Título
-                    </button>
-                    <button type="button" class="style-opt-btn ${currentStyle === 'tag' ? 'active' : ''}" data-style="tag">
-                        🏷️ Tag
-                    </button>
-                    <button type="button" class="style-opt-btn ${currentStyle === 'body' ? 'active' : ''}" data-style="body">
-                        📄 Cuerpo
-                    </button>
-                </div>
-            `;
-            const optBtns = styleGroup.querySelectorAll('.style-opt-btn');
-            optBtns.forEach(btn => {
-                btn.onclick = () => {
-                    const chosenStyle = btn.getAttribute('data-style');
-                    el.style = chosenStyle;
-                    optBtns.forEach(b => b.classList.toggle('active', b === btn));
+            if (isLocation) {
+                // Location Content Input
+                const textGroup = document.createElement('div');
+                textGroup.className = 'form-group';
+                textGroup.innerHTML = `
+                    <label>Nombre del Lugar / Ubicación (Aveny-T Mayúsculas)</label>
+                    <input type="text" class="form-input el-text-content" placeholder="Ej: Luna India, Coquimbito" value="${escapeHtml(el.content || '')}">
+                `;
+                const textInput = textGroup.querySelector('input');
+                textInput.oninput = (e) => {
+                    el.content = e.target.value;
                     updateLivePreview();
                 };
-            });
-            card.appendChild(styleGroup);
+                card.appendChild(textGroup);
+
+                // Location URL (Maps link)
+                const urlGroup = document.createElement('div');
+                urlGroup.className = 'form-group';
+                urlGroup.innerHTML = `
+                    <label style="display: flex; justify-content: space-between;">
+                        <span>Enlace a Google Maps (Opcional)</span>
+                        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal;">Si se deja vacío, busca el nombre automáticamente</span>
+                    </label>
+                    <input type="url" class="form-input el-url-content" placeholder="https://maps.app.goo.gl/... o dejar vacío" value="${escapeHtml(el.url || '')}">
+                `;
+                const urlInput = urlGroup.querySelector('input');
+                urlInput.oninput = (e) => {
+                    el.url = e.target.value;
+                };
+                card.appendChild(urlGroup);
+            } else {
+                // Text Content input
+                const textGroup = document.createElement('div');
+                textGroup.className = 'form-group';
+                textGroup.innerHTML = `
+                    <label>Contenido del Texto</label>
+                    <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
+                `;
+                const textarea = textGroup.querySelector('textarea');
+                textarea.oninput = (e) => {
+                    el.content = e.target.value;
+                    updateLivePreview();
+                };
+                card.appendChild(textGroup);
+
+                // Style selector: Title, Tag, Body
+                const currentStyle = el.style || 'body';
+                const styleGroup = document.createElement('div');
+                styleGroup.className = 'form-group';
+                styleGroup.innerHTML = `
+                    <label>Estilo</label>
+                    <div class="style-picker-group">
+                        <button type="button" class="style-opt-btn ${currentStyle === 'title' ? 'active' : ''}" data-style="title">
+                            🔤 Título
+                        </button>
+                        <button type="button" class="style-opt-btn ${currentStyle === 'tag' ? 'active' : ''}" data-style="tag">
+                            🏷️ Tag
+                        </button>
+                        <button type="button" class="style-opt-btn ${currentStyle === 'body' ? 'active' : ''}" data-style="body">
+                            📄 Cuerpo
+                        </button>
+                    </div>
+                `;
+                const optBtns = styleGroup.querySelectorAll('.style-opt-btn');
+                optBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        const chosenStyle = btn.getAttribute('data-style');
+                        el.style = chosenStyle;
+                        optBtns.forEach(b => b.classList.toggle('active', b === btn));
+                        updateLivePreview();
+                    };
+                });
+                card.appendChild(styleGroup);
+            }
 
             // Position controls: Horizontal X, Vertical Y & Width W
             const posRow = document.createElement('div');
@@ -2915,7 +3010,7 @@
 
             const currX = el.x !== undefined ? el.x : 0;
             const currY = el.y !== undefined ? el.y : 0;
-            const currW = el.w !== undefined ? el.w : 88;
+            const currW = el.w !== undefined ? el.w : (isLocation ? '' : 88);
 
             posRow.innerHTML = `
                 <!-- Horizontal X -->
@@ -2945,12 +3040,12 @@
                 <!-- Ancho del Cuadro (W) -->
                 <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 4px;">
                     <div class="pos-slider-header">
-                        <span>Ancho del Cuadro (% del slide)</span>
-                        <span class="pos-val-badge" id="badgeW_${idx}">${currW}%</span>
+                        <span>Ancho Máximo (% del slide${isLocation ? ', opcional' : ''})</span>
+                        <span class="pos-val-badge" id="badgeW_${idx}">${currW !== '' ? currW + '%' : 'Auto'}</span>
                     </div>
                     <div class="pos-input-group">
-                        <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW}">
-                        <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW}">
+                        <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW || 88}">
+                        <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
                     </div>
                 </div>
             `;
@@ -2999,8 +3094,24 @@
             const badgeW = posRow.querySelector(`#badgeW_${idx}`);
 
             const syncW = (val) => {
+                if (val === '' || val === null) {
+                    delete el.w;
+                    badgeW.textContent = 'Auto';
+                    numW.value = '';
+                    updateLivePreview();
+                    return;
+                }
                 let parsed = parseInt(val, 10);
-                if (isNaN(parsed)) parsed = 88;
+                if (isNaN(parsed)) {
+                    if (isLocation) {
+                        delete el.w;
+                        badgeW.textContent = 'Auto';
+                        numW.value = '';
+                        updateLivePreview();
+                        return;
+                    }
+                    parsed = 88;
+                }
                 parsed = Math.max(10, Math.min(100, parsed));
                 el.w = parsed;
                 sliderW.value = parsed;
@@ -3036,13 +3147,37 @@
         updateLivePreview();
     }
 
-    function removeTextElement(index) {
+    function addLocationElement() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        if (!Array.isArray(slide.elements)) slide.elements = [];
+
+        slide.elements.push({
+            id: 'el_' + Date.now(),
+            type: 'location',
+            content: 'Luna India, Coquimbito',
+            url: '',
+            style: 'classic',
+            x: 0,
+            y: 0,
+            w: null
+        });
+
+        renderElementsList();
+        updateLivePreview();
+    }
+
+    function removeElement(index) {
         const slide = getCurrentSlide();
         if (!slide || !Array.isArray(slide.elements)) return;
 
         slide.elements.splice(index, 1);
         renderElementsList();
         updateLivePreview();
+    }
+
+    function removeTextElement(index) {
+        removeElement(index);
     }
 
     function escapeHtml(text) {
@@ -3126,6 +3261,30 @@
                         textDiv.style.transform = 'translate(-50%, -50%)';
                         textDiv.textContent = el.content || '';
                         overlay.appendChild(textDiv);
+                    } else if (el.type === 'location') {
+                        const locDiv = document.createElement('div');
+                        locDiv.className = 'slide-el slide-el-location preview-location-el';
+                        const posX = el.x !== undefined ? el.x : 0;
+                        const posY = el.y !== undefined ? el.y : 0;
+                        locDiv.style.left = `calc(50% + ${posX}%)`;
+                        locDiv.style.top = `calc(50% + ${posY}%)`;
+                        if (el.w) {
+                            locDiv.style.width = `${el.w}%`;
+                            locDiv.style.maxWidth = `${el.w}%`;
+                        }
+                        locDiv.style.transform = 'translate(-50%, -50%)';
+                        locDiv.innerHTML = `
+                            <div class="instagram-location-sticker">
+                                <svg class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="20" height="20" xml:space="preserve">
+                                    <g style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
+                                        <path d="M 45 90 c -1.415 0 -2.725 -0.748 -3.444 -1.966 l -4.385 -7.417 C 28.167 65.396 19.664 51.02 16.759 45.189 c -2.112 -4.331 -3.175 -8.955 -3.175 -13.773 C 13.584 14.093 27.677 0 45 0 c 17.323 0 31.416 14.093 31.416 31.416 c 0 4.815 -1.063 9.438 -3.157 13.741 c -0.025 0.052 -0.053 0.104 -0.08 0.155 c -2.961 5.909 -11.41 20.193 -20.353 35.309 l -4.382 7.413 C 47.725 89.252 46.415 90 45 90 z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(4,136,219); fill-rule: nonzero; opacity: 1;" stroke-linecap="round"/>
+                                        <path d="M 45 45.678 c -8.474 0 -15.369 -6.894 -15.369 -15.368 S 36.526 14.941 45 14.941 c 8.474 0 15.368 6.895 15.368 15.369 S 53.474 45.678 45 45.678 z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,255,255); fill-rule: nonzero; opacity: 1;" stroke-linecap="round"/>
+                                    </g>
+                                </svg>
+                                <span class="location-sticker-text">${escapeHtml(el.content || 'Ubicación')}</span>
+                            </div>
+                        `;
+                        overlay.appendChild(locDiv);
                     }
                 });
             }
