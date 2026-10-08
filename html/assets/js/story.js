@@ -597,14 +597,109 @@
         return { months, days };
     }
 
+    function calculateCountdownUnits(targetDateStr, precision = 'seconds') {
+        const targetDate = new Date(targetDateStr);
+        const now = new Date();
+        const distance = targetDate.getTime() - now.getTime();
+
+        if (distance <= 0 || isNaN(distance)) {
+            const fallbackUnits = [];
+            fallbackUnits.push({ key: 'hours', label: 'HORAS', value: '00' });
+            if (precision === 'minutes' || precision === 'seconds') {
+                fallbackUnits.push({ key: 'minutes', label: 'MIN', value: '00' });
+            }
+            if (precision === 'seconds') {
+                fallbackUnits.push({ key: 'seconds', label: 'SEG', value: '00' });
+            }
+            return fallbackUnits;
+        }
+
+        // Calendar months + remaining days
+        let temp = new Date(now.getTime());
+        let months = 0;
+        while (true) {
+            let nextMonth = new Date(temp.getFullYear(), temp.getMonth() + 1, temp.getDate(), temp.getHours(), temp.getMinutes(), temp.getSeconds());
+            if (nextMonth <= targetDate) {
+                temp = nextMonth;
+                months++;
+            } else {
+                break;
+            }
+        }
+        let remMs = targetDate.getTime() - temp.getTime();
+        let days = Math.floor(remMs / (1000 * 60 * 60 * 24));
+        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        const units = [];
+        // Cascade disappearance: if months == 0, months disappears!
+        if (months > 0) {
+            units.push({ key: 'months', label: 'MESES', value: String(months).padStart(2, '0') });
+        }
+        // If months > 0 or days > 0, include days
+        if (months > 0 || days > 0) {
+            units.push({ key: 'days', label: 'DÍAS', value: String(days).padStart(2, '0') });
+        }
+
+        // Maximum precision cutoff
+        if (precision === 'days') {
+            if (units.length === 0) {
+                units.push({ key: 'days', label: 'DÍAS', value: '00' });
+            }
+        } else if (precision === 'hours') {
+            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+        } else if (precision === 'minutes') {
+            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
+        } else { // 'seconds'
+            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
+            units.push({ key: 'seconds', label: 'SEG', value: String(seconds).padStart(2, '0') });
+        }
+
+        if (units.length === 0) {
+            units.push({ key: 'hours', label: 'HORAS', value: '00' });
+            if (precision === 'minutes' || precision === 'seconds') {
+                units.push({ key: 'minutes', label: 'MIN', value: '00' });
+            }
+            if (precision === 'seconds') {
+                units.push({ key: 'seconds', label: 'SEG', value: '00' });
+            }
+        }
+
+        return units;
+    }
+
     function updateCountdown() {
         const now = new Date();
         const nowMs = now.getTime();
         const distance = TARGET_DATE - nowMs;
 
+        // Dynamic countdown stickers across all slides
+        document.querySelectorAll('.dynamic-countdown-sticker').forEach(sticker => {
+            const targetIso = sticker.getAttribute('data-target-date') || '2027-03-19T18:00';
+            const precision = sticker.getAttribute('data-precision') || 'seconds';
+            const grid = sticker.querySelector('.countdown-sticker-grid');
+            if (!grid) return;
 
+            const units = calculateCountdownUnits(targetIso, precision);
+            let html = '';
+            units.forEach((u, idx) => {
+                if (idx > 0) {
+                    html += `<div class="countdown-sticker-sep">:</div>`;
+                }
+                html += `
+                    <div class="countdown-sticker-unit" data-unit="${u.key}">
+                        <div class="countdown-sticker-box">${u.value}</div>
+                        <span class="countdown-sticker-label">${u.label}</span>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        });
 
-        // Sticker countdown elements (lugar slide)
+        // Legacy sticker countdown elements (lugar slide fallback)
         const sMonth = document.getElementById('cdStickerMonth');
         const sDay = document.getElementById('cdStickerDay');
         const sHour = document.getElementById('cdStickerHour');
@@ -622,13 +717,10 @@
             return;
         }
 
-        // Standard total days/hours/mins/secs
-        const totalDays = Math.floor(distance / (1000 * 60 * 60 * 24));
         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        // Sticker: months + remaining days
         if (sMonth && sDay && sHour && sMin && sSec) {
             const { months, days: remDays } = getCalendarMonthsAndDays(now, TARGET_DATE_OBJ);
             sMonth.textContent = String(months).padStart(2, '0');

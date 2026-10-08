@@ -354,12 +354,13 @@
             text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
-        .slide-el-location {
+        .slide-el-location,
+        .slide-el-countdown {
             display: inline-flex;
             justify-content: center;
             align-items: center;
             width: auto;
-            max-width: 90%;
+            max-width: 95%;
             pointer-events: auto;
             z-index: 20;
         }
@@ -1280,13 +1281,13 @@
 
         /* Instagram-like Countdown Sticker */
         .countdown-sticker {
-            display: block;
+            display: inline-block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 10px 12px 11px 12px;
+            padding: 10px 14px 12px 14px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-            max-width: 312px;
-            width: 100%;
+            max-width: 95%;
+            width: max-content;
             margin: 0 auto;
             color: #1a1a1a;
             user-select: none;
@@ -1310,16 +1311,20 @@
             justify-content: space-between;
             margin-bottom: 8px;
             padding: 0 2px;
+            gap: 12px;
         }
 
         .countdown-sticker-title {
-            font-family: var(--font-sticker) !important;
-            font-weight: 700;
-            font-size: 1.45em;
+            font-family: 'Aveny T', sans-serif !important;
+            font-weight: 500;
+            font-size: 1.25rem;
             letter-spacing: 0.5px;
             color: #1a1a1a;
-            text-transform: uppercase;
+            text-transform: uppercase !important;
             line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .countdown-sticker-arrow {
@@ -1346,29 +1351,29 @@
         .countdown-sticker-grid {
             display: flex;
             align-items: flex-start;
-            justify-content: space-between;
-            gap: 1px;
+            justify-content: center;
+            gap: 2px;
         }
 
         .countdown-sticker-unit {
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex: 1;
-            min-width: 0;
+            min-width: 40px;
+            padding: 0 1px;
         }
 
         .countdown-sticker-box {
             background: #eff2f6;
             border-radius: 8px;
-            font-family: var(--font-sticker) !important;
-            font-size: 2.05em;
-            font-weight: 700;
+            font-family: 'Aveny T', sans-serif !important;
+            font-size: 1.85rem;
+            font-weight: 500;
             color: #111827;
-            line-height: 1;
-            padding: 6px 4px 4px 4px;
+            line-height: 1.1;
+            padding: 6px 5px 3px 5px;
             width: 100%;
-            max-width: 48px;
+            min-width: 40px;
             text-align: center;
             letter-spacing: 0.5px;
             box-shadow: inset 0 1px 1px rgba(0,0,0,0.04);
@@ -1376,8 +1381,8 @@
         }
 
         .countdown-sticker-sep {
-            font-family: var(--font-sticker) !important;
-            font-size: 1.5em;
+            font-family: 'Aveny T', sans-serif !important;
+            font-size: 1.4rem;
             font-weight: 700;
             color: #374151;
             line-height: 1;
@@ -1387,14 +1392,15 @@
         }
 
         .countdown-sticker-label {
-            font-family: var(--font-body) !important;
-            font-size: 0.65em;
-            font-weight: 600;
+            font-family: 'Aveny T', sans-serif !important;
+            font-size: 0.72rem;
+            font-weight: 500;
             color: #4b5563;
             margin-top: 4px;
             text-align: center;
-            text-transform: lowercase;
-            letter-spacing: -0.2px;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px;
+            line-height: 1;
         }
 
 

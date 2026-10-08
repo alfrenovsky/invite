@@ -1268,6 +1268,131 @@
             text-overflow: ellipsis;
         }
 
+        .story-preview-viewport .slide-el-countdown,
+        .preview-countdown-el {
+            position: absolute;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            user-select: none;
+            width: auto;
+        }
+
+        .story-preview-viewport .countdown-sticker {
+            display: inline-block;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 10px 14px 12px 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            max-width: 95%;
+            width: max-content;
+            margin: 0 auto;
+            color: #1a1a1a;
+            user-select: none;
+            text-align: left;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .story-preview-viewport .countdown-sticker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 2px;
+            gap: 12px;
+        }
+
+        .story-preview-viewport .countdown-sticker-title {
+            font-family: 'Aveny T', sans-serif !important;
+            font-weight: 500;
+            font-size: 19px;
+            letter-spacing: 0.5px;
+            color: #1a1a1a;
+            text-transform: uppercase !important;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .story-preview-viewport .countdown-sticker-arrow {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1.5px solid #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+
+        .story-preview-viewport .countdown-sticker-arrow svg {
+            width: 11px;
+            height: 11px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+            margin-left: 1px;
+        }
+
+        .story-preview-viewport .countdown-sticker-grid {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .story-preview-viewport .countdown-sticker-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 40px;
+            padding: 0 1px;
+        }
+
+        .story-preview-viewport .countdown-sticker-box {
+            background: #eff2f6;
+            border-radius: 8px;
+            font-family: 'Aveny T', sans-serif !important;
+            font-size: 26px;
+            font-weight: 500;
+            color: #111827;
+            line-height: 1.1;
+            padding: 6px 5px 3px 5px;
+            width: 100%;
+            min-width: 40px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .story-preview-viewport .countdown-sticker-sep {
+            font-family: 'Aveny T', sans-serif !important;
+            font-size: 20px;
+            font-weight: 700;
+            color: #374151;
+            line-height: 1;
+            align-self: center;
+            margin-top: -12px;
+            padding: 0 1px;
+        }
+
+        .story-preview-viewport .countdown-sticker-label {
+            font-family: 'Aveny T', sans-serif !important;
+            font-size: 11px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-top: 4px;
+            text-align: center;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+
         .story-preview-viewport .slide-rsvp-preview {
             position: absolute;
             inset: 0;
@@ -1680,12 +1805,15 @@
                                 <span>Elementos</span>
                                 <span class="count" id="elementsCountBadge">0</span>
                             </h3>
-                            <div style="display: flex; gap: 8px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
-                                    <span>+ Agregar Texto</span>
+                                    <span>+ Texto</span>
                                 </button>
                                 <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddLocationElement" onclick="addLocationElement()" style="border-color: rgba(4, 136, 219, 0.45); color: #63b3ed;">
-                                    <span>📍 Agregar Ubicación</span>
+                                    <span>📍 Ubicación</span>
+                                </button>
+                                <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddCountdownElement" onclick="addCountdownElement()" style="border-color: rgba(237, 137, 54, 0.45); color: #f6ad55;">
+                                    <span>⏱️ Countdown</span>
                                 </button>
                             </div>
                         </div>
@@ -2915,13 +3043,25 @@
             card.id = 'elCard_' + idx;
 
             const isLocation = el.type === 'location';
+            const isCountdown = el.type === 'countdown';
+            const isTransformable = isLocation || isCountdown;
 
             // Header
             const header = document.createElement('div');
             header.className = 'element-header';
+            let titleHtml = '#' + (idx + 1) + ' Elemento de Texto';
+            let titleStyle = '';
+            if (isLocation) {
+                titleHtml = '📍 #' + (idx + 1) + ' Ubicación (Instagram Sticker)';
+                titleStyle = 'color: #63b3ed;';
+            } else if (isCountdown) {
+                titleHtml = '⏱️ #' + (idx + 1) + ' Cuenta Regresiva (Instagram Countdown)';
+                titleStyle = 'color: #f6ad55;';
+            }
+
             header.innerHTML = `
-                <span class="element-title" style="${isLocation ? 'color: #63b3ed;' : ''}">
-                    <span>${isLocation ? '📍 #' + (idx + 1) + ' Ubicación (Instagram Sticker)' : '#' + (idx + 1) + ' Elemento de Texto'}</span>
+                <span class="element-title" style="${titleStyle}">
+                    <span>${titleHtml}</span>
                 </span>
                 <button type="button" class="btn-del-el" onclick="removeElement(${idx})" title="Eliminar este elemento">
                     🗑️ Eliminar
@@ -2929,7 +3069,55 @@
             `;
             card.appendChild(header);
 
-            if (isLocation) {
+            if (isCountdown) {
+                // Title input
+                const titleGroup = document.createElement('div');
+                titleGroup.className = 'form-group';
+                titleGroup.innerHTML = `
+                    <label>Título del Sticker (Aveny-T Mayúsculas)</label>
+                    <input type="text" class="form-input el-title-content" placeholder="Ej: FALTA POCO" value="${escapeHtml(el.title || 'FALTA POCO')}">
+                `;
+                const titleInput = titleGroup.querySelector('input');
+                titleInput.oninput = (e) => {
+                    el.title = e.target.value;
+                    updateLivePreview();
+                };
+                card.appendChild(titleGroup);
+
+                // Date & Precision Row
+                const dtRow = document.createElement('div');
+                dtRow.className = 'pos-control-row';
+                dtRow.innerHTML = `
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Fecha y Hora Objetivo</span>
+                        </div>
+                        <input type="datetime-local" class="form-input el-target-date" value="${escapeHtml(el.target_date || '2027-03-19T18:00')}" style="padding: 8px 10px;">
+                    </div>
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Nivel Máximo de Detalle</span>
+                        </div>
+                        <select class="form-select el-precision-select" style="padding: 8px 10px;">
+                            <option value="seconds" ${(!el.precision || el.precision === 'seconds') ? 'selected' : ''}>⏱️ Hasta Segundos</option>
+                            <option value="minutes" ${el.precision === 'minutes' ? 'selected' : ''}>🕒 Hasta Minutos</option>
+                            <option value="hours" ${el.precision === 'hours' ? 'selected' : ''}>⏳ Hasta Horas</option>
+                            <option value="days" ${el.precision === 'days' ? 'selected' : ''}>📅 Hasta Días</option>
+                        </select>
+                    </div>
+                `;
+                const dtInput = dtRow.querySelector('.el-target-date');
+                dtInput.oninput = (e) => {
+                    el.target_date = e.target.value;
+                    updateLivePreview();
+                };
+                const precSelect = dtRow.querySelector('.el-precision-select');
+                precSelect.onchange = (e) => {
+                    el.precision = e.target.value;
+                    updateLivePreview();
+                };
+                card.appendChild(dtRow);
+            } else if (isLocation) {
                 // Location Content Input
                 const textGroup = document.createElement('div');
                 textGroup.className = 'form-group';
@@ -3010,7 +3198,7 @@
 
             const currX = el.x !== undefined ? el.x : 0;
             const currY = el.y !== undefined ? el.y : 0;
-            const currW = el.w !== undefined ? el.w : (isLocation ? '' : 88);
+            const currW = el.w !== undefined ? el.w : (isTransformable ? '' : 88);
             const currRot = el.rotate !== undefined ? el.rotate : 0;
             const currZoom = el.zoom !== undefined ? el.zoom : 100;
 
@@ -3042,7 +3230,7 @@
                 <!-- Ancho del Cuadro (W) -->
                 <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 4px;">
                     <div class="pos-slider-header">
-                        <span>Ancho Máximo (% del slide${isLocation ? ', opcional' : ''})</span>
+                        <span>Ancho Máximo (% del slide${isTransformable ? ', opcional' : ''})</span>
                         <span class="pos-val-badge" id="badgeW_${idx}">${currW !== '' ? currW + '%' : 'Auto'}</span>
                     </div>
                     <div class="pos-input-group">
@@ -3051,7 +3239,7 @@
                     </div>
                 </div>
 
-                ${isLocation ? `
+                ${isTransformable ? `
                 <!-- Rotación -->
                 <div class="pos-slider-wrap" style="margin-top: 4px;">
                     <div class="pos-slider-header">
@@ -3131,7 +3319,7 @@
                 }
                 let parsed = parseInt(val, 10);
                 if (isNaN(parsed)) {
-                    if (isLocation) {
+                    if (isTransformable) {
                         delete el.w;
                         badgeW.textContent = 'Auto';
                         numW.value = '';
@@ -3151,7 +3339,7 @@
             sliderW.oninput = (e) => syncW(e.target.value);
             numW.oninput = (e) => syncW(e.target.value);
 
-            if (isLocation) {
+            if (isTransformable) {
                 // Bind Rot
                 const sliderRot = posRow.querySelector(`#sliderRot_${idx}`);
                 const numRot = posRow.querySelector(`#numRot_${idx}`);
@@ -3237,6 +3425,28 @@
         updateLivePreview();
     }
 
+    function addCountdownElement() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        if (!Array.isArray(slide.elements)) slide.elements = [];
+
+        slide.elements.push({
+            id: 'el_' + Date.now(),
+            type: 'countdown',
+            title: 'FALTA POCO',
+            target_date: '2027-03-19T18:00',
+            precision: 'seconds',
+            x: 0,
+            y: 15,
+            w: null,
+            rotate: 0,
+            zoom: 100
+        });
+
+        renderElementsList();
+        updateLivePreview();
+    }
+
     function removeElement(index) {
         const slide = getCurrentSlide();
         if (!slide || !Array.isArray(slide.elements)) return;
@@ -3256,6 +3466,83 @@
                            .replace(/>/g, '&gt;')
                            .replace(/"/g, '&quot;')
                            .replace(/'/g, '&#039;');
+    }
+
+    // -------------------------------------------------------------
+    // COUNTDOWN TIME CALCULATION
+    // -------------------------------------------------------------
+    function calculateCountdownUnits(targetDateStr, precision = 'seconds') {
+        const targetDate = new Date(targetDateStr);
+        const now = new Date();
+        const distance = targetDate.getTime() - now.getTime();
+
+        if (distance <= 0 || isNaN(distance)) {
+            const fallbackUnits = [];
+            fallbackUnits.push({ key: 'hours', label: 'HORAS', value: '00' });
+            if (precision === 'minutes' || precision === 'seconds') {
+                fallbackUnits.push({ key: 'minutes', label: 'MIN', value: '00' });
+            }
+            if (precision === 'seconds') {
+                fallbackUnits.push({ key: 'seconds', label: 'SEG', value: '00' });
+            }
+            return fallbackUnits;
+        }
+
+        // Calendar months + remaining days
+        let temp = new Date(now.getTime());
+        let months = 0;
+        while (true) {
+            let nextMonth = new Date(temp.getFullYear(), temp.getMonth() + 1, temp.getDate(), temp.getHours(), temp.getMinutes(), temp.getSeconds());
+            if (nextMonth <= targetDate) {
+                temp = nextMonth;
+                months++;
+            } else {
+                break;
+            }
+        }
+        let remMs = targetDate.getTime() - temp.getTime();
+        let days = Math.floor(remMs / (1000 * 60 * 60 * 24));
+        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        const units = [];
+        // Cascade disappearance: if months == 0, months disappears!
+        if (months > 0) {
+            units.push({ key: 'months', label: 'MESES', value: String(months).padStart(2, '0') });
+        }
+        // If months > 0 or days > 0, include days
+        if (months > 0 || days > 0) {
+            units.push({ key: 'days', label: 'DÍAS', value: String(days).padStart(2, '0') });
+        }
+
+        // Maximum precision cutoff
+        if (precision === 'days') {
+            if (units.length === 0) {
+                units.push({ key: 'days', label: 'DÍAS', value: '00' });
+            }
+        } else if (precision === 'hours') {
+            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+        } else if (precision === 'minutes') {
+            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
+        } else { // 'seconds'
+            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
+            units.push({ key: 'seconds', label: 'SEG', value: String(seconds).padStart(2, '0') });
+        }
+
+        if (units.length === 0) {
+            units.push({ key: 'hours', label: 'HORAS', value: '00' });
+            if (precision === 'minutes' || precision === 'seconds') {
+                units.push({ key: 'minutes', label: 'MIN', value: '00' });
+            }
+            if (precision === 'seconds') {
+                units.push({ key: 'seconds', label: 'SEG', value: '00' });
+            }
+        }
+
+        return units;
     }
 
     // -------------------------------------------------------------
@@ -3358,6 +3645,52 @@
                             </div>
                         `;
                         overlay.appendChild(locDiv);
+                    } else if (el.type === 'countdown') {
+                        const cdDiv = document.createElement('div');
+                        cdDiv.className = 'slide-el slide-el-countdown preview-countdown-el';
+                        const posX = el.x !== undefined ? el.x : 0;
+                        const posY = el.y !== undefined ? el.y : 0;
+                        const rotVal = el.rotate !== undefined ? el.rotate : 0;
+                        const zoomVal = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : (el.scale !== undefined ? el.scale * 100 : 100);
+                        cdDiv.style.left = `calc(50% + ${posX}%)`;
+                        cdDiv.style.top = `calc(50% + ${posY}%)`;
+                        if (el.w) {
+                            cdDiv.style.width = `${el.w}%`;
+                            cdDiv.style.maxWidth = `${el.w}%`;
+                        }
+                        cdDiv.style.transform = `translate(-50%, -50%) rotate(${rotVal}deg) scale(${zoomVal / 100})`;
+                        cdDiv.style.transformOrigin = 'center center';
+
+                        const targetIso = el.target_date || '2027-03-19T18:00';
+                        const precision = el.precision || 'seconds';
+                        const units = calculateCountdownUnits(targetIso, precision);
+                        let gridHtml = '';
+                        units.forEach((u, uIdx) => {
+                            if (uIdx > 0) {
+                                gridHtml += `<div class="countdown-sticker-sep">:</div>`;
+                            }
+                            gridHtml += `
+                                <div class="countdown-sticker-unit" data-unit="${u.key}">
+                                    <div class="countdown-sticker-box">${u.value}</div>
+                                    <span class="countdown-sticker-label">${u.label}</span>
+                                </div>
+                            `;
+                        });
+
+                        cdDiv.innerHTML = `
+                            <div class="countdown-sticker">
+                                <div class="countdown-sticker-header">
+                                    <span class="countdown-sticker-title">${escapeHtml(el.title || 'FALTA POCO')}</span>
+                                    <div class="countdown-sticker-arrow" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </div>
+                                </div>
+                                <div class="countdown-sticker-grid">
+                                    ${gridHtml}
+                                </div>
+                            </div>
+                        `;
+                        overlay.appendChild(cdDiv);
                     }
                 });
             }
@@ -3379,6 +3712,14 @@
 
     window.addEventListener('resize', updateStoryPreviewScale);
     window.addEventListener('DOMContentLoaded', updateStoryPreviewScale);
+
+    // Ticking loop for countdown elements in live preview
+    setInterval(() => {
+        const slide = getCurrentSlide();
+        if (slide && Array.isArray(slide.elements) && slide.elements.some(e => e.type === 'countdown')) {
+            updateLivePreview();
+        }
+    }, 1000);
 
     // -------------------------------------------------------------
     // SLIDE CRUD OPERATIONS

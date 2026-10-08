@@ -38,6 +38,30 @@
                         <span class="location-sticker-text">{{ el.content | trim }}</span>
                     </a>
                 </div>
+            {% elif el.type == 'countdown' %}
+                {% set loc_rot = el.rotate if (el.rotate is defined and el.rotate is not none) else 0 %}
+                {% set loc_zoom = (el.zoom if (el.zoom is defined and el.zoom is not none) else 100) / 100 %}
+                {% set target_iso = el.target_date or '2027-03-19T18:00' %}
+                {% set precision_val = el.precision or 'seconds' %}
+                <div class="slide-el slide-el-countdown"
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
+                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{ (el.title or 'Boda Celia y Alfredo')|urlencode }}&dates=20270319T210000Z/20270320T070000Z&location=Luna+India%3A+Castro+Barros%2C+M5513%2C+Mendoza&details={{ (invitation_url or '')|urlencode }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="countdown-sticker dynamic-countdown-sticker"
+                       data-target-date="{{ target_iso }}"
+                       data-precision="{{ precision_val }}"
+                       aria-label="Agendar en Google Calendar">
+                        <div class="countdown-sticker-header">
+                            <span class="countdown-sticker-title">{{ (el.title or 'FALTA POCO') | trim }}</span>
+                            <div class="countdown-sticker-arrow" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="countdown-sticker-grid">
+                            <!-- Populated dynamically by story.js -->
+                        </div>
+                    </a>
+                </div>
             {% endif %}
         {% endfor %}
     </div>
