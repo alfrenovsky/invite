@@ -10,10 +10,8 @@
     {% endif %}
 {% endif %}
 
-<div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
-     {% if bg_url and not is_vid %}
-       style="background-image: url('{{ bg_url }}'); background-size: cover; background-position: center;"
-     {% endif %}>
+<div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" {% if slide and slide.id == 'triste' %}id="tristeSlide"{% endif %} data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
+     style="{% if slide and slide.id == 'triste' and not all_rejected %}display: none;{% endif %}{% if bg_url and not is_vid %} background-image: url('{{ bg_url }}'); background-size: cover; background-position: center;{% endif %}">
 
     {% if bg_url and is_vid %}
         <video class="story-video-bg" src="{{ bg_url }}" muted loop playsinline autoplay></video>

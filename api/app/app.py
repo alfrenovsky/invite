@@ -94,7 +94,7 @@ SLIDES_CONFIG_DEFAULT = [
     {
         "id": "triste",
         "title": "¡Qué pena!",
-        "template": "slides/triste.html",
+        "template": "slides/custom.html",
         "duration": 0,
         "enabled": True,
         "background": "GatoTriste.jpeg",
@@ -146,16 +146,7 @@ def load_slides():
         if s.get("id") == "rsvp":
             s["template"] = "slides/rsvp.html"
             s["enabled"] = True
-        elif s.get("id") == "triste":
-            s["template"] = "slides/triste.html"
-        elif not s.get("template") or s.get("template") in (
-            "slides/portada.html",
-            "slides/lugar.html",
-            "slides/video.html",
-            "slides/itinerario.html",
-            "slides/regalos.html",
-            "slides/custom.html",
-        ):
+        else:
             s["template"] = "slides/custom.html"
 
     # RSVP is a special slide that must always be kept
@@ -168,16 +159,7 @@ def save_slides(slides_list):
         if s.get("id") == "rsvp":
             s["template"] = "slides/rsvp.html"
             s["enabled"] = True
-        elif s.get("id") == "triste":
-            s["template"] = "slides/triste.html"
-        elif not s.get("template") or s.get("template") in (
-            "slides/portada.html",
-            "slides/lugar.html",
-            "slides/video.html",
-            "slides/itinerario.html",
-            "slides/regalos.html",
-            "slides/custom.html",
-        ):
+        else:
             s["template"] = "slides/custom.html"
 
     # Ensure RSVP is preserved before saving
