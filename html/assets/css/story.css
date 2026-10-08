@@ -235,18 +235,21 @@
         }
 
         .header-title {
-            font-family: var(--font-titles);
-            font-size: 0.85em;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: var(--header-title-size, 14px);
+            font-weight: var(--header-title-weight, 700);
+            letter-spacing: var(--header-title-spacing, 0.05em);
+            color: var(--header-title-color, #ffffff);
+            line-height: 1.2;
         }
 
         .header-subtitle {
-            font-family: var(--font-titles);
-            font-weight: 700;
-            font-size: 0.68em;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: var(--header-subtitle-weight, 600);
+            font-size: var(--header-subtitle-size, 11px);
+            letter-spacing: var(--header-subtitle-spacing, 0.05em);
+            color: var(--header-subtitle-color, #a0aec0);
+            line-height: 1.2;
         }
 
         .header-actions {

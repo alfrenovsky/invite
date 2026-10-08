@@ -56,6 +56,19 @@
             --el-body-spacing: {{ styles.body.letterSpacing }}em;
             --el-body-line-height: {{ styles.body.lineHeight }};
             --el-body-transform: {{ styles.body.textTransform }};
+
+            {% if styles.header_title %}
+            --header-title-color: {{ styles.header_title.color }};
+            --header-title-size: {{ styles.header_title.fontSize }}px;
+            --header-title-weight: {{ styles.header_title.fontWeight }};
+            --header-title-spacing: {{ styles.header_title.letterSpacing if styles.header_title.letterSpacing is not none else 0.05 }}em;
+            {% endif %}
+            {% if styles.header_subtitle %}
+            --header-subtitle-color: {{ styles.header_subtitle.color }};
+            --header-subtitle-size: {{ styles.header_subtitle.fontSize }}px;
+            --header-subtitle-weight: {{ styles.header_subtitle.fontWeight }};
+            --header-subtitle-spacing: {{ styles.header_subtitle.letterSpacing if styles.header_subtitle.letterSpacing is not none else 0.05 }}em;
+            {% endif %}
         }
     </style>
     {% endif %}

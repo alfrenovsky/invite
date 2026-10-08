@@ -1,26 +1,40 @@
 {
-  "body": {
-    "color": "#f0f4f8",
-    "fontSize": 18,
-    "fontWeight": 500,
-    "letterSpacing": 0,
-    "lineHeight": 1.4,
-    "textTransform": "none"
+  "title": {
+    "color": "#ffffff",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": -0.09,
+    "lineHeight": 0.95,
+    "textTransform": "uppercase"
   },
   "tag": {
     "color": "#ffffff",
-    "fontSize": 14,
+    "fontSize": 23,
     "fontWeight": 600,
     "letterSpacing": 0.15,
     "lineHeight": 1.2,
     "textTransform": "uppercase"
   },
-  "title": {
+  "body": {
+    "color": "#f0f4f8",
+    "fontSize": 27,
+    "fontWeight": 600,
+    "letterSpacing": 0,
+    "lineHeight": 1.35,
+    "textTransform": "none"
+  },
+  "header_title": {
+    "text": "CELIA & ALFREDO",
     "color": "#ffffff",
-    "fontSize": 40,
-    "fontWeight": 800,
-    "letterSpacing": -0.08,
-    "lineHeight": 0.9,
-    "textTransform": "uppercase"
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0.05
+  },
+  "header_subtitle": {
+    "text": "NOS CASAMOS - 19 de Marzo",
+    "color": "#a0aec0",
+    "fontSize": 11,
+    "fontWeight": 600,
+    "letterSpacing": 0.05
   }
 }

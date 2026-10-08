@@ -211,6 +211,20 @@ DEFAULT_STYLES = {
         "lineHeight": 1.4,
         "textTransform": "none",
     },
+    "header_title": {
+        "text": "CELIA & ALFREDO",
+        "color": "#ffffff",
+        "fontSize": 14,
+        "fontWeight": 700,
+        "letterSpacing": 0.05,
+    },
+    "header_subtitle": {
+        "text": "NOS CASAMOS - 19 de Marzo",
+        "color": "#a0aec0",
+        "fontSize": 11,
+        "fontWeight": 600,
+        "letterSpacing": 0.05,
+    },
 }
 
 
@@ -472,8 +486,14 @@ def panel_save_styles():
     data = request.get_json(silent=True) or request.form.to_dict()
     if not data or not isinstance(data, dict):
         return jsonify({"ok": False, "error": "Datos inválidos"}), 400
-    save_styles(data)
-    return jsonify({"ok": True, "styles": data, "message": "Estilos guardados correctamente"})
+    current = load_styles()
+    for k, v in data.items():
+        if isinstance(v, dict) and k in current and isinstance(current[k], dict):
+            current[k].update(v)
+        else:
+            current[k] = v
+    save_styles(current)
+    return jsonify({"ok": True, "styles": current, "message": "Estilos guardados correctamente"})
 
 
 @app.post("/panel/upload-background")

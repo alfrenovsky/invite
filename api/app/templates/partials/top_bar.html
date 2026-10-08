@@ -13,8 +13,8 @@
                 <span class="avatar-fallback" style="display: none;">C&A</span>
             </div>
             <div class="header-titles">
-                <span class="header-title">Celia & Alfredo</span>
-                <span class="header-subtitle">Nos casamos! — 19 de Marzo</span>
+                <span class="header-title">{{ (styles.header_title.text if styles and styles.header_title and styles.header_title.text else 'CELIA & ALFREDO') }}</span>
+                <span class="header-subtitle">{{ (styles.header_subtitle.text if styles and styles.header_subtitle and styles.header_subtitle.text else 'NOS CASAMOS - 19 de Marzo') }}</span>
             </div>
         </div>
     </div>

@@ -45,6 +45,17 @@
             --el-body-spacing: {{ styles.body.letterSpacing if styles else 0.0 }}em;
             --el-body-line-height: {{ styles.body.lineHeight if styles else 1.4 }};
             --el-body-transform: {{ styles.body.textTransform if styles else 'none' }};
+
+            /* Header Tokens */
+            --header-title-color: {{ styles.header_title.color if styles and styles.header_title else '#ffffff' }};
+            --header-title-size: {{ styles.header_title.fontSize if styles and styles.header_title else 14 }}px;
+            --header-title-weight: {{ styles.header_title.fontWeight if styles and styles.header_title else 700 }};
+            --header-title-spacing: {{ styles.header_title.letterSpacing if styles and styles.header_title and styles.header_title.letterSpacing is not none else 0.05 }}em;
+
+            --header-subtitle-color: {{ styles.header_subtitle.color if styles and styles.header_subtitle else '#a0aec0' }};
+            --header-subtitle-size: {{ styles.header_subtitle.fontSize if styles and styles.header_subtitle else 11 }}px;
+            --header-subtitle-weight: {{ styles.header_subtitle.fontWeight if styles and styles.header_subtitle else 600 }};
+            --header-subtitle-spacing: {{ styles.header_subtitle.letterSpacing if styles and styles.header_subtitle and styles.header_subtitle.letterSpacing is not none else 0.05 }}em;
         }
 
         * {
@@ -1052,19 +1063,21 @@
         }
 
         .story-preview-viewport .header-title {
-            font-family: 'Syncopate', sans-serif;
-            font-size: 0.85em;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: var(--header-title-size, 14px);
+            font-weight: var(--header-title-weight, 700);
+            letter-spacing: var(--header-title-spacing, 0.05em);
+            color: var(--header-title-color, #ffffff);
+            line-height: 1.2;
         }
 
         .story-preview-viewport .header-subtitle {
-            font-family: 'Syncopate', sans-serif;
-            font-weight: 700;
-            font-size: 0.68em;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: var(--header-subtitle-weight, 600);
+            font-size: var(--header-subtitle-size, 11px);
+            letter-spacing: var(--header-subtitle-spacing, 0.05em);
+            color: var(--header-subtitle-color, #a0aec0);
+            line-height: 1.2;
         }
 
         /* Slide Deck Area */
@@ -1256,7 +1269,8 @@
             border: 1px solid var(--card-border);
         }
 
-        .styles-subtab-btn {
+        .styles-subtab-btn,
+        .header-subtab-btn {
             flex: 1;
             display: flex;
             align-items: center;
@@ -1274,12 +1288,14 @@
             transition: all 0.2s ease;
         }
 
-        .styles-subtab-btn:hover {
+        .styles-subtab-btn:hover,
+        .header-subtab-btn:hover {
             color: #fff;
             background: rgba(255, 255, 255, 0.05);
         }
 
-        .styles-subtab-btn.active {
+        .styles-subtab-btn.active,
+        .header-subtab-btn.active {
             background: rgba(212, 175, 55, 0.16);
             border-color: var(--accent);
             color: #ffd978;
@@ -1532,6 +1548,10 @@
                     <button type="button" class="nav-tab" data-tab="tab-styles" id="tabBtnStyles" onclick="switchTab('tab-styles')">
                         <span class="tab-icon">🎨</span>
                         <span class="tab-label">Estilos</span>
+                    </button>
+                    <button type="button" class="nav-tab" data-tab="tab-header" id="tabBtnHeader" onclick="switchTab('tab-header')">
+                        <span class="tab-icon">🔝</span>
+                        <span class="tab-label">Encabezado</span>
                     </button>
                 </div>
             </nav>
@@ -1885,6 +1905,135 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TAB: Header Editor & Typography -->
+            <div id="tab-header" class="tab-pane">
+                <div class="styles-split-grid">
+                    <!-- Left Column: Header Editor & Controls -->
+                    <div class="styles-editor-col">
+                        <section class="panel-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                                <h2 class="section-title" style="margin-bottom: 0;">
+                                    <span>Editor de Encabezado</span>
+                                </h2>
+                                <span class="font-fixed-badge">Fuente: Montserrat</span>
+                            </div>
+
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.45;">
+                                Personaliza el título y subtítulo que aparecen en la barra superior de todas las historias. Cada línea cuenta con su propio estilo y formato independiente.
+                            </p>
+
+                            <!-- Sub-nav: Line 1 vs Line 2 -->
+                            <div class="styles-subnav" role="tablist">
+                                <button type="button" class="header-subtab-btn active" id="subtabBtnHeaderTitle" onclick="switchHeaderSubTab('header_title')">
+                                    <span>🔤 Línea 1: Título</span>
+                                </button>
+                                <button type="button" class="header-subtab-btn" id="subtabBtnHeaderSubtitle" onclick="switchHeaderSubTab('header_subtitle')">
+                                    <span>🏷️ Línea 2: Subtítulo</span>
+                                </button>
+                            </div>
+
+                            <!-- Dynamic Controls Form for active header line -->
+                            <div class="styles-form-fields" id="headerFormFields">
+                                <!-- Text content row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="headerTextInput">Texto</label>
+                                    </div>
+                                    <input type="text" id="headerTextInput" class="form-input" style="width: 100%; font-size: 0.95em;" placeholder="Ej: CELIA & ALFREDO" oninput="onHeaderTextChange(this.value)">
+                                </div>
+
+                                <!-- Color picker row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="headerColorPicker">Color del Texto</label>
+                                        <span class="style-prop-badge" id="headerColorValBadge">#FFFFFF</span>
+                                    </div>
+                                    <div class="color-picker-combo">
+                                        <input type="color" id="headerColorPicker" class="color-swatch-input" oninput="onHeaderColorPickerChange(this.value)">
+                                        <input type="text" id="headerColorHex" class="form-input color-hex-input" placeholder="#FFFFFF" oninput="onHeaderColorHexChange(this.value)">
+                                    </div>
+                                </div>
+
+                                <!-- Font Size row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="headerFontSizeSlider">Tamaño de Fuente (px)</label>
+                                        <span class="style-prop-badge" id="headerFontSizeBadge">14px</span>
+                                    </div>
+                                    <div class="pos-input-group">
+                                        <input type="range" class="pos-range-slider" id="headerFontSizeSlider" min="8" max="32" step="1" value="14" oninput="onHeaderFontSizeChange(this.value)">
+                                        <input type="number" class="pos-num-input" id="headerFontSizeNum" min="8" max="32" step="1" value="14" oninput="onHeaderFontSizeChange(this.value)">
+                                    </div>
+                                </div>
+
+                                <!-- Font Weight row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="headerFontWeightSelect">Grosor de Fuente (Weight)</label>
+                                        <span class="style-prop-badge" id="headerFontWeightBadge">700 - Bold</span>
+                                    </div>
+                                    <select id="headerFontWeightSelect" class="form-select" onchange="onHeaderFontWeightChange(this.value)">
+                                        <option value="300">300 — Light (Fina)</option>
+                                        <option value="400">400 — Regular (Normal)</option>
+                                        <option value="500">500 — Medium (Media)</option>
+                                        <option value="600">600 — SemiBold (Semi Negrita)</option>
+                                        <option value="700">700 — Bold (Negrita)</option>
+                                        <option value="800">800 — ExtraBold (Pesada)</option>
+                                        <option value="900">900 — Black (Ultra Pesada)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Letter Spacing row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="headerLetterSpacingSlider">Espaciado entre Letras (Letter-Spacing)</label>
+                                        <span class="style-prop-badge" id="headerLetterSpacingBadge">0.05em</span>
+                                    </div>
+                                    <div class="pos-input-group">
+                                        <input type="range" class="pos-range-slider" id="headerLetterSpacingSlider" min="-0.08" max="0.30" step="0.01" value="0.05" oninput="onHeaderLetterSpacingChange(this.value)">
+                                        <input type="number" class="pos-num-input" id="headerLetterSpacingNum" min="-0.08" max="0.30" step="0.01" value="0.05" oninput="onHeaderLetterSpacingChange(this.value)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions bar -->
+                            <div class="editor-actions-bar" style="margin-top: 24px; display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+                                <span class="styles-save-indicator" id="headerSaveIndicator">✓ Cambios guardados</span>
+                                <button type="button" class="btn-save-slide" id="btnSaveHeader" onclick="saveHeaderStyles()">
+                                    <span>💾 Guardar Encabezado</span>
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Right Column: Live In-Tab Header Preview Card -->
+                    <div class="styles-preview-col">
+                        <section class="panel-card" style="position: sticky; top: 20px;">
+                            <div class="preview-card-header">
+                                <span class="preview-title">
+                                    <span>👁️ Vista Previa del Encabezado</span>
+                                </span>
+                                <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">En Vivo</span>
+                            </div>
+
+                            <div style="background: rgba(15, 20, 26, 0.95); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; margin-top: 12px;">
+                                <div class="avatar-badge" style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, 0.3); flex-shrink: 0;">
+                                    <img src="/assets/avatar.jpeg" alt="Celia & Alfredo" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 3px;">
+                                    <span id="sampleHeaderTitle" style="font-family: 'Montserrat', sans-serif;">CELIA & ALFREDO</span>
+                                    <span id="sampleHeaderSubtitle" style="font-family: 'Montserrat', sans-serif;">NOS CASAMOS - 19 de Marzo</span>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 14px;">
+                                Se actualiza también en tiempo real en la maqueta del teléfono a la derecha.
+                            </p>
+                        </section>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Right Column: Live Sticky 98vh Preview Mockup -->
@@ -1901,8 +2050,8 @@
                                     <span class="avatar-fallback" style="display: none;">C&A</span>
                                 </div>
                                 <div class="header-titles">
-                                    <span class="header-title">Celia & Alfredo</span>
-                                    <span class="header-subtitle">Nos casamos! — 19 de Marzo</span>
+                                    <span class="header-title" id="previewHeaderTitle">{{ (styles.header_title.text if styles and styles.header_title and styles.header_title.text else 'CELIA & ALFREDO') }}</span>
+                                    <span class="header-subtitle" id="previewHeaderSubtitle">{{ (styles.header_subtitle.text if styles and styles.header_subtitle and styles.header_subtitle.text else 'NOS CASAMOS - 19 de Marzo') }}</span>
                                 </div>
                             </div>
                         </div>
@@ -2011,6 +2160,9 @@
         } else if (tabId === 'tab-styles') {
             window.location.hash = 'estilos';
             renderStylesEditor();
+        } else if (tabId === 'tab-header') {
+            window.location.hash = 'encabezado';
+            renderHeaderEditor();
         } else {
             window.location.hash = 'slides';
         }
@@ -2024,6 +2176,8 @@
             switchTab('tab-backgrounds');
         } else if (hash === '#estilos' || (!hash && savedTab === 'tab-styles')) {
             switchTab('tab-styles');
+        } else if (hash === '#encabezado' || (!hash && savedTab === 'tab-header')) {
+            switchTab('tab-header');
         } else {
             switchTab('tab-slides');
         }
@@ -2056,6 +2210,20 @@
             letterSpacing: 0.0,
             lineHeight: 1.4,
             textTransform: "none"
+        },
+        header_title: {
+            text: "CELIA & ALFREDO",
+            color: "#ffffff",
+            fontSize: 14,
+            fontWeight: 700,
+            letterSpacing: 0.05
+        },
+        header_subtitle: {
+            text: "NOS CASAMOS - 19 de Marzo",
+            color: "#a0aec0",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: 0.05
         }
     };
 
@@ -2257,6 +2425,26 @@
             if (item.textTransform) root.style.setProperty(`--el-${k}-transform`, item.textTransform);
         });
 
+        // Apply Header tokens and preview text
+        if (s.header_title) {
+            const ht = s.header_title;
+            if (ht.color) root.style.setProperty('--header-title-color', ht.color);
+            if (ht.fontSize) root.style.setProperty('--header-title-size', `${ht.fontSize}px`);
+            if (ht.fontWeight) root.style.setProperty('--header-title-weight', ht.fontWeight);
+            if (ht.letterSpacing !== undefined) root.style.setProperty('--header-title-spacing', `${ht.letterSpacing}em`);
+            const pt = document.getElementById('previewHeaderTitle');
+            if (pt && ht.text !== undefined) pt.textContent = ht.text;
+        }
+        if (s.header_subtitle) {
+            const hs = s.header_subtitle;
+            if (hs.color) root.style.setProperty('--header-subtitle-color', hs.color);
+            if (hs.fontSize) root.style.setProperty('--header-subtitle-size', `${hs.fontSize}px`);
+            if (hs.fontWeight) root.style.setProperty('--header-subtitle-weight', hs.fontWeight);
+            if (hs.letterSpacing !== undefined) root.style.setProperty('--header-subtitle-spacing', `${hs.letterSpacing}em`);
+            const ps = document.getElementById('previewHeaderSubtitle');
+            if (ps && hs.text !== undefined) ps.textContent = hs.text;
+        }
+
         // Update single preview element
         const singleEl = document.getElementById('singlePreviewSampleText');
         const activeItem = s[activeStyleKey];
@@ -2304,6 +2492,231 @@
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = '<span>💾 Guardar Estilos</span>';
+            }
+        }
+    }
+
+    // -------------------------------------------------------------
+    // HEADER EDITOR (Line 1: Title vs Line 2: Subtitle)
+    // -------------------------------------------------------------
+    let activeHeaderKey = 'header_title'; // 'header_title' | 'header_subtitle'
+
+    function switchHeaderSubTab(key) {
+        if (!['header_title', 'header_subtitle'].includes(key)) return;
+        activeHeaderKey = key;
+        const btnTitle = document.getElementById('subtabBtnHeaderTitle');
+        const btnSubtitle = document.getElementById('subtabBtnHeaderSubtitle');
+        if (btnTitle) btnTitle.classList.toggle('active', key === 'header_title');
+        if (btnSubtitle) btnSubtitle.classList.toggle('active', key === 'header_subtitle');
+        renderHeaderEditor();
+    }
+
+    function renderHeaderEditor() {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) {
+            stylesData[activeHeaderKey] = Object.assign({}, DEFAULT_STYLES_PRESET[activeHeaderKey]);
+        }
+        const s = stylesData[activeHeaderKey];
+
+        const textInput = document.getElementById('headerTextInput');
+        if (textInput) textInput.value = s.text !== undefined ? s.text : '';
+
+        const colorPicker = document.getElementById('headerColorPicker');
+        const colorHex = document.getElementById('headerColorHex');
+        const colorBadge = document.getElementById('headerColorValBadge');
+        const col = s.color || '#ffffff';
+        if (colorPicker) colorPicker.value = (col.startsWith('#') && col.length === 7) ? col : '#ffffff';
+        if (colorHex) colorHex.value = col;
+        if (colorBadge) {
+            colorBadge.textContent = col;
+            colorBadge.style.color = col;
+        }
+
+        const sizeSlider = document.getElementById('headerFontSizeSlider');
+        const sizeNum = document.getElementById('headerFontSizeNum');
+        const sizeBadge = document.getElementById('headerFontSizeBadge');
+        const fs = s.fontSize !== undefined ? s.fontSize : (activeHeaderKey === 'header_title' ? 14 : 11);
+        if (sizeSlider) sizeSlider.value = fs;
+        if (sizeNum) sizeNum.value = fs;
+        if (sizeBadge) sizeBadge.textContent = `${fs}px`;
+
+        const weightSelect = document.getElementById('headerFontWeightSelect');
+        const weightBadge = document.getElementById('headerFontWeightBadge');
+        const fw = s.fontWeight !== undefined ? s.fontWeight : (activeHeaderKey === 'header_title' ? 700 : 600);
+        if (weightSelect) weightSelect.value = String(fw);
+        if (weightBadge) {
+            const labels = {
+                300: '300 - Light',
+                400: '400 - Regular',
+                500: '500 - Medium',
+                600: '600 - SemiBold',
+                700: '700 - Bold',
+                800: '800 - ExtraBold',
+                900: '900 - Black'
+            };
+            weightBadge.textContent = labels[fw] || `${fw}`;
+        }
+
+        const spacingSlider = document.getElementById('headerLetterSpacingSlider');
+        const spacingNum = document.getElementById('headerLetterSpacingNum');
+        const spacingBadge = document.getElementById('headerLetterSpacingBadge');
+        const ls = s.letterSpacing !== undefined ? s.letterSpacing : 0.05;
+        if (spacingSlider) spacingSlider.value = ls;
+        if (spacingNum) spacingNum.value = ls;
+        if (spacingBadge) spacingBadge.textContent = `${Number(ls).toFixed(2)}em`;
+
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderTextChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        stylesData[activeHeaderKey].text = val;
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderColorPickerChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        stylesData[activeHeaderKey].color = val;
+        const colorHex = document.getElementById('headerColorHex');
+        const colorBadge = document.getElementById('headerColorValBadge');
+        if (colorHex) colorHex.value = val;
+        if (colorBadge) {
+            colorBadge.textContent = val;
+            colorBadge.style.color = val;
+        }
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderColorHexChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        let clean = val.trim();
+        if (!clean.startsWith('#') && clean.length > 0) clean = '#' + clean;
+        stylesData[activeHeaderKey].color = clean;
+        const colorBadge = document.getElementById('headerColorValBadge');
+        if (colorBadge) {
+            colorBadge.textContent = clean;
+            colorBadge.style.color = clean;
+        }
+        if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+            const picker = document.getElementById('headerColorPicker');
+            if (picker) picker.value = clean;
+        }
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderFontSizeChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        const num = parseInt(val, 10);
+        if (isNaN(num)) return;
+        stylesData[activeHeaderKey].fontSize = num;
+        const sizeSlider = document.getElementById('headerFontSizeSlider');
+        const sizeNum = document.getElementById('headerFontSizeNum');
+        const sizeBadge = document.getElementById('headerFontSizeBadge');
+        if (sizeSlider && sizeSlider.value != num) sizeSlider.value = num;
+        if (sizeNum && sizeNum.value != num) sizeNum.value = num;
+        if (sizeBadge) sizeBadge.textContent = `${num}px`;
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderFontWeightChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        const num = parseInt(val, 10);
+        if (isNaN(num)) return;
+        stylesData[activeHeaderKey].fontWeight = num;
+        const badge = document.getElementById('headerFontWeightBadge');
+        const labels = {
+            300: '300 - Light',
+            400: '400 - Regular',
+            500: '500 - Medium',
+            600: '600 - SemiBold',
+            700: '700 - Bold',
+            800: '800 - ExtraBold',
+            900: '900 - Black'
+        };
+        if (badge) badge.textContent = labels[num] || `${num}`;
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderLetterSpacingChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        const num = parseFloat(val);
+        if (isNaN(num)) return;
+        stylesData[activeHeaderKey].letterSpacing = num;
+        const spacingSlider = document.getElementById('headerLetterSpacingSlider');
+        const spacingNum = document.getElementById('headerLetterSpacingNum');
+        const spacingBadge = document.getElementById('headerLetterSpacingBadge');
+        if (spacingSlider && spacingSlider.value != num) spacingSlider.value = num;
+        if (spacingNum && spacingNum.value != num) spacingNum.value = num;
+        if (spacingBadge) spacingBadge.textContent = `${num.toFixed(2)}em`;
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function updateHeaderSampleCard() {
+        const titleEl = document.getElementById('sampleHeaderTitle');
+        const subtitleEl = document.getElementById('sampleHeaderSubtitle');
+        const ht = (stylesData && stylesData.header_title) || DEFAULT_STYLES_PRESET.header_title;
+        const hs = (stylesData && stylesData.header_subtitle) || DEFAULT_STYLES_PRESET.header_subtitle;
+
+        if (titleEl) {
+            titleEl.textContent = ht.text !== undefined ? ht.text : 'CELIA & ALFREDO';
+            titleEl.style.fontFamily = "'Montserrat', sans-serif";
+            titleEl.style.color = ht.color || '#ffffff';
+            titleEl.style.fontSize = `${ht.fontSize || 14}px`;
+            titleEl.style.fontWeight = ht.fontWeight || 700;
+            titleEl.style.letterSpacing = `${ht.letterSpacing !== undefined ? ht.letterSpacing : 0.05}em`;
+        }
+        if (subtitleEl) {
+            subtitleEl.textContent = hs.text !== undefined ? hs.text : 'NOS CASAMOS - 19 de Marzo';
+            subtitleEl.style.fontFamily = "'Montserrat', sans-serif";
+            subtitleEl.style.color = hs.color || '#a0aec0';
+            subtitleEl.style.fontSize = `${hs.fontSize || 11}px`;
+            subtitleEl.style.fontWeight = hs.fontWeight || 600;
+            subtitleEl.style.letterSpacing = `${hs.letterSpacing !== undefined ? hs.letterSpacing : 0.05}em`;
+        }
+    }
+
+    async function saveHeaderStyles() {
+        const btn = document.getElementById('btnSaveHeader');
+        const indicator = document.getElementById('headerSaveIndicator');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Guardando...</span>';
+        }
+
+        try {
+            const res = await fetch('/panel/styles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stylesData)
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast('✓ Encabezado guardado correctamente');
+                if (indicator) {
+                    indicator.classList.add('visible');
+                    setTimeout(() => indicator.classList.remove('visible'), 2500);
+                }
+            } else {
+                showToast(data.error || 'Error al guardar encabezado', true);
+            }
+        } catch (err) {
+            showToast('Error de red al guardar encabezado', true);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾 Guardar Encabezado</span>';
             }
         }
     }
@@ -3091,6 +3504,8 @@
             selectSlide(currentSlideId);
         }
         renderStylesEditor();
+        renderHeaderEditor();
+        applyStylesToDOM(stylesData);
     });
 </script>
 
