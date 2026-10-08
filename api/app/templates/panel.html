@@ -1299,13 +1299,13 @@
         }
 
         .story-preview-viewport .countdown-sticker {
-            display: inline-block;
+            display: block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 8px 12px 8px 12px;
+            padding: 10px 12px 11px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-            max-width: 95%;
-            width: max-content;
+            max-width: 312px;
+            width: 100%;
             margin: 0 auto;
             color: #1a1a1a;
             user-select: none;
@@ -1319,27 +1319,26 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
             padding: 0 2px;
-            gap: 12px;
         }
 
         .story-preview-viewport .countdown-sticker-title {
             font-family: 'Aveny T', sans-serif !important;
             font-weight: 500;
-            font-size: 19px;
+            font-size: 20px;
             letter-spacing: 0.5px;
             color: #1a1a1a;
             text-transform: uppercase !important;
-            line-height: 1.1;
+            line-height: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .story-preview-viewport .countdown-sticker-arrow {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             border: 1.5px solid #d1d5db;
             display: flex;
@@ -1350,8 +1349,8 @@
         }
 
         .story-preview-viewport .countdown-sticker-arrow svg {
-            width: 10px;
-            height: 10px;
+            width: 11px;
+            height: 11px;
             stroke: currentColor;
             stroke-width: 2.2;
             fill: none;
@@ -1361,35 +1360,31 @@
         .story-preview-viewport .countdown-sticker-grid {
             display: flex;
             align-items: flex-start;
-            justify-content: center;
-            gap: 2px;
+            justify-content: space-between;
+            gap: 1px;
         }
 
         .story-preview-viewport .countdown-sticker-unit {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 44px;
-            min-width: 44px;
-            padding: 0 1px;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 0;
         }
 
         .story-preview-viewport .countdown-sticker-box {
             background: #eff2f6;
             border-radius: 8px;
             font-family: 'Aveny T', sans-serif !important;
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 500;
             color: #111827;
-            line-height: 1.1;
-            padding: 5px 4px 4px 4px;
+            line-height: 1;
+            padding: 6px 4px 4px 4px;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            max-width: 48px;
             text-align: center;
-            letter-spacing: 0;
+            letter-spacing: 0.5px;
             box-shadow: inset 0 1px 1px rgba(0,0,0,0.04);
             font-variant-numeric: tabular-nums;
         }
@@ -1397,7 +1392,6 @@
         .story-preview-viewport .countdown-digit {
             display: inline-block;
             font-family: 'Aveny T', sans-serif !important;
-            width: 0.52em;
             text-align: center;
             font-variant-numeric: tabular-nums;
         }
@@ -1408,23 +1402,20 @@
             font-weight: 700;
             color: #374151;
             line-height: 1;
+            align-self: center;
+            margin-top: -12px;
             padding: 0 1px;
-            display: flex;
-            align-items: center;
-            height: 38px;
-            margin: 0;
         }
 
         .story-preview-viewport .countdown-sticker-label {
-            font-family: 'Aveny T', sans-serif !important;
-            font-size: 11px;
-            font-weight: 500;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 9px;
+            font-weight: 600;
             color: #4b5563;
-            margin-top: 3px;
+            margin-top: 4px;
             text-align: center;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px;
-            line-height: 1;
+            text-transform: lowercase;
+            letter-spacing: -0.2px;
         }
 
         .story-preview-viewport .slide-rsvp-preview {
@@ -3104,6 +3095,20 @@
             card.appendChild(header);
 
             if (isCountdown) {
+                // Title input
+                const titleGroup = document.createElement('div');
+                titleGroup.className = 'form-group';
+                titleGroup.innerHTML = `
+                    <label>Título del Sticker (Aveny-T Mayúsculas)</label>
+                    <input type="text" class="form-input el-title-content" placeholder="Ej: FALTA POCO" value="${escapeHtml(el.title || 'FALTA POCO')}">
+                `;
+                const titleInput = titleGroup.querySelector('input');
+                titleInput.oninput = (e) => {
+                    el.title = e.target.value;
+                    updateLivePreview();
+                };
+                card.appendChild(titleGroup);
+
                 // Date & Time pickers
                 const fullTarget = el.target_date || '2027-03-19T18:00';
                 const parts = fullTarget.split('T');
@@ -3586,36 +3591,36 @@
         const units = [];
         // Cascade disappearance: if months == 0, months disappears!
         if (months > 0) {
-            units.push({ key: 'months', label: 'MESES', value: String(months).padStart(2, '0') });
+            units.push({ key: 'months', label: 'meses', value: String(months).padStart(2, '0') });
         }
         // If months > 0 or days > 0, include days
         if (months > 0 || days > 0) {
-            units.push({ key: 'days', label: 'DÍAS', value: String(days).padStart(2, '0') });
+            units.push({ key: 'days', label: 'días', value: String(days).padStart(2, '0') });
         }
 
         // Maximum precision cutoff
         if (precision === 'days') {
             if (units.length === 0) {
-                units.push({ key: 'days', label: 'DÍAS', value: '00' });
+                units.push({ key: 'days', label: 'días', value: '00' });
             }
         } else if (precision === 'hours') {
-            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'hours', label: 'horas', value: String(hours).padStart(2, '0') });
         } else if (precision === 'minutes') {
-            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
-            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
+            units.push({ key: 'hours', label: 'horas', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'min', value: String(minutes).padStart(2, '0') });
         } else { // 'seconds'
-            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
-            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
-            units.push({ key: 'seconds', label: 'SEG', value: String(seconds).padStart(2, '0') });
+            units.push({ key: 'hours', label: 'horas', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'min', value: String(minutes).padStart(2, '0') });
+            units.push({ key: 'seconds', label: 'seg', value: String(seconds).padStart(2, '0') });
         }
 
         if (units.length === 0) {
-            units.push({ key: 'hours', label: 'HORAS', value: '00' });
+            units.push({ key: 'hours', label: 'horas', value: '00' });
             if (precision === 'minutes' || precision === 'seconds') {
-                units.push({ key: 'minutes', label: 'MIN', value: '00' });
+                units.push({ key: 'minutes', label: 'min', value: '00' });
             }
             if (precision === 'seconds') {
-                units.push({ key: 'seconds', label: 'SEG', value: '00' });
+                units.push({ key: 'seconds', label: 'seg', value: '00' });
             }
         }
 
@@ -3757,6 +3762,12 @@
 
                         cdDiv.innerHTML = `
                             <div class="countdown-sticker">
+                                <div class="countdown-sticker-header">
+                                    <span class="countdown-sticker-title">${escapeHtml(el.title || 'FALTA POCO')}</span>
+                                    <div class="countdown-sticker-arrow" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </div>
+                                </div>
                                 <div class="countdown-sticker-grid">
                                     ${gridHtml}
                                 </div>

@@ -635,36 +635,36 @@
         const units = [];
         // Cascade disappearance: if months == 0, months disappears!
         if (months > 0) {
-            units.push({ key: 'months', label: 'MESES', value: String(months).padStart(2, '0') });
+            units.push({ key: 'months', label: 'meses', value: String(months).padStart(2, '0') });
         }
         // If months > 0 or days > 0, include days
         if (months > 0 || days > 0) {
-            units.push({ key: 'days', label: 'DÍAS', value: String(days).padStart(2, '0') });
+            units.push({ key: 'days', label: 'días', value: String(days).padStart(2, '0') });
         }
 
         // Maximum precision cutoff
         if (precision === 'days') {
             if (units.length === 0) {
-                units.push({ key: 'days', label: 'DÍAS', value: '00' });
+                units.push({ key: 'days', label: 'días', value: '00' });
             }
         } else if (precision === 'hours') {
-            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'hours', label: 'horas', value: String(hours).padStart(2, '0') });
         } else if (precision === 'minutes') {
-            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
-            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
+            units.push({ key: 'hours', label: 'horas', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'min', value: String(minutes).padStart(2, '0') });
         } else { // 'seconds'
-            units.push({ key: 'hours', label: 'HORAS', value: String(hours).padStart(2, '0') });
-            units.push({ key: 'minutes', label: 'MIN', value: String(minutes).padStart(2, '0') });
-            units.push({ key: 'seconds', label: 'SEG', value: String(seconds).padStart(2, '0') });
+            units.push({ key: 'hours', label: 'horas', value: String(hours).padStart(2, '0') });
+            units.push({ key: 'minutes', label: 'min', value: String(minutes).padStart(2, '0') });
+            units.push({ key: 'seconds', label: 'seg', value: String(seconds).padStart(2, '0') });
         }
 
         if (units.length === 0) {
-            units.push({ key: 'hours', label: 'HORAS', value: '00' });
+            units.push({ key: 'hours', label: 'horas', value: '00' });
             if (precision === 'minutes' || precision === 'seconds') {
-                units.push({ key: 'minutes', label: 'MIN', value: '00' });
+                units.push({ key: 'minutes', label: 'min', value: '00' });
             }
             if (precision === 'seconds') {
-                units.push({ key: 'seconds', label: 'SEG', value: '00' });
+                units.push({ key: 'seconds', label: 'seg', value: '00' });
             }
         }
 

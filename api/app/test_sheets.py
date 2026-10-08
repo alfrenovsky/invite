@@ -311,7 +311,15 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
     def test_dynamic_slides_manifest_and_single_slide(self):
         from app import app
-        with patch("app.table.get_by_invitacion") as mock_get_by_inv:
+        dummy_slides = [
+            {"id": "portada", "title": "Portada", "template": "slides/custom.html", "enabled": True, "elements": [{"type": "text", "content": "Celia & Alfredo"}]},
+            {"id": "fecha", "title": "Fecha", "template": "slides/custom.html", "enabled": True, "elements": []},
+            {"id": "lugar", "title": "Lugar", "template": "slides/custom.html", "enabled": True, "elements": []},
+            {"id": "video", "title": "Video", "template": "slides/custom.html", "enabled": True, "elements": []},
+            {"id": "itinerario", "title": "Itinerario", "template": "slides/custom.html", "enabled": True, "elements": []},
+            {"id": "rsvp", "title": "Confirmación", "template": "slides/rsvp.html", "enabled": True, "elements": []},
+        ]
+        with patch("app.table.get_by_invitacion") as mock_get_by_inv, patch("app.load_slides", return_value=dummy_slides):
             mock_get_by_inv.return_value = [
                 {"id": "abc1", "nombre": "Juan", "apellido": "Perez", "confirmacion": "si", "url": "http://nos.vamos.acas.ar/i/familia_perez_123456"}
             ]

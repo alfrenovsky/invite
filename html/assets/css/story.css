@@ -1281,13 +1281,13 @@
 
         /* Instagram-like Countdown Sticker */
         .countdown-sticker {
-            display: inline-block;
+            display: block;
             background: #ffffff;
             border-radius: 16px;
-            padding: 8px 12px 8px 12px;
+            padding: 10px 12px 11px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-            max-width: 95%;
-            width: max-content;
+            max-width: 312px;
+            width: 100%;
             margin: 0 auto;
             color: #1a1a1a;
             user-select: none;
@@ -1309,27 +1309,23 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
             padding: 0 2px;
-            gap: 12px;
         }
 
         .countdown-sticker-title {
             font-family: 'Aveny T', sans-serif !important;
             font-weight: 500;
-            font-size: 1.25rem;
+            font-size: 1.45em;
             letter-spacing: 0.5px;
             color: #1a1a1a;
-            text-transform: uppercase !important;
-            line-height: 1.1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            text-transform: uppercase;
+            line-height: 1;
         }
 
         .countdown-sticker-arrow {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             border: 1.5px solid #d1d5db;
             display: flex;
@@ -1340,8 +1336,8 @@
         }
 
         .countdown-sticker-arrow svg {
-            width: 10px;
-            height: 10px;
+            width: 11px;
+            height: 11px;
             stroke: currentColor;
             stroke-width: 2.2;
             fill: none;
@@ -1351,35 +1347,31 @@
         .countdown-sticker-grid {
             display: flex;
             align-items: flex-start;
-            justify-content: center;
-            gap: 2px;
+            justify-content: space-between;
+            gap: 1px;
         }
 
         .countdown-sticker-unit {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 44px;
-            min-width: 44px;
-            padding: 0 1px;
-            flex-shrink: 0;
+            flex: 1;
+            min-width: 0;
         }
 
         .countdown-sticker-box {
             background: #eff2f6;
             border-radius: 8px;
             font-family: 'Aveny T', sans-serif !important;
-            font-size: 1.85rem;
+            font-size: 2.05em;
             font-weight: 500;
             color: #111827;
-            line-height: 1.1;
-            padding: 5px 4px 4px 4px;
+            line-height: 1;
+            padding: 6px 4px 4px 4px;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            max-width: 48px;
             text-align: center;
-            letter-spacing: 0;
+            letter-spacing: 0.5px;
             box-shadow: inset 0 1px 1px rgba(0,0,0,0.04);
             font-variant-numeric: tabular-nums;
         }
@@ -1387,34 +1379,30 @@
         .countdown-digit {
             display: inline-block;
             font-family: 'Aveny T', sans-serif !important;
-            width: 0.52em;
             text-align: center;
             font-variant-numeric: tabular-nums;
         }
 
         .countdown-sticker-sep {
             font-family: 'Aveny T', sans-serif !important;
-            font-size: 1.4rem;
+            font-size: 1.5em;
             font-weight: 700;
             color: #374151;
             line-height: 1;
+            align-self: center;
+            margin-top: -12px;
             padding: 0 1px;
-            display: flex;
-            align-items: center;
-            height: 38px;
-            margin: 0;
         }
 
         .countdown-sticker-label {
-            font-family: 'Aveny T', sans-serif !important;
-            font-size: 0.72rem;
-            font-weight: 500;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.65em;
+            font-weight: 600;
             color: #4b5563;
-            margin-top: 3px;
+            margin-top: 4px;
             text-align: center;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px;
-            line-height: 1;
+            text-transform: lowercase;
+            letter-spacing: -0.2px;
         }
 
 
