@@ -988,31 +988,154 @@
             gap: 6px;
         }
 
-        .phone-mockup {
+        .story-preview-viewport {
             width: 320px;
-            height: 568px; /* 9:16 vertical ratio */
-            background: #000;
-            border-radius: 32px;
-            border: 3px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(212, 175, 55, 0.2);
+            height: 693px;
             position: relative;
+            border-radius: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(212, 175, 55, 0.25);
+            background: #000;
             overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        .story-preview-viewport .story-container {
+            width: 390px;
+            height: 845px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            transform-origin: top left;
+            transform: scale(0.8205128);
+            user-select: none;
+        }
+
+        /* Top Bar: Progress & Meta Header */
+        .story-preview-viewport .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 12px 14px 8px 14px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: none;
+        }
+
+        .story-preview-viewport .progress-bars {
+            display: flex;
+            gap: 4px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .story-preview-viewport .progress-bar-slot {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .story-preview-viewport .progress-bar-fill {
+            height: 100%;
+            background: #ffffff;
+            border-radius: 3px;
+            transition: width 0.15s ease-out;
+        }
+
+        .story-preview-viewport .header-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .story-preview-viewport .avatar-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .story-preview-viewport .avatar-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9fd3fc, #4a9ee8);
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .story-preview-viewport .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 50%;
+        }
+
+        .story-preview-viewport .avatar-fallback {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #0c2340;
+        }
+
+        .story-preview-viewport .header-titles {
             display: flex;
             flex-direction: column;
         }
 
-        .phone-speaker-notch {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 999px;
-            z-index: 50;
+        .story-preview-viewport .header-title {
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
         }
 
+        .story-preview-viewport .header-subtitle {
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 0.68em;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        /* Slide Deck Area */
+        .story-preview-viewport .story-slides {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .story-preview-viewport .story-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: var(--primary, #1a252f);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.2);
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .story-preview-viewport .story-bg-layer,
         .phone-bg-layer {
             position: absolute;
             inset: 0;
@@ -1024,91 +1147,122 @@
             z-index: 1;
         }
 
+        .story-preview-viewport .story-video-bg,
         .phone-bg-video {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
             z-index: 1;
+            pointer-events: none;
             display: none;
         }
 
+        .story-preview-viewport .preview-center-guide-x,
         .phone-center-guide-x {
             position: absolute;
             top: 50%;
             left: 0;
             right: 0;
             height: 1px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.12);
-            z-index: 5;
+            border-top: 1px dashed rgba(255, 255, 255, 0.15);
+            z-index: 6;
             pointer-events: none;
         }
 
+        .story-preview-viewport .preview-center-guide-y,
         .phone-center-guide-y {
             position: absolute;
             left: 50%;
             top: 0;
             bottom: 0;
             width: 1px;
-            border-left: 1px dashed rgba(255, 255, 255, 0.12);
-            z-index: 5;
+            border-left: 1px dashed rgba(255, 255, 255, 0.15);
+            z-index: 6;
             pointer-events: none;
         }
 
+        .story-preview-viewport .slide-elements-layer,
         .phone-elements-overlay {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
-            z-index: 10;
-            overflow: hidden;
             pointer-events: none;
+            overflow: hidden;
+            z-index: 10;
         }
 
+        .story-preview-viewport .slide-el,
         .preview-text-el {
             position: absolute;
             text-align: center;
-            max-width: 86%;
+            max-width: 88%;
             word-break: break-word;
-            white-space: pre-wrap;
             pointer-events: auto;
+            white-space: pre-wrap;
             user-select: none;
-            transition: transform 0.05s ease-out;
             font-family: 'Montserrat', sans-serif;
         }
 
+        .story-preview-viewport .slide-el-title,
         .preview-text-el.style-title {
             font-family: 'Montserrat', sans-serif;
             font-weight: var(--el-title-weight, 800);
-            font-size: calc(var(--el-title-size, 38px) * 0.75);
+            font-size: var(--el-title-size, 40px);
             text-transform: var(--el-title-transform, uppercase);
-            letter-spacing: var(--el-title-spacing, -0.06em);
+            letter-spacing: var(--el-title-spacing, -0.08em);
             color: var(--el-title-color, #ffffff);
             line-height: var(--el-title-line-height, 0.9);
-            text-shadow: 0 3px 14px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.85);
+            text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.8);
         }
 
+        .story-preview-viewport .slide-el-tag,
         .preview-text-el.style-tag {
             font-family: 'Montserrat', sans-serif;
             font-weight: var(--el-tag-weight, 600);
-            font-size: calc(var(--el-tag-size, 14px) * 0.85);
+            font-size: var(--el-tag-size, 14px);
             text-transform: var(--el-tag-transform, uppercase);
             letter-spacing: var(--el-tag-spacing, 0.15em);
-            color: var(--el-tag-color, #d4af37);
+            color: var(--el-tag-color, #ffffff);
             line-height: var(--el-tag-line-height, 1.2);
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
+        .story-preview-viewport .slide-el-body,
         .preview-text-el.style-body {
             font-family: 'Montserrat', sans-serif;
             font-weight: var(--el-body-weight, 500);
-            font-size: calc(var(--el-body-size, 18px) * 0.8);
+            font-size: var(--el-body-size, 18px);
             text-transform: var(--el-body-transform, none);
             letter-spacing: var(--el-body-spacing, 0em);
             color: var(--el-body-color, #f0f4f8);
             line-height: var(--el-body-line-height, 1.4);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.85);
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .story-preview-viewport .slide-rsvp-preview {
+            position: absolute;
+            inset: 0;
+            padding: 76px 20px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            z-index: 12;
+            overflow-y: auto;
+        }
+
+        .story-preview-viewport .slide-tag {
+            display: inline-block;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 0.72em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #d4af37;
+            text-transform: uppercase;
+            margin-bottom: 4px;
         }
 
         /* Styles Tuner Tab Layout & Controls */
@@ -1600,22 +1754,59 @@
                     <span class="preview-title">
                         <span>📱 Previsualización en Vivo</span>
                     </span>
-                    <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">9:16 vertical</span>
+                    <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">story-container (390×845)</span>
                 </div>
 
-                <div class="phone-mockup" id="phoneMockup">
-                    <div class="phone-speaker-notch"></div>
-                    <!-- Faint center crosshair guides -->
-                    <div class="phone-center-guide-x" title="Línea central vertical (Y = 0)"></div>
-                    <div class="phone-center-guide-y" title="Línea central horizontal (X = 0)"></div>
+                <div class="story-preview-viewport" id="storyPreviewViewport">
+                    <div class="story-container" id="storyContainer">
+                        <!-- Top Bar: Progress & Meta Header -->
+                        <div class="top-bar">
+                            <div class="progress-bars" id="previewProgressBars"></div>
+                            <div class="header-meta">
+                                <div class="avatar-group">
+                                    <div class="avatar-badge">
+                                        <img src="/assets/avatar.jpeg" alt="Celia & Alfredo" class="avatar-img" onerror="if(!this.dataset.triedPng){this.dataset.triedPng='1';this.src='/assets/avatar.png';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+                                        <span class="avatar-fallback" style="display: none;">C&A</span>
+                                    </div>
+                                    <div class="header-titles">
+                                        <span class="header-title">Celia & Alfredo</span>
+                                        <span class="header-subtitle">Nos casamos! — 19 de Marzo</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Background layer -->
-                    <div class="phone-bg-layer" id="phoneBgLayer"></div>
-                    <video class="phone-bg-video" id="phoneBgVideo" muted loop playsinline autoplay></video>
+                        <!-- Story Slides Deck -->
+                        <div class="story-slides" id="previewStorySlides">
+                            <div class="story-slide active" id="previewStorySlide">
+                                <!-- Background Image / Video -->
+                                <div class="story-bg-layer" id="previewBgLayer"></div>
+                                <video class="story-video-bg" id="previewBgVideo" muted loop playsinline autoplay></video>
 
-                    <!-- Real-time elements overlay -->
-                    <div class="phone-elements-overlay" id="phoneElementsOverlay">
-                        <!-- Populated dynamically by JS -->
+                                <!-- Alignment Crosshairs (Y=0, X=0) -->
+                                <div class="preview-center-guide-x" title="Línea central vertical (Y = 0)"></div>
+                                <div class="preview-center-guide-y" title="Línea central horizontal (X = 0)"></div>
+
+                                <!-- Dynamic Elements Layer -->
+                                <div class="slide-elements-layer" id="previewElementsLayer"></div>
+
+                                <!-- Special RSVP Slide Content Preview -->
+                                <div class="slide-body slide-rsvp-preview" id="previewRsvpBody" style="display: none;">
+                                    <span class="slide-tag">RSVP</span>
+                                    <h2 class="slide-title" style="font-size: 1.45em; margin-bottom: 4px; color: #fff;">Confirmación de Grupo</h2>
+                                    <p class="slide-desc" style="font-size: 0.84em; margin-bottom: 8px; color: #b8deff;">Confirmá la asistencia y menú de todos los invitados de este grupo:</p>
+                                    <div class="interactive-content rsvp-form-container" style="background: rgba(15,20,26,0.85); border-radius: 16px; padding: 14px; border: 1px solid rgba(212,175,55,0.3);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                            <span style="font-size: 0.9em; font-weight: 700; color: #fff;">👤 Juan Pérez</span>
+                                            <span style="background: rgba(46,204,113,0.2); color: #2ecc71; padding: 3px 8px; border-radius: 6px; font-size: 0.72em; font-weight: 700;">✓ Asiste</span>
+                                        </div>
+                                        <div style="margin-top: 10px; font-size: 0.78em; color: #a0aec0;">
+                                            <div>🍽️ Menú General • Sin restricciones</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2475,53 +2666,78 @@
     }
 
     // -------------------------------------------------------------
-    // LIVE PREVIEW ENGINE (9:16 vertical mockup)
+    // LIVE PREVIEW ENGINE (story-container)
     // -------------------------------------------------------------
     function updateLivePreview() {
         const slide = getCurrentSlide();
-        const bgLayer = document.getElementById('phoneBgLayer');
-        const bgVideo = document.getElementById('phoneBgVideo');
-        const overlay = document.getElementById('phoneElementsOverlay');
-        if (!slide || !bgLayer || !bgVideo || !overlay) return;
+        const bgLayer = document.getElementById('previewBgLayer') || document.getElementById('phoneBgLayer');
+        const bgVideo = document.getElementById('previewBgVideo') || document.getElementById('phoneBgVideo');
+        const overlay = document.getElementById('previewElementsLayer') || document.getElementById('phoneElementsOverlay');
+        const rsvpBody = document.getElementById('previewRsvpBody');
+        const progressBars = document.getElementById('previewProgressBars');
+        if (!slide) return;
+
+        // Progress bars in top-bar
+        if (progressBars && Array.isArray(slidesData)) {
+            progressBars.innerHTML = '';
+            const currIdx = slidesData.findIndex(s => s.id === currentSlideId);
+            slidesData.forEach((s, idx) => {
+                const slot = document.createElement('div');
+                slot.className = 'progress-bar-slot' + (idx < currIdx ? ' completed' : '');
+                const fill = document.createElement('div');
+                fill.className = 'progress-bar-fill';
+                fill.style.width = (idx < currIdx) ? '100%' : ((idx === currIdx) ? '100%' : '0%');
+                slot.appendChild(fill);
+                progressBars.appendChild(slot);
+            });
+        }
 
         // Background
-        const bg = slide.background || '';
-        if (bg) {
+        const bg = (slide.background || '').trim();
+        if (bg && bgLayer && bgVideo) {
+            const bgUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURIComponent(bg));
             if (isVideoFile(bg)) {
                 bgLayer.style.backgroundImage = 'none';
-                const videoSrc = '/assets/backgrounds/' + encodeURIComponent(bg);
-                if (bgVideo.getAttribute('src') !== videoSrc) {
-                    bgVideo.src = videoSrc;
+                if (bgVideo.getAttribute('src') !== bgUrl) {
+                    bgVideo.src = bgUrl;
                 }
                 bgVideo.style.display = 'block';
                 bgVideo.play().catch(() => {});
             } else {
                 bgVideo.pause();
                 bgVideo.style.display = 'none';
-                bgLayer.style.backgroundImage = `url('/assets/backgrounds/${encodeURIComponent(bg)}')`;
+                bgLayer.style.backgroundImage = `url('${bgUrl}')`;
             }
-        } else {
+        } else if (bgLayer && bgVideo) {
             bgVideo.pause();
             bgVideo.style.display = 'none';
             bgLayer.style.backgroundImage = 'none';
         }
 
+        // Handle RSVP slide vs normal dynamic slide
+        const isRsvp = (slide.id === 'rsvp');
+        if (rsvpBody) {
+            rsvpBody.style.display = isRsvp ? 'flex' : 'none';
+        }
+
         // Render live overlay elements
-        overlay.innerHTML = '';
-        if (Array.isArray(slide.elements)) {
-            slide.elements.forEach(el => {
-                if (el.type === 'text') {
-                    const textDiv = document.createElement('div');
-                    textDiv.className = `preview-text-el style-${el.style || 'body'}`;
-                    const posX = el.x !== undefined ? el.x : 0;
-                    const posY = el.y !== undefined ? el.y : 0;
-                    textDiv.style.left = `calc(50% + ${posX}%)`;
-                    textDiv.style.top = `calc(50% + ${posY}%)`;
-                    textDiv.style.transform = 'translate(-50%, -50%)';
-                    textDiv.textContent = el.content || '';
-                    overlay.appendChild(textDiv);
-                }
-            });
+        if (overlay) {
+            overlay.innerHTML = '';
+            if (!isRsvp && Array.isArray(slide.elements)) {
+                slide.elements.forEach(el => {
+                    if (el.type === 'text') {
+                        const textDiv = document.createElement('div');
+                        textDiv.className = `slide-el slide-el-${el.style || 'body'} preview-text-el style-${el.style || 'body'}`;
+                        const posX = el.x !== undefined ? el.x : 0;
+                        const posY = el.y !== undefined ? el.y : 0;
+                        textDiv.style.left = `calc(50% + ${posX}%)`;
+                        textDiv.style.top = `calc(50% + ${posY}%)`;
+                        textDiv.style.transform = 'translate(-50%, -50%)';
+                        textDiv.textContent = el.content || '';
+                        overlay.appendChild(textDiv);
+                    }
+                });
+            }
         }
     }
 

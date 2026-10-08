@@ -339,8 +339,8 @@ class TestGoogleSheetsTable(unittest.TestCase):
     def test_panel_route_dev_mode_and_production_protection(self):
         from app import app
         with app.test_client() as client:
-            # 1. Dev mode active -> 200 OK
-            with patch("app.is_dev_mode", return_value=True):
+            # 1. Dev mode active -> 200 OK (isolate save_slides so tests don't overwrite user slides.json)
+            with patch("app.is_dev_mode", return_value=True), patch("app.save_slides"):
                 res = client.get("/panel")
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Panel de Control", res.data)
