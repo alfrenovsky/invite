@@ -61,11 +61,11 @@
             color: var(--text-main);
             font-family: 'Montserrat', sans-serif;
             min-height: 100vh;
-            padding: 14px 20px 40px;
+            padding: 1vh 20px 20px;
         }
 
         .panel-container {
-            max-width: 1280px;
+            max-width: 1440px;
             margin: 0 auto;
         }
 
@@ -89,14 +89,14 @@
 
         .grid-two-col {
             display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 28px;
-            margin-bottom: 40px;
+            grid-template-columns: 1fr;
+            gap: 22px;
+            margin-bottom: 30px;
         }
 
-        @media (max-width: 900px) {
+        @media (min-width: 1250px) {
             .grid-two-col {
-                grid-template-columns: 1fr;
+                grid-template-columns: 320px 1fr;
             }
         }
 
@@ -560,16 +560,17 @@
         /* Navigation Bar */
         .panel-nav-bar {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 18px;
+            gap: 12px;
+            margin-bottom: 0px;
             background: rgba(18, 24, 38, 0.7);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: var(--radius);
-            padding: 8px 14px;
+            padding: 8px 12px;
         }
 
         .panel-nav-tabs {
@@ -754,6 +755,7 @@
         }
 
         /* Split Editor Layout */
+        .panel-split-grid,
         .slide-split-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
@@ -762,12 +764,21 @@
         }
 
         @media (max-width: 1050px) {
+            .panel-split-grid,
             .slide-split-grid {
                 grid-template-columns: 1fr;
             }
         }
 
-        /* Left Column */
+        /* Left Column: Navigation & Content */
+        .panel-left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 0;
+        }
+
+        /* Editor Column */
         .editor-form-col {
             display: flex;
             flex-direction: column;
@@ -1213,14 +1224,14 @@
         /* Styles Tuner Tab Layout & Controls */
         .styles-split-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 28px;
+            grid-template-columns: 1fr;
+            gap: 24px;
             align-items: start;
         }
 
-        @media (max-width: 960px) {
+        @media (min-width: 1300px) {
             .styles-split-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
             }
         }
 
@@ -1502,437 +1513,437 @@
 <body>
 
 <div class="panel-container">
-    <!-- Top Navigation Tabs Menu -->
-    <nav class="panel-nav-bar">
-        <div class="panel-nav-tabs">
-            <button type="button" class="nav-tab active" data-tab="tab-slides" id="tabBtnSlides" onclick="switchTab('tab-slides')">
-                <span class="tab-icon">🎞️</span>
-                <span class="tab-label">Slides</span>
-                <span class="tab-badge" id="slidesCountBadge">{{ slides|length }}</span>
-            </button>
-            <button type="button" class="nav-tab" data-tab="tab-backgrounds" id="tabBtnBackgrounds" onclick="switchTab('tab-backgrounds')">
-                <span class="tab-icon">🖼️</span>
-                <span class="tab-label">Fondos y Videos</span>
-                <span class="tab-badge" id="bgNavBadge">{{ backgrounds|length }}</span>
-            </button>
-            <button type="button" class="nav-tab" data-tab="tab-styles" id="tabBtnStyles" onclick="switchTab('tab-styles')">
-                <span class="tab-icon">🎨</span>
-                <span class="tab-label">Estilos</span>
-            </button>
-        </div>
-
-    </nav>
-
-    <!-- TAB: Fondos y Videos (Already Done) -->
-    <div id="tab-backgrounds" class="tab-pane">
-        <!-- Top Two Columns: Upload & Backgrounds Gallery -->
-        <div class="grid-two-col">
-            <!-- Upload New Background Form -->
-            <section class="panel-card">
-                <h2 class="section-title">
-                    <span>Subir Fondo / Video</span>
-                </h2>
-                <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>Archivo de Imagen o Video</label>
-                        <div class="file-upload-box" id="fileDropBox">
-                            <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v" required>
-                            <div class="upload-box-icon">📁</div>
-                            <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
-                            <div class="selected-file-name" id="selectedFileName"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="bgNameInput">Nombre personalizado (opcional)</label>
-                        <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. video_intro o iglesia_atardecer">
-                    </div>
-
-                    <button type="submit" class="btn-submit" id="btnUploadSubmit">
-                        <span>⬆ Subir Fondo / Video</span>
+    <div class="panel-split-grid">
+        <!-- Left Column: Navigation Tabs & Tab Content Panes -->
+        <div class="panel-left-col">
+            <!-- Top Navigation Tabs Menu -->
+            <nav class="panel-nav-bar">
+                <div class="panel-nav-tabs">
+                    <button type="button" class="nav-tab active" data-tab="tab-slides" id="tabBtnSlides" onclick="switchTab('tab-slides')">
+                        <span class="tab-icon">🎞️</span>
+                        <span class="tab-label">Slides</span>
+                        <span class="tab-badge" id="slidesCountBadge">{{ slides|length }}</span>
                     </button>
-                </form>
-            </section>
+                    <button type="button" class="nav-tab" data-tab="tab-backgrounds" id="tabBtnBackgrounds" onclick="switchTab('tab-backgrounds')">
+                        <span class="tab-icon">🖼️</span>
+                        <span class="tab-label">Fondos y Videos</span>
+                        <span class="tab-badge" id="bgNavBadge">{{ backgrounds|length }}</span>
+                    </button>
+                    <button type="button" class="nav-tab" data-tab="tab-styles" id="tabBtnStyles" onclick="switchTab('tab-styles')">
+                        <span class="tab-icon">🎨</span>
+                        <span class="tab-label">Estilos</span>
+                    </button>
+                </div>
+            </nav>
 
-            <!-- Backgrounds List / Gallery -->
-            <section class="panel-card">
-                <h2 class="section-title">
-                    <span>Fondos y Videos Disponibles</span>
-                    <span class="count" id="bgCountBadge">{{ backgrounds|length }}</span>
-                </h2>
-
-                {% if backgrounds %}
-                    <div class="bg-gallery" id="bgGallery">
-                        {% for bg in backgrounds %}
-                            {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-                            <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}" data-is-video="{{ 'true' if is_vid else 'false' }}">
-                                <div class="bg-thumb-wrap">
-                                    {% if is_vid %}
-                                        <video src="/assets/backgrounds/{{ bg }}" class="bg-thumb" muted loop playsinline autoplay></video>
-                                        <span class="media-badge">🎬 Video</span>
-                                    {% else %}
-                                        <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
-                                    {% endif %}
-                                </div>
-                                <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
-                                    <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
-                                    <div class="bg-btn-group">
-                                        <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar archivo">✏️</button>
-                                        <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteBackground('{{ loop.index }}', '{{ bg }}')" title="Eliminar archivo">🗑️</button>
-                                    </div>
-                                </div>
-                                <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
-                                    <input type="text" class="rename-input" id="renameInput_{{ loop.index }}" value="{{ bg }}">
-                                    <div class="rename-actions">
-                                        <button type="button" class="btn-rename-save" onclick="saveRename('{{ loop.index }}', '{{ bg }}')" title="Guardar">✓</button>
-                                        <button type="button" class="btn-rename-cancel" onclick="cancelRename('{{ loop.index }}')" title="Cancelar">✕</button>
-                                    </div>
-                                </div>
+            <!-- TAB: Slides Manager & Live Split Editor -->
+            <div id="tab-slides" class="tab-pane active">
+                <div class="editor-form-col">
+                    <!-- Slides Selection & Manager -->
+                    <section class="panel-card">
+                        <div class="slides-card-header">
+                            <h3 class="section-title" style="margin-bottom: 0;">
+                                <span>Slides</span>
+                                <span class="count" id="slidesSectionBadge">{{ slides|length }}</span>
+                            </h3>
+                            <div class="slide-manager-actions">
+                                <button type="button" class="btn-ctrl" id="btnMoveSlideUp" onclick="moveSlide(-1)" title="Mover slide hacia arriba en el orden">
+                                    <span>▲ Subir</span>
+                                </button>
+                                <button type="button" class="btn-ctrl" id="btnMoveSlideDown" onclick="moveSlide(1)" title="Mover slide hacia abajo en el orden">
+                                    <span>▼ Bajar</span>
+                                </button>
+                                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnNewSlide" onclick="openNewSlideModal()" title="Crear nuevo slide">
+                                    <span>+ Nuevo</span>
+                                </button>
+                                <button type="button" class="btn-ctrl btn-ctrl-danger" id="btnDeleteSlide" onclick="deleteCurrentSlide()" title="Eliminar slide actual">
+                                    <span>🗑️</span>
+                                </button>
                             </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p id="noBgMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
-                {% endif %}
-            </section>
-        </div>
-    </div>
-
-    <!-- TAB: Slides Manager & Live Split Editor -->
-    <div id="tab-slides" class="tab-pane active">
-        <!-- Split Grid: Left Editor & Right Live 9:16 Preview -->
-        <div class="slide-split-grid">
-            <!-- Left Column: Slide Config & Elements CRUD -->
-            <div class="editor-form-col">
-                <!-- Slides Selection & Manager -->
-                <section class="panel-card">
-                    <div class="slides-card-header">
-                        <h3 class="section-title" style="margin-bottom: 0;">
-                            <span>Slides</span>
-                            <span class="count" id="slidesSectionBadge">{{ slides|length }}</span>
+                        </div>
+                        <div class="slides-chips-container" id="slidesChipsContainer">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </section>
+                    <!-- Slide Basic Settings -->
+                    <section class="panel-card">
+                        <h3 class="section-title" style="margin-bottom: 14px;">
+                            <span>Configuración del Slide</span>
+                            <span class="count" id="activeSlideBadgeId"></span>
                         </h3>
-                        <div class="slide-manager-actions">
-                            <button type="button" class="btn-ctrl" id="btnMoveSlideUp" onclick="moveSlide(-1)" title="Mover slide hacia arriba en el orden">
-                                <span>▲ Subir</span>
-                            </button>
-                            <button type="button" class="btn-ctrl" id="btnMoveSlideDown" onclick="moveSlide(1)" title="Mover slide hacia abajo en el orden">
-                                <span>▼ Bajar</span>
-                            </button>
-                            <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnNewSlide" onclick="openNewSlideModal()" title="Crear nuevo slide">
-                                <span>+ Nuevo</span>
-                            </button>
-                            <button type="button" class="btn-ctrl btn-ctrl-danger" id="btnDeleteSlide" onclick="deleteCurrentSlide()" title="Eliminar slide actual">
-                                <span>🗑️</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="slides-chips-container" id="slidesChipsContainer">
-                        <!-- Populated dynamically by JS -->
-                    </div>
-                </section>
-                <!-- Slide Basic Settings -->
-                <section class="panel-card">
-                    <h3 class="section-title" style="margin-bottom: 14px;">
-                        <span>Configuración del Slide</span>
-                        <span class="count" id="activeSlideBadgeId"></span>
-                    </h3>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                            <div class="form-group">
+                                <label for="slideTitleInput">Título del Slide</label>
+                                <input type="text" class="form-input" id="slideTitleInput" placeholder="ej. Portada, Fiesta, etc.">
+                            </div>
+                            <div class="form-group">
+                                <label for="slideDurationInput">
+                                    <span>Duración (ms)</span>
+                                    <span class="sub-label-hint">0 = sin auto-avance</span>
+                                </label>
+                                <input type="number" class="form-input" id="slideDurationInput" min="0" step="500" value="7000">
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label for="slideTitleInput">Título del Slide</label>
-                            <input type="text" class="form-input" id="slideTitleInput" placeholder="ej. Portada, Fiesta, etc.">
+                            <label for="slideBgSelect">Fondo / Video</label>
+                            <select id="slideBgSelect" class="form-select">
+                                <option value="">(Sin fondo / Default)</option>
+                                {% for bg in backgrounds %}
+                                    <option value="{{ bg }}">{{ bg }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label for="slideDurationInput">
-                                <span>Duración (ms)</span>
-                                <span class="sub-label-hint">0 = sin auto-avance</span>
-                            </label>
-                            <input type="number" class="form-input" id="slideDurationInput" min="0" step="500" value="7000">
+                    </section>
+
+                    <!-- Elements CRUD Section -->
+                    <section class="panel-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 class="section-title" style="margin-bottom: 0;">
+                                <span>Elementos</span>
+                                <span class="count" id="elementsCountBadge">0</span>
+                            </h3>
+                            <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
+                                <span>+ Agregar Texto</span>
+                            </button>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="slideBgSelect">Fondo / Video</label>
-                        <select id="slideBgSelect" class="form-select">
-                            <option value="">(Sin fondo / Default)</option>
-                            {% for bg in backgrounds %}
-                                <option value="{{ bg }}">{{ bg }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </section>
+                        <div id="elementsListContainer">
+                            <!-- Populated dynamically by JS -->
+                        </div>
 
-                <!-- Elements CRUD Section -->
-                <section class="panel-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 class="section-title" style="margin-bottom: 0;">
-                            <span>Elementos</span>
-                            <span class="count" id="elementsCountBadge">0</span>
-                        </h3>
-                        <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
-                            <span>+ Agregar Texto</span>
-                        </button>
-                    </div>
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--card-border);">
+                            <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
+                            <button type="button" class="btn-save-slide" id="btnSaveActiveSlide" onclick="saveActiveSlide()">
+                                <span>💾 Guardar Slide</span>
+                            </button>
+                        </div>
 
-                    <div id="elementsListContainer">
-                        <!-- Populated dynamically by JS -->
-                    </div>
-
-                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--card-border);">
-                        <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
-                        <button type="button" class="btn-save-slide" id="btnSaveActiveSlide" onclick="saveActiveSlide()">
-                            <span>💾 Guardar Slide</span>
-                        </button>
-                    </div>
-
-                    <p class="preview-hint" style="margin-top: 14px;">
-                        🎯 <strong>(0%, 0%)</strong> es el centro exacto del slide. Rango: <code>-60%</code> a <code>60%</code> en horizontal y vertical. Los cambios se actualizan en vivo al editar.
-                    </p>
-                </section>
+                        <p class="preview-hint" style="margin-top: 14px;">
+                            🎯 <strong>(0%, 0%)</strong> es el centro exacto del slide. Rango: <code>-60%</code> a <code>60%</code> en horizontal y vertical. Los cambios se actualizan en vivo al editar.
+                        </p>
+                    </section>
+                </div>
             </div>
 
-            <!-- Right Column: Live Sticky 98vh Preview Mockup -->
-            <div class="preview-sticky-wrap">
-                <div class="story-preview-viewport" id="storyPreviewViewport">
-                    <div class="story-container" id="storyContainer">
-                        <!-- Top Bar: Progress & Meta Header -->
-                        <div class="top-bar">
-                            <div class="progress-bars" id="previewProgressBars"></div>
-                            <div class="header-meta">
-                                <div class="avatar-group">
-                                    <div class="avatar-badge">
-                                        <img src="/assets/avatar.jpeg" alt="Celia & Alfredo" class="avatar-img" onerror="if(!this.dataset.triedPng){this.dataset.triedPng='1';this.src='/assets/avatar.png';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
-                                        <span class="avatar-fallback" style="display: none;">C&A</span>
+            <!-- TAB: Fondos y Videos (Already Done) -->
+            <div id="tab-backgrounds" class="tab-pane">
+                <!-- Top Two Columns: Upload & Backgrounds Gallery -->
+                <div class="grid-two-col">
+                    <!-- Upload New Background Form -->
+                    <section class="panel-card">
+                        <h2 class="section-title">
+                            <span>Subir Fondo / Video</span>
+                        </h2>
+                        <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label>Archivo de Imagen o Video</label>
+                                <div class="file-upload-box" id="fileDropBox">
+                                    <input type="file" name="background_file" id="bgFileInput" accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v" required>
+                                    <div class="upload-box-icon">📁</div>
+                                    <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
+                                    <div class="selected-file-name" id="selectedFileName"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="bgNameInput">Nombre personalizado (opcional)</label>
+                                <input type="text" class="form-input" id="bgNameInput" name="background_name" placeholder="ej. video_intro o iglesia_atardecer">
+                            </div>
+
+                            <button type="submit" class="btn-submit" id="btnUploadSubmit">
+                                <span>⬆ Subir Fondo / Video</span>
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Backgrounds List / Gallery -->
+                    <section class="panel-card">
+                        <h2 class="section-title">
+                            <span>Fondos y Videos Disponibles</span>
+                            <span class="count" id="bgCountBadge">{{ backgrounds|length }}</span>
+                        </h2>
+
+                        {% if backgrounds %}
+                            <div class="bg-gallery" id="bgGallery">
+                                {% for bg in backgrounds %}
+                                    {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                    <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}" data-is-video="{{ 'true' if is_vid else 'false' }}">
+                                        <div class="bg-thumb-wrap">
+                                            {% if is_vid %}
+                                                <video src="/assets/backgrounds/{{ bg }}" class="bg-thumb" muted loop playsinline autoplay></video>
+                                                <span class="media-badge">🎬 Video</span>
+                                            {% else %}
+                                                <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
+                                            {% endif %}
+                                        </div>
+                                        <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
+                                            <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
+                                            <div class="bg-btn-group">
+                                                <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar archivo">✏️</button>
+                                                <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteBackground('{{ loop.index }}', '{{ bg }}')" title="Eliminar archivo">🗑️</button>
+                                            </div>
+                                        </div>
+                                        <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
+                                            <input type="text" class="rename-input" id="renameInput_{{ loop.index }}" value="{{ bg }}">
+                                            <div class="rename-actions">
+                                                <button type="button" class="btn-rename-save" onclick="saveRename('{{ loop.index }}', '{{ bg }}')" title="Guardar">✓</button>
+                                                <button type="button" class="btn-rename-cancel" onclick="cancelRename('{{ loop.index }}')" title="Cancelar">✕</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="header-titles">
-                                        <span class="header-title">Celia & Alfredo</span>
-                                        <span class="header-subtitle">Nos casamos! — 19 de Marzo</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p id="noBgMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fondos subidos todavía en la carpeta backgrounds.</p>
+                        {% endif %}
+                    </section>
+                </div>
+            </div>
+
+            <!-- TAB: Styles Tuner & Live Typography Preview -->
+            <div id="tab-styles" class="tab-pane">
+                <div class="styles-split-grid">
+                    <!-- Left Column: Styles Editor & Controls -->
+                    <div class="styles-editor-col">
+                        <section class="panel-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                                <h2 class="section-title" style="margin-bottom: 0;">
+                                    <span>Afinador de Estilos</span>
+                                </h2>
+                                <span class="font-fixed-badge">Fuente: Montserrat</span>
+                            </div>
+
+                            <!-- Sub-nav: select style to tune (Title, Tag, Body) -->
+                            <div class="styles-subnav" role="tablist">
+                                <button type="button" class="styles-subtab-btn active" id="subtabBtnTitle" onclick="switchStyleSubTab('title')">
+                                    <span>🔤 Título</span>
+                                </button>
+                                <button type="button" class="styles-subtab-btn" id="subtabBtnTag" onclick="switchStyleSubTab('tag')">
+                                    <span>🏷️ Tag</span>
+                                </button>
+                                <button type="button" class="styles-subtab-btn" id="subtabBtnBody" onclick="switchStyleSubTab('body')">
+                                    <span>📄 Cuerpo</span>
+                                </button>
+                            </div>
+
+                            <!-- Dynamic Controls Form for active style -->
+                            <div class="styles-form-fields" id="stylesFormFields">
+                                <!-- Color picker row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="styleColorPicker">Color del Texto</label>
+                                        <span class="style-prop-badge" id="styleColorValBadge">#FFFFFF</span>
+                                    </div>
+                                    <div class="color-picker-combo">
+                                        <input type="color" id="styleColorPicker" class="color-swatch-input" oninput="onColorPickerChange(this.value)">
+                                        <input type="text" id="styleColorHex" class="form-input color-hex-input" placeholder="#FFFFFF" oninput="onColorHexChange(this.value)">
+                                    </div>
+                                </div>
+
+                                <!-- Font Size row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="styleFontSizeSlider">Tamaño de Fuente (px)</label>
+                                        <span class="style-prop-badge" id="styleFontSizeBadge">38px</span>
+                                    </div>
+                                    <div class="pos-input-group">
+                                        <input type="range" class="pos-range-slider" id="styleFontSizeSlider" min="10" max="80" step="1" value="38" oninput="onFontSizeChange(this.value)">
+                                        <input type="number" class="pos-num-input" id="styleFontSizeNum" min="10" max="80" step="1" value="38" oninput="onFontSizeChange(this.value)">
+                                    </div>
+                                </div>
+
+                                <!-- Font Weight row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="styleFontWeightSelect">Grosor de Fuente (Weight)</label>
+                                        <span class="style-prop-badge" id="styleFontWeightBadge">800 - ExtraBold</span>
+                                    </div>
+                                    <select id="styleFontWeightSelect" class="form-select" onchange="onFontWeightChange(this.value)">
+                                        <option value="300">300 — Light (Fina)</option>
+                                        <option value="400">400 — Regular (Normal)</option>
+                                        <option value="500">500 — Medium (Media)</option>
+                                        <option value="600">600 — SemiBold (Semi Negrita)</option>
+                                        <option value="700">700 — Bold (Negrita)</option>
+                                        <option value="800">800 — ExtraBold (Estilo Póster)</option>
+                                        <option value="900">900 — Black (Ultra Pesada)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Letter Spacing row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="styleLetterSpacingSlider">Espaciado entre Letras (Letter-Spacing)</label>
+                                        <span class="style-prop-badge" id="styleLetterSpacingBadge">-0.06em</span>
+                                    </div>
+                                    <div class="pos-input-group">
+                                        <input type="range" class="pos-range-slider" id="styleLetterSpacingSlider" min="-0.12" max="0.30" step="0.01" value="-0.06" oninput="onLetterSpacingChange(this.value)">
+                                        <input type="number" class="pos-num-input" id="styleLetterSpacingNum" min="-0.12" max="0.30" step="0.01" value="-0.06" oninput="onLetterSpacingChange(this.value)">
+                                    </div>
+                                    <span class="sub-label-hint">Valores negativos (-0.05 a -0.08) compactan los caracteres logrando el estilo bloque.</span>
+                                </div>
+
+                                <!-- Line Height row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="styleLineHeightSlider">Interlineado (Line-Height)</label>
+                                        <span class="style-prop-badge" id="styleLineHeightBadge">0.90</span>
+                                    </div>
+                                    <div class="pos-input-group">
+                                        <input type="range" class="pos-range-slider" id="styleLineHeightSlider" min="0.70" max="2.00" step="0.05" value="0.90" oninput="onLineHeightChange(this.value)">
+                                        <input type="number" class="pos-num-input" id="styleLineHeightNum" min="0.70" max="2.00" step="0.05" value="0.90" oninput="onLineHeightChange(this.value)">
+                                    </div>
+                                    <span class="sub-label-hint">0.85 - 0.95 compacta los títulos multilínea sin espacio vertical desperdiciado.</span>
+                                </div>
+
+                                <!-- Text Transform row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label>Transformación de Texto</label>
+                                        <span class="style-prop-badge" id="styleTransformBadge">MAYÚSCULAS</span>
+                                    </div>
+                                    <div class="style-picker-group">
+                                        <button type="button" class="style-opt-btn active" id="btnTransformUpper" onclick="setStyleTransform('uppercase')">
+                                            MAYÚSCULAS (uppercase)
+                                        </button>
+                                        <button type="button" class="style-opt-btn" id="btnTransformNone" onclick="setStyleTransform('none')">
+                                            Normal (sin forzar)
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- GPT Poster Explanation Callout -->
+                            <div class="gpt-poster-callout">
+                                <div class="gpt-callout-header">
+                                    <span class="gpt-callout-icon">💡</span>
+                                    <strong>¿Cómo lograr la tipografía estilo póster de <code>gpt.html</code>?</strong>
+                                </div>
+                                <p class="gpt-callout-desc">
+                                    En <code>gpt.html</code> el texto impactante y monolítico se consigue combinando 4 parámetros en la fuente <strong>Montserrat</strong>:
+                                </p>
+                                <ul class="gpt-callout-list">
+                                    <li><strong>Grosor (Weight):</strong> <code>800</code> o <code>900</code> (ExtraBold / Black).</li>
+                                    <li><strong>Letter-Spacing:</strong> Negativo, entre <code>-0.05em</code> y <code>-0.08em</code> (recomendado: <code>-0.06em</code>). Las letras se pegan entre sí como un solo bloque.</li>
+                                    <li><strong>Line-Height:</strong> Muy compacto (entre <code>0.85</code> y <code>0.90</code>). Elimina las franjas vacías entre renglones.</li>
+                                    <li><strong>Transformación:</strong> <code>MAYÚSCULAS</code> (uppercase). Las mayúsculas tienen altura homogénea, creando una silueta rectangular limpia.</li>
+                                </ul>
+                                <button type="button" class="btn-apply-poster-preset" onclick="applyGptPosterPreset()">
+                                    ⚡ Aplicar Preset Póster de gpt.html al Título
+                                </button>
+                            </div>
+
+                            <!-- Save Actions -->
+                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--card-border);">
+                                <div class="save-indicator" id="stylesSaveIndicator">✓ Guardado</div>
+                                <button type="button" class="btn-ctrl" onclick="resetStylesToDefault()" title="Volver a los valores por defecto">
+                                    <span>↺ Restablecer Defaults</span>
+                                </button>
+                                <button type="button" class="btn-save-slide" id="btnSaveStyles" onclick="saveStyles()">
+                                    <span>💾 Guardar Estilos</span>
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Right Column: Live Previews -->
+                    <div class="styles-preview-col">
+                        <!-- Single Active Style Preview -->
+                        <section class="panel-card" style="margin-bottom: 24px;">
+                            <div class="preview-header-info" style="margin-bottom: 12px;">
+                                <span class="preview-title">
+                                    <span>👁️ Vista Previa: <span id="previewActiveStyleName" style="color: var(--accent);">Título</span></span>
+                                </span>
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">En vivo</span>
+                            </div>
+
+                            <div class="style-single-preview-box" id="styleSinglePreviewBox">
+                                <div id="singlePreviewSampleText" class="sample-text-target" contenteditable="true" spellcheck="false" title="Hacé clic para escribir tu propio texto de prueba">
+                                    CELIA & ALFREDO
+                                </div>
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                                ✏️ <em>Podés hacer clic en el texto para editar la frase de muestra.</em>
+                            </p>
+                        </section>
+
+                        <!-- Composite Real-World Invitation Preview -->
+                        <section class="panel-card">
+                            <div class="preview-header-info" style="margin-bottom: 12px;">
+                                <span class="preview-title">
+                                    <span>📱 Composición Completa (Tag + Título + Cuerpo)</span>
+                                </span>
+                                <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">Jerarquía visual</span>
+                            </div>
+
+                            <div class="style-composite-card" id="styleCompositeCard">
+                                <span class="preview-composite-tag" id="compositeTagText">NUESTRA BODA</span>
+                                <h2 class="preview-composite-title" id="compositeTitleText">CELIA & ALFREDO</h2>
+                                <p class="preview-composite-body" id="compositeBodyText">¡Queremos compartir este día tan especial con vos!</p>
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                                Muestra cómo armonizan los 3 estilos juntos en la invitación.
+                            </p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Live Sticky 98vh Preview Mockup -->
+        <div class="preview-sticky-wrap">
+            <div class="story-preview-viewport" id="storyPreviewViewport">
+                <div class="story-container" id="storyContainer">
+                    <!-- Top Bar: Progress & Meta Header -->
+                    <div class="top-bar">
+                        <div class="progress-bars" id="previewProgressBars"></div>
+                        <div class="header-meta">
+                            <div class="avatar-group">
+                                <div class="avatar-badge">
+                                    <img src="/assets/avatar.jpeg" alt="Celia & Alfredo" class="avatar-img" onerror="if(!this.dataset.triedPng){this.dataset.triedPng='1';this.src='/assets/avatar.png';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+                                    <span class="avatar-fallback" style="display: none;">C&A</span>
+                                </div>
+                                <div class="header-titles">
+                                    <span class="header-title">Celia & Alfredo</span>
+                                    <span class="header-subtitle">Nos casamos! — 19 de Marzo</span>
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        <!-- Story Slides Deck -->
-                        <div class="story-slides" id="previewStorySlides">
-                            <div class="story-slide active" id="previewStorySlide">
-                                <!-- Background Image / Video -->
-                                <div class="story-bg-layer" id="previewBgLayer"></div>
-                                <video class="story-video-bg" id="previewBgVideo" muted loop playsinline autoplay></video>
+                    <!-- Story Slides Deck -->
+                    <div class="story-slides" id="previewStorySlides">
+                        <div class="story-slide active" id="previewStorySlide">
+                            <!-- Background Image / Video -->
+                            <div class="story-bg-layer" id="previewBgLayer"></div>
+                            <video class="story-video-bg" id="previewBgVideo" muted loop playsinline autoplay></video>
 
-                                <!-- Alignment Crosshairs (Y=0, X=0) -->
-                                <div class="preview-center-guide-x" title="Línea central vertical (Y = 0)"></div>
-                                <div class="preview-center-guide-y" title="Línea central horizontal (X = 0)"></div>
+                            <!-- Alignment Crosshairs (Y=0, X=0) -->
+                            <div class="preview-center-guide-x" title="Línea central vertical (Y = 0)"></div>
+                            <div class="preview-center-guide-y" title="Línea central horizontal (X = 0)"></div>
 
-                                <!-- Dynamic Elements Layer -->
-                                <div class="slide-elements-layer" id="previewElementsLayer"></div>
+                            <!-- Dynamic Elements Layer -->
+                            <div class="slide-elements-layer" id="previewElementsLayer"></div>
 
-                                <!-- Special RSVP Slide Content Preview -->
-                                <div class="slide-body slide-rsvp-preview" id="previewRsvpBody" style="display: none;">
-                                    <span class="slide-tag">RSVP</span>
-                                    <h2 class="slide-title" style="font-size: 1.45em; margin-bottom: 4px; color: #fff;">Confirmación de Grupo</h2>
-                                    <p class="slide-desc" style="font-size: 0.84em; margin-bottom: 8px; color: #b8deff;">Confirmá la asistencia y menú de todos los invitados de este grupo:</p>
-                                    <div class="interactive-content rsvp-form-container" style="background: rgba(15,20,26,0.85); border-radius: 16px; padding: 14px; border: 1px solid rgba(212,175,55,0.3);">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                            <span style="font-size: 0.9em; font-weight: 700; color: #fff;">👤 Juan Pérez</span>
-                                            <span style="background: rgba(46,204,113,0.2); color: #2ecc71; padding: 3px 8px; border-radius: 6px; font-size: 0.72em; font-weight: 700;">✓ Asiste</span>
-                                        </div>
-                                        <div style="margin-top: 10px; font-size: 0.78em; color: #a0aec0;">
-                                            <div>🍽️ Menú General • Sin restricciones</div>
-                                        </div>
+                            <!-- Special RSVP Slide Content Preview -->
+                            <div class="slide-body slide-rsvp-preview" id="previewRsvpBody" style="display: none;">
+                                <span class="slide-tag">RSVP</span>
+                                <h2 class="slide-title" style="font-size: 1.45em; margin-bottom: 4px; color: #fff;">Confirmación de Grupo</h2>
+                                <p class="slide-desc" style="font-size: 0.84em; margin-bottom: 8px; color: #b8deff;">Confirmá la asistencia y menú de todos los invitados de este grupo:</p>
+                                <div class="interactive-content rsvp-form-container" style="background: rgba(15,20,26,0.85); border-radius: 16px; padding: 14px; border: 1px solid rgba(212,175,55,0.3);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <span style="font-size: 0.9em; font-weight: 700; color: #fff;">👤 Juan Pérez</span>
+                                        <span style="background: rgba(46,204,113,0.2); color: #2ecc71; padding: 3px 8px; border-radius: 6px; font-size: 0.72em; font-weight: 700;">✓ Asiste</span>
+                                    </div>
+                                    <div style="margin-top: 10px; font-size: 0.78em; color: #a0aec0;">
+                                        <div>🍽️ Menú General • Sin restricciones</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB: Styles Tuner & Live Typography Preview -->
-    <div id="tab-styles" class="tab-pane">
-        <div class="styles-split-grid">
-            <!-- Left Column: Styles Editor & Controls -->
-            <div class="styles-editor-col">
-                <section class="panel-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-                        <h2 class="section-title" style="margin-bottom: 0;">
-                            <span>Afinador de Estilos</span>
-                        </h2>
-                        <span class="font-fixed-badge">Fuente: Montserrat</span>
-                    </div>
-
-                    <!-- Sub-nav: select style to tune (Title, Tag, Body) -->
-                    <div class="styles-subnav" role="tablist">
-                        <button type="button" class="styles-subtab-btn active" id="subtabBtnTitle" onclick="switchStyleSubTab('title')">
-                            <span>🔤 Título</span>
-                        </button>
-                        <button type="button" class="styles-subtab-btn" id="subtabBtnTag" onclick="switchStyleSubTab('tag')">
-                            <span>🏷️ Tag</span>
-                        </button>
-                        <button type="button" class="styles-subtab-btn" id="subtabBtnBody" onclick="switchStyleSubTab('body')">
-                            <span>📄 Cuerpo</span>
-                        </button>
-                    </div>
-
-                    <!-- Dynamic Controls Form for active style -->
-                    <div class="styles-form-fields" id="stylesFormFields">
-                        <!-- Color picker row -->
-                        <div class="style-prop-row">
-                            <div class="style-prop-header">
-                                <label for="styleColorPicker">Color del Texto</label>
-                                <span class="style-prop-badge" id="styleColorValBadge">#FFFFFF</span>
-                            </div>
-                            <div class="color-picker-combo">
-                                <input type="color" id="styleColorPicker" class="color-swatch-input" oninput="onColorPickerChange(this.value)">
-                                <input type="text" id="styleColorHex" class="form-input color-hex-input" placeholder="#FFFFFF" oninput="onColorHexChange(this.value)">
-                            </div>
-                        </div>
-
-                        <!-- Font Size row -->
-                        <div class="style-prop-row">
-                            <div class="style-prop-header">
-                                <label for="styleFontSizeSlider">Tamaño de Fuente (px)</label>
-                                <span class="style-prop-badge" id="styleFontSizeBadge">38px</span>
-                            </div>
-                            <div class="pos-input-group">
-                                <input type="range" class="pos-range-slider" id="styleFontSizeSlider" min="10" max="80" step="1" value="38" oninput="onFontSizeChange(this.value)">
-                                <input type="number" class="pos-num-input" id="styleFontSizeNum" min="10" max="80" step="1" value="38" oninput="onFontSizeChange(this.value)">
-                            </div>
-                        </div>
-
-                        <!-- Font Weight row -->
-                        <div class="style-prop-row">
-                            <div class="style-prop-header">
-                                <label for="styleFontWeightSelect">Grosor de Fuente (Weight)</label>
-                                <span class="style-prop-badge" id="styleFontWeightBadge">800 - ExtraBold</span>
-                            </div>
-                            <select id="styleFontWeightSelect" class="form-select" onchange="onFontWeightChange(this.value)">
-                                <option value="300">300 — Light (Fina)</option>
-                                <option value="400">400 — Regular (Normal)</option>
-                                <option value="500">500 — Medium (Media)</option>
-                                <option value="600">600 — SemiBold (Semi Negrita)</option>
-                                <option value="700">700 — Bold (Negrita)</option>
-                                <option value="800">800 — ExtraBold (Estilo Póster)</option>
-                                <option value="900">900 — Black (Ultra Pesada)</option>
-                            </select>
-                        </div>
-
-                        <!-- Letter Spacing row -->
-                        <div class="style-prop-row">
-                            <div class="style-prop-header">
-                                <label for="styleLetterSpacingSlider">Espaciado entre Letras (Letter-Spacing)</label>
-                                <span class="style-prop-badge" id="styleLetterSpacingBadge">-0.06em</span>
-                            </div>
-                            <div class="pos-input-group">
-                                <input type="range" class="pos-range-slider" id="styleLetterSpacingSlider" min="-0.12" max="0.30" step="0.01" value="-0.06" oninput="onLetterSpacingChange(this.value)">
-                                <input type="number" class="pos-num-input" id="styleLetterSpacingNum" min="-0.12" max="0.30" step="0.01" value="-0.06" oninput="onLetterSpacingChange(this.value)">
-                            </div>
-                            <span class="sub-label-hint">Valores negativos (-0.05 a -0.08) compactan los caracteres logrando el estilo bloque.</span>
-                        </div>
-
-                        <!-- Line Height row -->
-                        <div class="style-prop-row">
-                            <div class="style-prop-header">
-                                <label for="styleLineHeightSlider">Interlineado (Line-Height)</label>
-                                <span class="style-prop-badge" id="styleLineHeightBadge">0.90</span>
-                            </div>
-                            <div class="pos-input-group">
-                                <input type="range" class="pos-range-slider" id="styleLineHeightSlider" min="0.70" max="2.00" step="0.05" value="0.90" oninput="onLineHeightChange(this.value)">
-                                <input type="number" class="pos-num-input" id="styleLineHeightNum" min="0.70" max="2.00" step="0.05" value="0.90" oninput="onLineHeightChange(this.value)">
-                            </div>
-                            <span class="sub-label-hint">0.85 - 0.95 compacta los títulos multilínea sin espacio vertical desperdiciado.</span>
-                        </div>
-
-                        <!-- Text Transform row -->
-                        <div class="style-prop-row">
-                            <div class="style-prop-header">
-                                <label>Transformación de Texto</label>
-                                <span class="style-prop-badge" id="styleTransformBadge">MAYÚSCULAS</span>
-                            </div>
-                            <div class="style-picker-group">
-                                <button type="button" class="style-opt-btn active" id="btnTransformUpper" onclick="setStyleTransform('uppercase')">
-                                    MAYÚSCULAS (uppercase)
-                                </button>
-                                <button type="button" class="style-opt-btn" id="btnTransformNone" onclick="setStyleTransform('none')">
-                                    Normal (sin forzar)
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- GPT Poster Explanation Callout -->
-                    <div class="gpt-poster-callout">
-                        <div class="gpt-callout-header">
-                            <span class="gpt-callout-icon">💡</span>
-                            <strong>¿Cómo lograr la tipografía estilo póster de <code>gpt.html</code>?</strong>
-                        </div>
-                        <p class="gpt-callout-desc">
-                            En <code>gpt.html</code> el texto impactante y monolítico se consigue combinando 4 parámetros en la fuente <strong>Montserrat</strong>:
-                        </p>
-                        <ul class="gpt-callout-list">
-                            <li><strong>Grosor (Weight):</strong> <code>800</code> o <code>900</code> (ExtraBold / Black).</li>
-                            <li><strong>Letter-Spacing:</strong> Negativo, entre <code>-0.05em</code> y <code>-0.08em</code> (recomendado: <code>-0.06em</code>). Las letras se pegan entre sí como un solo bloque.</li>
-                            <li><strong>Line-Height:</strong> Muy compacto (entre <code>0.85</code> y <code>0.90</code>). Elimina las franjas vacías entre renglones.</li>
-                            <li><strong>Transformación:</strong> <code>MAYÚSCULAS</code> (uppercase). Las mayúsculas tienen altura homogénea, creando una silueta rectangular limpia.</li>
-                        </ul>
-                        <button type="button" class="btn-apply-poster-preset" onclick="applyGptPosterPreset()">
-                            ⚡ Aplicar Preset Póster de gpt.html al Título
-                        </button>
-                    </div>
-
-                    <!-- Save Actions -->
-                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--card-border);">
-                        <div class="save-indicator" id="stylesSaveIndicator">✓ Guardado</div>
-                        <button type="button" class="btn-ctrl" onclick="resetStylesToDefault()" title="Volver a los valores por defecto">
-                            <span>↺ Restablecer Defaults</span>
-                        </button>
-                        <button type="button" class="btn-save-slide" id="btnSaveStyles" onclick="saveStyles()">
-                            <span>💾 Guardar Estilos</span>
-                        </button>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Right Column: Live Previews -->
-            <div class="styles-preview-col">
-                <!-- Single Active Style Preview -->
-                <section class="panel-card" style="margin-bottom: 24px;">
-                    <div class="preview-header-info" style="margin-bottom: 12px;">
-                        <span class="preview-title">
-                            <span>👁️ Vista Previa: <span id="previewActiveStyleName" style="color: var(--accent);">Título</span></span>
-                        </span>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">En vivo</span>
-                    </div>
-
-                    <div class="style-single-preview-box" id="styleSinglePreviewBox">
-                        <div id="singlePreviewSampleText" class="sample-text-target" contenteditable="true" spellcheck="false" title="Hacé clic para escribir tu propio texto de prueba">
-                            CELIA & ALFREDO
-                        </div>
-                    </div>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
-                        ✏️ <em>Podés hacer clic en el texto para editar la frase de muestra.</em>
-                    </p>
-                </section>
-
-                <!-- Composite Real-World Invitation Preview -->
-                <section class="panel-card">
-                    <div class="preview-header-info" style="margin-bottom: 12px;">
-                        <span class="preview-title">
-                            <span>📱 Composición Completa (Tag + Título + Cuerpo)</span>
-                        </span>
-                        <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">Jerarquía visual</span>
-                    </div>
-
-                    <div class="style-composite-card" id="styleCompositeCard">
-                        <span class="preview-composite-tag" id="compositeTagText">NUESTRA BODA</span>
-                        <h2 class="preview-composite-title" id="compositeTitleText">CELIA & ALFREDO</h2>
-                        <p class="preview-composite-body" id="compositeBodyText">¡Queremos compartir este día tan especial con vos!</p>
-                    </div>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
-                        Muestra cómo armonizan los 3 estilos juntos en la invitación.
-                    </p>
-                </section>
             </div>
         </div>
     </div>
@@ -2006,8 +2017,8 @@
             renderStylesEditor();
         } else {
             window.location.hash = 'slides';
-            setTimeout(updateStoryPreviewScale, 30);
         }
+        setTimeout(updateStoryPreviewScale, 30);
     }
 
     function initActiveTab() {
