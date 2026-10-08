@@ -1,15 +1,26 @@
 <!-- SLIDE PERSONALIZADO -->
-<div class="story-slide" data-slide-id="{{ slide.id }}" data-duration="{{ slide.duration if slide.duration is not none else 7000 }}"
-     {% if slide.background and not slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-       style="background-image: url('/assets/backgrounds/{{ slide.background }}'); background-size: cover; background-position: center;"
+{% set bg_url = '' %}
+{% set is_vid = false %}
+{% if slide and slide.background %}
+    {% set is_vid = slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+    {% if slide.background.startswith('/') %}
+        {% set bg_url = slide.background %}
+    {% else %}
+        {% set bg_url = '/assets/backgrounds/' ~ slide.background %}
+    {% endif %}
+{% endif %}
+
+<div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
+     {% if bg_url and not is_vid %}
+       style="background-image: url('{{ bg_url }}'); background-size: cover; background-position: center;"
      {% endif %}>
 
-    {% if slide.background and slide.background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-        <video class="story-video-bg" src="/assets/backgrounds/{{ slide.background }}" muted loop playsinline autoplay></video>
+    {% if bg_url and is_vid %}
+        <video class="story-video-bg" src="{{ bg_url }}" muted loop playsinline autoplay></video>
     {% endif %}
 
     <div class="slide-elements-layer">
-        {% for el in slide.elements or [] %}
+        {% for el in (slide.elements if slide else []) or [] %}
             {% if el.type == 'text' %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }}"
                      style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); transform: translate(-50%, -50%);">

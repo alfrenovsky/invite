@@ -28,7 +28,7 @@ SLIDES_CONFIG_DEFAULT = [
     {
         "id": "portada",
         "title": "Portada",
-        "template": "slides/portada.html",
+        "template": "slides/custom.html",
         "duration": 6000,
         "enabled": True,
         "background": "photo01.jpeg",
@@ -36,7 +36,7 @@ SLIDES_CONFIG_DEFAULT = [
     {
         "id": "lugar",
         "title": "Lugar",
-        "template": "slides/lugar.html",
+        "template": "slides/custom.html",
         "duration": 7000,
         "enabled": True,
         "background": "fiesta.jpeg",
@@ -44,7 +44,7 @@ SLIDES_CONFIG_DEFAULT = [
     {
         "id": "video",
         "title": "Video",
-        "template": "slides/video.html",
+        "template": "slides/custom.html",
         "duration": 10000,
         "enabled": True,
         "background": "",
@@ -52,7 +52,7 @@ SLIDES_CONFIG_DEFAULT = [
     {
         "id": "itinerario",
         "title": "Itinerario",
-        "template": "slides/itinerario.html",
+        "template": "slides/custom.html",
         "duration": 7000,
         "enabled": True,
         "background": "background.jpeg",
@@ -60,7 +60,7 @@ SLIDES_CONFIG_DEFAULT = [
     {
         "id": "regalos",
         "title": "Regalos",
-        "template": "slides/regalos.html",
+        "template": "slides/custom.html",
         "duration": 7000,
         "enabled": True,
         "background": "background.1.jpeg",
@@ -125,6 +125,20 @@ def load_slides():
     for s in slides:
         if "elements" not in s or not isinstance(s["elements"], list):
             s["elements"] = []
+        if s.get("id") == "rsvp":
+            s["template"] = "slides/rsvp.html"
+            s["enabled"] = True
+        elif s.get("id") == "triste":
+            s["template"] = "slides/triste.html"
+        elif not s.get("template") or s.get("template") in (
+            "slides/portada.html",
+            "slides/lugar.html",
+            "slides/video.html",
+            "slides/itinerario.html",
+            "slides/regalos.html",
+            "slides/custom.html",
+        ):
+            s["template"] = "slides/custom.html"
 
     # RSVP is a special slide that must always be kept
     ensure_rsvp_slide(slides)
@@ -132,6 +146,22 @@ def load_slides():
 
 
 def save_slides(slides_list):
+    for s in slides_list:
+        if s.get("id") == "rsvp":
+            s["template"] = "slides/rsvp.html"
+            s["enabled"] = True
+        elif s.get("id") == "triste":
+            s["template"] = "slides/triste.html"
+        elif not s.get("template") or s.get("template") in (
+            "slides/portada.html",
+            "slides/lugar.html",
+            "slides/video.html",
+            "slides/itinerario.html",
+            "slides/regalos.html",
+            "slides/custom.html",
+        ):
+            s["template"] = "slides/custom.html"
+
     # Ensure RSVP is preserved before saving
     ensure_rsvp_slide(slides_list)
     with open(SLIDES_JSON_PATH, "w", encoding="utf-8") as f:
@@ -384,7 +414,7 @@ def get_single_slide(token, slide_id):
     if not slide:
         return "Slide no encontrada o deshabilitada", 404
 
-    return render_template(slide["template"], **context)
+    return render_template(slide["template"], slide=slide, **context)
 
 
 

@@ -2,17 +2,17 @@
   {
     "id": "portada",
     "title": "Portada",
-    "template": "slides/custom.html",
+    "template": "slides/portada.html",
     "duration": 8500,
     "enabled": true,
-    "background": "photo01.jpeg",
+    "background": "AyCenMaal.jpeg",
     "elements": [
       {
         "content": "NOS CASAMOS",
         "id": "el_1791458669060",
         "style": "body",
         "type": "text",
-        "x": 0,
+        "x": -1,
         "y": 32
       },
       {
@@ -28,7 +28,7 @@
   {
     "id": "lugar",
     "title": "Lugar",
-    "template": "slides/custom.html",
+    "template": "slides/lugar.html",
     "duration": 7000,
     "enabled": true,
     "background": "fiesta.jpeg",
@@ -37,7 +37,7 @@
   {
     "id": "video",
     "title": "Video",
-    "template": "slides/custom.html",
+    "template": "slides/video.html",
     "duration": 10000,
     "enabled": true,
     "background": "intro.mp4",
@@ -46,7 +46,7 @@
   {
     "id": "itinerario",
     "title": "Itinerario",
-    "template": "slides/custom.html",
+    "template": "slides/itinerario.html",
     "duration": 7000,
     "enabled": true,
     "background": "background.jpeg",
@@ -55,7 +55,7 @@
   {
     "id": "regalos",
     "title": "Regalos",
-    "template": "slides/custom.html",
+    "template": "slides/regalos.html",
     "duration": 7000,
     "enabled": true,
     "background": "background.1.jpeg",

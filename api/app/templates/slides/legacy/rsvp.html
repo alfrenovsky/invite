@@ -1,17 +1,5 @@
                 <!-- SLIDE 6: RSVP -->
-                {% set rsvp_bg = slide.background if (slide and slide.background) else '' %}
-                {% set rsvp_is_vid = rsvp_bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) if rsvp_bg else false %}
-                {% set rsvp_bg_url = (rsvp_bg if rsvp_bg.startswith('/') else '/assets/backgrounds/' ~ rsvp_bg) if rsvp_bg else '' %}
-
-                <div class="story-slide" data-slide-id="rsvp" data-duration="0"
-                     {% if rsvp_bg_url and not rsvp_is_vid %}
-                       style="background-image: url('{{ rsvp_bg_url }}'); background-size: cover; background-position: center;"
-                     {% endif %}>
-
-                    {% if rsvp_bg_url and rsvp_is_vid %}
-                        <video class="story-video-bg" src="{{ rsvp_bg_url }}" muted loop playsinline autoplay></video>
-                    {% endif %}
-
+                <div class="story-slide" data-slide-id="rsvp" data-duration="0">
                     <div class="slide-body">
 
                         <span class="slide-tag">RSVP</span>
