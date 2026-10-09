@@ -1327,6 +1327,17 @@
         });
     }
 
+    // Immediate save on clicking or tapping outside the RSVP form
+    function handleOutsideFormClick(e) {
+        const form = document.getElementById('storyRsvpForm');
+        if (!form) return;
+        if (!form.contains(e.target)) {
+            flushAutoSave();
+        }
+    }
+    document.addEventListener('pointerdown', handleOutsideFormClick, { passive: true });
+    document.addEventListener('click', handleOutsideFormClick, { passive: true });
+
     // Page exit listeners
     window.addEventListener('beforeunload', flushAutoSave);
     window.addEventListener('pagehide', flushAutoSave);
