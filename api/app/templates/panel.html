@@ -430,9 +430,19 @@
         }
 
         /* Custom Background Dropdown with Thumbnails */
+        .panel-card.dropdown-open,
+        .panel-card:has(.custom-bg-dropdown.open) {
+            position: relative;
+            z-index: 300;
+        }
+
         .custom-bg-dropdown {
             position: relative;
             width: 100%;
+        }
+
+        .custom-bg-dropdown.open {
+            z-index: 500;
         }
 
         .custom-bg-trigger {
@@ -514,7 +524,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 10px;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
-            z-index: 120;
+            z-index: 1000;
             padding: 6px;
         }
 
@@ -5889,6 +5899,14 @@
             const dropdown = document.getElementById('customBgDropdown');
             if (!dropdown) return;
             const isOpen = dropdown.classList.toggle('open');
+            const card = dropdown.closest('.panel-card');
+            if (card) {
+                if (isOpen) {
+                    card.classList.add('dropdown-open');
+                } else {
+                    card.classList.remove('dropdown-open');
+                }
+            }
             const trigger = document.getElementById('customBgTrigger');
             if (trigger) trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             if (isOpen) {
@@ -5902,6 +5920,8 @@
             const dropdown = document.getElementById('customBgDropdown');
             if (dropdown && dropdown.classList.contains('open')) {
                 dropdown.classList.remove('open');
+                const card = dropdown.closest('.panel-card');
+                if (card) card.classList.remove('dropdown-open');
                 const trigger = document.getElementById('customBgTrigger');
                 if (trigger) trigger.setAttribute('aria-expanded', 'false');
             }
