@@ -1675,6 +1675,60 @@
             width: 90%;
             max-width: 440px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        /* Fonts Tab Gallery & Cards */
+        .fonts-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 640px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .font-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.2s ease;
+        }
+
+        .font-card:hover {
+            border-color: rgba(212, 175, 55, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .font-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .font-card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .font-card-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #ffffff;
+        }
+
+        .font-card-preview {
+            font-size: 1.15rem;
+            color: #f7fafc;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.3;
         }
     </style>
 </head>
@@ -1704,6 +1758,11 @@
                     <button type="button" class="nav-tab" data-tab="tab-header" id="tabBtnHeader" onclick="switchTab('tab-header')">
                         <span class="tab-icon">🔝</span>
                         <span class="tab-label">Encabezado</span>
+                    </button>
+                    <button type="button" class="nav-tab" data-tab="tab-fonts" id="tabBtnFonts" onclick="switchTab('tab-fonts')">
+                        <span class="tab-icon">🔤</span>
+                        <span class="tab-label">Fuentes</span>
+                        <span class="tab-badge" id="fontsNavBadge">{{ fonts|length if fonts else 0 }}</span>
                     </button>
                 </div>
             </nav>
@@ -2205,6 +2264,73 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TAB: Fonts Manager & Catalog -->
+            <div id="tab-fonts" class="tab-pane">
+                <div class="grid-two-col">
+                    <!-- Upload New Font Form -->
+                    <section class="panel-card">
+                        <h2 class="section-title">
+                            <span>Subir Tipografía</span>
+                        </h2>
+                        <form class="upload-form" id="uploadFontForm" onsubmit="handleFontUpload(event)">
+                            <div class="form-group">
+                                <label>Archivo de Fuente (.ttf, .otf, .woff, .woff2)</label>
+                                <div class="file-upload-box" id="fontFileDropBox" onclick="document.getElementById('fontFileInput').click()">
+                                    <input type="file" name="font_file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;" onchange="onFontFileSelected(this)" required>
+                                    <div class="upload-box-icon">🔤</div>
+                                    <div class="upload-box-text">Arrastrá un archivo de fuente (TTF, OTF, WOFF, WOFF2) o hacé clic</div>
+                                    <div class="selected-file-name" id="selectedFontFileName"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="fontNameInput">Nombre de familia personalizado (opcional)</label>
+                                <input type="text" class="form-input" id="fontNameInput" name="font_name" placeholder="ej. MiFuenteElegante (por defecto usa el nombre del archivo)">
+                            </div>
+
+                            <button type="submit" class="btn-submit" id="btnUploadFontSubmit">
+                                <span>⬆ Subir Tipografía</span>
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Fonts Catalog -->
+                    <section class="panel-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                            <h2 class="section-title" style="margin-bottom: 0;">
+                                <span>Fuentes Instaladas</span>
+                                <span class="count" id="fontsCountBadge">{{ fonts|length if fonts else 0 }}</span>
+                            </h2>
+                            <div style="position: relative; min-width: 200px;">
+                                <input type="text" id="fontSearchInput" class="form-input" placeholder="🔍 Buscar fuente..." oninput="filterFontsList(this.value)" style="padding: 7px 12px; font-size: 0.85rem; border-radius: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="fonts-gallery" id="fontsGallery">
+                            {% if fonts %}
+                                {% for f in fonts %}
+                                    <div class="font-card" data-filename="{{ f.filename }}" data-family="{{ f.family }}">
+                                        <div class="font-card-header">
+                                            <div class="font-card-title-group">
+                                                <span class="font-card-name" title="{{ f.family }}">{{ f.family }}</span>
+                                                <span class="media-badge" style="font-size: 0.65rem; padding: 2px 6px;">{{ f.ext }}</span>
+                                                <span style="font-size: 0.72rem; color: var(--text-muted);">{{ f.size_kb }} KB</span>
+                                            </div>
+                                            <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteFont('{{ f.filename }}', '{{ f.family }}')" title="Eliminar tipografía">🗑️</button>
+                                        </div>
+                                        <div class="font-card-preview" style="font-family: '{{ f.family }}', sans-serif;">
+                                            Celia & Alfredo — 19 de Marzo de 2027
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p id="noFontsMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fuentes subidas todavía en la carpeta assets/fonts.</p>
+                            {% endif %}
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
 
         <!-- Right Column: Live Sticky 98vh Preview Mockup -->
@@ -2334,6 +2460,8 @@
         } else if (tabId === 'tab-header') {
             window.location.hash = 'encabezado';
             renderHeaderEditor();
+        } else if (tabId === 'tab-fonts') {
+            window.location.hash = 'fuentes';
         } else {
             window.location.hash = 'slides';
         }
@@ -2349,6 +2477,8 @@
             switchTab('tab-styles');
         } else if (hash === '#encabezado' || (!hash && savedTab === 'tab-header')) {
             switchTab('tab-header');
+        } else if (hash === '#fuentes' || (!hash && savedTab === 'tab-fonts')) {
+            switchTab('tab-fonts');
         } else {
             switchTab('tab-slides');
         }
@@ -4294,6 +4424,134 @@
                 btn.innerHTML = '<span>⬆ Subir Fondo / Video</span>';
             }
         });
+    }
+
+    // -------------------------------------------------------------
+    // FONT MANAGEMENT HANDLERS
+    // -------------------------------------------------------------
+    function onFontFileSelected(input) {
+        const selectedText = document.getElementById('selectedFontFileName');
+        const nameInput = document.getElementById('fontNameInput');
+        if (input.files && input.files[0]) {
+            const f = input.files[0];
+            if (selectedText) selectedText.textContent = `${f.name} (${Math.round(f.size / 1024)} KB)`;
+            if (nameInput && !nameInput.value.trim()) {
+                const base = f.name.replace(/\.(ttf|otf|woff2?)$/i, '');
+                nameInput.value = base;
+            }
+        } else {
+            if (selectedText) selectedText.textContent = '';
+        }
+    }
+
+    const fontDropBox = document.getElementById('fontFileDropBox');
+    if (fontDropBox) {
+        ['dragenter', 'dragover'].forEach(name => {
+            fontDropBox.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fontDropBox.classList.add('drag-over');
+            });
+        });
+        ['dragleave', 'drop'].forEach(name => {
+            fontDropBox.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fontDropBox.classList.remove('drag-over');
+            });
+        });
+        fontDropBox.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length) {
+                const fileInput = document.getElementById('fontFileInput');
+                fileInput.files = files;
+                onFontFileSelected(fileInput);
+            }
+        });
+    }
+
+    async function handleFontUpload(e) {
+        e.preventDefault();
+        const form = document.getElementById('uploadFontForm');
+        const fileInput = document.getElementById('fontFileInput');
+        if (!fileInput.files || !fileInput.files[0]) {
+            showToast('Por favor selecciona un archivo de fuente (.ttf, .otf, .woff, .woff2)', true);
+            return;
+        }
+        const btn = document.getElementById('btnUploadFontSubmit');
+        const formData = new FormData(form);
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>Subiendo fuente...</span>';
+
+        try {
+            const res = await fetch('/panel/upload-font', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(data.message || 'Tipografía subida correctamente');
+                setTimeout(() => {
+                    window.location.hash = 'fuentes';
+                    window.location.reload();
+                }, 800);
+            } else {
+                showToast(data.error || 'Error al subir fuente', true);
+                btn.disabled = false;
+                btn.innerHTML = '<span>⬆ Subir Tipografía</span>';
+            }
+        } catch (err) {
+            showToast('Error de red al subir fuente', true);
+            btn.disabled = false;
+            btn.innerHTML = '<span>⬆ Subir Tipografía</span>';
+        }
+    }
+
+    async function deleteFont(filename, family) {
+        if (!confirm(`¿Eliminar la tipografía "${family}" (${filename}) permanentemente?`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/panel/delete-font', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(data.message || 'Fuente eliminada correctamente');
+                setTimeout(() => {
+                    window.location.hash = 'fuentes';
+                    window.location.reload();
+                }, 600);
+            } else {
+                showToast(data.error || 'Error al eliminar fuente', true);
+            }
+        } catch (err) {
+            showToast('Error de red al eliminar fuente', true);
+        }
+    }
+
+    function filterFontsList(term) {
+        const query = (term || '').toLowerCase().trim();
+        const cards = document.querySelectorAll('#fontsGallery .font-card');
+        let visibleCount = 0;
+        cards.forEach(card => {
+            const fam = (card.getAttribute('data-family') || '').toLowerCase();
+            const file = (card.getAttribute('data-filename') || '').toLowerCase();
+            const matches = !query || fam.includes(query) || file.includes(query);
+            card.style.display = matches ? 'block' : 'none';
+            if (matches) visibleCount++;
+        });
+        const badge = document.getElementById('fontsCountBadge');
+        if (badge && !query) {
+            badge.textContent = cards.length;
+        } else if (badge) {
+            badge.textContent = visibleCount + ' / ' + cards.length;
+        }
     }
 
     // Initialize on page load

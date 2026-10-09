@@ -489,6 +489,60 @@ class TestGoogleSheetsTable(unittest.TestCase):
                         bad_slides_file = io.BytesIO(b'["string instead of object"]')
                         self.assertEqual(client.post("/panel/slides/upload", data={"file": (bad_slides_file, "slides.json")}).status_code, 400)
 
+    def test_panel_fonts_upload_and_delete(self):
+        import io
+        import tempfile
+        from app import app
+
+        with tempfile.TemporaryDirectory() as tmp_fonts_dir:
+            with patch("app.get_fonts_dir", return_value=tmp_fonts_dir):
+                with app.test_client() as client:
+                    # 1. Production mode protection (404)
+                    with patch("app.is_dev_mode", return_value=False):
+                        self.assertEqual(client.post("/panel/upload-font").status_code, 404)
+                        self.assertEqual(client.post("/panel/delete-font").status_code, 404)
+
+                    # 2. Dev mode active
+                    with patch("app.is_dev_mode", return_value=True):
+                        # Missing file
+                        res_empty = client.post("/panel/upload-font")
+                        self.assertEqual(res_empty.status_code, 400)
+
+                        # Bad extension
+                        bad_file = (io.BytesIO(b"fake binary"), "bad.exe")
+                        res_bad_ext = client.post("/panel/upload-font", data={"font_file": bad_file})
+                        self.assertEqual(res_bad_ext.status_code, 400)
+
+                        # Successful TTF upload
+                        ttf_file = (io.BytesIO(b"dummy ttf content"), "SampleFont.ttf")
+                        res_up = client.post("/panel/upload-font", data={"font_file": ttf_file, "font_name": "SampleFont"})
+                        self.assertEqual(res_up.status_code, 200)
+                        data_up = res_up.get_json()
+                        self.assertTrue(data_up["ok"])
+                        self.assertEqual(data_up["filename"], "SampleFont.ttf")
+                        self.assertTrue(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
+
+                        # Check fonts.css auto-generation
+                        css_file = os.path.join(tmp_fonts_dir, "fonts.css")
+                        self.assertTrue(os.path.exists(css_file))
+                        with open(css_file, "r") as f:
+                            css_content = f.read()
+                        self.assertIn("font-family: 'SampleFont'", css_content)
+
+                        # Delete: Path traversal protection
+                        res_trav = client.post("/panel/delete-font", json={"filename": "../evil.ttf"})
+                        self.assertEqual(res_trav.status_code, 400)
+
+                        # Delete: Not found
+                        res_nf = client.post("/panel/delete-font", json={"filename": "NonExistent.ttf"})
+                        self.assertEqual(res_nf.status_code, 404)
+
+                        # Successful delete
+                        res_del = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"})
+                        self.assertEqual(res_del.status_code, 200)
+                        self.assertTrue(res_del.get_json()["ok"])
+                        self.assertFalse(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
+
 
 if __name__ == "__main__":
     unittest.main()

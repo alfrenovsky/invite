@@ -2,6 +2,7 @@ import os
 import time
 import json
 import re
+import urllib.parse
 from flask import Flask, request, jsonify, render_template, abort, send_file
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token
@@ -270,6 +271,105 @@ def get_backgrounds_list():
     return files
 
 
+VALID_FONT_EXTS = {".ttf", ".otf", ".woff", ".woff2"}
+
+
+def get_fonts_dir():
+    candidates = [
+        "/app/fonts",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../html/assets/fonts")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts")),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    target = candidates[0]
+    os.makedirs(target, exist_ok=True)
+    return target
+
+
+def get_fonts_list():
+    fonts_dir = get_fonts_dir()
+    if not os.path.exists(fonts_dir):
+        return []
+    fonts = []
+    try:
+        for fname in sorted(os.listdir(fonts_dir)):
+            if fname.startswith("."):
+                continue
+            ext = os.path.splitext(fname)[1].lower()
+            if ext in VALID_FONT_EXTS:
+                full_path = os.path.join(fonts_dir, fname)
+                size_bytes = os.path.getsize(full_path) if os.path.isfile(full_path) else 0
+                size_kb = round(size_bytes / 1024, 1)
+                family = os.path.splitext(fname)[0]
+                fonts.append({
+                    "filename": fname,
+                    "family": family,
+                    "ext": ext.replace(".", "").upper(),
+                    "size_kb": size_kb,
+                })
+    except Exception:
+        pass
+    return fonts
+
+
+def rebuild_fonts_css(fonts_dir=None):
+    if not fonts_dir:
+        fonts_dir = get_fonts_dir()
+    if not os.path.exists(fonts_dir):
+        return
+    css_path = os.path.join(fonts_dir, "fonts.css")
+
+    format_map = {
+        ".ttf": "truetype",
+        ".otf": "opentype",
+        ".woff": "woff",
+        ".woff2": "woff2",
+    }
+    special_aliases = {
+        "Aveny-T.otf": "Aveny T",
+        "FoundationTitlesHand_1.0.otf": "FoundationTitlesHand",
+    }
+
+    entries = []
+    try:
+        for fname in sorted(os.listdir(fonts_dir)):
+            if fname.startswith("."):
+                continue
+            ext = os.path.splitext(fname)[1].lower()
+            if ext not in format_map:
+                continue
+            fmt = format_map[ext]
+            base_family = os.path.splitext(fname)[0]
+            encoded_fname = urllib.parse.quote(fname)
+
+            entries.append(
+                f"@font-face {{\n"
+                f"    font-family: '{base_family}';\n"
+                f"    src: url('/assets/fonts/{encoded_fname}') format('{fmt}');\n"
+                f"    font-display: swap;\n"
+                f"}}"
+            )
+
+            if fname in special_aliases:
+                alias = special_aliases[fname]
+                entries.append(
+                    f"@font-face {{\n"
+                    f"    font-family: '{alias}';\n"
+                    f"    src: url('/assets/fonts/{encoded_fname}') format('{fmt}');\n"
+                    f"    font-display: swap;\n"
+                    f"}}"
+                )
+
+        header = "/* Auto-generated font-face definitions for wedding story fonts */\n\n"
+        content = header + "\n\n".join(entries) + "\n"
+        with open(css_path, "w", encoding="utf-8") as out:
+            out.write(content)
+    except Exception:
+        pass
+
+
 def is_dev_mode():
     return bool(
         app.debug
@@ -463,7 +563,8 @@ def panel_view():
     slides = load_slides()
     backgrounds = get_backgrounds_list()
     styles = load_styles()
-    return render_template("panel.html", slides=slides, backgrounds=backgrounds, styles=styles)
+    fonts = get_fonts_list()
+    return render_template("panel.html", slides=slides, backgrounds=backgrounds, styles=styles, fonts=fonts)
 
 
 @app.post("/panel/styles")
@@ -817,6 +918,89 @@ def panel_delete_background():
         "ok": True,
         "filename": filename,
         "message": f"Fondo '{filename}' eliminado correctamente"
+    })
+
+
+@app.post("/panel/upload-font")
+def panel_upload_font():
+    if not is_dev_mode():
+        abort(404)
+
+    if "font_file" not in request.files:
+        return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
+
+    file = request.files["font_file"]
+    if not file or not file.filename:
+        return jsonify({"ok": False, "error": "Archivo no seleccionado"}), 400
+
+    orig_name, orig_ext = os.path.splitext(file.filename)
+    orig_ext = orig_ext.lower()
+    if orig_ext not in VALID_FONT_EXTS:
+        return jsonify({"ok": False, "error": f"Formato no permitido: {orig_ext}. Formatos aceptados: TTF, OTF, WOFF, WOFF2."}), 400
+
+    custom_name = request.form.get("font_name", "").strip()
+    if custom_name:
+        clean_base = re.sub(r"[^a-zA-Z0-9_\-\s]", "_", custom_name).strip()
+        filename = f"{clean_base}{orig_ext}"
+    else:
+        clean_base = re.sub(r"[^a-zA-Z0-9_\-\s]", "_", orig_name).strip()
+        filename = f"{clean_base}{orig_ext}"
+
+    if not filename:
+        filename = f"font_{int(time.time())}{orig_ext}"
+
+    fonts_dir = get_fonts_dir()
+    os.makedirs(fonts_dir, exist_ok=True)
+    save_path = os.path.join(fonts_dir, filename)
+    file.save(save_path)
+
+    rebuild_fonts_css(fonts_dir)
+    updated_fonts = get_fonts_list()
+
+    return jsonify({
+        "ok": True,
+        "filename": filename,
+        "family": os.path.splitext(filename)[0],
+        "fonts": updated_fonts,
+        "message": f"Tipografía '{filename}' subida correctamente"
+    })
+
+
+@app.post("/panel/delete-font")
+def panel_delete_font():
+    if not is_dev_mode():
+        abort(404)
+
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict()
+
+    filename = (data.get("filename") or "").strip()
+    if not filename:
+        return jsonify({"ok": False, "error": "Nombre de archivo no especificado"}), 400
+
+    if ".." in filename or "/" in filename or "\\" in filename:
+        return jsonify({"ok": False, "error": "Nombre de archivo inválido"}), 400
+
+    fonts_dir = get_fonts_dir()
+    target_path = os.path.join(fonts_dir, filename)
+    if not os.path.isfile(target_path):
+        return jsonify({"ok": False, "error": f"La fuente '{filename}' no existe"}), 404
+
+    try:
+        os.remove(target_path)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Error al eliminar la fuente: {str(e)}"}), 500
+
+    rebuild_fonts_css(fonts_dir)
+    updated_fonts = get_fonts_list()
+
+    return jsonify({
+        "ok": True,
+        "filename": filename,
+        "fonts": updated_fonts,
+        "message": f"Fuente '{filename}' eliminada correctamente"
     })
 
 
