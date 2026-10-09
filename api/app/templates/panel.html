@@ -2431,6 +2431,11 @@
                                             style="border-color: rgba(237, 137, 54, 0.45); color: #f6ad55;">
                                             <span>⏱️ Countdown</span>
                                         </button>
+                                        <button type="button" class="btn-ctrl btn-ctrl-secondary"
+                                            id="btnAddFormElement" onclick="addFormElement()"
+                                            style="border-color: rgba(72, 187, 120, 0.45); color: #48bb78;">
+                                            <span>📝 Formulario</span>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -4102,6 +4107,7 @@
 
                 const isLocation = el.type === 'location';
                 const isCountdown = el.type === 'countdown';
+                const isForm = el.type === 'form';
                 const isTransformable = isLocation || isCountdown;
 
                 // Header
@@ -4115,6 +4121,9 @@
                 } else if (isCountdown) {
                     titleHtml = '⏱️ #' + (idx + 1) + ' Cuenta Regresiva (Instagram Countdown)';
                     titleStyle = 'color: #f6ad55;';
+                } else if (isForm) {
+                    titleHtml = '📝 #' + (idx + 1) + ' Formulario de Confirmación (RSVP)';
+                    titleStyle = 'color: #48bb78;';
                 }
 
                 header.innerHTML = `
@@ -4262,6 +4271,15 @@
                         el.url = e.target.value;
                     };
                     card.appendChild(urlGroup);
+                } else if (isForm) {
+                    const formNote = document.createElement('div');
+                    formNote.className = 'form-group';
+                    formNote.innerHTML = `
+                    <div style="font-size: 0.82rem; color: #cbd5e0; background: rgba(72, 187, 120, 0.1); border: 1px solid rgba(72, 187, 120, 0.25); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;">
+                        <strong style="color: #68d391;">Formulario RSVP del Grupo:</strong> Muestra los nombres de los invitados, opciones de asistencia (✓ Asiste / ✗ No), selección de menú (General, Vegetariano, Vegano, Celíaco) y auto-guardado en tiempo real.
+                    </div>
+                `;
+                    card.appendChild(formNote);
                 } else {
                     // Text Content input
                     const textGroup = document.createElement('div');
@@ -4307,13 +4325,14 @@
                     card.appendChild(styleGroup);
                 }
 
-                // Position controls: Horizontal X, Vertical Y & Width W
+                // Position controls: Horizontal X, Vertical Y, Width W & Height H
                 const posRow = document.createElement('div');
                 posRow.className = 'pos-control-row';
 
                 const currX = el.x !== undefined ? el.x : 0;
                 const currY = el.y !== undefined ? el.y : 0;
-                const currW = el.w !== undefined ? el.w : (isTransformable ? '' : 88);
+                const currW = el.w !== undefined ? el.w : (isTransformable ? '' : (isForm ? 92 : 88));
+                const currH = el.h !== undefined ? el.h : (isForm ? 70 : 100);
                 const currRot = el.rotate !== undefined ? el.rotate : 0;
                 const currZoom = el.zoom !== undefined ? el.zoom : 100;
 
@@ -4349,10 +4368,24 @@
                         <span class="pos-val-badge" id="badgeW_${idx}">${currW !== '' ? currW + '%' : 'Auto'}</span>
                     </div>
                     <div class="pos-input-group">
-                        <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW || 88}">
+                        <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW || (isForm ? 92 : 88)}">
                         <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
                     </div>
                 </div>
+
+                ${isForm ? `
+                <!-- Alto del Formulario (H) -->
+                <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 4px;">
+                    <div class="pos-slider-header">
+                        <span>Alto Máximo (% del slide, con scroll)</span>
+                        <span class="pos-val-badge" id="badgeH_${idx}">${currH}%</span>
+                    </div>
+                    <div class="pos-input-group">
+                        <input type="range" class="pos-range-slider" id="sliderH_${idx}" min="20" max="100" step="1" value="${currH}">
+                        <input type="number" class="pos-num-input" id="numH_${idx}" min="20" max="100" step="1" value="${currH}">
+                    </div>
+                </div>
+                ` : ''}
 
                 ${isTransformable ? `
                 <!-- Rotación -->
@@ -4494,6 +4527,26 @@
                     numZoom.oninput = (e) => syncZoom(e.target.value);
                 }
 
+                if (isForm) {
+                    const sliderH = posRow.querySelector(`#sliderH_${idx}`);
+                    const numH = posRow.querySelector(`#numH_${idx}`);
+                    const badgeH = posRow.querySelector(`#badgeH_${idx}`);
+
+                    const syncH = (val) => {
+                        let parsed = parseInt(val, 10);
+                        if (isNaN(parsed)) parsed = 70;
+                        parsed = Math.max(20, Math.min(100, parsed));
+                        el.h = parsed;
+                        sliderH.value = parsed;
+                        numH.value = parsed;
+                        badgeH.textContent = `${parsed}%`;
+                        updateLivePreview();
+                    };
+
+                    sliderH.oninput = (e) => syncH(e.target.value);
+                    numH.oninput = (e) => syncH(e.target.value);
+                }
+
                 card.appendChild(posRow);
                 container.appendChild(card);
             });
@@ -4556,6 +4609,24 @@
                 w: null,
                 rotate: 0,
                 zoom: 100
+            });
+
+            renderElementsList();
+            updateLivePreview();
+        }
+
+        function addFormElement() {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+            if (!Array.isArray(slide.elements)) slide.elements = [];
+
+            slide.elements.push({
+                id: 'el_' + Date.now(),
+                type: 'form',
+                x: 0,
+                y: 0,
+                w: 92,
+                h: 70
             });
 
             renderElementsList();
@@ -4731,14 +4802,15 @@
 
             // Handle RSVP slide vs normal dynamic slide
             const isRsvp = (slide.id === 'rsvp');
+            const hasFormElement = Array.isArray(slide.elements) && slide.elements.some(e => e.type === 'form');
             if (rsvpBody) {
-                rsvpBody.style.display = isRsvp ? 'flex' : 'none';
+                rsvpBody.style.display = (isRsvp && !hasFormElement) ? 'flex' : 'none';
             }
 
             // Render live overlay elements
             if (overlay) {
                 overlay.innerHTML = '';
-                if (!isRsvp && Array.isArray(slide.elements)) {
+                if (Array.isArray(slide.elements)) {
                     slide.elements.forEach(el => {
                         if (el.type === 'text') {
                             const textDiv = document.createElement('div');
@@ -4827,6 +4899,57 @@
                             </div>
                         `;
                             overlay.appendChild(cdDiv);
+                        } else if (el.type === 'form') {
+                            const formDiv = document.createElement('div');
+                            formDiv.className = 'slide-el slide-el-form preview-form-el';
+                            const posX = el.x !== undefined ? el.x : 0;
+                            const posY = el.y !== undefined ? el.y : 0;
+                            const widthVal = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 92;
+                            const heightVal = (el.h !== undefined && el.h !== null && el.h !== '') ? el.h : 70;
+                            formDiv.style.left = `calc(50% + ${posX}%)`;
+                            formDiv.style.top = `calc(50% + ${posY}%)`;
+                            formDiv.style.width = `${widthVal}%`;
+                            formDiv.style.maxWidth = `${widthVal}%`;
+                            formDiv.style.height = `${heightVal}%`;
+                            formDiv.style.maxHeight = `${heightVal}%`;
+                            formDiv.style.transform = 'translate(-50%, -50%)';
+                            formDiv.style.overflowY = 'auto';
+                            formDiv.style.pointerEvents = 'auto';
+                            formDiv.innerHTML = `
+                            <div class="interactive-content rsvp-form-container" style="padding: 2px; box-sizing: border-box; width: 100%; height: 100%; display: flex; flex-direction: column;">
+                                <div class="rsvp-card expanded" style="margin-bottom: 7px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; overflow: hidden; text-align: left;">
+                                    <div class="rsvp-card-header" style="padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                        <div class="guest-info-line" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                            <span class="guest-name" style="font-weight: 600; font-size: 0.85em; color: #fff;">👤 Juan Pérez</span>
+                                            <span class="guest-badge badge-si" style="background: rgba(46,204,113,0.2); color: #2ecc71; padding: 2px 6px; border-radius: 5px; font-size: 0.7em; font-weight: 700;">✓ Asiste</span>
+                                            <span class="diet-mini-badge" style="background: rgba(255,255,255,0.1); color: #ddd; padding: 2px 5px; border-radius: 4px; font-size: 0.65em;">🍽️ General</span>
+                                        </div>
+                                        <span class="chevron-icon" style="color: #aaa; font-size: 0.7em;">▼</span>
+                                    </div>
+                                    <div class="rsvp-card-body" style="padding: 10px 12px;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+                                            <div>
+                                                <div style="font-size: 0.68em; color: #a0aec0; text-transform: uppercase;">Nombre:</div>
+                                                <div style="font-size: 0.8em; color: #fff; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px;">Juan</div>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 0.68em; color: #a0aec0; text-transform: uppercase;">Apellido:</div>
+                                                <div style="font-size: 0.8em; color: #fff; background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px;">Pérez</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 6px; font-size: 0.75em;">
+                                            <span style="flex: 1; text-align: center; background: rgba(46,204,113,0.25); color: #2ecc71; border: 1px solid rgba(46,204,113,0.5); padding: 5px; border-radius: 8px; font-weight: 600;">✓ Asiste</span>
+                                            <span style="flex: 1; text-align: center; background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1); padding: 5px; border-radius: 8px;">✗ No</span>
+                                            <span style="flex: 1; text-align: center; background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1); padding: 5px; border-radius: 8px;">⏳ Pend</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.7em; color: #68d391; margin-top: 2px;">
+                                    <span>✓ Respuestas sincronizadas automáticamente</span>
+                                </div>
+                            </div>
+                        `;
+                            overlay.appendChild(formDiv);
                         }
                     });
                 }

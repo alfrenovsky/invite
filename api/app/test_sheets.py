@@ -341,6 +341,23 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res_rsvp.status_code, 200)
                 self.assertIn(b"storyRsvpForm", res_rsvp.data)
 
+                # Custom slide with form element
+                dummy_slides.append({
+                    "id": "custom_rsvp",
+                    "title": "RSVP Custom",
+                    "template": "slides/custom.html",
+                    "enabled": True,
+                    "elements": [{"type": "form", "x": 5, "y": -10, "w": 85, "h": 65}]
+                })
+                res_custom_rsvp = client.get(f"/i/familia_perez_{code}/slide/custom_rsvp")
+                self.assertEqual(res_custom_rsvp.status_code, 200)
+                self.assertIn(b"slide-el-form", res_custom_rsvp.data)
+                self.assertIn(b"storyRsvpForm", res_custom_rsvp.data)
+                self.assertIn(b"left: calc(50% + 5%);", res_custom_rsvp.data)
+                self.assertIn(b"top: calc(50% + -10%);", res_custom_rsvp.data)
+                self.assertIn(b"width: 85%;", res_custom_rsvp.data)
+                self.assertIn(b"max-height: 65%;", res_custom_rsvp.data)
+
                 res_invalid = client.get("/i/familia_perez_invalid/slides")
                 self.assertEqual(res_invalid.status_code, 403)
 

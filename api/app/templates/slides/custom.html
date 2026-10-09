@@ -73,6 +73,15 @@
                         </div>
                     </a>
                 </div>
+            {% elif el.type == 'form' %}
+                {% set form_x = el.x if (el.x is defined and el.x is not none) else 0 %}
+                {% set form_y = el.y if (el.y is defined and el.y is not none) else 0 %}
+                {% set form_w = el.w if (el.w is defined and el.w is not none) else 92 %}
+                {% set form_h = el.h if (el.h is defined and el.h is not none) else 70 %}
+                <div class="slide-el slide-el-form"
+                     style="left: calc(50% + {{ form_x }}%); top: calc(50% + {{ form_y }}%); width: {{ form_w }}%; max-width: {{ form_w }}%; height: {{ form_h }}%; max-height: {{ form_h }}%; transform: translate(-50%, -50%);">
+                    {% include "partials/rsvp_form.html" %}
+                </div>
             {% endif %}
         {% endfor %}
     </div>

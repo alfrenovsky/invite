@@ -240,10 +240,11 @@
             }
         });
 
-        // En slide de RSVP desactivar tap-zones para garantizar cero interferencias con el formulario
-        const isRsvpSlide = (currentSlideId === 'rsvp');
-        if (tapLeft) tapLeft.style.pointerEvents = isRsvpSlide ? 'none' : 'auto';
-        if (tapRight) tapRight.style.pointerEvents = isRsvpSlide ? 'none' : 'auto';
+        // En slides con formulario RSVP desactivar tap-zones para garantizar cero interferencias con el formulario
+        const hasForm = !!(currentSlide && currentSlide.querySelector('.rsvp-form-container'));
+        const disableTaps = (currentSlideId === 'rsvp') || hasForm;
+        if (tapLeft) tapLeft.style.pointerEvents = disableTaps ? 'none' : 'auto';
+        if (tapRight) tapRight.style.pointerEvents = disableTaps ? 'none' : 'auto';
     }
 
     function updateStoryScale() {
@@ -934,7 +935,10 @@
             btnEditRsvp.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const rsvpIdx = slides.findIndex(s => s.getAttribute('data-slide-id') === 'rsvp');
+                let rsvpIdx = slides.findIndex(s => s.getAttribute('data-slide-id') === 'rsvp');
+                if (rsvpIdx === -1) {
+                    rsvpIdx = slides.findIndex(s => s.querySelector('.rsvp-form-container'));
+                }
                 if (rsvpIdx !== -1) {
                     stopAutoplay();
                     goToSlide(rsvpIdx);
