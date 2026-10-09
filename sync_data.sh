@@ -7,7 +7,7 @@ REMOTE_DIR="${REMOTE_DIR:-/home/alfredo/invite}"
 LOCAL_DATA="./data/"
 REMOTE_DATA="${REMOTE_HOST}:${REMOTE_DIR}/data/"
 
-ACTION="push"
+ACTION=""
 DRY_RUN=""
 
 # Parse arguments
@@ -23,16 +23,24 @@ for arg in "$@"; do
             DRY_RUN="--dry-run"
             ;;
         -h|--help)
-            echo "Uso: $0 [push|pull] [--dry-run]"
+            echo "Uso: $0 <push|pull> [--dry-run]"
             echo ""
-            echo "Comandos:"
-            echo "  push        Sube el contenido local (data/) a producción (por defecto)"
-            echo "  pull        Descarga el contenido de producción a local"
-            echo "  --dry-run   Muestra los cambios que se transferirían sin modificar archivos"
+            echo "Comandos requeridos:"
+            echo "  push        Sube el contenido local (data/) a producción (--delete)"
+            echo "  pull        Descarga el contenido de producción a local (--delete)"
+            echo ""
+            echo "Opciones:"
+            echo "  --dry-run   Muestra los cambios que se transferirían/eliminarían sin modificar archivos"
             exit 0
             ;;
     esac
 done
+
+if [ -z "$ACTION" ]; then
+    echo "❌ Error: Debes especificar una acción obligatoria ('push' o 'pull')."
+    echo "Uso: $0 <push|pull> [--dry-run]"
+    exit 1
+fi
 
 echo "========================================="
 if [ -n "$DRY_RUN" ]; then
@@ -53,8 +61,8 @@ echo "========================================="
 # Ensure local data directory exists
 mkdir -p "$LOCAL_DATA"
 
-# Run rsync excluding runtime logs
-rsync -avz --progress --exclude="*.log" $DRY_RUN "$SRC" "$DST"
+# Run rsync with delete, excluding runtime logs and sheet cache
+rsync -avz --delete --progress --exclude="*.log" --exclude="sheet_cache.json" $DRY_RUN "$SRC" "$DST"
 
 echo "========================================="
 echo "✅ Sincronización completada con éxito."
