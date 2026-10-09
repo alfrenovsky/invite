@@ -1,31 +1,55 @@
 [
   {
-    "background": "Parque.jpg",
-    "duration": 8500,
+    "background": "AyCenMaal.jpeg",
+    "duration": 7000,
     "elements": [
       {
-        "content": "NOS CASAMOS",
-        "id": "el_1791458669060",
-        "style": "tag",
-        "type": "text",
-        "w": 56,
-        "x": 0,
-        "y": 32
+        "id": "el_1791505191857",
+        "type": "location",
+        "content": "Luna India,",
+        "url": "",
+        "style": "classic",
+        "x": -1,
+        "y": 21,
+        "w": null,
+        "rotate": -15,
+        "zoom": 150
       },
       {
-        "content": "Celia & Alfredo",
-        "id": "el_1791458721214",
-        "style": "title",
+        "id": "el_1791505213379",
         "type": "text",
-        "w": 90,
+        "content": "cxvzxvcxzvzcx sslkdfjs jfsld jfsdlkfjdslkf jdslf jdskj f\nsdsflkjslkf ",
+        "style": "body",
+        "x": 4,
+        "y": -8,
+        "w": 74
+      },
+      {
+        "id": "el_1791505389586",
+        "type": "text",
+        "content": "TITULO",
+        "style": "title",
         "x": 0,
-        "y": 39
+        "y": -33,
+        "w": 88
+      },
+      {
+        "id": "el_1791505401680",
+        "type": "countdown",
+        "title": "FALTA POCO",
+        "target_date": "2027-03-19T18:00",
+        "precision": "days",
+        "x": 0,
+        "y": 37,
+        "w": null,
+        "rotate": 0,
+        "zoom": 100
       }
     ],
     "enabled": true,
-    "id": "portada",
+    "id": "intro",
     "template": "slides/custom.html",
-    "title": "Portada"
+    "title": "Intro"
   },
   {
     "background": "ConGlobo.jpg",
@@ -48,9 +72,9 @@
         "title": "Falta poco",
         "type": "countdown",
         "w": 100,
-        "x": -15,
-        "y": -23,
-        "zoom": 200
+        "x": -17,
+        "y": -24,
+        "zoom": 110
       }
     ],
     "enabled": true,
@@ -59,7 +83,35 @@
     "title": "Fecha"
   },
   {
-    "background": "Luna_India.jpg",
+    "background": "Parque.jpg",
+    "duration": 8500,
+    "elements": [
+      {
+        "content": "Nos casamos",
+        "id": "el_1791458669060",
+        "style": "tag",
+        "type": "text",
+        "w": 92,
+        "x": 0,
+        "y": 32
+      },
+      {
+        "content": "Celia & Alfredo",
+        "id": "el_1791458721214",
+        "style": "title",
+        "type": "text",
+        "w": 90,
+        "x": 0,
+        "y": 39
+      }
+    ],
+    "enabled": true,
+    "id": "portada",
+    "template": "slides/custom.html",
+    "title": "Portada"
+  },
+  {
+    "background": "LunaIndia.jpeg",
     "duration": 6500,
     "elements": [
       {
@@ -99,34 +151,7 @@
     "title": "Lugar"
   },
   {
-    "background": "intro.mp4",
-    "duration": 10000,
-    "elements": [],
-    "enabled": true,
-    "id": "video",
-    "template": "slides/custom.html",
-    "title": "Video"
-  },
-  {
-    "background": "background.jpeg",
-    "duration": 7000,
-    "elements": [],
-    "enabled": true,
-    "id": "itinerario",
-    "template": "slides/custom.html",
-    "title": "Itinerario"
-  },
-  {
-    "background": "background.1.jpeg",
-    "duration": 7000,
-    "elements": [],
-    "enabled": true,
-    "id": "regalos",
-    "template": "slides/custom.html",
-    "title": "Regalos"
-  },
-  {
-    "background": "background.alternate.jpeg",
+    "background": "",
     "duration": 0,
     "elements": [],
     "enabled": true,
@@ -145,7 +170,7 @@
         "type": "text",
         "w": 88,
         "x": 0,
-        "y": 18
+        "y": -30
       },
       {
         "content": "Lamentamos mucho que no puedas venir a festejar con nosotros.\nEsperamos vernos pronto para brindar.\n            ",
@@ -154,7 +179,7 @@
         "type": "text",
         "w": 88,
         "x": 0,
-        "y": 35
+        "y": 30
       }
     ],
     "enabled": true,

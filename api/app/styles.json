@@ -1,13 +1,15 @@
 {
   "title": {
+    "fontFamily": "Montserrat",
     "color": "#ffffff",
-    "fontSize": 40,
+    "fontSize": 37,
     "fontWeight": 800,
-    "letterSpacing": -0.09,
-    "lineHeight": 0.95,
+    "letterSpacing": -0.08,
+    "lineHeight": 0.9,
     "textTransform": "uppercase"
   },
   "tag": {
+    "fontFamily": "Montserrat",
     "color": "#ffffff",
     "fontSize": 23,
     "fontWeight": 600,
@@ -16,6 +18,7 @@
     "textTransform": "uppercase"
   },
   "body": {
+    "fontFamily": "Montserrat",
     "color": "#f0f4f8",
     "fontSize": 27,
     "fontWeight": 600,
@@ -25,15 +28,17 @@
   },
   "header_title": {
     "text": "CELIA & ALFREDO",
+    "fontFamily": "Montserrat",
     "color": "#ffffff",
-    "fontSize": 14,
+    "fontSize": 17,
     "fontWeight": 700,
     "letterSpacing": 0.05
   },
   "header_subtitle": {
-    "text": "NOS CASAMOS - 19 de Marzo",
+    "text": "19 de marzo de 2027",
+    "fontFamily": "Montserrat",
     "color": "#a0aec0",
-    "fontSize": 11,
+    "fontSize": 18,
     "fontWeight": 600,
     "letterSpacing": 0.05
   }
