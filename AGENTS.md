@@ -81,6 +81,7 @@ The application is containerized using **Docker Compose** and consists of two ma
 ├── docker-compose.yml         # Main Docker Compose configuration
 ├── docker-compose.override.yml# Local override configuration (ports, mounts)
 ├── deploy.sh                  # Automated deployment script with remote container refresh
+├── sync_data.sh               # Content synchronization script (rsync data/ with production)
 ├── project.env                # Project environment variables
 ├── API.md                     # Full RESTful CRUD API documentation & field specs
 └── AGENTS.md                  # Instructions for AI agents (this file)
