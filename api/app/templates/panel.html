@@ -1811,9 +1811,80 @@
             text-overflow: ellipsis;
             line-height: 1.3;
         }
+
+        /* Mobile Blocker Screen (Panel is PC only) */
+        .mobile-only-blocker {
+            display: none;
+        }
+
+        @media (max-width: 1023px) {
+            body {
+                overflow: hidden !important;
+                background: #0a0d14 !important;
+            }
+            .panel-container {
+                display: none !important;
+            }
+            .mobile-only-blocker {
+                display: flex !important;
+                position: fixed;
+                inset: 0;
+                width: 100vw;
+                height: 100vh;
+                background: radial-gradient(circle at 50% 30%, rgba(26, 36, 52, 0.95), #080b11 90%);
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 24px;
+                z-index: 99999999;
+                box-sizing: border-box;
+            }
+            .mobile-blocker-card {
+                max-width: 360px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid var(--card-border);
+                border-radius: 18px;
+                padding: 38px 24px;
+                box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+            }
+            .mobile-blocker-icon {
+                font-size: 3.4rem;
+                line-height: 1;
+                filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.3));
+            }
+            .mobile-blocker-title {
+                font-family: 'Cinzel', serif;
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: #ffffff;
+                margin: 0;
+                letter-spacing: 0.04em;
+            }
+            .mobile-blocker-desc {
+                font-size: 0.9rem;
+                line-height: 1.55;
+                color: var(--text-muted);
+                margin: 0;
+            }
+        }
     </style>
 </head>
 <body>
+
+<div class="mobile-only-blocker">
+    <div class="mobile-blocker-card">
+        <div class="mobile-blocker-icon">💻</div>
+        <h1 class="mobile-blocker-title">Panel exclusivo para PC</h1>
+        <p class="mobile-blocker-desc">
+            El editor visual está optimizado exclusivamente para computadoras de escritorio. Por favor abrí el panel desde una PC para gestionar la invitación.
+        </p>
+    </div>
+</div>
 
 <div class="panel-container">
     <div class="panel-split-grid">
@@ -1918,7 +1989,7 @@
                         <!-- Background Position & Zoom Controls -->
                         <div class="form-group" id="slideBgSettingsGroup" style="display: none; margin-top: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes de Fondo (Zoom y Posición)</label>
+                                <label style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes de Fondo</label>
                                 <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()" style="padding: 3px 8px; font-size: 0.72rem;" title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
@@ -1928,20 +1999,8 @@
                                     <input type="range" class="pos-range-slider" id="slideBgZoomSlider" min="100" max="300" step="5" value="100" oninput="onSlideBgZoomChange(this.value)">
                                     <span class="style-prop-badge" id="slideBgZoomBadge" style="min-width: 48px; text-align: center;">100%</span>
                                 </div>
-                                <!-- Pos X Slider -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">↔️ Pos X</span>
-                                    <input type="range" class="pos-range-slider" id="slideBgXSlider" min="-50" max="50" step="1" value="0" oninput="onSlideBgXChange(this.value)">
-                                    <span class="style-prop-badge" id="slideBgXBadge" style="min-width: 48px; text-align: center;">0%</span>
-                                </div>
-                                <!-- Pos Y Slider -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">↕️ Pos Y</span>
-                                    <input type="range" class="pos-range-slider" id="slideBgYSlider" min="-50" max="50" step="1" value="0" oninput="onSlideBgYChange(this.value)">
-                                    <span class="style-prop-badge" id="slideBgYBadge" style="min-width: 48px; text-align: center;">0%</span>
-                                </div>
                                 <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
-                                    💡 <em>Podés arrastrar el fondo en el teléfono o usar la rueda del mouse para hacer zoom.</em>
+                                    💡 <em>Arrastrá el fondo en el teléfono para moverlo libremente.</em>
                                 </div>
                             </div>
                         </div>
@@ -3418,22 +3477,11 @@
         }
 
         const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
-        const bgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? slide.bg_x : 0;
-        const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
-
         const zoomSlider = document.getElementById('slideBgZoomSlider');
         const zoomBadge = document.getElementById('slideBgZoomBadge');
-        const xSlider = document.getElementById('slideBgXSlider');
-        const xBadge = document.getElementById('slideBgXBadge');
-        const ySlider = document.getElementById('slideBgYSlider');
-        const yBadge = document.getElementById('slideBgYBadge');
 
         if (zoomSlider) zoomSlider.value = bgZoom;
         if (zoomBadge) zoomBadge.textContent = bgZoom + '%';
-        if (xSlider) xSlider.value = bgX;
-        if (xBadge) xBadge.textContent = bgX + '%';
-        if (ySlider) ySlider.value = bgY;
-        if (yBadge) yBadge.textContent = bgY + '%';
 
         updateBgSettingsVisibility();
 
@@ -4846,17 +4894,9 @@
 
         const zoomSlider = document.getElementById('slideBgZoomSlider');
         const zoomBadge = document.getElementById('slideBgZoomBadge');
-        const xSlider = document.getElementById('slideBgXSlider');
-        const xBadge = document.getElementById('slideBgXBadge');
-        const ySlider = document.getElementById('slideBgYSlider');
-        const yBadge = document.getElementById('slideBgYBadge');
 
         if (zoomSlider) zoomSlider.value = 100;
         if (zoomBadge) zoomBadge.textContent = '100%';
-        if (xSlider) xSlider.value = 0;
-        if (xBadge) xBadge.textContent = '0%';
-        if (ySlider) ySlider.value = 0;
-        if (yBadge) yBadge.textContent = '0%';
 
         updateLivePreview();
         showToast('↺ Fondo centrado y restablecido');
@@ -4899,21 +4939,11 @@
             const deltaXPercent = ((e.clientX - startClientX) / width) * 100;
             const deltaYPercent = ((e.clientY - startClientY) / height) * 100;
 
-            const newX = Math.max(-50, Math.min(50, Math.round(initialBgX + deltaXPercent)));
-            const newY = Math.max(-50, Math.min(50, Math.round(initialBgY + deltaYPercent)));
+            const newX = Math.round((initialBgX + deltaXPercent) * 10) / 10;
+            const newY = Math.round((initialBgY + deltaYPercent) * 10) / 10;
 
             slide.bg_x = newX;
             slide.bg_y = newY;
-
-            const xSlider = document.getElementById('slideBgXSlider');
-            const ySlider = document.getElementById('slideBgYSlider');
-            const xBadge = document.getElementById('slideBgXBadge');
-            const yBadge = document.getElementById('slideBgYBadge');
-
-            if (xSlider) xSlider.value = newX;
-            if (ySlider) ySlider.value = newY;
-            if (xBadge) xBadge.textContent = newX + '%';
-            if (yBadge) yBadge.textContent = newY + '%';
 
             updateLivePreview();
         });
