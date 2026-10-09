@@ -609,28 +609,28 @@
             transform: scale(0.97);
         }
 
-        /* Selected Status Colors */
+        /* Selected Status Colors: Keep gray background, change border and text color */
         .rsvp-status-btn.btn-asiste.selected {
-            background: #2ecc71;
-            color: #ffffff;
-            border-color: #27ae60;
-            box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
+            background: rgba(255, 255, 255, 0.12);
+            color: #2ecc71;
+            border: 1.5px solid #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.35);
             font-weight: 700;
         }
 
         .rsvp-status-btn.btn-no.selected {
-            background: #e74c3c;
-            color: #ffffff;
-            border-color: #c0392b;
-            box-shadow: 0 0 12px rgba(231, 76, 60, 0.6);
+            background: rgba(255, 255, 255, 0.12);
+            color: #e74c3c;
+            border: 1.5px solid #e74c3c;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.35);
             font-weight: 700;
         }
 
         .rsvp-status-btn.btn-pendiente.selected {
-            background: #f1c40f;
-            color: #1a1a1a;
-            border-color: #d4ac0d;
-            box-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
+            background: rgba(255, 255, 255, 0.12);
+            color: #f1c40f;
+            border: 1.5px solid #f1c40f;
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.35);
             font-weight: 700;
         }
 
