@@ -1675,6 +1675,8 @@
             width: 90%;
             max-width: 440px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
         /* Fonts Tab Gallery & Cards */
         .fonts-gallery {
             display: flex;
@@ -1686,6 +1688,10 @@
         }
 
         .font-card {
+            display: grid;
+            grid-template-columns: 36px 1fr;
+            align-items: center;
+            gap: 14px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--card-border);
             border-radius: 10px;
@@ -1698,11 +1704,35 @@
             background: rgba(255, 255, 255, 0.05);
         }
 
+        .font-card-col-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .font-card-col-action .btn-delete-icon {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .font-card-col-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
         .font-card-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 0;
         }
 
         .font-card-title-group {
@@ -1721,7 +1751,7 @@
         .font-card-preview {
             font-size: 1.15rem;
             color: #f7fafc;
-            padding: 10px 14px;
+            padding: 8px 12px;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 6px;
             letter-spacing: 0.02em;
@@ -2311,16 +2341,20 @@
                             {% if fonts %}
                                 {% for f in fonts %}
                                     <div class="font-card" data-filename="{{ f.filename }}" data-family="{{ f.family }}">
-                                        <div class="font-card-header">
-                                            <div class="font-card-title-group">
-                                                <span class="font-card-name" title="{{ f.family }}">{{ f.family }}</span>
-                                                <span class="media-badge" style="font-size: 0.65rem; padding: 2px 6px;">{{ f.ext }}</span>
-                                                <span style="font-size: 0.72rem; color: var(--text-muted);">{{ f.size_kb }} KB</span>
-                                            </div>
+                                        <div class="font-card-col-action">
                                             <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteFont('{{ f.filename }}', '{{ f.family }}')" title="Eliminar tipografía">🗑️</button>
                                         </div>
-                                        <div class="font-card-preview" style="font-family: '{{ f.family }}', sans-serif;">
-                                            Celia & Alfredo — 19 de Marzo de 2027
+                                        <div class="font-card-col-content">
+                                            <div class="font-card-header">
+                                                <div class="font-card-title-group">
+                                                    <span class="font-card-name" title="{{ f.family }}">{{ f.family }}</span>
+                                                    <span class="media-badge" style="font-size: 0.65rem; padding: 2px 6px;">{{ f.ext }}</span>
+                                                    <span style="font-size: 0.72rem; color: var(--text-muted);">{{ f.size_kb }} KB</span>
+                                                </div>
+                                            </div>
+                                            <div class="font-card-preview" style="font-family: '{{ f.family }}', sans-serif;">
+                                                Celia & Alfredo — 19 de Marzo de 2027
+                                            </div>
                                         </div>
                                     </div>
                                 {% endfor %}
