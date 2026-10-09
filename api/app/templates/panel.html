@@ -429,6 +429,34 @@
             color: var(--text-muted);
         }
 
+        .slide-bg-thumb-box {
+            width: 52px;
+            height: 52px;
+            min-width: 52px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.45);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .slide-bg-thumb-box:hover {
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .slide-bg-thumb-box img,
+        .slide-bg-thumb-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         .selected-file-name {
             font-size: 0.82rem;
             color: var(--accent);
@@ -2366,12 +2394,22 @@
 
                                 <div class="form-group">
                                     <label for="slideBgSelect">Fondo / Video</label>
-                                    <select id="slideBgSelect" class="form-select">
-                                        <option value="">(Sin fondo / Default)</option>
-                                        {% for bg in backgrounds %}
-                                        <option value="{{ bg }}">{{ bg }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="slide-bg-select-wrap" style="display: flex; gap: 12px; align-items: center;">
+                                        <div id="slideBgThumbnailBox" class="slide-bg-thumb-box" title="Vista previa del fondo">
+                                            <span id="slideBgThumbEmpty" style="font-size: 1.25rem; color: var(--text-muted); opacity: 0.6;">🖼️</span>
+                                            <img id="slideBgThumbImg" src="" alt="Fondo" style="display: none;">
+                                            <video id="slideBgThumbVideo" src="" muted loop playsinline autoplay style="display: none;"></video>
+                                            <span id="slideBgThumbBadge" style="display: none; position: absolute; bottom: 2px; right: 2px; font-size: 0.55rem; background: rgba(0,0,0,0.8); padding: 1px 4px; border-radius: 3px; color: #fff; font-weight: 700;">🎬</span>
+                                        </div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <select id="slideBgSelect" class="form-select">
+                                                <option value="">(Sin fondo / Default)</option>
+                                                {% for bg in backgrounds %}
+                                                <option value="{{ bg }}">{{ bg }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Background Position & Zoom Controls -->
@@ -4050,8 +4088,10 @@
             const bgSelect = document.getElementById('slideBgSelect');
             if (bgSelect) {
                 bgSelect.value = slide.background || '';
+                updateSlideBgThumbnail(bgSelect.value);
                 bgSelect.onchange = () => {
                     slide.background = bgSelect.value;
+                    updateSlideBgThumbnail(bgSelect.value);
                     updateBgSettingsVisibility();
                     updateLivePreview();
                     updateBackgroundsInUseUI();
@@ -5242,6 +5282,9 @@
                     slidesData.forEach(s => {
                         if (s.background === oldName) s.background = finalName;
                     });
+                    if (bgSelect && bgSelect.value === finalName) {
+                        updateSlideBgThumbnail(finalName);
+                    }
                     updateLivePreview();
 
                     cancelRename(index);
@@ -5336,6 +5379,7 @@
                             opt.remove();
                             if (isSelected) {
                                 bgSelect.value = '';
+                                updateSlideBgThumbnail('');
                             }
                         }
                     }
@@ -5634,6 +5678,44 @@
         // -------------------------------------------------------------
         // SLIDE BACKGROUND ZOOM & MOVE CONTROLS
         // -------------------------------------------------------------
+        function updateSlideBgThumbnail(bgName) {
+            const emptyEl = document.getElementById('slideBgThumbEmpty');
+            const imgEl = document.getElementById('slideBgThumbImg');
+            const videoEl = document.getElementById('slideBgThumbVideo');
+            const badgeEl = document.getElementById('slideBgThumbBadge');
+            if (!emptyEl || !imgEl || !videoEl || !badgeEl) return;
+
+            const name = (bgName || '').trim();
+            if (!name) {
+                emptyEl.style.display = 'flex';
+                imgEl.style.display = 'none';
+                imgEl.src = '';
+                videoEl.style.display = 'none';
+                videoEl.src = '';
+                badgeEl.style.display = 'none';
+                return;
+            }
+
+            const isVid = /\.(mp4|webm|mov|m4v)$/i.test(name);
+            const mediaUrl = name.startsWith('/') ? name : ('/assets/backgrounds/' + encodeURIComponent(name));
+
+            emptyEl.style.display = 'none';
+            if (isVid) {
+                imgEl.style.display = 'none';
+                imgEl.src = '';
+                videoEl.src = mediaUrl;
+                videoEl.style.display = 'block';
+                videoEl.play().catch(() => {});
+                badgeEl.style.display = 'block';
+            } else {
+                videoEl.style.display = 'none';
+                videoEl.src = '';
+                imgEl.src = mediaUrl;
+                imgEl.style.display = 'block';
+                badgeEl.style.display = 'none';
+            }
+        }
+
         function updateBgSettingsVisibility() {
             const slide = getCurrentSlide();
             const group = document.getElementById('slideBgSettingsGroup');
