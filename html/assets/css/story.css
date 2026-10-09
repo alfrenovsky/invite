@@ -533,9 +533,35 @@
             line-height: 1.2;
         }
 
-        .rsvp-menu-icon {
+        .rsvp-header-icons {
             margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .rsvp-gluten-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .rsvp-gluten-badge {
+            width: 19px;
+            height: 19px;
+            border-radius: 50%;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+        }
+
+        .rsvp-menu-icon {
+            margin-left: 0;
+            margin-right: 0;
             font-size: 1.05rem;
             line-height: 1;
             display: inline-flex;
@@ -767,6 +793,71 @@
             border: 1.5px solid rgba(255, 255, 255, 0.55);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
             font-weight: 700;
+        }
+
+        .rsvp-celiac-wrapper {
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .rsvp-celiac-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+        }
+
+        .rsvp-celiac-checkbox {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        .rsvp-celiac-custom-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.08);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .rsvp-celiac-label:hover .rsvp-celiac-custom-box {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .rsvp-celiac-checkbox:checked + .rsvp-celiac-custom-box {
+            background: #ef4444;
+            border-color: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .rsvp-celiac-checkbox:checked + .rsvp-celiac-custom-box::after {
+            content: "";
+            width: 5px;
+            height: 9px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            margin-bottom: 2px;
+        }
+
+        .rsvp-celiac-text {
+            line-height: 1.2;
         }
 
         /* Active & Interactive Layers */

@@ -6,6 +6,7 @@
             {% for guest in guests %}
             {% set conf = guest.confirmacion or '' %}
             {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
+            {% set is_celiac = (guest.celiaco == 'si' or guest.pa_celiaco == 'si') %}
             {% set menu_icon = '' %}
             {% if conf == 'si' %}
                 {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
@@ -14,11 +15,16 @@
                 {% endif %}
             {% endif %}
             <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}">
-                <!-- Guest Header Row (One Line with Bullet, Full Name, and Right-Aligned Menu Icon) -->
+                <!-- Guest Header Row (One Line with Bullet, Full Name, Gluten Icon, and Menu Icon) -->
                 <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}">
                     <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
                     <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}</span>
-                    <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{{ menu_icon }}</span>
+                    <span class="rsvp-header-icons">
+                        <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}" style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
+                            <img src="/assets/sin_gluten.svg" alt="Sin gluten" class="rsvp-gluten-badge">
+                        </span>
+                        <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{{ menu_icon }}</span>
+                    </span>
                     <span class="rsvp-chevron" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
@@ -55,6 +61,13 @@
                             <button type="button" class="rsvp-menu-btn {% if current_menu == 'general' %}selected{% endif %}" data-menu="general">General</button>
                             <button type="button" class="rsvp-menu-btn {% if current_menu == 'vegetariano' %}selected{% endif %}" data-menu="vegetariano">Vegetariano</button>
                             <button type="button" class="rsvp-menu-btn {% if current_menu == 'vegano' %}selected{% endif %}" data-menu="vegano">Vegano</button>
+                        </div>
+                        <div class="rsvp-celiac-wrapper">
+                            <label class="rsvp-celiac-label" for="celiaco_{{ guest.id }}">
+                                <input type="checkbox" id="celiaco_{{ guest.id }}" name="celiaco_{{ guest.id }}" class="rsvp-celiac-checkbox" value="si" {% if is_celiac %}checked{% endif %}>
+                                <span class="rsvp-celiac-custom-box" aria-hidden="true"></span>
+                                <span class="rsvp-celiac-text">Sin gluten</span>
+                            </label>
                         </div>
                     </div>
                 </div>

@@ -747,6 +747,8 @@
             const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
             const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
             const selectedMenu = selectedMenuBtn ? (selectedMenuBtn.getAttribute('data-menu') || 'general') : 'general';
+            const celiacCheck = card.querySelector(`input[name="celiaco_${guestId}"]`);
+            const isCeliac = celiacCheck ? celiacCheck.checked : false;
 
             const payload = {
                 confirmacion: conf
@@ -762,6 +764,8 @@
             payload.pa_general = (conf === 'si' && selectedMenu === 'general') ? 'si' : '';
             payload.pa_vegetariano = (conf === 'si' && selectedMenu === 'vegetariano') ? 'si' : '';
             payload.pa_vegano = (conf === 'si' && selectedMenu === 'vegano') ? 'si' : '';
+            payload.celiaco = (conf === 'si' && isCeliac) ? 'si' : '';
+            payload.pa_celiaco = (conf === 'si' && isCeliac) ? 'si' : '';
 
             return payload;
         }
@@ -1064,8 +1068,10 @@
             const header = card.querySelector('.rsvp-card-header');
             const bullet = card.querySelector('.rsvp-bullet');
             const menuIcon = card.querySelector('.rsvp-menu-icon');
+            const glutenIcon = card.querySelector('.rsvp-gluten-icon');
             const statusButtons = card.querySelectorAll('.rsvp-status-btn');
             const menuButtons = card.querySelectorAll('.rsvp-menu-btn');
+            const celiacCheck = card.querySelector(`input[name="celiaco_${guestId}"]`);
             const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
             const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
             const nameDisplay = card.querySelector('.rsvp-guest-name');
@@ -1079,6 +1085,16 @@
                 const selBtn = card.querySelector('.rsvp-menu-btn.selected');
                 const selMenu = selBtn ? (selBtn.getAttribute('data-menu') || 'general') : 'general';
                 menuIcon.textContent = MENU_ICONS[selMenu] || '🥩';
+            }
+
+            function updateGlutenIconDisplay(status) {
+                if (!glutenIcon) return;
+                const isCeliac = celiacCheck ? celiacCheck.checked : false;
+                if (status === 'si' && isCeliac) {
+                    glutenIcon.style.display = 'inline-flex';
+                } else {
+                    glutenIcon.style.display = 'none';
+                }
             }
 
             // 1. Accordion Toggle on clicking the Header / Row
@@ -1153,6 +1169,7 @@
                     }
 
                     updateMenuIconDisplay(val);
+                    updateGlutenIconDisplay(val);
                     updateSlideList();
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                 });
@@ -1169,6 +1186,14 @@
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                 });
             });
+
+            // Sin Gluten Checkbox
+            if (celiacCheck) {
+                celiacCheck.addEventListener('change', () => {
+                    updateGlutenIconDisplay(card.getAttribute('data-status'));
+                    queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                });
+            }
 
             // 3. Name & Lastname Live Sync
             function syncGuestName() {
@@ -1190,8 +1215,9 @@
                 inputApellido.addEventListener('blur', () => flushAutoSave());
             }
 
-            // Initial Menu Icon State
+            // Initial Menu & Gluten Icon State
             updateMenuIconDisplay(card.getAttribute('data-status'));
+            updateGlutenIconDisplay(card.getAttribute('data-status'));
         });
 
         // RSVP Form Radio & Input Bindings (Legacy or Detailed)
