@@ -2392,7 +2392,7 @@
                                 {% for f in fonts %}
                                     <div class="font-card" data-filename="{{ f.filename }}" data-family="{{ f.family }}">
                                         <div class="font-card-col-action">
-                                            <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteFont('{{ f.filename }}', '{{ f.family }}')" title="Eliminar tipografía">🗑️</button>
+                                            <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteFont('{{ f.filename }}', '{{ f.family }}', this)" title="Eliminar tipografía">🗑️</button>
                                         </div>
                                         <div class="font-card-col-content">
                                             <div class="font-card-header">
@@ -4613,9 +4613,14 @@
         }
     }
 
-    async function deleteFont(filename, family) {
+    async function deleteFont(filename, family, btnElement = null) {
         if (!confirm(`¿Eliminar la tipografía "${family}" (${filename}) permanentemente?`)) {
             return;
+        }
+
+        if (btnElement) {
+            btnElement.disabled = true;
+            btnElement.style.opacity = '0.4';
         }
 
         try {
@@ -4627,15 +4632,61 @@
             const data = await res.json();
             if (data.ok) {
                 showToast(data.message || 'Fuente eliminada correctamente');
-                setTimeout(() => {
-                    window.location.hash = 'fuentes';
-                    window.location.reload();
-                }, 600);
+
+                const gallery = document.getElementById('fontsGallery');
+                const card = gallery ? Array.from(gallery.querySelectorAll('.font-card')).find(c => c.getAttribute('data-filename') === filename) : null;
+
+                if (card) {
+                    card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.96)';
+
+                    setTimeout(() => {
+                        card.remove();
+
+                        const remainingCards = gallery.querySelectorAll('.font-card');
+                        const remainingTotal = remainingCards.length;
+
+                        // Update badges
+                        const navBadge = document.getElementById('fontsNavBadge');
+                        if (navBadge) navBadge.textContent = remainingTotal;
+
+                        const searchInput = document.getElementById('fontSearchInput');
+                        const query = searchInput ? searchInput.value.trim() : '';
+                        filterFontsList(query);
+
+                        // If no fonts left, show empty gallery message
+                        if (remainingTotal === 0 && !document.getElementById('noFontsMsg')) {
+                            gallery.innerHTML = '<p id="noFontsMsg" style="color: var(--text-muted); font-size: 0.9rem;">No hay fuentes subidas todavía en la carpeta assets/fonts.</p>';
+                        }
+
+                        // Check if this family is still used by another font file in remaining cards
+                        const familyStillExists = Array.from(remainingCards).some(c => c.getAttribute('data-family') === family);
+                        if (!familyStillExists) {
+                            const fontIndex = AVAILABLE_FONTS.indexOf(family);
+                            if (fontIndex !== -1) {
+                                AVAILABLE_FONTS.splice(fontIndex, 1);
+                                const currentStyleFam = (stylesData[activeStyleKey] && stylesData[activeStyleKey].fontFamily) || 'Montserrat';
+                                const currentHeaderFam = (stylesData[activeHeaderKey] && stylesData[activeHeaderKey].fontFamily) || 'Montserrat';
+                                populateFontSelect('styleFontFamilySelect', currentStyleFam);
+                                populateFontSelect('headerFontFamilySelect', currentHeaderFam);
+                            }
+                        }
+                    }, 250);
+                }
             } else {
                 showToast(data.error || 'Error al eliminar fuente', true);
+                if (btnElement) {
+                    btnElement.disabled = false;
+                    btnElement.style.opacity = '1';
+                }
             }
         } catch (err) {
             showToast('Error de red al eliminar fuente', true);
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.style.opacity = '1';
+            }
         }
     }
 
