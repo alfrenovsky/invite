@@ -31,20 +31,8 @@
 }
 
 @font-face {
-    font-family: 'Ethnocentric-Regular';
-    src: url('/assets/fonts/Ethnocentric-Regular.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'FoundationTitlesHand-SemiBold-v0.85';
     src: url('/assets/fonts/FoundationTitlesHand-SemiBold-v0.85.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'ND LOGOS REGULAR';
-    src: url('/assets/fonts/ND%20LOGOS%20REGULAR.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -63,24 +51,6 @@
 @font-face {
     font-family: 'Quadrillion Sb';
     src: url('/assets/fonts/Quadrillion%20Sb.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'ROBOTECH GP';
-    src: url('/assets/fonts/ROBOTECH%20GP.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'SPACE ARMOR';
-    src: url('/assets/fonts/SPACE%20ARMOR.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'SPACEBAR';
-    src: url('/assets/fonts/SPACEBAR.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -128,12 +98,6 @@
 
 @font-face {
     font-family: 'Space Rave';
-    src: url('/assets/fonts/Space%20Rave.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Space Rave';
     src: url('/assets/fonts/Space%20Rave.ttf') format('truetype');
     font-display: swap;
 }
@@ -159,12 +123,6 @@
 @font-face {
     font-family: 'Striker PersonalUseOnly';
     src: url('/assets/fonts/Striker%20PersonalUseOnly.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Strjmono';
-    src: url('/assets/fonts/Strjmono.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -321,12 +279,6 @@
 @font-face {
     font-family: 'mandalore';
     src: url('/assets/fonts/mandalore.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalore3d';
-    src: url('/assets/fonts/mandalore3d.ttf') format('truetype');
     font-display: swap;
 }
 
