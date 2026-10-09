@@ -5,9 +5,39 @@
         <div id="rsvpCardsContainer" class="rsvp-guest-list">
             {% for guest in guests %}
             {% set conf = guest.confirmacion or '' %}
-            <div class="rsvp-guest-row" data-guest-id="{{ guest.id }}" data-status="{{ conf }}" tabindex="0" role="button" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}">
-                <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
-                <span class="rsvp-guest-name">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}</span>
+            <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}">
+                <!-- Guest Header Row (One Line with Bullet and Full Name) -->
+                <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}">
+                    <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
+                    <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}</span>
+                    <span class="rsvp-chevron" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </span>
+                </div>
+
+                <!-- Expanded Body -->
+                <div class="rsvp-guest-body">
+                    <!-- 3 Status Buttons (Text Only, No Emojis) -->
+                    <div class="rsvp-status-buttons" role="group" aria-label="Estado de asistencia">
+                        <button type="button" class="rsvp-status-btn btn-asiste {% if conf == 'si' %}selected{% endif %}" data-val="si">Asiste</button>
+                        <button type="button" class="rsvp-status-btn btn-no {% if conf == 'no' %}selected{% endif %}" data-val="no">No asiste</button>
+                        <button type="button" class="rsvp-status-btn btn-pendiente {% if conf != 'si' and conf != 'no' %}selected{% endif %}" data-val="">Pendiente</button>
+                    </div>
+
+                    <!-- Name & Lastname Inputs -->
+                    <div class="rsvp-guest-inputs">
+                        <div class="rsvp-field">
+                            <label for="nombre_{{ guest.id }}">Nombre</label>
+                            <input type="text" id="nombre_{{ guest.id }}" name="nombre_{{ guest.id }}" class="guest-input-nombre" value="{{ guest.nombre or '' }}" placeholder="Nombre" autocomplete="off">
+                        </div>
+                        <div class="rsvp-field">
+                            <label for="apellido_{{ guest.id }}">Apellido</label>
+                            <input type="text" id="apellido_{{ guest.id }}" name="apellido_{{ guest.id }}" class="guest-input-apellido" value="{{ guest.apellido or '' }}" placeholder="Apellido" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
             </div>
             {% endfor %}
         </div>

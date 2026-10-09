@@ -443,7 +443,7 @@
             z-index: 750 !important;
         }
 
-        /* Minimalist RSVP Guest List in Montserrat */
+        /* Minimalist Expandable RSVP Guest Cards in Montserrat */
         .rsvp-guest-list {
             display: flex;
             flex-direction: column;
@@ -452,31 +452,42 @@
             font-family: 'Montserrat', sans-serif !important;
         }
 
+        .rsvp-guest-card {
+            display: flex;
+            flex-direction: column;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            overflow: hidden;
+            transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .rsvp-guest-card:hover {
+            border-color: rgba(255, 255, 255, 0.28);
+        }
+
+        .rsvp-guest-card.expanded {
+            background: rgba(18, 20, 28, 0.76);
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+
         .rsvp-guest-row {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 14px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            padding: 11px 14px;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
-            transition: background-color 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
             font-family: 'Montserrat', sans-serif !important;
-        }
-
-        .rsvp-guest-row:hover {
-            background: rgba(255, 255, 255, 0.14);
-            border-color: rgba(255, 255, 255, 0.28);
-        }
-
-        .rsvp-guest-row:active {
-            transform: scale(0.98);
+            width: 100%;
+            box-sizing: border-box;
+            background: transparent;
+            border: none;
         }
 
         .rsvp-bullet {
@@ -488,6 +499,7 @@
             display: inline-block;
             transition: background-color 0.25s ease, box-shadow 0.25s ease;
             box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         /* Green if confirmed */
@@ -519,6 +531,156 @@
             overflow: hidden;
             text-overflow: ellipsis;
             line-height: 1.2;
+        }
+
+        .rsvp-chevron {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.6);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .rsvp-guest-card.expanded .rsvp-chevron {
+            transform: rotate(180deg);
+            color: #ffffff;
+        }
+
+        .rsvp-guest-body {
+            display: none;
+            padding: 0 14px 14px 14px;
+            flex-direction: column;
+            gap: 12px;
+            animation: rsvpCardSlideDown 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .rsvp-guest-card.expanded .rsvp-guest-body {
+            display: flex;
+        }
+
+        @keyframes rsvpCardSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 3 Status Buttons (No emojis, Montserrat) */
+        .rsvp-status-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .rsvp-status-btn {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            padding: 9px 4px;
+            border-radius: 9px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            cursor: pointer;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .rsvp-status-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .rsvp-status-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Selected Status Colors */
+        .rsvp-status-btn.btn-asiste.selected {
+            background: #2ecc71;
+            color: #ffffff;
+            border-color: #27ae60;
+            box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
+            font-weight: 700;
+        }
+
+        .rsvp-status-btn.btn-no.selected {
+            background: #e74c3c;
+            color: #ffffff;
+            border-color: #c0392b;
+            box-shadow: 0 0 12px rgba(231, 76, 60, 0.6);
+            font-weight: 700;
+        }
+
+        .rsvp-status-btn.btn-pendiente.selected {
+            background: #f1c40f;
+            color: #1a1a1a;
+            border-color: #d4ac0d;
+            box-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
+            font-weight: 700;
+        }
+
+        /* Name & Lastname inputs */
+        .rsvp-guest-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .rsvp-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .rsvp-field label {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.65);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .rsvp-field input {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 10px;
+            outline: none;
+            box-sizing: border-box;
+            width: 100%;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .rsvp-field input:focus {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+        }
+
+        .rsvp-field input::placeholder {
+            color: rgba(255, 255, 255, 0.35);
         }
 
         /* Active & Interactive Layers */

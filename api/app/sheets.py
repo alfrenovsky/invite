@@ -105,9 +105,13 @@ class GoogleSheetsTable:
             try:
                 if self._check_and_consume_update_trigger():
                     self.get_all(force_remote=True)
+                else:
+                    cache = self._load_cache()
+                    if self._has_expired_local(cache):
+                        self.flush_local_to_remote()
             except Exception:
                 pass
-            self._stop_watcher.wait(1.5)
+            self._stop_watcher.wait(2.0)
 
     def _log_event(self, category: str, source: str, message: str):
 

@@ -4904,13 +4904,30 @@
                             formDiv.innerHTML = `
                             <div class="interactive-content rsvp-form-container" style="padding: 4px; box-sizing: border-box; width: 100%; font-family: 'Montserrat', sans-serif;">
                                 <div class="rsvp-guest-list" style="display: flex; flex-direction: column; gap: 8px;">
-                                    <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);">
-                                        <span class="rsvp-bullet bullet-si" style="width: 14px; height: 14px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.7); display: inline-block;"></span>
-                                        <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Juan Pérez</span>
+                                    <div class="rsvp-guest-card expanded" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(18,20,28,0.76); border: 1px solid rgba(255,255,255,0.3); overflow: hidden;">
+                                        <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: transparent;">
+                                            <span class="rsvp-bullet bullet-si" style="width: 14px; height: 14px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.7); display: inline-block;"></span>
+                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Juan Pérez</span>
+                                            <span style="margin-left: auto; color: #fff; font-size: 0.75rem;">▲</span>
+                                        </div>
+                                        <div style="padding: 0 12px 12px 12px; display: flex; flex-direction: column; gap: 8px;">
+                                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                                                <button type="button" style="padding: 6px 2px; border-radius: 7px; background: #2ecc71; color: #fff; font-size: 0.78rem; font-weight: 700; border: none; font-family: 'Montserrat', sans-serif;">Asiste</button>
+                                                <button type="button" style="padding: 6px 2px; border-radius: 7px; background: rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.78rem; border: 1px solid rgba(255,255,255,0.2); font-family: 'Montserrat', sans-serif;">No asiste</button>
+                                                <button type="button" style="padding: 6px 2px; border-radius: 7px; background: rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.78rem; border: 1px solid rgba(255,255,255,0.2); font-family: 'Montserrat', sans-serif;">Pendiente</button>
+                                            </div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                                <input type="text" value="Juan" readonly style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; width: 100%; box-sizing: border-box;">
+                                                <input type="text" value="Pérez" readonly style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; width: 100%; box-sizing: border-box;">
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);">
-                                        <span class="rsvp-bullet bullet-pending" style="width: 14px; height: 14px; border-radius: 50%; background: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.7); display: inline-block;"></span>
-                                        <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">María Gómez</span>
+                                    <div class="rsvp-guest-card" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
+                                        <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px;">
+                                            <span class="rsvp-bullet bullet-pending" style="width: 14px; height: 14px; border-radius: 50%; background: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.7); display: inline-block;"></span>
+                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">María Gómez</span>
+                                            <span style="margin-left: auto; color: rgba(255,255,255,0.6); font-size: 0.75rem;">▼</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.72em; color: #68d391; margin-top: 10px; font-family: 'Montserrat', sans-serif;">

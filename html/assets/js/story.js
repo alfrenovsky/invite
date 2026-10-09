@@ -740,12 +740,21 @@
     // ==============================================================
     function getGuestPayload(card) {
         const guestId = card.getAttribute('data-guest-id');
-        // Support minimalist rsvp-guest-row element
-        if (card.classList.contains('rsvp-guest-row')) {
+        // Support expandable rsvp-guest-card and rsvp-guest-row elements
+        if (card.classList.contains('rsvp-guest-card') || card.classList.contains('rsvp-guest-row')) {
             const conf = card.getAttribute('data-status') || '';
-            return {
+            const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+            const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+            const payload = {
                 confirmacion: conf
             };
+            if (inputNombre !== null) {
+                payload.nombre = inputNombre.value.trim();
+            }
+            if (inputApellido !== null) {
+                payload.apellido = inputApellido.value.trim();
+            }
+            return payload;
         }
 
         const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
@@ -792,14 +801,14 @@
     // 😿 Gato Triste Dynamic Slide Engine
     // ==============================================================
     function checkAllRejected() {
-        const rows = Array.from(document.querySelectorAll('.rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]'));
-        if (rows.length === 0) return false;
-        return rows.every(row => {
-            if (row.classList.contains('rsvp-guest-row')) {
-                return (row.getAttribute('data-status') === 'no');
+        const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]'));
+        if (cards.length === 0) return false;
+        return cards.every(card => {
+            if (card.hasAttribute('data-status')) {
+                return (card.getAttribute('data-status') === 'no');
             }
-            const guestId = row.getAttribute('data-guest-id');
-            const checked = row.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+            const guestId = card.getAttribute('data-guest-id');
+            const checked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
             return checked && checked.value === 'no';
         });
     }
@@ -1033,49 +1042,98 @@
             savedGuestStates[guestId] = JSON.stringify(getGuestPayload(card));
         });
 
-        // Minimalist RSVP Guest Row Taps (Yellow -> Green -> Red -> Yellow)
-        const guestRows = Array.from(document.querySelectorAll('.rsvp-guest-row[data-guest-id]'));
-        guestRows.forEach(row => {
-            const guestId = row.getAttribute('data-guest-id');
-            const bullet = row.querySelector('.rsvp-bullet');
+        // Expandable RSVP Guest Cards (Accordion toggle, 3 status buttons, live name sync)
+        const guestCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
+        guestCards.forEach(card => {
+            const guestId = card.getAttribute('data-guest-id');
+            const header = card.querySelector('.rsvp-card-header');
+            const bullet = card.querySelector('.rsvp-bullet');
+            const statusButtons = card.querySelectorAll('.rsvp-status-btn');
+            const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+            const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+            const nameDisplay = card.querySelector('.rsvp-guest-name');
 
-            const handleToggle = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const currentStatus = row.getAttribute('data-status') || '';
-                let nextStatus;
-                if (currentStatus === 'si') {
-                    nextStatus = 'no';
-                } else if (currentStatus === 'no') {
-                    nextStatus = '';
-                } else {
-                    nextStatus = 'si';
-                }
-
-                row.setAttribute('data-status', nextStatus);
-
-                if (bullet) {
-                    bullet.classList.remove('bullet-si', 'bullet-no', 'bullet-pending');
-                    if (nextStatus === 'si') {
-                        bullet.classList.add('bullet-si');
-                    } else if (nextStatus === 'no') {
-                        bullet.classList.add('bullet-no');
+            // 1. Accordion Toggle on clicking the Header / Row
+            if (header) {
+                const toggleCard = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    flushAutoSave();
+                    const isExpanded = card.classList.contains('expanded');
+                    // Close other cards for clean accordion
+                    guestCards.forEach(c => {
+                        if (c !== card) {
+                            c.classList.remove('expanded');
+                            const h = c.querySelector('.rsvp-card-header');
+                            if (h) h.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    if (isExpanded) {
+                        card.classList.remove('expanded');
+                        header.setAttribute('aria-expanded', 'false');
                     } else {
-                        bullet.classList.add('bullet-pending');
+                        card.classList.add('expanded');
+                        header.setAttribute('aria-expanded', 'true');
                     }
-                }
+                };
 
-                updateSlideList();
-                queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
-            };
+                header.addEventListener('click', toggleCard);
+                header.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        toggleCard(e);
+                    }
+                });
+            }
 
-            row.addEventListener('click', handleToggle);
-            row.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    handleToggle(e);
-                }
+            // 2. Status Buttons Click Handlers ("Asiste", "No asiste", "Pendiente")
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const val = btn.getAttribute('data-val') || '';
+                    card.setAttribute('data-status', val);
+
+                    // Update button styling
+                    statusButtons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+
+                    // Update Bullet Color
+                    if (bullet) {
+                        bullet.classList.remove('bullet-si', 'bullet-no', 'bullet-pending');
+                        if (val === 'si') {
+                            bullet.classList.add('bullet-si');
+                        } else if (val === 'no') {
+                            bullet.classList.add('bullet-no');
+                        } else {
+                            bullet.classList.add('bullet-pending');
+                        }
+                    }
+
+                    updateSlideList();
+                    queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                });
             });
+
+            // 3. Name & Lastname Live Sync
+            function syncGuestName() {
+                const n = inputNombre ? inputNombre.value.trim() : '';
+                const a = inputApellido ? inputApellido.value.trim() : '';
+                const full = (n || a) ? `${n} ${a}`.trim() : 'Invitado';
+                if (nameDisplay) {
+                    nameDisplay.textContent = full;
+                }
+                queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
+            }
+
+            if (inputNombre) {
+                inputNombre.addEventListener('input', syncGuestName);
+                inputNombre.addEventListener('blur', () => flushAutoSave());
+            }
+            if (inputApellido) {
+                inputApellido.addEventListener('input', syncGuestName);
+                inputApellido.addEventListener('blur', () => flushAutoSave());
+            }
         });
 
         // RSVP Form Radio & Input Bindings (Legacy or Detailed)
