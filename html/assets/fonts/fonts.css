@@ -37,38 +37,8 @@
 }
 
 @font-face {
-    font-family: 'Quadrillion Sb It';
-    src: url('/assets/fonts/Quadrillion%20Sb%20It.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'SciFly-Sans';
     src: url('/assets/fonts/SciFly-Sans.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Space Crusaders';
-    src: url('/assets/fonts/Space%20Crusaders.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Space Crusaders';
-    src: url('/assets/fonts/Space%20Crusaders.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Space Quest';
-    src: url('/assets/fonts/Space%20Quest.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Space Quest';
-    src: url('/assets/fonts/Space%20Quest.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -85,20 +55,8 @@
 }
 
 @font-face {
-    font-family: 'Transformers Movie';
-    src: url('/assets/fonts/Transformers%20Movie.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Varino - Normal';
     src: url('/assets/fonts/Varino%20-%20Normal.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Varino - Normal';
-    src: url('/assets/fonts/Varino%20-%20Normal.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -117,23 +75,5 @@
 @font-face {
     font-family: 'space age';
     src: url('/assets/fonts/space%20age.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'spacefri';
-    src: url('/assets/fonts/spacefri.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'terminator real nfi';
-    src: url('/assets/fonts/terminator%20real%20nfi.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'terminator real nfi';
-    src: url('/assets/fonts/terminator%20real%20nfi.ttf') format('truetype');
     font-display: swap;
 }
