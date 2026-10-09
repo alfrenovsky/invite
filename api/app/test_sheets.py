@@ -559,6 +559,15 @@ class TestGoogleSheetsTable(unittest.TestCase):
                             self.assertEqual(res_in_use.status_code, 400)
                             self.assertIn("en uso", res_in_use.get_json()["error"].lower())
 
+                        # Delete: Aveny-T system required sticker font protection
+                        aveny_file = os.path.join(tmp_fonts_dir, "aveny-t-medium.ttf")
+                        with open(aveny_file, "wb") as f:
+                            f.write(b"font-data")
+                        res_aveny = client.post("/panel/delete-font", json={"filename": "aveny-t-medium.ttf"})
+                        self.assertEqual(res_aveny.status_code, 400)
+                        self.assertIn("en uso", res_aveny.get_json()["error"].lower())
+                        self.assertTrue(os.path.exists(aveny_file))
+
                         # Successful delete
                         res_del = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"})
                         self.assertEqual(res_del.status_code, 200)

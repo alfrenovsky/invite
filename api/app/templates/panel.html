@@ -2065,7 +2065,7 @@
             max-width: 100%;
             box-sizing: border-box;
             overflow-x: hidden;
-            overflow-y: visible;
+            overflow-y: hidden;
         }
 
         .font-card:hover {
@@ -5359,6 +5359,11 @@
 
         function getUsedFontsSet() {
             const used = new Set();
+            // System-level sticker fonts (Aveny-T required for countdown & location stickers)
+            used.add('aveny-t');
+            used.add('aveny-t-medium');
+            used.add('aveny t');
+
             if (typeof stylesData === 'object' && stylesData) {
                 Object.values(stylesData).forEach(val => {
                     if (val && typeof val === 'object' && val.fontFamily) {
@@ -5393,7 +5398,8 @@
                     btn.disabled = isInUse;
                     if (isInUse) {
                         btn.classList.add('btn-disabled');
-                        btn.setAttribute('title', 'Esta fuente está en uso en los estilos o slides');
+                        const isAveny = ['aveny-t', 'aveny-t-medium', 'aveny t'].includes(family);
+                        btn.setAttribute('title', isAveny ? 'Esta fuente está en uso en los stickers (cuenta regresiva y ubicación)' : 'Esta fuente está en uso en los estilos o slides');
                     } else {
                         btn.classList.remove('btn-disabled');
                         btn.setAttribute('title', 'Eliminar tipografía');

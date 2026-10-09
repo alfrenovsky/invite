@@ -251,10 +251,15 @@ def save_styles(styles_dict):
         json.dump(styles_dict, f, indent=2, ensure_ascii=False)
 
 
+SYSTEM_REQUIRED_FONTS = {"aveny-t", "aveny-t-medium", "aveny t"}
+
+
 def is_font_in_use(family, styles=None, slides=None):
     if not family:
         return False
     fam_norm = family.strip().lower()
+    if fam_norm in SYSTEM_REQUIRED_FONTS:
+        return True
     if styles is None:
         styles = load_styles()
     for s_val in styles.values():
@@ -1073,8 +1078,10 @@ def panel_delete_font():
         return jsonify({"ok": False, "error": f"La fuente '{filename}' no existe"}), 404
 
     family = os.path.splitext(filename)[0]
-    if is_font_in_use(family):
-        return jsonify({"ok": False, "error": f"La fuente '{family}' está en uso en los estilos o slides y no puede eliminarse"}), 400
+    fam_norm = family.strip().lower()
+    file_norm = filename.strip().lower()
+    if fam_norm in SYSTEM_REQUIRED_FONTS or file_norm.startswith("aveny-t") or is_font_in_use(family):
+        return jsonify({"ok": False, "error": f"La fuente '{family}' está en uso en los stickers o estilos y no puede eliminarse"}), 400
 
     try:
         os.remove(target_path)
