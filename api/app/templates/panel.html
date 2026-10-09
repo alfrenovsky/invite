@@ -1573,68 +1573,6 @@
             text-transform: uppercase;
         }
 
-        .gpt-poster-callout {
-            margin-top: 24px;
-            padding: 16px 18px;
-            background: rgba(49, 130, 206, 0.08);
-            border: 1px solid rgba(99, 179, 237, 0.25);
-            border-radius: 12px;
-        }
-
-        .gpt-callout-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #90cdf4;
-            font-size: 0.88rem;
-            margin-bottom: 8px;
-        }
-
-        .gpt-callout-desc {
-            font-size: 0.8rem;
-            color: #cbd5e0;
-            line-height: 1.45;
-            margin-bottom: 10px;
-        }
-
-        .gpt-callout-list {
-            margin-left: 18px;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 12px;
-        }
-
-        .gpt-callout-list strong {
-            color: #e2e8f0;
-        }
-
-        .gpt-callout-list code {
-            color: #ffd978;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 1px 4px;
-            border-radius: 4px;
-        }
-
-        .btn-apply-poster-preset {
-            width: 100%;
-            padding: 9px 14px;
-            background: rgba(49, 130, 206, 0.2);
-            border: 1px solid rgba(99, 179, 237, 0.4);
-            border-radius: 8px;
-            color: #90cdf4;
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-apply-poster-preset:hover {
-            background: rgba(49, 130, 206, 0.35);
-            border-color: #63b3ed;
-            color: #fff;
-        }
 
         .style-single-preview-box {
             background: radial-gradient(circle at center, rgba(30, 42, 60, 0.7) 0%, rgba(10, 15, 22, 0.95) 100%);
@@ -2077,32 +2015,9 @@
                                 </div>
                             </div>
 
-                            <!-- GPT Poster Explanation Callout -->
-                            <div class="gpt-poster-callout">
-                                <div class="gpt-callout-header">
-                                    <span class="gpt-callout-icon">💡</span>
-                                    <strong>¿Cómo lograr la tipografía estilo póster de <code>gpt.html</code>?</strong>
-                                </div>
-                                <p class="gpt-callout-desc">
-                                    En <code>gpt.html</code> el texto impactante y monolítico se consigue combinando 4 parámetros en la fuente <strong>Montserrat</strong>:
-                                </p>
-                                <ul class="gpt-callout-list">
-                                    <li><strong>Grosor (Weight):</strong> <code>800</code> o <code>900</code> (ExtraBold / Black).</li>
-                                    <li><strong>Letter-Spacing:</strong> Negativo, entre <code>-0.05em</code> y <code>-0.08em</code> (recomendado: <code>-0.06em</code>). Las letras se pegan entre sí como un solo bloque.</li>
-                                    <li><strong>Line-Height:</strong> Muy compacto (entre <code>0.85</code> y <code>0.90</code>). Elimina las franjas vacías entre renglones.</li>
-                                    <li><strong>Transformación:</strong> <code>MAYÚSCULAS</code> (uppercase). Las mayúsculas tienen altura homogénea, creando una silueta rectangular limpia.</li>
-                                </ul>
-                                <button type="button" class="btn-apply-poster-preset" onclick="applyGptPosterPreset()">
-                                    ⚡ Aplicar Preset Póster de gpt.html al Título
-                                </button>
-                            </div>
-
                             <!-- Save Actions -->
                             <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--card-border);">
                                 <div class="save-indicator" id="stylesSaveIndicator">✓ Guardado</div>
-                                <button type="button" class="btn-ctrl" onclick="resetStylesToDefault()" title="Volver a los valores por defecto">
-                                    <span>↺ Restablecer Defaults</span>
-                                </button>
                                 <button type="button" class="btn-save-slide" id="btnSaveStyles" onclick="saveStyles()">
                                     <span>💾 Guardar Estilos</span>
                                 </button>
@@ -2714,30 +2629,6 @@
         applyStylesToDOM(stylesData);
     }
 
-    function applyGptPosterPreset() {
-        if (!stylesData.title) stylesData.title = {};
-        stylesData.title.fontFamily = 'Montserrat';
-        stylesData.title.fontWeight = 800;
-        stylesData.title.fontSize = 42;
-        stylesData.title.letterSpacing = -0.06;
-        stylesData.title.lineHeight = 0.90;
-        stylesData.title.textTransform = 'uppercase';
-        stylesData.title.color = '#ffffff';
-
-        activeStyleKey = 'title';
-        document.querySelectorAll('.styles-subtab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.id === 'subtabBtnTitle');
-        });
-        renderStylesEditor();
-        showToast('⚡ Preset de póster (gpt.html) aplicado a Título');
-    }
-
-    function resetStylesToDefault() {
-        if (!confirm('¿Restablecer todos los estilos a los valores por defecto?')) return;
-        stylesData = JSON.parse(JSON.stringify(DEFAULT_STYLES_PRESET));
-        renderStylesEditor();
-        showToast('↺ Estilos restablecidos a valores por defecto');
-    }
 
     function applyStylesToDOM(s) {
         if (!s) return;
