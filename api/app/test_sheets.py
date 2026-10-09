@@ -353,11 +353,21 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Panel de Control", res.data)
 
-                # Slide update with duration in dev mode
-                res_slide = client.post("/panel/slide/portada", data={"background": "photo01.jpeg", "duration": 8500})
+                # Slide update with duration and background transforms in dev mode
+                res_slide = client.post("/panel/slide/portada", data={
+                    "background": "photo01.jpeg",
+                    "duration": 8500,
+                    "bg_zoom": 150,
+                    "bg_x": 10.5,
+                    "bg_y": -15.2
+                })
                 self.assertEqual(res_slide.status_code, 200)
                 self.assertTrue(res_slide.get_json()["ok"])
-                self.assertEqual(res_slide.get_json()["slide"]["duration"], 8500)
+                slide_data = res_slide.get_json()["slide"]
+                self.assertEqual(slide_data["duration"], 8500)
+                self.assertEqual(slide_data["bg_zoom"], 150.0)
+                self.assertEqual(slide_data["bg_x"], 10.5)
+                self.assertEqual(slide_data["bg_y"], -15.2)
 
                 # Rename background validation in dev mode
                 res_rename = client.post("/panel/rename-background", json={"old_name": "inexistente.jpeg", "new_name": "nuevo.jpeg"})

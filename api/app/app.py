@@ -740,8 +740,15 @@ def panel_update_slide(slide_id):
         except (ValueError, TypeError):
             pass
 
+    for num_key in ("bg_zoom", "bg_x", "bg_y"):
+        if num_key in data:
+            try:
+                target_slide[num_key] = float(data[num_key])
+            except (ValueError, TypeError):
+                pass
+
     for key, val in data.items():
-        if key not in ("slide_id", "background", "duration"):
+        if key not in ("slide_id", "background", "duration", "bg_zoom", "bg_x", "bg_y"):
             target_slide[key] = val
 
     save_slides(slides)
@@ -789,6 +796,12 @@ def panel_create_slide():
     except (ValueError, TypeError):
         duration = 7000
 
+    def _safe_float(v, default):
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return default
+
     new_slide = {
         "id": slide_id,
         "title": title or slide_id,
@@ -796,6 +809,9 @@ def panel_create_slide():
         "duration": duration,
         "enabled": True,
         "background": data.get("background", ""),
+        "bg_zoom": _safe_float(data.get("bg_zoom"), 100.0),
+        "bg_x": _safe_float(data.get("bg_x"), 0.0),
+        "bg_y": _safe_float(data.get("bg_y"), 0.0),
         "elements": data.get("elements", []) if isinstance(data.get("elements"), list) else [],
     }
     slides.append(new_slide)

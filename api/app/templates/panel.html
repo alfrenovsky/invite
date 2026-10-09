@@ -1137,26 +1137,45 @@
             background-position: center;
         }
 
-        .story-preview-viewport .story-bg-layer,
-        .phone-bg-layer {
+        .story-preview-viewport .story-bg-layer-wrap,
+        .phone-bg-layer-wrap {
             position: absolute;
             inset: 0;
             width: 100%;
             height: 100%;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            overflow: hidden;
             z-index: 1;
+            pointer-events: none;
         }
 
-        .story-preview-viewport .story-video-bg,
-        .phone-bg-video {
+        .story-preview-viewport .story-bg-media,
+        .phone-bg-media {
             position: absolute;
-            inset: 0;
+            top: 50%;
+            left: 50%;
             width: 100%;
             height: 100%;
             object-fit: cover;
             object-position: center;
+            transform-origin: center center;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .story-preview-viewport .story-bg-image {
+            display: block;
+        }
+
+        .story-preview-viewport .story-video-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transform-origin: center center;
             z-index: 1;
             pointer-events: none;
             display: none;
@@ -1863,6 +1882,37 @@
                                 {% endfor %}
                             </select>
                         </div>
+
+                        <!-- Background Position & Zoom Controls -->
+                        <div class="form-group" id="slideBgSettingsGroup" style="display: none; margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes de Fondo (Zoom y Posición)</label>
+                                <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()" style="padding: 3px 8px; font-size: 0.72rem;" title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
+                                <!-- Zoom Slider -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">🔍 Zoom</span>
+                                    <input type="range" class="pos-range-slider" id="slideBgZoomSlider" min="100" max="300" step="5" value="100" oninput="onSlideBgZoomChange(this.value)">
+                                    <span class="style-prop-badge" id="slideBgZoomBadge" style="min-width: 48px; text-align: center;">100%</span>
+                                </div>
+                                <!-- Pos X Slider -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">↔️ Pos X</span>
+                                    <input type="range" class="pos-range-slider" id="slideBgXSlider" min="-50" max="50" step="1" value="0" oninput="onSlideBgXChange(this.value)">
+                                    <span class="style-prop-badge" id="slideBgXBadge" style="min-width: 48px; text-align: center;">0%</span>
+                                </div>
+                                <!-- Pos Y Slider -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">↕️ Pos Y</span>
+                                    <input type="range" class="pos-range-slider" id="slideBgYSlider" min="-50" max="50" step="1" value="0" oninput="onSlideBgYChange(this.value)">
+                                    <span class="style-prop-badge" id="slideBgYBadge" style="min-width: 48px; text-align: center;">0%</span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
+                                    💡 <em>Podés arrastrar el fondo en el teléfono o usar la rueda del mouse para hacer zoom.</em>
+                                </div>
+                            </div>
+                        </div>
                     </section>
 
                     <!-- Elements CRUD Section -->
@@ -2392,8 +2442,10 @@
                     <div class="story-slides" id="previewStorySlides">
                         <div class="story-slide active" id="previewStorySlide">
                             <!-- Background Image / Video -->
-                            <div class="story-bg-layer" id="previewBgLayer"></div>
-                            <video class="story-video-bg" id="previewBgVideo" muted loop playsinline autoplay></video>
+                            <div class="story-bg-layer-wrap" id="previewBgWrap">
+                                <img class="story-bg-image story-bg-media" id="previewBgImg" src="" alt="" style="display: none;">
+                                <video class="story-video-bg story-bg-media" id="previewBgVideo" muted loop playsinline autoplay style="display: none;"></video>
+                            </div>
 
                             <!-- Alignment Crosshairs (Y=0, X=0) -->
                             <div class="preview-center-guide-x" title="Línea central vertical (Y = 0)"></div>
@@ -3321,9 +3373,30 @@
             bgSelect.value = slide.background || '';
             bgSelect.onchange = () => {
                 slide.background = bgSelect.value;
+                updateBgSettingsVisibility();
                 updateLivePreview();
             };
         }
+
+        const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
+        const bgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? slide.bg_x : 0;
+        const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
+
+        const zoomSlider = document.getElementById('slideBgZoomSlider');
+        const zoomBadge = document.getElementById('slideBgZoomBadge');
+        const xSlider = document.getElementById('slideBgXSlider');
+        const xBadge = document.getElementById('slideBgXBadge');
+        const ySlider = document.getElementById('slideBgYSlider');
+        const yBadge = document.getElementById('slideBgYBadge');
+
+        if (zoomSlider) zoomSlider.value = bgZoom;
+        if (zoomBadge) zoomBadge.textContent = bgZoom + '%';
+        if (xSlider) xSlider.value = bgX;
+        if (xBadge) xBadge.textContent = bgX + '%';
+        if (ySlider) ySlider.value = bgY;
+        if (yBadge) yBadge.textContent = bgY + '%';
+
+        updateBgSettingsVisibility();
 
         renderElementsList();
     }
@@ -3941,24 +4014,44 @@
 
         // Background
         const bg = (slide.background || '').trim();
-        if (bg && bgLayer && bgVideo) {
+        const bgImg = document.getElementById('previewBgImg');
+        const bgVid = document.getElementById('previewBgVideo');
+        const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? (slide.bg_zoom / 100) : 1;
+        const bgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? slide.bg_x : 0;
+        const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
+        const transformStr = `translate(-50%, -50%) translate(${bgX}%, ${bgY}%) scale(${bgZoom})`;
+
+        if (bg) {
             const bgUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURIComponent(bg));
             if (isVideoFile(bg)) {
-                bgLayer.style.backgroundImage = 'none';
-                if (bgVideo.getAttribute('src') !== bgUrl) {
-                    bgVideo.src = bgUrl;
+                if (bgImg) bgImg.style.display = 'none';
+                if (bgVid) {
+                    if (bgVid.getAttribute('src') !== bgUrl) {
+                        bgVid.src = bgUrl;
+                    }
+                    bgVid.style.display = 'block';
+                    bgVid.style.transform = transformStr;
+                    bgVid.play().catch(() => {});
                 }
-                bgVideo.style.display = 'block';
-                bgVideo.play().catch(() => {});
             } else {
-                bgVideo.pause();
-                bgVideo.style.display = 'none';
-                bgLayer.style.backgroundImage = `url('${bgUrl}')`;
+                if (bgVid) {
+                    bgVid.pause();
+                    bgVid.style.display = 'none';
+                }
+                if (bgImg) {
+                    if (bgImg.getAttribute('src') !== bgUrl) {
+                        bgImg.src = bgUrl;
+                    }
+                    bgImg.style.display = 'block';
+                    bgImg.style.transform = transformStr;
+                }
             }
-        } else if (bgLayer && bgVideo) {
-            bgVideo.pause();
-            bgVideo.style.display = 'none';
-            bgLayer.style.backgroundImage = 'none';
+        } else {
+            if (bgVid) {
+                bgVid.pause();
+                bgVid.style.display = 'none';
+            }
+            if (bgImg) bgImg.style.display = 'none';
         }
 
         // Handle RSVP slide vs normal dynamic slide
@@ -4563,6 +4656,152 @@
         } else if (badge) {
             badge.textContent = visibleCount + ' / ' + cards.length;
         }
+    }
+
+    // -------------------------------------------------------------
+    // SLIDE BACKGROUND ZOOM & MOVE CONTROLS
+    // -------------------------------------------------------------
+    function updateBgSettingsVisibility() {
+        const slide = getCurrentSlide();
+        const group = document.getElementById('slideBgSettingsGroup');
+        if (group) {
+            group.style.display = (slide && slide.background) ? 'block' : 'none';
+        }
+    }
+
+    function onSlideBgZoomChange(val) {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        slide.bg_zoom = parseInt(val, 10) || 100;
+        const badge = document.getElementById('slideBgZoomBadge');
+        if (badge) badge.textContent = slide.bg_zoom + '%';
+        updateLivePreview();
+    }
+
+    function onSlideBgXChange(val) {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        slide.bg_x = parseFloat(val) || 0;
+        const badge = document.getElementById('slideBgXBadge');
+        if (badge) badge.textContent = slide.bg_x + '%';
+        updateLivePreview();
+    }
+
+    function onSlideBgYChange(val) {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        slide.bg_y = parseFloat(val) || 0;
+        const badge = document.getElementById('slideBgYBadge');
+        if (badge) badge.textContent = slide.bg_y + '%';
+        updateLivePreview();
+    }
+
+    function resetSlideBgTransforms() {
+        const slide = getCurrentSlide();
+        if (!slide) return;
+        slide.bg_zoom = 100;
+        slide.bg_x = 0;
+        slide.bg_y = 0;
+
+        const zoomSlider = document.getElementById('slideBgZoomSlider');
+        const zoomBadge = document.getElementById('slideBgZoomBadge');
+        const xSlider = document.getElementById('slideBgXSlider');
+        const xBadge = document.getElementById('slideBgXBadge');
+        const ySlider = document.getElementById('slideBgYSlider');
+        const yBadge = document.getElementById('slideBgYBadge');
+
+        if (zoomSlider) zoomSlider.value = 100;
+        if (zoomBadge) zoomBadge.textContent = '100%';
+        if (xSlider) xSlider.value = 0;
+        if (xBadge) xBadge.textContent = '0%';
+        if (ySlider) ySlider.value = 0;
+        if (yBadge) yBadge.textContent = '0%';
+
+        updateLivePreview();
+        showToast('↺ Fondo centrado y restablecido');
+    }
+
+    // Interactive mouse / touch drag & wheel zoom on preview background
+    const previewSlideViewport = document.getElementById('previewStorySlide');
+    if (previewSlideViewport) {
+        let isDraggingBg = false;
+        let startClientX = 0;
+        let startClientY = 0;
+        let initialBgX = 0;
+        let initialBgY = 0;
+
+        previewSlideViewport.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.interactive-content') || e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) {
+                return;
+            }
+            const slide = getCurrentSlide();
+            if (!slide || !slide.background) return;
+
+            isDraggingBg = true;
+            startClientX = e.clientX;
+            startClientY = e.clientY;
+            initialBgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? slide.bg_x : 0;
+            initialBgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
+            previewSlideViewport.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingBg) return;
+            const slide = getCurrentSlide();
+            if (!slide) return;
+
+            const rect = previewSlideViewport.getBoundingClientRect();
+            const width = rect.width || 360;
+            const height = rect.height || 640;
+
+            const deltaXPercent = ((e.clientX - startClientX) / width) * 100;
+            const deltaYPercent = ((e.clientY - startClientY) / height) * 100;
+
+            const newX = Math.max(-50, Math.min(50, Math.round(initialBgX + deltaXPercent)));
+            const newY = Math.max(-50, Math.min(50, Math.round(initialBgY + deltaYPercent)));
+
+            slide.bg_x = newX;
+            slide.bg_y = newY;
+
+            const xSlider = document.getElementById('slideBgXSlider');
+            const ySlider = document.getElementById('slideBgYSlider');
+            const xBadge = document.getElementById('slideBgXBadge');
+            const yBadge = document.getElementById('slideBgYBadge');
+
+            if (xSlider) xSlider.value = newX;
+            if (ySlider) ySlider.value = newY;
+            if (xBadge) xBadge.textContent = newX + '%';
+            if (yBadge) yBadge.textContent = newY + '%';
+
+            updateLivePreview();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDraggingBg) {
+                isDraggingBg = false;
+                if (previewSlideViewport) previewSlideViewport.style.cursor = '';
+            }
+        });
+
+        previewSlideViewport.addEventListener('wheel', (e) => {
+            const slide = getCurrentSlide();
+            if (!slide || !slide.background) return;
+            e.preventDefault();
+
+            const curZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
+            const step = e.deltaY < 0 ? 5 : -5;
+            const nextZoom = Math.max(100, Math.min(300, curZoom + step));
+
+            slide.bg_zoom = nextZoom;
+
+            const zoomSlider = document.getElementById('slideBgZoomSlider');
+            const zoomBadge = document.getElementById('slideBgZoomBadge');
+            if (zoomSlider) zoomSlider.value = nextZoom;
+            if (zoomBadge) zoomBadge.textContent = nextZoom + '%';
+
+            updateLivePreview();
+        }, { passive: false });
     }
 
     // Initialize on page load

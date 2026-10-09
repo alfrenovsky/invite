@@ -3,13 +3,21 @@
                 {% set rsvp_is_vid = rsvp_bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) if rsvp_bg else false %}
                 {% set rsvp_bg_url = (rsvp_bg if rsvp_bg.startswith('/') else '/assets/backgrounds/' ~ rsvp_bg) if rsvp_bg else '' %}
 
-                <div class="story-slide" data-slide-id="rsvp" data-duration="0"
-                     {% if rsvp_bg_url and not rsvp_is_vid %}
-                       style="background-image: url('{{ rsvp_bg_url }}'); background-size: cover; background-position: center;"
-                     {% endif %}>
+                {% set rsvp_bg_x = slide.bg_x if (slide and slide.bg_x is defined and slide.bg_x is not none) else 0 %}
+                {% set rsvp_bg_y = slide.bg_y if (slide and slide.bg_y is defined and slide.bg_y is not none) else 0 %}
+                {% set rsvp_bg_zoom = ((slide.bg_zoom if (slide and slide.bg_zoom is defined and slide.bg_zoom is not none) else 100) / 100) %}
 
-                    {% if rsvp_bg_url and rsvp_is_vid %}
-                        <video class="story-video-bg" src="{{ rsvp_bg_url }}" muted loop playsinline autoplay></video>
+                <div class="story-slide" data-slide-id="rsvp" data-duration="0">
+                    {% if rsvp_bg_url %}
+                        <div class="story-bg-layer-wrap">
+                            {% if rsvp_is_vid %}
+                                <video class="story-video-bg story-bg-media" src="{{ rsvp_bg_url }}" muted loop playsinline autoplay
+                                       style="transform: translate(-50%, -50%) translate({{ rsvp_bg_x }}%, {{ rsvp_bg_y }}%) scale({{ rsvp_bg_zoom }});"></video>
+                            {% else %}
+                                <img class="story-bg-image story-bg-media" src="{{ rsvp_bg_url }}" alt=""
+                                     style="transform: translate(-50%, -50%) translate({{ rsvp_bg_x }}%, {{ rsvp_bg_y }}%) scale({{ rsvp_bg_zoom }});">
+                            {% endif %}
+                        </div>
                     {% endif %}
 
                     <div class="slide-body">

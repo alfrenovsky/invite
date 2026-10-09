@@ -9,12 +9,23 @@
         {% set bg_url = '/assets/backgrounds/' ~ slide.background %}
     {% endif %}
 {% endif %}
+{% set bg_x = slide.bg_x if (slide and slide.bg_x is defined and slide.bg_x is not none) else 0 %}
+{% set bg_y = slide.bg_y if (slide and slide.bg_y is defined and slide.bg_y is not none) else 0 %}
+{% set bg_zoom = ((slide.bg_zoom if (slide and slide.bg_zoom is defined and slide.bg_zoom is not none) else 100) / 100) %}
 
 <div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" {% if slide and slide.id == 'triste' %}id="tristeSlide"{% endif %} data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
-     style="{% if slide and slide.id == 'triste' and not all_rejected %}display: none;{% endif %}{% if bg_url and not is_vid %} background-image: url('{{ bg_url }}'); background-size: cover; background-position: center;{% endif %}">
+     style="{% if slide and slide.id == 'triste' and not all_rejected %}display: none;{% endif %}">
 
-    {% if bg_url and is_vid %}
-        <video class="story-video-bg" src="{{ bg_url }}" muted loop playsinline autoplay></video>
+    {% if bg_url %}
+        <div class="story-bg-layer-wrap">
+            {% if is_vid %}
+                <video class="story-video-bg story-bg-media" src="{{ bg_url }}" muted loop playsinline autoplay
+                       style="transform: translate(-50%, -50%) translate({{ bg_x }}%, {{ bg_y }}%) scale({{ bg_zoom }});"></video>
+            {% else %}
+                <img class="story-bg-image story-bg-media" src="{{ bg_url }}" alt=""
+                     style="transform: translate(-50%, -50%) translate({{ bg_x }}%, {{ bg_y }}%) scale({{ bg_zoom }});">
+            {% endif %}
+        </div>
     {% endif %}
 
     <div class="slide-elements-layer">
