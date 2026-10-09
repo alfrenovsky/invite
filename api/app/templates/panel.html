@@ -3974,12 +3974,7 @@
                 numSpan.textContent = idx + 1;
 
                 const titleSpan = document.createElement('span');
-                if (slide.id === 'rsvp') {
-                    titleSpan.innerHTML = `${escapeHtml(slide.title || 'Confirmación')} <span style="font-size:0.75em; color:var(--accent); font-weight:700;" title="Slide especial del sistema">✨</span>`;
-                    chip.title = 'Slide especial: Formulario RSVP interactivo (obligatorio)';
-                } else {
-                    titleSpan.textContent = slide.title || slide.id;
-                }
+                titleSpan.textContent = slide.title || slide.id;
 
                 chip.appendChild(numSpan);
                 chip.appendChild(titleSpan);
@@ -4001,9 +3996,8 @@
             if (btnUp) btnUp.disabled = (currIdx <= 0);
             if (btnDown) btnDown.disabled = (currIdx < 0 || currIdx >= slidesData.length - 1);
             if (btnDel) {
-                const isRsvp = (currentSlideId === 'rsvp');
-                btnDel.disabled = (slidesData.length <= 1 || isRsvp);
-                btnDel.title = isRsvp ? 'El slide de Confirmación (RSVP) es especial y no se puede eliminar' : 'Eliminar slide actual';
+                btnDel.disabled = (slidesData.length <= 1);
+                btnDel.title = (slidesData.length <= 1) ? 'No se puede eliminar el único slide restante' : 'Eliminar slide actual';
             }
 
             const countBadge = document.getElementById('slidesCountBadge');
@@ -4031,11 +4025,7 @@
 
             const badgeId = document.getElementById('activeSlideBadgeId');
             if (badgeId) {
-                if (slide.id === 'rsvp') {
-                    badgeId.innerHTML = `${slide.id} <span style="color:var(--accent); font-weight:700; margin-left:4px;">★ Especial RSVP</span>`;
-                } else {
-                    badgeId.textContent = slide.id;
-                }
+                badgeId.textContent = slide.id;
             }
 
             const titleInput = document.getElementById('slideTitleInput');
@@ -4799,11 +4789,8 @@
                 if (bgImg) bgImg.style.display = 'none';
             }
 
-            // Handle RSVP slide vs normal dynamic slide
-            const isRsvp = (slide.id === 'rsvp');
-            const hasFormElement = Array.isArray(slide.elements) && slide.elements.some(e => e.type === 'form');
             if (rsvpBody) {
-                rsvpBody.style.display = (isRsvp && !hasFormElement) ? 'flex' : 'none';
+                rsvpBody.style.display = 'none';
             }
 
             // Render live overlay elements
@@ -5088,10 +5075,6 @@
         async function deleteCurrentSlide() {
             const slide = getCurrentSlide();
             if (!slide) return;
-            if (slide.id === 'rsvp') {
-                showToast('El slide de Confirmación (RSVP) es especial y no se puede eliminar', true);
-                return;
-            }
             if (slidesData.length <= 1) {
                 showToast('No podés eliminar el único slide restante', true);
                 return;

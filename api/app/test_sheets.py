@@ -317,7 +317,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
             {"id": "lugar", "title": "Lugar", "template": "slides/custom.html", "enabled": True, "elements": []},
             {"id": "video", "title": "Video", "template": "slides/custom.html", "enabled": True, "elements": []},
             {"id": "itinerario", "title": "Itinerario", "template": "slides/custom.html", "enabled": True, "elements": []},
-            {"id": "rsvp", "title": "Confirmación", "template": "slides/rsvp.html", "enabled": True, "elements": []},
+            {"id": "rsvp", "title": "Confirmación", "template": "slides/custom.html", "enabled": True, "elements": [{"type": "form", "x": 0, "y": 0, "w": 90, "h": 70}]},
         ]
         with patch("app.table.get_by_invitacion") as mock_get_by_inv, patch("app.load_slides", return_value=dummy_slides):
             mock_get_by_inv.return_value = [
@@ -417,24 +417,27 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_del_prod = client.post("/panel/delete-background", json={"filename": "test.jpeg"})
                 self.assertEqual(res_del_prod.status_code, 404)
 
-    def test_rsvp_special_slide_preservation_and_protection(self):
-        from app import app, ensure_rsvp_slide
+    def test_slides_freedom_and_modular_custom_templates(self):
+        from app import app, load_slides
         with app.test_client() as client:
             with patch("app.is_dev_mode", return_value=True):
-                # 1. Attempting to delete RSVP slide via API must be rejected with 400
-                res_del = client.post("/panel/slide/rsvp/delete")
-                self.assertEqual(res_del.status_code, 400)
-                data = res_del.get_json()
-                self.assertFalse(data["ok"])
-                self.assertIn("especial", data["error"].lower())
+                # 1. Slides can be deleted normally without special rsvp restrictions
+                with patch("app.load_slides", return_value=[{"id": "rsvp", "title": "RSVP"}, {"id": "portada", "title": "Portada"}]), patch("app.save_slides") as mock_save:
+                    res_del = client.post("/panel/slide/rsvp/delete")
+                    self.assertEqual(res_del.status_code, 200)
+                    data = res_del.get_json()
+                    self.assertTrue(data["ok"])
+                    mock_save.assert_called_once()
+                    saved_slides = mock_save.call_args[0][0]
+                    self.assertEqual(len(saved_slides), 1)
+                    self.assertEqual(saved_slides[0]["id"], "portada")
 
-                # 2. ensure_rsvp_slide restores RSVP if missing in a list
-                slides_without_rsvp = [{"id": "portada", "title": "Portada"}]
-                fixed = ensure_rsvp_slide(slides_without_rsvp)
-                self.assertTrue(any(s["id"] == "rsvp" for s in fixed))
-                rsvp_item = next(s for s in fixed if s["id"] == "rsvp")
-                self.assertEqual(rsvp_item["template"], "slides/rsvp.html")
-                self.assertTrue(rsvp_item["enabled"])
+                # 2. load_slides assigns slides/custom.html to all slides
+                custom_list = [{"id": "s1", "title": "S1"}]
+                with patch("app.SLIDES_CONFIG_DEFAULT", custom_list), patch("os.path.exists", return_value=False):
+                    loaded = load_slides()
+                    self.assertEqual(len(loaded), 1)
+                    self.assertEqual(loaded[0]["template"], "slides/custom.html")
 
     def test_panel_styles_and_slides_download_upload(self):
         import io
@@ -505,9 +508,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
                         res_up_slides = client.post("/panel/slides/upload", json=new_slides)
                         self.assertEqual(res_up_slides.status_code, 200)
                         data_slides = res_up_slides.get_json()
-                        self.assertTrue(data_slides["ok"])
-                        # Check that RSVP slide is guaranteed and preserved
-                        self.assertTrue(any(s["id"] == "rsvp" for s in data_slides["slides"]))
+                        # Check that uploaded slides are saved correctly without forced injection
+                        self.assertTrue(any(s["id"] == "intro" for s in data_slides["slides"]))
+                        self.assertEqual(len(data_slides["slides"]), 1)
 
                         # --- SLIDES UPLOAD (File payload) ---
                         file_slides_data = io.BytesIO(json.dumps([{"id": "portada", "title": "Portada", "elements": []}]).encode("utf-8"))
