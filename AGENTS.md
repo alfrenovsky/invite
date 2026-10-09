@@ -71,7 +71,7 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   │   │   └── story.css      # Main stylesheet for Story UI, layout, animations & RSVP form
 │   │   ├── js/
 │   │   │   └── story.js       # Client Story engine (Auto-save, swipe gestures, timer, pull-to-refresh)
-│   │   └── favicon.svg        # Golden heart vector favicon
+│   │   └── favicon.svg        # Red heart vector favicon
 │   ├── form.html              # Standalone guest registration form
 │   └── index.html             # Static fallback invitation page
 ├── nginx/
