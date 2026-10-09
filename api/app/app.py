@@ -22,8 +22,23 @@ def add_cache_headers(response):
     return response
 
 
-SLIDES_JSON_PATH = os.path.join(os.path.dirname(__file__), "slides.json")
-STYLES_JSON_PATH = os.path.join(os.path.dirname(__file__), "styles.json")
+def get_data_dir():
+    candidates = [
+        "/data",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "data")),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    target = candidates[0]
+    os.makedirs(target, exist_ok=True)
+    return target
+
+
+DATA_DIR = get_data_dir()
+SLIDES_JSON_PATH = os.path.join(DATA_DIR, "slides.json")
+STYLES_JSON_PATH = os.path.join(DATA_DIR, "styles.json")
 
 SLIDES_CONFIG_DEFAULT = [
     {
@@ -260,9 +275,10 @@ def is_font_in_use(family, styles=None, slides=None):
 
 def get_backgrounds_dir():
     candidates = [
+        os.path.join(get_data_dir(), "backgrounds"),
+        "/data/backgrounds",
         "/app/backgrounds",
         os.path.abspath(os.path.join(os.path.dirname(__file__), "../../html/assets/backgrounds")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "backgrounds")),
     ]
     for p in candidates:
         if os.path.exists(p):
@@ -298,9 +314,10 @@ VALID_FONT_EXTS = {".ttf", ".otf", ".woff", ".woff2"}
 
 def get_fonts_dir():
     candidates = [
+        os.path.join(get_data_dir(), "fonts"),
+        "/data/fonts",
         "/app/fonts",
         os.path.abspath(os.path.join(os.path.dirname(__file__), "../../html/assets/fonts")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "fonts")),
     ]
     for p in candidates:
         if os.path.exists(p):

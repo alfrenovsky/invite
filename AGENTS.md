@@ -56,26 +56,26 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   │       └── invitados.html # Admin guest overview table
 │   ├── Dockerfile             # Python 3.12 slim container build definition
 │   └── requirements.txt       # Flask, gspread, google-auth dependencies
+├── data/                      # Decoupled content & runtime data (excluded from git, migrated via rsync)
+│   ├── backgrounds/           # Slide media (images & videos: .jpg, .png, .mp4, etc.)
+│   ├── fonts/                 # Custom font assets (.ttf, .otf) and generated fonts.css
+│   ├── slides.json            # Dynamic slide configuration and interactive elements
+│   ├── styles.json            # Visual styles and typography configuration
+│   ├── avatar.jpeg            # Header avatar photo
+│   ├── whatsapp.thumb.jpeg    # OpenGraph WhatsApp preview thumbnail
+│   ├── sheet_cache.json       # Google Sheets persistent local JSON cache
+│   └── api.log                # Flask application log
 ├── html/
 │   ├── assets/
 │   │   ├── css/
 │   │   │   └── story.css      # Main stylesheet for Story UI, layout, animations & RSVP form
 │   │   ├── js/
 │   │   │   └── story.js       # Client Story engine (Auto-save, swipe gestures, timer, pull-to-refresh)
-│   │   ├── avatar.jpeg        # Circular story header avatar image
-
-│   │   ├── background.jpeg    # High-resolution desktop background
-│   │   ├── favicon.svg        # Golden heart vector favicon
-│   │   ├── photo01.jpeg       # Slide 0 couple photo asset
-│   │   └── whatsapp.thumb.jpeg# 600x600 WhatsApp thumbnail asset
-
-
+│   │   └── favicon.svg        # Golden heart vector favicon
 │   ├── form.html              # Standalone guest registration form
-│   ├── favicon.svg            # Fallback favicon asset
 │   └── index.html             # Static fallback invitation page
 ├── nginx/
-│   └── nginx.conf             # Nginx server configuration, no-cache asset delivery in dev, and API proxy rules
-
+│   └── nginx.conf             # Nginx reverse proxy configuration & asset delivery rules
 ├── secrets/
 │   └── credentials.json       # Google Service Account JSON credentials (mounted read-only)
 ├── docker-compose.yml         # Main Docker Compose configuration
