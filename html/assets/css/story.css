@@ -683,6 +683,80 @@
             color: rgba(255, 255, 255, 0.35);
         }
 
+        /* Dietary Menu Selector (Only shown if confirmed) */
+        .rsvp-menu-section {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 4px;
+            animation: rsvpMenuFadeIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes rsvpMenuFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rsvp-menu-label {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.65);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .rsvp-menu-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .rsvp-menu-btn {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            padding: 8px 4px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            cursor: pointer;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .rsvp-menu-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .rsvp-menu-btn:active {
+            transform: scale(0.97);
+        }
+
+        .rsvp-menu-btn.selected {
+            background: rgba(255, 255, 255, 0.12);
+            color: #34d399;
+            border: 1.5px solid #34d399;
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.35);
+            font-weight: 700;
+        }
+
         /* Active & Interactive Layers */
 
         

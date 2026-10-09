@@ -745,6 +745,9 @@
             const conf = card.getAttribute('data-status') || '';
             const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
             const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+            const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
+            const selectedMenu = selectedMenuBtn ? (selectedMenuBtn.getAttribute('data-menu') || 'general') : 'general';
+
             const payload = {
                 confirmacion: conf
             };
@@ -754,6 +757,12 @@
             if (inputApellido !== null) {
                 payload.apellido = inputApellido.value.trim();
             }
+            payload.pa = (conf === 'si') ? selectedMenu : '';
+            payload.ap = (conf === 'si') ? selectedMenu : '';
+            payload.pa_general = (conf === 'si' && selectedMenu === 'general') ? 'si' : '';
+            payload.pa_vegetariano = (conf === 'si' && selectedMenu === 'vegetariano') ? 'si' : '';
+            payload.pa_vegano = (conf === 'si' && selectedMenu === 'vegano') ? 'si' : '';
+
             return payload;
         }
 
@@ -1110,7 +1119,33 @@
                         }
                     }
 
+                    // Toggle dietary menu section visibility
+                    const menuSection = card.querySelector('.rsvp-menu-section');
+                    if (menuSection) {
+                        if (val === 'si') {
+                            menuSection.style.display = 'flex';
+                            if (!menuSection.querySelector('.rsvp-menu-btn.selected')) {
+                                const defaultMenu = menuSection.querySelector('.rsvp-menu-btn[data-menu="general"]');
+                                if (defaultMenu) defaultMenu.classList.add('selected');
+                            }
+                        } else {
+                            menuSection.style.display = 'none';
+                        }
+                    }
+
                     updateSlideList();
+                    queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                });
+            });
+
+            // Menu Buttons ("General", "Vegetariano", "Vegano")
+            const menuButtons = card.querySelectorAll('.rsvp-menu-btn');
+            menuButtons.forEach(mBtn => {
+                mBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    menuButtons.forEach(b => b.classList.remove('selected'));
+                    mBtn.classList.add('selected');
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                 });
             });

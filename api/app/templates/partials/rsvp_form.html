@@ -37,6 +37,17 @@
                             <input type="text" id="apellido_{{ guest.id }}" name="apellido_{{ guest.id }}" class="guest-input-apellido" value="{{ guest.apellido or '' }}" placeholder="Apellido" autocomplete="off">
                         </div>
                     </div>
+
+                    <!-- Dietary Menu Buttons (Shown only if confirmed) -->
+                    {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
+                    <div class="rsvp-menu-section" id="menu_section_{{ guest.id }}" style="{% if conf != 'si' %}display: none;{% endif %}">
+                        <label class="rsvp-menu-label">Menú</label>
+                        <div class="rsvp-menu-buttons" role="group" aria-label="Menú">
+                            <button type="button" class="rsvp-menu-btn {% if current_menu == 'general' %}selected{% endif %}" data-menu="general">General</button>
+                            <button type="button" class="rsvp-menu-btn {% if current_menu == 'vegetariano' %}selected{% endif %}" data-menu="vegetariano">Vegetariano</button>
+                            <button type="button" class="rsvp-menu-btn {% if current_menu == 'vegano' %}selected{% endif %}" data-menu="vegano">Vegano</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
