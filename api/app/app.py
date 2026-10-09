@@ -278,13 +278,16 @@ def get_backgrounds_list():
         return []
     files = []
     try:
-        for fname in sorted(os.listdir(bg_dir)):
-            ext = os.path.splitext(fname)[1].lower()
-            if ext in VALID_MEDIA_EXTS and not fname.startswith("."):
-                files.append(fname)
+        for root, dirs, fnames in os.walk(bg_dir):
+            dirs.sort()
+            for fname in sorted(fnames):
+                ext = os.path.splitext(fname)[1].lower()
+                if ext in VALID_MEDIA_EXTS and not fname.startswith("."):
+                    rel = os.path.relpath(os.path.join(root, fname), bg_dir)
+                    files.append(rel)
     except Exception:
         pass
-    return files
+    return sorted(files)
 
 
 VALID_FONT_EXTS = {".ttf", ".otf", ".woff", ".woff2"}

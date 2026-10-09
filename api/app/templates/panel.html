@@ -4989,7 +4989,7 @@
             const transformStr = `translate(-50%, -50%) translate(${bgX}%, ${bgY}%) scale(${bgZoom})`;
 
             if (bg) {
-                const bgUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURIComponent(bg));
+                const bgUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURI(bg));
                 if (isVideoFile(bg)) {
                     if (bgImg) bgImg.style.display = 'none';
                     if (bgVid) {
@@ -5442,12 +5442,12 @@
                             const isVid = isVideoFile(finalName);
                             if (isVid) {
                                 thumbWrap.innerHTML = `
-                                <video src="/assets/backgrounds/${encodeURIComponent(finalName)}" class="bg-thumb" muted loop playsinline autoplay></video>
+                                <video src="/assets/backgrounds/${encodeURI(finalName)}" class="bg-thumb" muted loop playsinline autoplay></video>
                                 <span class="media-badge">🎬 Video</span>
                             `;
                             } else {
                                 thumbWrap.innerHTML = `
-                                <img src="/assets/backgrounds/${encodeURIComponent(finalName)}" alt="${finalName}" class="bg-thumb" loading="lazy">
+                                <img src="/assets/backgrounds/${encodeURI(finalName)}" alt="${finalName}" class="bg-thumb" loading="lazy">
                             `;
                             }
                         }
@@ -5482,7 +5482,7 @@
                                 nameSpan.title = finalName;
                             }
                             const isVid = /\.(mp4|webm|mov|m4v)$/i.test(finalName);
-                            const mediaUrl = '/assets/backgrounds/' + encodeURIComponent(finalName);
+                            const mediaUrl = '/assets/backgrounds/' + encodeURI(finalName);
                             const thumbDiv = item.querySelector('.custom-bg-item-thumb');
                             if (thumbDiv) {
                                 if (isVid) {
@@ -5952,7 +5952,7 @@
                     thumbEl.innerHTML = '<span>🚫</span>';
                 } else {
                     const isVid = /\.(mp4|webm|mov|m4v)$/i.test(bg);
-                    const mediaUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURIComponent(bg));
+                    const mediaUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURI(bg));
                     if (isVid) {
                         thumbEl.innerHTML = `<video src="${mediaUrl}" muted loop playsinline autoplay style="width: 100%; height: 100%; object-fit: cover;"></video>`;
                     } else {
