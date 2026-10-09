@@ -698,13 +698,29 @@
         }
 
         /* Slides Manager Card (inside left editor column) */
+        .slides-manager-card {
+            position: sticky;
+            top: 0;
+            z-index: 25;
+            background: rgba(14, 20, 30, 0.95);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
         .slides-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
+        }
+
+        .slides-chips-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
         }
 
         .slides-chips-container {
@@ -712,8 +728,43 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
-            max-width: 100%;
+            flex: 1;
+            min-width: 0;
             padding: 2px 0;
+        }
+
+        .slides-save-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .slides-scroll-container {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            overflow-y: auto;
+            max-height: calc(98vh - 175px);
+            padding-right: 6px;
+        }
+
+        .slides-scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .slides-scroll-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+        }
+
+        .slides-scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+        }
+
+        .slides-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .slide-chip {
@@ -743,6 +794,60 @@
             border-color: rgba(212, 175, 55, 0.5);
             color: #fff;
             box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .slide-chip.dirty {
+            border-color: #e53e3e !important;
+            background: rgba(229, 62, 62, 0.16) !important;
+            color: #feb2b2 !important;
+            box-shadow: 0 0 10px rgba(229, 62, 62, 0.3) !important;
+        }
+
+        .slide-chip.dirty:hover {
+            background: rgba(229, 62, 62, 0.25) !important;
+            color: #fff !important;
+        }
+
+        .slide-chip.dirty .slide-chip-num {
+            background: rgba(229, 62, 62, 0.45) !important;
+            color: #fff !important;
+        }
+
+        .slide-chip.active.dirty {
+            border-color: #fc8181 !important;
+            background: rgba(229, 62, 62, 0.3) !important;
+            color: #fff !important;
+            box-shadow: 0 0 16px rgba(229, 62, 62, 0.55), inset 0 0 8px rgba(229, 62, 62, 0.2) !important;
+        }
+
+        .slide-chip-dirty-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #e53e3e;
+            box-shadow: 0 0 6px #e53e3e;
+            display: inline-block;
+            flex-shrink: 0;
+            margin-left: 2px;
+            animation: pulseDirty 1.5s infinite;
+        }
+
+        @keyframes pulseDirty {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .btn-save-slide.btn-save-dirty {
+            background: rgba(229, 62, 62, 0.25);
+            border-color: rgba(229, 62, 62, 0.6);
+            color: #feb2b2;
+            box-shadow: 0 0 12px rgba(229, 62, 62, 0.35);
+        }
+
+        .btn-save-slide.btn-save-dirty:hover {
+            background: var(--danger);
+            color: #fff;
+            box-shadow: 0 0 16px rgba(229, 62, 62, 0.6);
         }
 
         .slide-chip-num {
@@ -1936,8 +2041,8 @@
             <!-- TAB: Slides Manager & Live Split Editor -->
             <div id="tab-slides" class="tab-pane active">
                 <div class="editor-form-col">
-                    <!-- Slides Selection & Manager -->
-                    <section class="panel-card">
+                    <!-- Slides Selection & Manager (Static Top Card) -->
+                    <section class="panel-card slides-manager-card">
                         <div class="slides-card-header">
                             <h3 class="section-title" style="margin-bottom: 0;">
                                 <span>Slides</span>
@@ -1965,92 +2070,97 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="slides-chips-container" id="slidesChipsContainer">
-                            <!-- Populated dynamically by JS -->
-                        </div>
-                    </section>
-                    <!-- Slide Basic Settings -->
-                    <section class="panel-card">
-                        <h3 class="section-title" style="margin-bottom: 14px;">
-                            <span>Configuración del Slide</span>
-                            <span class="count" id="activeSlideBadgeId"></span>
-                        </h3>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-                            <div class="form-group">
-                                <label for="slideTitleInput">Título del Slide</label>
-                                <input type="text" class="form-input" id="slideTitleInput" placeholder="ej. Portada, Fiesta, etc.">
+                        <div class="slides-chips-row">
+                            <div class="slides-chips-container" id="slidesChipsContainer">
+                                <!-- Populated dynamically by JS -->
                             </div>
-                            <div class="form-group">
-                                <label for="slideDurationInput">
-                                    <span>Duración (ms)</span>
-                                    <span class="sub-label-hint">0 = sin auto-avance</span>
-                                </label>
-                                <input type="number" class="form-input" id="slideDurationInput" min="0" step="500" value="7000">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="slideBgSelect">Fondo / Video</label>
-                            <select id="slideBgSelect" class="form-select">
-                                <option value="">(Sin fondo / Default)</option>
-                                {% for bg in backgrounds %}
-                                    <option value="{{ bg }}">{{ bg }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Background Position & Zoom Controls -->
-                        <div class="form-group" id="slideBgSettingsGroup" style="display: none; margin-top: 10px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes de Fondo</label>
-                                <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()" style="padding: 3px 8px; font-size: 0.72rem;" title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
-                                <!-- Zoom Slider -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                    <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">🔍 Zoom</span>
-                                    <input type="range" class="pos-range-slider" id="slideBgZoomSlider" min="100" max="300" step="5" value="100" oninput="onSlideBgZoomChange(this.value)">
-                                    <span class="style-prop-badge" id="slideBgZoomBadge" style="min-width: 48px; text-align: center;">100%</span>
-                                </div>
-                                <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
-                                    💡 <em>Arrastrá el fondo en el teléfono para moverlo libremente.</em>
-                                </div>
+                            <div class="slides-save-wrap">
+                                <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
+                                <button type="button" class="btn-save-slide" id="btnSaveActiveSlide" onclick="saveActiveSlide()" title="Guardar cambios del slide activo">
+                                    <span>💾 Guardar</span>
+                                </button>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Elements CRUD Section -->
-                    <section class="panel-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h3 class="section-title" style="margin-bottom: 0;">
-                                <span>Elementos</span>
-                                <span class="count" id="elementsCountBadge">0</span>
+                    <!-- Scrollable Settings & Elements Area below static slides list -->
+                    <div class="slides-scroll-container">
+                        <!-- Slide Basic Settings -->
+                        <section class="panel-card">
+                            <h3 class="section-title" style="margin-bottom: 14px;">
+                                <span>Configuración del Slide</span>
+                                <span class="count" id="activeSlideBadgeId"></span>
                             </h3>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
-                                    <span>+ Texto</span>
-                                </button>
-                                <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddLocationElement" onclick="addLocationElement()" style="border-color: rgba(4, 136, 219, 0.45); color: #63b3ed;">
-                                    <span>📍 Ubicación</span>
-                                </button>
-                                <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddCountdownElement" onclick="addCountdownElement()" style="border-color: rgba(237, 137, 54, 0.45); color: #f6ad55;">
-                                    <span>⏱️ Countdown</span>
-                                </button>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                                <div class="form-group">
+                                    <label for="slideTitleInput">Título del Slide</label>
+                                    <input type="text" class="form-input" id="slideTitleInput" placeholder="ej. Portada, Fiesta, etc.">
+                                </div>
+                                <div class="form-group">
+                                    <label for="slideDurationInput">
+                                        <span>Duración (ms)</span>
+                                        <span class="sub-label-hint">0 = sin auto-avance</span>
+                                    </label>
+                                    <input type="number" class="form-input" id="slideDurationInput" min="0" step="500" value="7000">
+                                </div>
                             </div>
-                        </div>
 
-                        <div id="elementsListContainer">
-                            <!-- Populated dynamically by JS -->
-                        </div>
+                            <div class="form-group">
+                                <label for="slideBgSelect">Fondo / Video</label>
+                                <select id="slideBgSelect" class="form-select">
+                                    <option value="">(Sin fondo / Default)</option>
+                                    {% for bg in backgrounds %}
+                                        <option value="{{ bg }}">{{ bg }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--card-border);">
-                            <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
-                            <button type="button" class="btn-save-slide" id="btnSaveActiveSlide" onclick="saveActiveSlide()">
-                                <span>💾 Guardar Slide</span>
-                            </button>
-                        </div>
-                    </section>
+                            <!-- Background Position & Zoom Controls -->
+                            <div class="form-group" id="slideBgSettingsGroup" style="display: none; margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes de Fondo</label>
+                                    <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()" style="padding: 3px 8px; font-size: 0.72rem;" title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
+                                    <!-- Zoom Slider -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                        <span style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">🔍 Zoom</span>
+                                        <input type="range" class="pos-range-slider" id="slideBgZoomSlider" min="100" max="300" step="5" value="100" oninput="onSlideBgZoomChange(this.value)">
+                                        <span class="style-prop-badge" id="slideBgZoomBadge" style="min-width: 48px; text-align: center;">100%</span>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
+                                        💡 <em>Arrastrá el fondo en el teléfono para moverlo libremente.</em>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Elements CRUD Section -->
+                        <section class="panel-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                <h3 class="section-title" style="margin-bottom: 0;">
+                                    <span>Elementos</span>
+                                    <span class="count" id="elementsCountBadge">0</span>
+                                </h3>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement" onclick="addTextElement()">
+                                        <span>+ Texto</span>
+                                    </button>
+                                    <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddLocationElement" onclick="addLocationElement()" style="border-color: rgba(4, 136, 219, 0.45); color: #63b3ed;">
+                                        <span>📍 Ubicación</span>
+                                    </button>
+                                    <button type="button" class="btn-ctrl btn-ctrl-secondary" id="btnAddCountdownElement" onclick="addCountdownElement()" style="border-color: rgba(237, 137, 54, 0.45); color: #f6ad55;">
+                                        <span>⏱️ Countdown</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="elementsListContainer">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </section>
+                    </div>
                 </div>
             </div>
 
@@ -2622,10 +2732,54 @@
 <script>
     // State
     let slidesData = {{ slides|tojson }};
+    let savedSlidesSnapshot = JSON.parse(JSON.stringify(slidesData));
     let backgroundsData = {{ backgrounds|tojson }};
     let stylesData = {{ styles|tojson if styles else '{}' }};
     let currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
     let activeStyleKey = 'title'; // 'title' | 'tag' | 'body'
+
+    function isSlideDirty(slideId) {
+        if (!slideId) return false;
+        const current = slidesData.find(s => s.id === slideId);
+        const saved = savedSlidesSnapshot.find(s => s.id === slideId);
+        if (!current && !saved) return false;
+        if (!current || !saved) return true;
+        return JSON.stringify(current) !== JSON.stringify(saved);
+    }
+
+    function updateDirtySlideChipsUI() {
+        const chips = document.querySelectorAll('#slidesChipsContainer .slide-chip');
+        chips.forEach(chip => {
+            const slideId = chip.dataset.slideId;
+            if (!slideId) return;
+            const dirty = isSlideDirty(slideId);
+            if (dirty) {
+                chip.classList.add('dirty');
+                if (!chip.querySelector('.slide-chip-dirty-dot')) {
+                    const dot = document.createElement('span');
+                    dot.className = 'slide-chip-dirty-dot';
+                    dot.title = 'Modificado sin guardar';
+                    chip.appendChild(dot);
+                }
+            } else {
+                chip.classList.remove('dirty');
+                const dot = chip.querySelector('.slide-chip-dirty-dot');
+                if (dot) dot.remove();
+            }
+        });
+
+        const currDirty = isSlideDirty(currentSlideId);
+        const saveBtn = document.getElementById('btnSaveActiveSlide');
+        if (saveBtn) {
+            if (currDirty) {
+                saveBtn.classList.add('btn-save-dirty');
+                saveBtn.innerHTML = '<span>💾 Guardar *</span>';
+            } else {
+                saveBtn.classList.remove('btn-save-dirty');
+                saveBtn.innerHTML = '<span>💾 Guardar</span>';
+            }
+        }
+    }
 
     function isVideoFile(filename) {
         return /\.(mp4|webm|mov|m4v)$/i.test(filename || '');
@@ -3405,9 +3559,11 @@
         container.innerHTML = '';
 
         slidesData.forEach((slide, idx) => {
+            const isDirty = isSlideDirty(slide.id);
             const chip = document.createElement('button');
             chip.type = 'button';
-            chip.className = 'slide-chip' + (slide.id === currentSlideId ? ' active' : '');
+            chip.className = 'slide-chip' + (slide.id === currentSlideId ? ' active' : '') + (isDirty ? ' dirty' : '');
+            chip.dataset.slideId = slide.id;
             chip.onclick = () => selectSlide(slide.id);
 
             const numSpan = document.createElement('span');
@@ -3424,6 +3580,12 @@
 
             chip.appendChild(numSpan);
             chip.appendChild(titleSpan);
+            if (isDirty) {
+                const dirtyDot = document.createElement('span');
+                dirtyDot.className = 'slide-chip-dirty-dot';
+                dirtyDot.title = 'Modificado sin guardar';
+                chip.appendChild(dirtyDot);
+            }
             container.appendChild(chip);
         });
 
@@ -3445,6 +3607,8 @@
         if (countBadge) countBadge.textContent = slidesData.length;
         const sectionBadge = document.getElementById('slidesSectionBadge');
         if (sectionBadge) sectionBadge.textContent = slidesData.length;
+
+        updateDirtySlideChipsUI();
     }
 
     function selectSlide(slideId) {
@@ -3477,6 +3641,7 @@
             titleInput.oninput = () => {
                 slide.title = titleInput.value;
                 renderSlideChips();
+                updateLivePreview();
             };
         }
 
@@ -3485,6 +3650,7 @@
             durationInput.value = slide.duration !== undefined ? slide.duration : 7000;
             durationInput.oninput = () => {
                 slide.duration = parseInt(durationInput.value, 10) || 0;
+                updateLivePreview();
             };
         }
 
@@ -4268,6 +4434,7 @@
         }
 
         updateStoryPreviewScale();
+        updateDirtySlideChipsUI();
     }
 
     function updateStoryPreviewScale() {
@@ -4314,6 +4481,14 @@
             });
             const data = await res.json();
             if (data.ok) {
+                const snapIdx = savedSlidesSnapshot.findIndex(s => s.id === slide.id);
+                if (snapIdx >= 0) {
+                    savedSlidesSnapshot[snapIdx] = JSON.parse(JSON.stringify(slide));
+                } else {
+                    savedSlidesSnapshot.push(JSON.parse(JSON.stringify(slide)));
+                }
+                updateDirtySlideChipsUI();
+
                 showToast(`Slide "${slide.title || slide.id}" guardado con éxito`);
                 if (indicator) {
                     indicator.style.display = 'block';
@@ -4327,7 +4502,7 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<span>💾 Guardar Slide</span>';
+                updateDirtySlideChipsUI();
             }
         }
     }
@@ -4352,6 +4527,8 @@
             });
             const data = await res.json();
             if (data.ok) {
+                savedSlidesSnapshot = JSON.parse(JSON.stringify(slidesData));
+                updateDirtySlideChipsUI();
                 showToast('Orden de slides actualizado');
             } else {
                 showToast(data.error || 'Error al reordenar slides', true);
@@ -4391,8 +4568,10 @@
             const data = await res.json();
             if (data.ok && data.slide) {
                 slidesData.push(data.slide);
+                savedSlidesSnapshot.push(JSON.parse(JSON.stringify(data.slide)));
                 closeNewSlideModal();
                 selectSlide(data.slide.id);
+                updateDirtySlideChipsUI();
                 showToast(`Slide "${data.slide.title || data.slide.id}" creado`);
             } else {
                 showToast(data.error || 'Error al crear slide', true);
@@ -4426,8 +4605,10 @@
             if (data.ok) {
                 const currIdx = slidesData.findIndex(s => s.id === slide.id);
                 slidesData.splice(currIdx, 1);
+                savedSlidesSnapshot = savedSlidesSnapshot.filter(s => s.id !== slide.id);
                 const nextSlide = slidesData[currIdx] || slidesData[currIdx - 1] || slidesData[0];
                 selectSlide(nextSlide.id);
+                updateDirtySlideChipsUI();
                 showToast(`Slide "${slide.title || slide.id}" eliminado`);
             } else {
                 showToast(data.error || 'Error al eliminar slide', true);
