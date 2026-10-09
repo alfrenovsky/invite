@@ -526,9 +526,9 @@
                 }
             }
 
-            // On RSVP slide, preserve vertical scrolling inside form
+            // On RSVP slide or any slide with form, never trigger swipe navigation from form touches
             const target = e.target;
-            if (target && target.closest('.rsvp-form-container') && Math.abs(touchStartY - touchEndY) > Math.abs(diffX)) {
+            if (target && target.closest('.rsvp-form-container')) {
                 setTimeout(() => { isSwiping = false; }, 50);
                 return;
             }
@@ -740,6 +740,14 @@
     // ==============================================================
     function getGuestPayload(card) {
         const guestId = card.getAttribute('data-guest-id');
+        // Support minimalist rsvp-guest-row element
+        if (card.classList.contains('rsvp-guest-row')) {
+            const conf = card.getAttribute('data-status') || '';
+            return {
+                confirmacion: conf
+            };
+        }
+
         const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
         const asistencia = radioChecked ? radioChecked.value : '';
         const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
@@ -784,11 +792,14 @@
     // 😿 Gato Triste Dynamic Slide Engine
     // ==============================================================
     function checkAllRejected() {
-        const cards = Array.from(document.querySelectorAll('.rsvp-card[data-guest-id]'));
-        if (cards.length === 0) return false;
-        return cards.every(card => {
-            const guestId = card.getAttribute('data-guest-id');
-            const checked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
+        const rows = Array.from(document.querySelectorAll('.rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]'));
+        if (rows.length === 0) return false;
+        return rows.every(row => {
+            if (row.classList.contains('rsvp-guest-row')) {
+                return (row.getAttribute('data-status') === 'no');
+            }
+            const guestId = row.getAttribute('data-guest-id');
+            const checked = row.querySelector(`input[name="asistencia_${guestId}"]:checked`);
             return checked && checked.value === 'no';
         });
     }
@@ -820,7 +831,7 @@
         const guestIdsToSave = Array.from(dirtyGuests);
         const actualToSave = [];
         for (const guestId of guestIdsToSave) {
-            const card = document.querySelector(`.rsvp-card[data-guest-id="${guestId}"]`);
+            const card = document.querySelector(`[data-guest-id="${guestId}"]`);
             if (!card) {
                 dirtyGuests.delete(guestId);
                 continue;
@@ -1007,13 +1018,67 @@
             };
         });
 
+        // Prevent tap-zones and swipe navigation when interacting inside form
+        document.querySelectorAll('.rsvp-form-container').forEach(formCont => {
+            ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
+                formCont.addEventListener(evtType, (e) => {
+                    e.stopPropagation();
+                }, { passive: false });
+            });
+        });
+
         // RSVP Form Initial Snapshots
-        document.querySelectorAll('.rsvp-card[data-guest-id]').forEach(card => {
+        document.querySelectorAll('[data-guest-id]').forEach(card => {
             const guestId = card.getAttribute('data-guest-id');
             savedGuestStates[guestId] = JSON.stringify(getGuestPayload(card));
         });
 
-        // RSVP Form Radio & Input Bindings
+        // Minimalist RSVP Guest Row Taps (Yellow -> Green -> Red -> Yellow)
+        const guestRows = Array.from(document.querySelectorAll('.rsvp-guest-row[data-guest-id]'));
+        guestRows.forEach(row => {
+            const guestId = row.getAttribute('data-guest-id');
+            const bullet = row.querySelector('.rsvp-bullet');
+
+            const handleToggle = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const currentStatus = row.getAttribute('data-status') || '';
+                let nextStatus;
+                if (currentStatus === 'si') {
+                    nextStatus = 'no';
+                } else if (currentStatus === 'no') {
+                    nextStatus = '';
+                } else {
+                    nextStatus = 'si';
+                }
+
+                row.setAttribute('data-status', nextStatus);
+
+                if (bullet) {
+                    bullet.classList.remove('bullet-si', 'bullet-no', 'bullet-pending');
+                    if (nextStatus === 'si') {
+                        bullet.classList.add('bullet-si');
+                    } else if (nextStatus === 'no') {
+                        bullet.classList.add('bullet-no');
+                    } else {
+                        bullet.classList.add('bullet-pending');
+                    }
+                }
+
+                updateSlideList();
+                queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+            };
+
+            row.addEventListener('click', handleToggle);
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleToggle(e);
+                }
+            });
+        });
+
+        // RSVP Form Radio & Input Bindings (Legacy or Detailed)
         const cards = Array.from(document.querySelectorAll('.rsvp-card'));
         cards.forEach((card, cardIdx) => {
             const guestId = card.getAttribute('data-guest-id');
