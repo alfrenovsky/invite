@@ -1052,15 +1052,34 @@
         });
 
         // Expandable RSVP Guest Cards (Accordion toggle, 3 status buttons, live name sync)
+        const MENU_ICONS = {
+            'general': '🥩',
+            'vegetariano': '🥬',
+            'vegano': '🌱'
+        };
+
         const guestCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
         guestCards.forEach(card => {
             const guestId = card.getAttribute('data-guest-id');
             const header = card.querySelector('.rsvp-card-header');
             const bullet = card.querySelector('.rsvp-bullet');
+            const menuIcon = card.querySelector('.rsvp-menu-icon');
             const statusButtons = card.querySelectorAll('.rsvp-status-btn');
+            const menuButtons = card.querySelectorAll('.rsvp-menu-btn');
             const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
             const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
             const nameDisplay = card.querySelector('.rsvp-guest-name');
+
+            function updateMenuIconDisplay(status) {
+                if (!menuIcon) return;
+                if (status !== 'si') {
+                    menuIcon.textContent = '';
+                    return;
+                }
+                const selBtn = card.querySelector('.rsvp-menu-btn.selected');
+                const selMenu = selBtn ? (selBtn.getAttribute('data-menu') || 'general') : 'general';
+                menuIcon.textContent = MENU_ICONS[selMenu] || '🥩';
+            }
 
             // 1. Accordion Toggle on clicking the Header / Row
             if (header) {
@@ -1133,19 +1152,20 @@
                         }
                     }
 
+                    updateMenuIconDisplay(val);
                     updateSlideList();
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                 });
             });
 
             // Menu Buttons ("General", "Vegetariano", "Vegano")
-            const menuButtons = card.querySelectorAll('.rsvp-menu-btn');
             menuButtons.forEach(mBtn => {
                 mBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     menuButtons.forEach(b => b.classList.remove('selected'));
                     mBtn.classList.add('selected');
+                    updateMenuIconDisplay(card.getAttribute('data-status'));
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                 });
             });
@@ -1169,6 +1189,9 @@
                 inputApellido.addEventListener('input', syncGuestName);
                 inputApellido.addEventListener('blur', () => flushAutoSave());
             }
+
+            // Initial Menu Icon State
+            updateMenuIconDisplay(card.getAttribute('data-status'));
         });
 
         // RSVP Form Radio & Input Bindings (Legacy or Detailed)

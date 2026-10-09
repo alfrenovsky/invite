@@ -5,11 +5,20 @@
         <div id="rsvpCardsContainer" class="rsvp-guest-list">
             {% for guest in guests %}
             {% set conf = guest.confirmacion or '' %}
+            {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
+            {% set menu_icon = '' %}
+            {% if conf == 'si' %}
+                {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
+                {% elif current_menu == 'vegetariano' %}{% set menu_icon = '🥬' %}
+                {% else %}{% set menu_icon = '🥩' %}
+                {% endif %}
+            {% endif %}
             <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}">
-                <!-- Guest Header Row (One Line with Bullet and Full Name) -->
+                <!-- Guest Header Row (One Line with Bullet, Full Name, and Right-Aligned Menu Icon) -->
                 <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}">
                     <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
                     <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}</span>
+                    <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{{ menu_icon }}</span>
                     <span class="rsvp-chevron" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
