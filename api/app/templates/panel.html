@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Archivo:ital,wght@0,300..900;1,300..900&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Rosario:ital,wght@0,300..700;1,300..700&family=Saira:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/fonts/fonts.css">
     <style>
         @font-face {
@@ -385,6 +385,20 @@
             opacity: 1;
             color: var(--danger);
             background: rgba(229, 62, 62, 0.15);
+        }
+
+        .btn-delete-icon:disabled,
+        .btn-delete-icon.btn-disabled {
+            opacity: 0.22 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(1);
+            pointer-events: auto !important;
+        }
+
+        .btn-delete-icon:disabled:hover,
+        .btn-delete-icon.btn-disabled:hover {
+            background: transparent !important;
+            color: inherit !important;
         }
 
         .bg-rename-box {
@@ -2082,6 +2096,7 @@
                             <div class="bg-gallery" id="bgGallery">
                                 {% for bg in backgrounds %}
                                     {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                    {% set bg_in_use = (bg in used_backgrounds) if used_backgrounds else false %}
                                     <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}" data-is-video="{{ 'true' if is_vid else 'false' }}">
                                         <div class="bg-thumb-wrap">
                                             {% if is_vid %}
@@ -2090,12 +2105,16 @@
                                             {% else %}
                                                 <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb" loading="lazy">
                                             {% endif %}
+                                            <span class="badge-in-use in-use-bg-badge" style="position: absolute; top: 6px; right: 6px; z-index: 2; {% if not bg_in_use %}display: none;{% endif %}">En uso</span>
                                         </div>
                                         <div class="bg-info-row" id="bgInfoRow_{{ loop.index }}">
                                             <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}</div>
                                             <div class="bg-btn-group">
                                                 <button type="button" class="btn-rename-icon" onclick="startRename('{{ loop.index }}', '{{ bg }}')" title="Renombrar archivo">✏️</button>
-                                                <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteBackground('{{ loop.index }}', '{{ bg }}')" title="Eliminar archivo">🗑️</button>
+                                                <button type="button"
+                                                        class="btn-rename-icon btn-delete-icon {% if bg_in_use %}btn-disabled{% endif %}"
+                                                        {% if bg_in_use %}disabled title="Este archivo está en uso en los slides y no puede eliminarse"{% else %}title="Eliminar archivo"{% endif %}
+                                                        onclick="deleteBackground('{{ loop.index }}', '{{ bg }}', this)">🗑️</button>
                                             </div>
                                         </div>
                                         <div class="bg-rename-box" id="bgRenameBox_{{ loop.index }}" style="display: none;">
@@ -2481,19 +2500,21 @@
                         <div class="fonts-gallery" id="fontsGallery">
                             {% if fonts %}
                                 {% for f in fonts %}
-                                    <div class="font-card" data-filename="{{ f.filename }}" data-family="{{ f.family }}">
+                                    <div class="font-card" data-filename="{{ f.filename }}" data-family="{{ f.family }}" data-is-system="{{ 'true' if f.is_system else 'false' }}">
                                         <div class="font-card-col-action">
                                             <button type="button"
-                                                    class="btn-rename-icon btn-delete-icon {% if f.in_use %}btn-disabled{% endif %}"
-                                                    {% if f.in_use %}disabled title="Esta fuente está en uso en los estilos o slides"{% else %}title="Eliminar tipografía"{% endif %}
+                                                    class="btn-rename-icon btn-delete-icon {% if f.in_use or f.is_system %}btn-disabled{% endif %}"
+                                                    {% if f.is_system %}disabled title="Fuente de Google Fonts (no eliminable)"{% elif f.in_use %}disabled title="Esta fuente está en uso en los estilos o slides"{% else %}title="Eliminar tipografía"{% endif %}
                                                     onclick="deleteFont('{{ f.filename }}', '{{ f.family }}', this)">🗑️</button>
                                         </div>
                                         <div class="font-card-col-content">
                                             <div class="font-card-header">
                                                 <div class="font-card-title-group">
                                                     <span class="font-card-name" title="{{ f.family }}">{{ f.family }}</span>
-                                                    <span class="media-badge" style="font-size: 0.65rem; padding: 2px 6px;">{{ f.ext }}</span>
-                                                    <span style="font-size: 0.72rem; color: var(--text-muted);">{{ f.size_kb }} KB</span>
+                                                    <span class="media-badge" style="{% if f.is_system %}background: rgba(4, 136, 219, 0.25); color: #63b3ed; border: 1px solid rgba(4, 136, 219, 0.4);{% endif %} font-size: 0.65rem; padding: 2px 6px;">{{ f.ext }}</span>
+                                                    {% if not f.is_system %}
+                                                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ f.size_kb }} KB</span>
+                                                    {% endif %}
                                                     <span class="badge-in-use in-use-tag" style="{% if not f.in_use %}display: none;{% endif %}">En uso</span>
                                                 </div>
                                             </div>
@@ -2635,6 +2656,7 @@
         localStorage.setItem('panel_active_tab', tabId);
         if (tabId === 'tab-backgrounds') {
             window.location.hash = 'fondos';
+            updateBackgroundsInUseUI();
         } else if (tabId === 'tab-styles') {
             window.location.hash = 'estilos';
             renderStylesEditor();
@@ -2716,7 +2738,7 @@
     };
 
     const AVAILABLE_FONTS = Array.from(new Set([
-        "Montserrat", "Aveny T", "Syncopate",
+        "Montserrat", "Alegreya", "Archivo", "Rosario", "Saira", "Aveny T", "Syncopate",
         {% if fonts %}
         {% for f in fonts %}
         "{{ f.family }}",
@@ -3473,6 +3495,7 @@
                 slide.background = bgSelect.value;
                 updateBgSettingsVisibility();
                 updateLivePreview();
+                updateBackgroundsInUseUI();
             };
         }
 
@@ -4529,9 +4552,54 @@
         }
     }
 
-    async function deleteBackground(index, filename) {
-        if (!confirm(`¿Eliminar "${filename}" permanentemente?`)) {
+    function getUsedBackgroundsSet() {
+        const used = new Set();
+        if (typeof slidesData === 'object' && Array.isArray(slidesData)) {
+            slidesData.forEach(s => {
+                if (s && s.background) {
+                    used.add(String(s.background).trim());
+                }
+            });
+        }
+        return used;
+    }
+
+    function updateBackgroundsInUseUI() {
+        const used = getUsedBackgroundsSet();
+        const cards = document.querySelectorAll('.bg-gallery .bg-card');
+        cards.forEach(card => {
+            const filename = (card.getAttribute('data-filename') || '').trim();
+            const isInUse = used.has(filename);
+            const deleteBtn = card.querySelector('.btn-delete-icon');
+            const inUseBadge = card.querySelector('.in-use-bg-badge');
+
+            if (deleteBtn) {
+                deleteBtn.disabled = isInUse;
+                if (isInUse) {
+                    deleteBtn.classList.add('btn-disabled');
+                    deleteBtn.setAttribute('title', 'Este archivo está en uso en los slides y no puede eliminarse');
+                } else {
+                    deleteBtn.classList.remove('btn-disabled');
+                    deleteBtn.setAttribute('title', 'Eliminar archivo');
+                }
+            }
+
+            if (inUseBadge) {
+                inUseBadge.style.display = isInUse ? 'inline-flex' : 'none';
+            }
+        });
+    }
+
+    async function deleteBackground(index, filename, btnElement = null) {
+        const used = getUsedBackgroundsSet();
+        if (used.has(String(filename).trim())) {
+            showToast(`No se puede eliminar "${filename}" porque está en uso en los slides`, true);
             return;
+        }
+
+        if (btnElement) {
+            btnElement.disabled = true;
+            btnElement.style.opacity = '0.4';
         }
 
         try {
@@ -4576,11 +4644,20 @@
                     if (s.background === filename) s.background = '';
                 });
                 updateLivePreview();
+                updateBackgroundsInUseUI();
             } else {
                 showToast(data.error || 'Error al eliminar archivo', true);
+                if (btnElement) {
+                    btnElement.disabled = false;
+                    btnElement.style.opacity = '1';
+                }
             }
         } catch (err) {
             showToast('Error de red al eliminar archivo', true);
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.style.opacity = '1';
+            }
         }
     }
 
@@ -4986,6 +5063,7 @@
         renderHeaderEditor();
         applyStylesToDOM(stylesData);
         updateFontsInUseUI();
+        updateBackgroundsInUseUI();
 
         // Asynchronously discover any newly added fonts in /assets/fonts/
         fetch('/assets/fonts/').then(r => r.json()).then(files => {

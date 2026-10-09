@@ -377,6 +377,12 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_del = client.post("/panel/delete-background", json={"filename": "inexistente.jpeg"})
                 self.assertEqual(res_del.status_code, 404)
 
+                # Delete background rejection when in use by a slide
+                with patch("app.load_slides", return_value=[{"id": "intro", "title": "Intro", "background": "sample.jpeg"}]):
+                    res_in_use_bg = client.post("/panel/delete-background", json={"filename": "sample.jpeg"})
+                    self.assertEqual(res_in_use_bg.status_code, 400)
+                    self.assertIn("en uso", res_in_use_bg.get_json()["error"].lower())
+
             # 2. Production mode (dev mode False) -> 404 Not Found
             with patch("app.is_dev_mode", return_value=False):
                 res = client.get("/panel")

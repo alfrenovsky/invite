@@ -578,6 +578,9 @@ def form_page():
 # DEVELOPMENT PANEL (Unauthenticated, Dev Mode Only)
 # ---------------------------------------------------------
 
+GOOGLE_FONTS_CATALOG = ["Montserrat", "Alegreya", "Archivo", "Rosario", "Saira"]
+
+
 @app.get("/panel")
 def panel_view():
     if not is_dev_mode():
@@ -585,10 +588,36 @@ def panel_view():
     slides = load_slides()
     backgrounds = get_backgrounds_list()
     styles = load_styles()
-    fonts = get_fonts_list()
-    for f in fonts:
+    local_fonts = get_fonts_list()
+    local_families = {f["family"].lower() for f in local_fonts}
+
+    google_fonts = []
+    for gfont in GOOGLE_FONTS_CATALOG:
+        if gfont.lower() not in local_families:
+            google_fonts.append({
+                "filename": "",
+                "family": gfont,
+                "ext": "GOOGLE",
+                "size_kb": 0,
+                "is_system": True,
+                "in_use": is_font_in_use(gfont, styles, slides),
+            })
+
+    for f in local_fonts:
         f["in_use"] = is_font_in_use(f.get("family"), styles, slides)
-    return render_template("panel.html", slides=slides, backgrounds=backgrounds, styles=styles, fonts=fonts)
+        f["is_system"] = False
+
+    all_fonts = google_fonts + local_fonts
+    used_backgrounds = {s.get("background") for s in slides if s.get("background")}
+
+    return render_template(
+        "panel.html",
+        slides=slides,
+        backgrounds=backgrounds,
+        styles=styles,
+        fonts=all_fonts,
+        used_backgrounds=used_backgrounds
+    )
 
 
 @app.post("/panel/styles")
@@ -934,6 +963,14 @@ def panel_delete_background():
     if ".." in filename or "/" in filename or "\\" in filename:
         return jsonify({"ok": False, "error": "Nombre de archivo inválido"}), 400
 
+    slides = load_slides()
+    used_slides = [s.get("title") or s.get("id") for s in slides if s.get("background") == filename]
+    if used_slides:
+        return jsonify({
+            "ok": False,
+            "error": f"No se puede eliminar '{filename}' porque está en uso en el slide '{used_slides[0]}'"
+        }), 400
+
     bg_dir = get_backgrounds_dir()
     file_path = os.path.join(bg_dir, filename)
     if not os.path.isfile(file_path):
@@ -943,16 +980,6 @@ def panel_delete_background():
         os.remove(file_path)
     except Exception as e:
         return jsonify({"ok": False, "error": f"Error al eliminar archivo: {str(e)}"}), 500
-
-    # Clean up slides.json if any slide was using this background
-    slides = load_slides()
-    modified = False
-    for slide in slides:
-        if slide.get("background") == filename:
-            slide["background"] = ""
-            modified = True
-    if modified:
-        save_slides(slides)
 
     return jsonify({
         "ok": True,
