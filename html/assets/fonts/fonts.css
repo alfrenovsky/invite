@@ -37,26 +37,8 @@
 }
 
 @font-face {
-    font-family: 'Nasalization Rg';
-    src: url('/assets/fonts/Nasalization%20Rg.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Quadrillion Sb It';
     src: url('/assets/fonts/Quadrillion%20Sb%20It.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Quadrillion Sb';
-    src: url('/assets/fonts/Quadrillion%20Sb.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'STJEDISE';
-    src: url('/assets/fonts/STJEDISE.TTF') format('truetype');
     font-display: swap;
 }
 
@@ -97,44 +79,14 @@
 }
 
 @font-face {
-    font-family: 'Space Rave';
-    src: url('/assets/fonts/Space%20Rave.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Starjedi';
-    src: url('/assets/fonts/Starjedi.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Starjout';
     src: url('/assets/fonts/Starjout.ttf') format('truetype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Stjldbl2';
-    src: url('/assets/fonts/Stjldbl2.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Striker PersonalUseOnly';
-    src: url('/assets/fonts/Striker%20PersonalUseOnly.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Transformers Movie';
     src: url('/assets/fonts/Transformers%20Movie.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Universe PersonalUseOnly';
-    src: url('/assets/fonts/Universe%20PersonalUseOnly.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -151,200 +103,14 @@
 }
 
 @font-face {
-    font-family: 'alienleague';
-    src: url('/assets/fonts/alienleague.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleague3d';
-    src: url('/assets/fonts/alienleague3d.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleaguebold';
-    src: url('/assets/fonts/alienleaguebold.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleaguecond';
-    src: url('/assets/fonts/alienleaguecond.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueexpand';
-    src: url('/assets/fonts/alienleagueexpand.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleaguegrad';
-    src: url('/assets/fonts/alienleaguegrad.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleaguegradbold';
-    src: url('/assets/fonts/alienleaguegradbold.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueii';
-    src: url('/assets/fonts/alienleagueii.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueii3d';
-    src: url('/assets/fonts/alienleagueii3d.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiibold';
-    src: url('/assets/fonts/alienleagueiibold.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiicond';
-    src: url('/assets/fonts/alienleagueiicond.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiiexpand';
-    src: url('/assets/fonts/alienleagueiiexpand.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiigrad';
-    src: url('/assets/fonts/alienleagueiigrad.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiigradbold';
-    src: url('/assets/fonts/alienleagueiigradbold.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiileft';
-    src: url('/assets/fonts/alienleagueiileft.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiiout';
-    src: url('/assets/fonts/alienleagueiiout.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueleft';
-    src: url('/assets/fonts/alienleagueleft.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueout';
-    src: url('/assets/fonts/alienleagueout.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'aveny-t-medium';
     src: url('/assets/fonts/aveny-t-medium.ttf') format('truetype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'future-earth';
-    src: url('/assets/fonts/future-earth.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'good timing bd';
     src: url('/assets/fonts/good%20timing%20bd.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalore';
-    src: url('/assets/fonts/mandalore.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorecond';
-    src: url('/assets/fonts/mandalorecond.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloregrad';
-    src: url('/assets/fonts/mandaloregrad.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorehalf';
-    src: url('/assets/fonts/mandalorehalf.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelaser';
-    src: url('/assets/fonts/mandalorelaser.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelaserleft';
-    src: url('/assets/fonts/mandalorelaserleft.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelaserrough';
-    src: url('/assets/fonts/mandalorelaserrough.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelasertitle';
-    src: url('/assets/fonts/mandalorelasertitle.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloreleft';
-    src: url('/assets/fonts/mandaloreleft.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorerough';
-    src: url('/assets/fonts/mandalorerough.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloretitle';
-    src: url('/assets/fonts/mandaloretitle.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorexpand';
-    src: url('/assets/fonts/mandalorexpand.ttf') format('truetype');
     font-display: swap;
 }
 
