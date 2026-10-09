@@ -902,6 +902,11 @@
 
         isSaving = false;
 
+        if (dirtyGuests.size > 0) {
+            flushAutoSave();
+            return;
+        }
+
         if (allOk) {
             setAutoSaveState('saved', 'Cambios guardados automáticamente');
             const allRejected = checkAllRejected();
@@ -1171,7 +1176,16 @@
                     updateMenuIconDisplay(val);
                     updateGlutenIconDisplay(val);
                     updateSlideList();
-                    queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+
+                    if (checkAllRejected()) {
+                        document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
+                            const gid = c.getAttribute('data-guest-id');
+                            if (gid) dirtyGuests.add(gid);
+                        });
+                        flushAutoSave();
+                    } else {
+                        queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                    }
                 });
             });
 
@@ -1267,7 +1281,17 @@
                     }
 
                     updateDietIcons(card);
-                    queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                    updateSlideList();
+
+                    if (checkAllRejected()) {
+                        document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
+                            const gid = c.getAttribute('data-guest-id');
+                            if (gid) dirtyGuests.add(gid);
+                        });
+                        flushAutoSave();
+                    } else {
+                        queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                    }
 
                     const nextCard = cards[cardIdx + 1];
                     if (nextCard && !nextCard.querySelector('input[type="radio"]:checked')) {
