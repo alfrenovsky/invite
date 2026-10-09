@@ -403,6 +403,92 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(rsvp_item["template"], "slides/rsvp.html")
                 self.assertTrue(rsvp_item["enabled"])
 
+    def test_panel_styles_and_slides_download_upload(self):
+        import io
+        import json
+        import tempfile
+        from app import app
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_styles_path = os.path.join(tmpdir, "styles.json")
+            test_slides_path = os.path.join(tmpdir, "slides.json")
+
+            with patch("app.STYLES_JSON_PATH", test_styles_path), \
+                 patch("app.SLIDES_JSON_PATH", test_slides_path):
+
+                with app.test_client() as client:
+                    # 1. Production mode protection (404)
+                    with patch("app.is_dev_mode", return_value=False):
+                        self.assertEqual(client.get("/panel/styles/download").status_code, 404)
+                        self.assertEqual(client.post("/panel/styles/upload").status_code, 404)
+                        self.assertEqual(client.get("/panel/slides/download").status_code, 404)
+                        self.assertEqual(client.post("/panel/slides/upload").status_code, 404)
+
+                    # 2. Dev mode active
+                    with patch("app.is_dev_mode", return_value=True):
+                        # --- STYLES DOWNLOAD ---
+                        res_dl_styles = client.get("/panel/styles/download")
+                        self.assertEqual(res_dl_styles.status_code, 200)
+                        self.assertIn("application/json", res_dl_styles.content_type)
+                        self.assertIn("styles.json", res_dl_styles.headers.get("Content-Disposition", ""))
+                        res_dl_styles.close()
+
+                        # --- STYLES UPLOAD (JSON payload) ---
+                        res_up_styles_json = client.post("/panel/styles/upload", json={
+                            "title": {"fontFamily": "Cinzel", "fontSize": 42}
+                        })
+                        self.assertEqual(res_up_styles_json.status_code, 200)
+                        data_styles = res_up_styles_json.get_json()
+                        self.assertTrue(data_styles["ok"])
+                        self.assertEqual(data_styles["styles"]["title"]["fontFamily"], "Cinzel")
+                        self.assertEqual(data_styles["styles"]["title"]["fontSize"], 42)
+
+                        # --- STYLES UPLOAD (File payload) ---
+                        file_styles_data = io.BytesIO(b'{"tag": {"fontFamily": "Pacifico", "fontSize": 18}}')
+                        res_up_styles_file = client.post("/panel/styles/upload", data={
+                            "file": (file_styles_data, "styles.json")
+                        })
+                        self.assertEqual(res_up_styles_file.status_code, 200)
+                        data_file_styles = res_up_styles_file.get_json()
+                        self.assertTrue(data_file_styles["ok"])
+                        self.assertEqual(data_file_styles["styles"]["tag"]["fontFamily"], "Pacifico")
+
+                        # --- STYLES UPLOAD (Invalid data) ---
+                        bad_file = io.BytesIO(b'{"invalid_json": ')
+                        self.assertEqual(client.post("/panel/styles/upload", data={"file": (bad_file, "styles.json")}).status_code, 400)
+                        self.assertEqual(client.post("/panel/styles/upload", json=["not a dict"]).status_code, 400)
+
+                        # --- SLIDES DOWNLOAD ---
+                        res_dl_slides = client.get("/panel/slides/download")
+                        self.assertEqual(res_dl_slides.status_code, 200)
+                        self.assertIn("application/json", res_dl_slides.content_type)
+                        self.assertIn("slides.json", res_dl_slides.headers.get("Content-Disposition", ""))
+                        res_dl_slides.close()
+
+                        # --- SLIDES UPLOAD (JSON payload) ---
+                        new_slides = [
+                            {"id": "intro", "title": "Intro", "duration": 5000, "elements": []}
+                        ]
+                        res_up_slides = client.post("/panel/slides/upload", json=new_slides)
+                        self.assertEqual(res_up_slides.status_code, 200)
+                        data_slides = res_up_slides.get_json()
+                        self.assertTrue(data_slides["ok"])
+                        # Check that RSVP slide is guaranteed and preserved
+                        self.assertTrue(any(s["id"] == "rsvp" for s in data_slides["slides"]))
+
+                        # --- SLIDES UPLOAD (File payload) ---
+                        file_slides_data = io.BytesIO(json.dumps([{"id": "portada", "title": "Portada", "elements": []}]).encode("utf-8"))
+                        res_up_slides_file = client.post("/panel/slides/upload", data={
+                            "file": (file_slides_data, "slides.json")
+                        })
+                        self.assertEqual(res_up_slides_file.status_code, 200)
+                        self.assertTrue(res_up_slides_file.get_json()["ok"])
+
+                        # --- SLIDES UPLOAD (Invalid data) ---
+                        self.assertEqual(client.post("/panel/slides/upload", json={"not": "a list"}).status_code, 400)
+                        bad_slides_file = io.BytesIO(b'["string instead of object"]')
+                        self.assertEqual(client.post("/panel/slides/upload", data={"file": (bad_slides_file, "slides.json")}).status_code, 400)
+
 
 if __name__ == "__main__":
     unittest.main()

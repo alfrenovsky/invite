@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/fonts/fonts.css">
     <style>
         @font-face {
             font-family: 'Aveny T';
@@ -33,6 +34,7 @@
             --radius: 14px;
 
             /* Story Typography Tokens */
+            --el-title-font: '{{ styles.title.fontFamily if (styles and styles.title and styles.title.fontFamily) else "Montserrat" }}';
             --el-title-color: {{ styles.title.color if styles else '#ffffff' }};
             --el-title-size: {{ styles.title.fontSize if styles else 38 }}px;
             --el-title-weight: {{ styles.title.fontWeight if styles else 800 }};
@@ -40,6 +42,7 @@
             --el-title-line-height: {{ styles.title.lineHeight if styles else 0.9 }};
             --el-title-transform: {{ styles.title.textTransform if styles else 'uppercase' }};
 
+            --el-tag-font: '{{ styles.tag.fontFamily if (styles and styles.tag and styles.tag.fontFamily) else "Montserrat" }}';
             --el-tag-color: {{ styles.tag.color if styles else '#d4af37' }};
             --el-tag-size: {{ styles.tag.fontSize if styles else 14 }}px;
             --el-tag-weight: {{ styles.tag.fontWeight if styles else 600 }};
@@ -47,6 +50,7 @@
             --el-tag-line-height: {{ styles.tag.lineHeight if styles else 1.2 }};
             --el-tag-transform: {{ styles.tag.textTransform if styles else 'uppercase' }};
 
+            --el-body-font: '{{ styles.body.fontFamily if (styles and styles.body and styles.body.fontFamily) else "Montserrat" }}';
             --el-body-color: {{ styles.body.color if styles else '#f0f4f8' }};
             --el-body-size: {{ styles.body.fontSize if styles else 18 }}px;
             --el-body-weight: {{ styles.body.fontWeight if styles else 500 }};
@@ -55,11 +59,13 @@
             --el-body-transform: {{ styles.body.textTransform if styles else 'none' }};
 
             /* Header Tokens */
+            --header-title-font: '{{ styles.header_title.fontFamily if (styles and styles.header_title and styles.header_title.fontFamily) else "Montserrat" }}';
             --header-title-color: {{ styles.header_title.color if styles and styles.header_title else '#ffffff' }};
             --header-title-size: {{ styles.header_title.fontSize if styles and styles.header_title else 14 }}px;
             --header-title-weight: {{ styles.header_title.fontWeight if styles and styles.header_title else 700 }};
             --header-title-spacing: {{ styles.header_title.letterSpacing if styles and styles.header_title and styles.header_title.letterSpacing is not none else 0.05 }}em;
 
+            --header-subtitle-font: '{{ styles.header_subtitle.fontFamily if (styles and styles.header_subtitle and styles.header_subtitle.fontFamily) else "Montserrat" }}';
             --header-subtitle-color: {{ styles.header_subtitle.color if styles and styles.header_subtitle else '#a0aec0' }};
             --header-subtitle-size: {{ styles.header_subtitle.fontSize if styles and styles.header_subtitle else 11 }}px;
             --header-subtitle-weight: {{ styles.header_subtitle.fontWeight if styles and styles.header_subtitle else 600 }};
@@ -1090,7 +1096,7 @@
         }
 
         .story-preview-viewport .header-title {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--header-title-font, 'Montserrat'), sans-serif;
             font-size: var(--header-title-size, 14px);
             font-weight: var(--header-title-weight, 700);
             letter-spacing: var(--header-title-spacing, 0.05em);
@@ -1099,7 +1105,7 @@
         }
 
         .story-preview-viewport .header-subtitle {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--header-subtitle-font, 'Montserrat'), sans-serif;
             font-weight: var(--header-subtitle-weight, 600);
             font-size: var(--header-subtitle-size, 11px);
             letter-spacing: var(--header-subtitle-spacing, 0.05em);
@@ -1205,7 +1211,7 @@
 
         .story-preview-viewport .slide-el-title,
         .preview-text-el.style-title {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--el-title-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-title-weight, 800);
             font-size: var(--el-title-size, 40px);
             text-transform: var(--el-title-transform, uppercase);
@@ -1217,7 +1223,7 @@
 
         .story-preview-viewport .slide-el-tag,
         .preview-text-el.style-tag {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--el-tag-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-tag-weight, 600);
             font-size: var(--el-tag-size, 14px);
             text-transform: var(--el-tag-transform, uppercase);
@@ -1229,7 +1235,7 @@
 
         .story-preview-viewport .slide-el-body,
         .preview-text-el.style-body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--el-body-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-body-weight, 500);
             font-size: var(--el-body-size, 18px);
             text-transform: var(--el-body-transform, none);
@@ -1775,6 +1781,13 @@
                                 <span class="count" id="slidesSectionBadge">{{ slides|length }}</span>
                             </h3>
                             <div class="slide-manager-actions">
+                                <a href="/panel/slides/download" class="btn-ctrl" style="text-decoration: none;" title="Descargar archivo slides.json" download="slides.json">
+                                    <span>📥 Descargar JSON</span>
+                                </a>
+                                <button type="button" class="btn-ctrl" onclick="triggerUploadSlides()" title="Subir / importar archivo slides.json">
+                                    <span>📤 Subir JSON</span>
+                                </button>
+                                <input type="file" id="uploadSlidesInput" accept=".json,application/json" style="display:none;" onchange="handleSlidesFileSelected(event)">
                                 <button type="button" class="btn-ctrl" id="btnMoveSlideUp" onclick="moveSlide(-1)" title="Mover slide hacia arriba en el orden">
                                     <span>▲ Subir</span>
                                 </button>
@@ -1944,7 +1957,15 @@
                                 <h2 class="section-title" style="margin-bottom: 0;">
                                     <span>Afinador de Estilos</span>
                                 </h2>
-                                <span class="font-fixed-badge">Fuente: Montserrat</span>
+                                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <a href="/panel/styles/download" class="btn-ctrl" style="text-decoration: none;" title="Descargar archivo styles.json" download="styles.json">
+                                        <span>📥 Descargar JSON</span>
+                                    </a>
+                                    <button type="button" class="btn-ctrl" onclick="triggerUploadStyles()" title="Subir / importar archivo styles.json">
+                                        <span>📤 Subir JSON</span>
+                                    </button>
+                                    <input type="file" id="uploadStylesInput" accept=".json,application/json" style="display:none;" onchange="handleStylesFileSelected(event)">
+                                </div>
                             </div>
 
                             <!-- Sub-nav: select style to tune (Title, Tag, Body) -->
@@ -1962,6 +1983,16 @@
 
                             <!-- Dynamic Controls Form for active style -->
                             <div class="styles-form-fields" id="stylesFormFields">
+                                <!-- Font Family row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="styleFontFamilySelect">Tipografía / Fuente</label>
+                                        <span class="style-prop-badge" id="styleFontFamilyBadge">Montserrat</span>
+                                    </div>
+                                    <select id="styleFontFamilySelect" class="form-select" onchange="onFontFamilyChange(this.value)">
+                                    </select>
+                                </div>
+
                                 <!-- Color picker row -->
                                 <div class="style-prop-row">
                                     <div class="style-prop-header">
@@ -2132,7 +2163,6 @@
                                 <h2 class="section-title" style="margin-bottom: 0;">
                                     <span>Editor de Encabezado</span>
                                 </h2>
-                                <span class="font-fixed-badge">Fuente: Montserrat</span>
                             </div>
 
                             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.45;">
@@ -2157,6 +2187,16 @@
                                         <label for="headerTextInput">Texto</label>
                                     </div>
                                     <input type="text" id="headerTextInput" class="form-input" style="width: 100%; font-size: 0.95em;" placeholder="Ej: CELIA & ALFREDO" oninput="onHeaderTextChange(this.value)">
+                                </div>
+
+                                <!-- Font Family row -->
+                                <div class="style-prop-row">
+                                    <div class="style-prop-header">
+                                        <label for="headerFontFamilySelect">Tipografía / Fuente</label>
+                                        <span class="style-prop-badge" id="headerFontFamilyBadge">Montserrat</span>
+                                    </div>
+                                    <select id="headerFontFamilySelect" class="form-select" onchange="onHeaderFontFamilyChange(this.value)">
+                                    </select>
                                 </div>
 
                                 <!-- Color picker row -->
@@ -2404,6 +2444,7 @@
     // -------------------------------------------------------------
     const DEFAULT_STYLES_PRESET = {
         title: {
+            fontFamily: "Montserrat",
             color: "#ffffff",
             fontSize: 38,
             fontWeight: 800,
@@ -2412,6 +2453,7 @@
             textTransform: "uppercase"
         },
         tag: {
+            fontFamily: "Montserrat",
             color: "#d4af37",
             fontSize: 14,
             fontWeight: 600,
@@ -2420,6 +2462,7 @@
             textTransform: "uppercase"
         },
         body: {
+            fontFamily: "Montserrat",
             color: "#f0f4f8",
             fontSize: 18,
             fontWeight: 500,
@@ -2429,6 +2472,7 @@
         },
         header_title: {
             text: "CELIA & ALFREDO",
+            fontFamily: "Montserrat",
             color: "#ffffff",
             fontSize: 14,
             fontWeight: 700,
@@ -2436,12 +2480,67 @@
         },
         header_subtitle: {
             text: "NOS CASAMOS - 19 de Marzo",
+            fontFamily: "Montserrat",
             color: "#a0aec0",
             fontSize: 11,
             fontWeight: 600,
             letterSpacing: 0.05
         }
     };
+
+    const AVAILABLE_FONTS = [
+        "Montserrat", "Aveny T", "Syncopate", "Varino - Normal", "Beyonders",
+        "Beyonders Italic", "Dune_Rise", "ELIXIA", "Ethnocentric-Regular",
+        "future-earth", "mandalore", "Space Crusaders", "Android", "Android Hollow",
+        "Android Italic", "Android Scratch", "Axera Round", "BLADRMF_", "BLANK SPACE",
+        "BabaPro-Bold", "FoundationTitlesHand-SemiBold-v0.85", "Futuristic Armour",
+        "Guardians", "Lightyear Design", "ND LOGOS REGULAR", "ND LOGOS REGULAR ITALIC",
+        "Nasalization Rg", "Nebula-Hollow", "Nebula-Regular", "Quadrillion Sb",
+        "Quadrillion Sb It", "ROBOTECH GP", "SPACE ARMOR", "SPACEBAR", "STJEDISE",
+        "SciFly-Sans", "Space Quest", "Space Quest Italic", "Space Rangers",
+        "Space Rave", "Space Rave Italic", "Starjedi", "Starjhol", "Starjout",
+        "Stjldbl1", "Stjldbl2", "Striker PersonalUseOnly", "Strjmono",
+        "Transformers Movie", "Universe PersonalUseOnly", "alienleague", "alienleague3d",
+        "alienleague3dital", "alienleaguebold", "alienleaguebolditalic", "alienleaguecond",
+        "alienleaguecondital", "alienleagueexpand", "alienleaguegrad", "alienleaguegradbold",
+        "alienleagueii", "alienleagueii3d", "alienleagueii3dital", "alienleagueiibold",
+        "alienleagueiiboldital", "alienleagueiicond", "alienleagueiicondital",
+        "alienleagueiiexpand", "alienleagueiiexpandital", "alienleagueiigrad",
+        "alienleagueiigradbold", "alienleagueiiital", "alienleagueiileft",
+        "alienleagueiiout", "alienleagueital", "alienleagueleft", "alienleagueout",
+        "aveny-t-medium", "good timing bd", "mandalore3d", "mandalore3dital",
+        "mandalorecond", "mandalorecondital", "mandaloregrad", "mandaloregradital",
+        "mandalorehalf", "mandalorehalfital", "mandaloreital", "mandalorelaser",
+        "mandalorelaserital", "mandalorelaserleft", "mandalorelaserrough",
+        "mandalorelaserroughital", "mandalorelasersemital", "mandalorelasersuperital",
+        "mandalorelasertitle", "mandalorelasertitleital", "mandaloreleft",
+        "mandalorerough", "mandaloreroughital", "mandaloresemital",
+        "mandaloresuperital", "mandaloretitle", "mandaloretitleital",
+        "mandalorexpand", "mandalorexpandital", "space age", "spacefr", "spacefri",
+        "terminator real nfi"
+    ];
+
+    function populateFontSelect(selectId, selectedVal) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.innerHTML = '';
+        AVAILABLE_FONTS.forEach(font => {
+            const opt = document.createElement('option');
+            opt.value = font;
+            opt.textContent = font === 'Montserrat' ? 'Montserrat (Estándar)' : font;
+            opt.style.fontFamily = `'${font}', sans-serif`;
+            if (font === selectedVal) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        if (selectedVal && !AVAILABLE_FONTS.includes(selectedVal)) {
+            const opt = document.createElement('option');
+            opt.value = selectedVal;
+            opt.textContent = selectedVal;
+            opt.style.fontFamily = `'${selectedVal}', sans-serif`;
+            opt.selected = true;
+            sel.prepend(opt);
+        }
+    }
 
     function switchStyleSubTab(key) {
         if (!['title', 'tag', 'body'].includes(key)) return;
@@ -2463,6 +2562,12 @@
         if (nameLabel) {
             nameLabel.textContent = activeStyleKey === 'title' ? 'Título' : (activeStyleKey === 'tag' ? 'Tag' : 'Cuerpo');
         }
+
+        // Font Family
+        const fam = s.fontFamily || 'Montserrat';
+        populateFontSelect('styleFontFamilySelect', fam);
+        const fontBadge = document.getElementById('styleFontFamilyBadge');
+        if (fontBadge) fontBadge.textContent = fam;
 
         // Color
         const colorPicker = document.getElementById('styleColorPicker');
@@ -2528,6 +2633,14 @@
             }
         }
 
+        applyStylesToDOM(stylesData);
+    }
+
+    function onFontFamilyChange(val) {
+        if (!stylesData[activeStyleKey]) return;
+        stylesData[activeStyleKey].fontFamily = val;
+        const fontBadge = document.getElementById('styleFontFamilyBadge');
+        if (fontBadge) fontBadge.textContent = val;
         applyStylesToDOM(stylesData);
     }
 
@@ -2603,6 +2716,7 @@
 
     function applyGptPosterPreset() {
         if (!stylesData.title) stylesData.title = {};
+        stylesData.title.fontFamily = 'Montserrat';
         stylesData.title.fontWeight = 800;
         stylesData.title.fontSize = 42;
         stylesData.title.letterSpacing = -0.06;
@@ -2633,6 +2747,8 @@
         ['title', 'tag', 'body'].forEach(k => {
             const item = s[k];
             if (!item) return;
+            const fam = item.fontFamily || 'Montserrat';
+            root.style.setProperty(`--el-${k}-font`, `'${fam}', sans-serif`);
             if (item.color) root.style.setProperty(`--el-${k}-color`, item.color);
             if (item.fontSize) root.style.setProperty(`--el-${k}-size`, `${item.fontSize}px`);
             if (item.fontWeight) root.style.setProperty(`--el-${k}-weight`, item.fontWeight);
@@ -2644,28 +2760,39 @@
         // Apply Header tokens and preview text
         if (s.header_title) {
             const ht = s.header_title;
+            const fam = ht.fontFamily || 'Montserrat';
+            root.style.setProperty('--header-title-font', `'${fam}', sans-serif`);
             if (ht.color) root.style.setProperty('--header-title-color', ht.color);
             if (ht.fontSize) root.style.setProperty('--header-title-size', `${ht.fontSize}px`);
             if (ht.fontWeight) root.style.setProperty('--header-title-weight', ht.fontWeight);
             if (ht.letterSpacing !== undefined) root.style.setProperty('--header-title-spacing', `${ht.letterSpacing}em`);
             const pt = document.getElementById('previewHeaderTitle');
-            if (pt && ht.text !== undefined) pt.textContent = ht.text;
+            if (pt) {
+                if (ht.text !== undefined) pt.textContent = ht.text;
+                pt.style.fontFamily = `'${fam}', sans-serif`;
+            }
         }
         if (s.header_subtitle) {
             const hs = s.header_subtitle;
+            const fam = hs.fontFamily || 'Montserrat';
+            root.style.setProperty('--header-subtitle-font', `'${fam}', sans-serif`);
             if (hs.color) root.style.setProperty('--header-subtitle-color', hs.color);
             if (hs.fontSize) root.style.setProperty('--header-subtitle-size', `${hs.fontSize}px`);
             if (hs.fontWeight) root.style.setProperty('--header-subtitle-weight', hs.fontWeight);
             if (hs.letterSpacing !== undefined) root.style.setProperty('--header-subtitle-spacing', `${hs.letterSpacing}em`);
             const ps = document.getElementById('previewHeaderSubtitle');
-            if (ps && hs.text !== undefined) ps.textContent = hs.text;
+            if (ps) {
+                if (hs.text !== undefined) ps.textContent = hs.text;
+                ps.style.fontFamily = `'${fam}', sans-serif`;
+            }
         }
 
         // Update single preview element
         const singleEl = document.getElementById('singlePreviewSampleText');
         const activeItem = s[activeStyleKey];
         if (singleEl && activeItem) {
-            singleEl.style.fontFamily = "'Montserrat', sans-serif";
+            const fam = activeItem.fontFamily || 'Montserrat';
+            singleEl.style.fontFamily = `'${fam}', sans-serif`;
             singleEl.style.color = activeItem.color || '#fff';
             singleEl.style.fontSize = `${activeItem.fontSize || 20}px`;
             singleEl.style.fontWeight = activeItem.fontWeight || 500;
@@ -2737,6 +2864,12 @@
         const textInput = document.getElementById('headerTextInput');
         if (textInput) textInput.value = s.text !== undefined ? s.text : '';
 
+        // Font Family
+        const headerFam = s.fontFamily || 'Montserrat';
+        populateFontSelect('headerFontFamilySelect', headerFam);
+        const headerFontBadge = document.getElementById('headerFontFamilyBadge');
+        if (headerFontBadge) headerFontBadge.textContent = headerFam;
+
         const colorPicker = document.getElementById('headerColorPicker');
         const colorHex = document.getElementById('headerColorHex');
         const colorBadge = document.getElementById('headerColorValBadge');
@@ -2788,6 +2921,16 @@
         if (!stylesData) stylesData = {};
         if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
         stylesData[activeHeaderKey].text = val;
+        applyStylesToDOM(stylesData);
+        updateHeaderSampleCard();
+    }
+
+    function onHeaderFontFamilyChange(val) {
+        if (!stylesData) stylesData = {};
+        if (!stylesData[activeHeaderKey]) stylesData[activeHeaderKey] = {};
+        stylesData[activeHeaderKey].fontFamily = val;
+        const fontBadge = document.getElementById('headerFontFamilyBadge');
+        if (fontBadge) fontBadge.textContent = val;
         applyStylesToDOM(stylesData);
         updateHeaderSampleCard();
     }
@@ -2887,7 +3030,8 @@
 
         if (titleEl) {
             titleEl.textContent = ht.text !== undefined ? ht.text : 'CELIA & ALFREDO';
-            titleEl.style.fontFamily = "'Montserrat', sans-serif";
+            const fam = ht.fontFamily || 'Montserrat';
+            titleEl.style.fontFamily = `'${fam}', sans-serif`;
             titleEl.style.color = ht.color || '#ffffff';
             titleEl.style.fontSize = `${ht.fontSize || 14}px`;
             titleEl.style.fontWeight = ht.fontWeight || 700;
@@ -2895,7 +3039,8 @@
         }
         if (subtitleEl) {
             subtitleEl.textContent = hs.text !== undefined ? hs.text : 'NOS CASAMOS - 19 de Marzo';
-            subtitleEl.style.fontFamily = "'Montserrat', sans-serif";
+            const fam = hs.fontFamily || 'Montserrat';
+            subtitleEl.style.fontFamily = `'${fam}', sans-serif`;
             subtitleEl.style.color = hs.color || '#a0aec0';
             subtitleEl.style.fontSize = `${hs.fontSize || 11}px`;
             subtitleEl.style.fontWeight = hs.fontWeight || 600;
@@ -2934,6 +3079,112 @@
                 btn.disabled = false;
                 btn.innerHTML = '<span>💾 Guardar Encabezado</span>';
             }
+        }
+    }
+
+    // -------------------------------------------------------------
+    // SLIDES & STYLES JSON DOWNLOAD / UPLOAD HANDLERS
+    // -------------------------------------------------------------
+    function triggerUploadSlides() {
+        const inp = document.getElementById('uploadSlidesInput');
+        if (inp) {
+            inp.value = '';
+            inp.click();
+        }
+    }
+
+    async function handleSlidesFileSelected(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            let json;
+            try {
+                json = JSON.parse(text);
+            } catch (e) {
+                alert('Error: El archivo seleccionado no contiene un JSON válido.');
+                return;
+            }
+
+            if (!Array.isArray(json)) {
+                alert('Error: El archivo slides.json debe contener una lista (array) de slides.');
+                return;
+            }
+
+            if (!confirm(`¿Importar ${json.length} slides desde "${file.name}"? Esto reemplazará la lista actual de slides.`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/panel/slides/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast('✓ slides.json importado con éxito');
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                alert('Error al importar slides: ' + (data.error || 'Error desconocido'));
+            }
+        } catch (err) {
+            alert('Error al leer o subir el archivo: ' + err.message);
+        }
+    }
+
+    function triggerUploadStyles() {
+        const inp = document.getElementById('uploadStylesInput');
+        if (inp) {
+            inp.value = '';
+            inp.click();
+        }
+    }
+
+    async function handleStylesFileSelected(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            let json;
+            try {
+                json = JSON.parse(text);
+            } catch (e) {
+                alert('Error: El archivo seleccionado no contiene un JSON válido.');
+                return;
+            }
+
+            if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+                alert('Error: El archivo styles.json debe ser un objeto JSON de estilos.');
+                return;
+            }
+
+            if (!confirm(`¿Importar estilos desde "${file.name}"? Esto reemplazará la configuración actual de estilos.`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/panel/styles/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.ok) {
+                stylesData = data.styles;
+                renderStylesEditor();
+                renderHeaderEditor();
+                applyStylesToDOM(stylesData);
+                showToast('✓ styles.json importado con éxito');
+            } else {
+                alert('Error al importar estilos: ' + (data.error || 'Error desconocido'));
+            }
+        } catch (err) {
+            alert('Error al leer o subir el archivo: ' + err.message);
         }
     }
 
@@ -4164,6 +4415,29 @@
         renderStylesEditor();
         renderHeaderEditor();
         applyStylesToDOM(stylesData);
+
+        // Asynchronously discover any newly added fonts in /assets/fonts/
+        fetch('/assets/fonts/').then(r => r.json()).then(files => {
+            if (Array.isArray(files)) {
+                let changed = false;
+                files.forEach(f => {
+                    if (f && f.name && (f.name.endsWith('.ttf') || f.name.endsWith('.otf'))) {
+                        const base = f.name.replace(/\.(ttf|otf)$/i, '');
+                        if (!AVAILABLE_FONTS.includes(base)) {
+                            AVAILABLE_FONTS.push(base);
+                            changed = true;
+                        }
+                    }
+                });
+                if (changed) {
+                    AVAILABLE_FONTS.sort((a, b) => a.localeCompare(b));
+                    const currentStyleFam = (stylesData[activeStyleKey] && stylesData[activeStyleKey].fontFamily) || 'Montserrat';
+                    const currentHeaderFam = (stylesData[activeHeaderKey] && stylesData[activeHeaderKey].fontFamily) || 'Montserrat';
+                    populateFontSelect('styleFontFamilySelect', currentStyleFam);
+                    populateFontSelect('headerFontFamilySelect', currentHeaderFam);
+                }
+            }
+        }).catch(() => {});
     });
 </script>
 

@@ -2,7 +2,7 @@ import os
 import time
 import json
 import re
-from flask import Flask, request, jsonify, render_template, abort
+from flask import Flask, request, jsonify, render_template, abort, send_file
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token
 
@@ -170,6 +170,7 @@ def save_slides(slides_list):
 
 DEFAULT_STYLES = {
     "title": {
+        "fontFamily": "Montserrat",
         "color": "#ffffff",
         "fontSize": 38,
         "fontWeight": 800,
@@ -178,6 +179,7 @@ DEFAULT_STYLES = {
         "textTransform": "uppercase",
     },
     "tag": {
+        "fontFamily": "Montserrat",
         "color": "#d4af37",
         "fontSize": 14,
         "fontWeight": 600,
@@ -186,6 +188,7 @@ DEFAULT_STYLES = {
         "textTransform": "uppercase",
     },
     "body": {
+        "fontFamily": "Montserrat",
         "color": "#f0f4f8",
         "fontSize": 18,
         "fontWeight": 500,
@@ -195,6 +198,7 @@ DEFAULT_STYLES = {
     },
     "header_title": {
         "text": "CELIA & ALFREDO",
+        "fontFamily": "Montserrat",
         "color": "#ffffff",
         "fontSize": 14,
         "fontWeight": 700,
@@ -202,6 +206,7 @@ DEFAULT_STYLES = {
     },
     "header_subtitle": {
         "text": "NOS CASAMOS - 19 de Marzo",
+        "fontFamily": "Montserrat",
         "color": "#a0aec0",
         "fontSize": 11,
         "fontWeight": 600,
@@ -476,6 +481,102 @@ def panel_save_styles():
             current[k] = v
     save_styles(current)
     return jsonify({"ok": True, "styles": current, "message": "Estilos guardados correctamente"})
+
+
+@app.get("/panel/styles/download")
+def panel_download_styles():
+    if not is_dev_mode():
+        abort(404)
+    if not os.path.exists(STYLES_JSON_PATH):
+        styles = load_styles()
+        save_styles(styles)
+    return send_file(
+        STYLES_JSON_PATH,
+        as_attachment=True,
+        download_name="styles.json",
+        mimetype="application/json",
+    )
+
+
+@app.post("/panel/styles/upload")
+def panel_upload_styles():
+    if not is_dev_mode():
+        abort(404)
+    uploaded = None
+    if "file" in request.files:
+        file = request.files["file"]
+        if not file or not file.filename:
+            return jsonify({"ok": False, "error": "No se seleccionó ningún archivo"}), 400
+        try:
+            content = file.read().decode("utf-8")
+            uploaded = json.loads(content)
+        except Exception as e:
+            return jsonify({"ok": False, "error": f"JSON inválido: {str(e)}"}), 400
+    elif request.is_json:
+        uploaded = request.get_json(silent=True)
+
+    if uploaded is None:
+        return jsonify({"ok": False, "error": "No se recibieron datos"}), 400
+    if not isinstance(uploaded, dict):
+        return jsonify({"ok": False, "error": "El archivo debe contener un objeto JSON con los estilos."}), 400
+
+    current = load_styles()
+    for k, v in uploaded.items():
+        if isinstance(v, dict) and k in current and isinstance(current[k], dict):
+            current[k].update(v)
+        else:
+            current[k] = v
+    save_styles(current)
+    saved = load_styles()
+    return jsonify({"ok": True, "styles": saved, "message": "styles.json importado correctamente"})
+
+
+@app.get("/panel/slides/download")
+def panel_download_slides():
+    if not is_dev_mode():
+        abort(404)
+    if not os.path.exists(SLIDES_JSON_PATH):
+        slides = load_slides()
+        save_slides(slides)
+    return send_file(
+        SLIDES_JSON_PATH,
+        as_attachment=True,
+        download_name="slides.json",
+        mimetype="application/json",
+    )
+
+
+@app.post("/panel/slides/upload")
+def panel_upload_slides():
+    if not is_dev_mode():
+        abort(404)
+    uploaded = None
+    if "file" in request.files:
+        file = request.files["file"]
+        if not file or not file.filename:
+            return jsonify({"ok": False, "error": "No se seleccionó ningún archivo"}), 400
+        try:
+            content = file.read().decode("utf-8")
+            uploaded = json.loads(content)
+        except Exception as e:
+            return jsonify({"ok": False, "error": f"JSON inválido: {str(e)}"}), 400
+    elif request.is_json:
+        uploaded = request.get_json(silent=True)
+
+    if uploaded is None:
+        return jsonify({"ok": False, "error": "No se recibieron datos"}), 400
+    if not isinstance(uploaded, list):
+        return jsonify({"ok": False, "error": "El archivo debe contener una lista (array) de slides."}), 400
+
+    for s in uploaded:
+        if not isinstance(s, dict):
+            return jsonify({"ok": False, "error": "Cada elemento debe ser un objeto slide."}), 400
+        if "elements" not in s or not isinstance(s["elements"], list):
+            s["elements"] = []
+
+    save_slides(uploaded)
+    saved = load_slides()
+    return jsonify({"ok": True, "slides": saved, "message": "slides.json importado correctamente"})
 
 
 @app.post("/panel/upload-background")

@@ -1,4 +1,5 @@
         @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Montserrat:ital,wght@0,300..800;1,300..800&display=swap');
+        @import url('/assets/fonts/fonts.css');
 
         @font-face {
             font-family: 'FoundationTitlesHand';
@@ -216,7 +217,7 @@
         }
 
         .header-title {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--header-title-font, 'Montserrat'), sans-serif;
             font-size: var(--header-title-size, 14px);
             font-weight: var(--header-title-weight, 700);
             letter-spacing: var(--header-title-spacing, 0.05em);
@@ -225,7 +226,7 @@
         }
 
         .header-subtitle {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--header-subtitle-font, 'Montserrat'), sans-serif;
             font-weight: var(--header-subtitle-weight, 600);
             font-size: var(--header-subtitle-size, 11px);
             letter-spacing: var(--header-subtitle-spacing, 0.05em);
@@ -322,7 +323,7 @@
         }
 
         .slide-el-title {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--el-title-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-title-weight, 800);
             font-size: var(--el-title-size, clamp(1.6rem, 6vw, 2.4rem));
             text-transform: var(--el-title-transform, uppercase);
@@ -333,7 +334,7 @@
         }
 
         .slide-el-tag {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--el-tag-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-tag-weight, 600);
             font-size: var(--el-tag-size, clamp(0.75rem, 2.8vw, 0.95rem));
             text-transform: var(--el-tag-transform, uppercase);
@@ -344,7 +345,7 @@
         }
 
         .slide-el-body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: var(--el-body-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-body-weight, 500);
             font-size: var(--el-body-size, clamp(0.95rem, 3.2vw, 1.15rem));
             text-transform: var(--el-body-transform, none);
