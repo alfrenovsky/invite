@@ -429,32 +429,185 @@
             color: var(--text-muted);
         }
 
-        .slide-bg-thumb-box {
-            width: 52px;
-            height: 52px;
-            min-width: 52px;
+        /* Custom Background Dropdown with Thumbnails */
+        .custom-bg-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-bg-trigger {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(11, 15, 21, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            outline: none;
+            text-align: left;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .custom-bg-trigger:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(18, 24, 34, 0.9);
+        }
+
+        .custom-bg-dropdown.open .custom-bg-trigger {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
+        }
+
+        .custom-bg-trigger-thumb {
+            width: 26px;
+            height: 26px;
+            min-width: 26px;
+            border-radius: 4px;
             overflow: hidden;
+            background: rgba(255, 255, 255, 0.06);
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.45);
-            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 0.9rem;
         }
 
-        .slide-bg-thumb-box:hover {
-            border-color: rgba(255, 255, 255, 0.35);
-        }
-
-        .slide-bg-thumb-box img,
-        .slide-bg-thumb-box video {
+        .custom-bg-trigger-thumb img,
+        .custom-bg-trigger-thumb video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
+        }
+
+        .custom-bg-trigger-label {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #f1f5f9;
+        }
+
+        .custom-bg-chevron {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .custom-bg-dropdown.open .custom-bg-chevron {
+            transform: rotate(180deg);
+        }
+
+        .custom-bg-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            max-height: 310px;
+            overflow-y: auto;
+            background: #0f141e;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
+            z-index: 120;
+            padding: 6px;
+        }
+
+        .custom-bg-dropdown.open .custom-bg-menu {
+            display: block;
+        }
+
+        .custom-bg-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            user-select: none;
+        }
+
+        .custom-bg-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .custom-bg-item.selected {
+            background: rgba(49, 130, 206, 0.16);
+        }
+
+        .custom-bg-item-thumb {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .custom-bg-item-thumb img,
+        .custom-bg-item-thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .custom-bg-vid-badge {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.55rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1px 3px;
+            border-radius: 3px;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .custom-bg-item-text {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .custom-bg-item-name {
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #f8fafc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .custom-bg-item-type {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .custom-bg-check {
+            color: #38a169;
+            font-weight: bold;
+            font-size: 0.95rem;
+            opacity: 0;
+            margin-right: 4px;
+        }
+
+        .custom-bg-item.selected .custom-bg-check {
+            opacity: 1;
         }
 
         .selected-file-name {
@@ -2393,21 +2546,50 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="slideBgSelect">Fondo / Video</label>
-                                    <div class="slide-bg-select-wrap" style="display: flex; gap: 12px; align-items: center;">
-                                        <div id="slideBgThumbnailBox" class="slide-bg-thumb-box" title="Vista previa del fondo">
-                                            <span id="slideBgThumbEmpty" style="font-size: 1.25rem; color: var(--text-muted); opacity: 0.6;">🖼️</span>
-                                            <img id="slideBgThumbImg" src="" alt="Fondo" style="display: none;">
-                                            <video id="slideBgThumbVideo" src="" muted loop playsinline autoplay style="display: none;"></video>
-                                            <span id="slideBgThumbBadge" style="display: none; position: absolute; bottom: 2px; right: 2px; font-size: 0.55rem; background: rgba(0,0,0,0.8); padding: 1px 4px; border-radius: 3px; color: #fff; font-weight: 700;">🎬</span>
-                                        </div>
-                                        <div style="flex: 1; min-width: 0;">
-                                            <select id="slideBgSelect" class="form-select">
-                                                <option value="">(Sin fondo / Default)</option>
-                                                {% for bg in backgrounds %}
-                                                <option value="{{ bg }}">{{ bg }}</option>
-                                                {% endfor %}
-                                            </select>
+                                    <label for="customBgTrigger">Fondo / Video</label>
+                                    <select id="slideBgSelect" class="form-select" style="display: none;">
+                                        <option value="">(Sin fondo / Default)</option>
+                                        {% for bg in backgrounds %}
+                                        <option value="{{ bg }}">{{ bg }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="custom-bg-dropdown" id="customBgDropdown">
+                                        <button type="button" class="custom-bg-trigger" id="customBgTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleCustomBgDropdown()">
+                                            <span class="custom-bg-trigger-thumb" id="customBgTriggerThumb">
+                                                <span>🚫</span>
+                                            </span>
+                                            <span class="custom-bg-trigger-label" id="customBgTriggerLabel">(Sin fondo / Default)</span>
+                                            <span class="custom-bg-chevron">▼</span>
+                                        </button>
+                                        <div class="custom-bg-menu" id="customBgMenu" role="listbox">
+                                            <div class="custom-bg-item selected" data-value="" role="option" onclick="selectCustomBg(this.dataset.value)">
+                                                <div class="custom-bg-item-thumb">
+                                                    <span>🚫</span>
+                                                </div>
+                                                <div class="custom-bg-item-text">
+                                                    <span class="custom-bg-item-name">(Sin fondo / Default)</span>
+                                                    <span class="custom-bg-item-type">Predeterminado</span>
+                                                </div>
+                                                <span class="custom-bg-check">✓</span>
+                                            </div>
+                                            {% for bg in backgrounds %}
+                                            {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                            <div class="custom-bg-item" data-value="{{ bg }}" role="option" data-is-video="{{ 'true' if is_vid else 'false' }}" onclick="selectCustomBg(this.dataset.value)">
+                                                <div class="custom-bg-item-thumb">
+                                                    {% if is_vid %}
+                                                    <video src="/assets/backgrounds/{{ bg }}" muted loop playsinline></video>
+                                                    <span class="custom-bg-vid-badge">🎬</span>
+                                                    {% else %}
+                                                    <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" loading="lazy">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="custom-bg-item-text">
+                                                    <span class="custom-bg-item-name" title="{{ bg }}">{{ bg }}</span>
+                                                    <span class="custom-bg-item-type">{% if is_vid %}Video{% else %}Imagen{% endif %}</span>
+                                                </div>
+                                                <span class="custom-bg-check">✓</span>
+                                            </div>
+                                            {% endfor %}
                                         </div>
                                     </div>
                                 </div>
@@ -4088,10 +4270,10 @@
             const bgSelect = document.getElementById('slideBgSelect');
             if (bgSelect) {
                 bgSelect.value = slide.background || '';
-                updateSlideBgThumbnail(bgSelect.value);
+                syncCustomBgDropdown(bgSelect.value);
                 bgSelect.onchange = () => {
                     slide.background = bgSelect.value;
-                    updateSlideBgThumbnail(bgSelect.value);
+                    syncCustomBgDropdown(bgSelect.value);
                     updateBgSettingsVisibility();
                     updateLivePreview();
                     updateBackgroundsInUseUI();
@@ -5278,12 +5460,32 @@
                         }
                     }
 
-                    // Update slidesData if current slide was using it
-                    slidesData.forEach(s => {
-                        if (s.background === oldName) s.background = finalName;
-                    });
+                    // Update custom dropdown item if it exists
+                    const menu = document.getElementById('customBgMenu');
+                    if (menu) {
+                        const item = menu.querySelector(`.custom-bg-item[data-value="${oldName}"]`);
+                        if (item) {
+                            item.setAttribute('data-value', finalName);
+                            const nameSpan = item.querySelector('.custom-bg-item-name');
+                            if (nameSpan) {
+                                nameSpan.textContent = finalName;
+                                nameSpan.title = finalName;
+                            }
+                            const isVid = /\.(mp4|webm|mov|m4v)$/i.test(finalName);
+                            const mediaUrl = '/assets/backgrounds/' + encodeURIComponent(finalName);
+                            const thumbDiv = item.querySelector('.custom-bg-item-thumb');
+                            if (thumbDiv) {
+                                if (isVid) {
+                                    thumbDiv.innerHTML = `<video src="${mediaUrl}" muted loop playsinline></video><span class="custom-bg-vid-badge">🎬</span>`;
+                                } else {
+                                    thumbDiv.innerHTML = `<img src="${mediaUrl}" alt="${finalName}" loading="lazy">`;
+                                }
+                            }
+                        }
+                    }
+
                     if (bgSelect && bgSelect.value === finalName) {
-                        updateSlideBgThumbnail(finalName);
+                        syncCustomBgDropdown(finalName);
                     }
                     updateLivePreview();
 
@@ -5377,9 +5579,14 @@
                         if (opt) {
                             const isSelected = opt.selected;
                             opt.remove();
+                            // Remove from custom dropdown menu
+                            const menu = document.getElementById('customBgMenu');
+                            if (menu) {
+                                const item = menu.querySelector(`.custom-bg-item[data-value="${filename}"]`);
+                                if (item) item.remove();
+                            }
                             if (isSelected) {
-                                bgSelect.value = '';
-                                updateSlideBgThumbnail('');
+                                syncCustomBgDropdown('');
                             }
                         }
                     }
@@ -5676,46 +5883,90 @@
         }
 
         // -------------------------------------------------------------
-        // SLIDE BACKGROUND ZOOM & MOVE CONTROLS
+        // CUSTOM BACKGROUND DROPDOWN WITH THUMBNAILS
         // -------------------------------------------------------------
-        function updateSlideBgThumbnail(bgName) {
-            const emptyEl = document.getElementById('slideBgThumbEmpty');
-            const imgEl = document.getElementById('slideBgThumbImg');
-            const videoEl = document.getElementById('slideBgThumbVideo');
-            const badgeEl = document.getElementById('slideBgThumbBadge');
-            if (!emptyEl || !imgEl || !videoEl || !badgeEl) return;
-
-            const name = (bgName || '').trim();
-            if (!name) {
-                emptyEl.style.display = 'flex';
-                imgEl.style.display = 'none';
-                imgEl.src = '';
-                videoEl.style.display = 'none';
-                videoEl.src = '';
-                badgeEl.style.display = 'none';
-                return;
-            }
-
-            const isVid = /\.(mp4|webm|mov|m4v)$/i.test(name);
-            const mediaUrl = name.startsWith('/') ? name : ('/assets/backgrounds/' + encodeURIComponent(name));
-
-            emptyEl.style.display = 'none';
-            if (isVid) {
-                imgEl.style.display = 'none';
-                imgEl.src = '';
-                videoEl.src = mediaUrl;
-                videoEl.style.display = 'block';
-                videoEl.play().catch(() => {});
-                badgeEl.style.display = 'block';
-            } else {
-                videoEl.style.display = 'none';
-                videoEl.src = '';
-                imgEl.src = mediaUrl;
-                imgEl.style.display = 'block';
-                badgeEl.style.display = 'none';
+        function toggleCustomBgDropdown() {
+            const dropdown = document.getElementById('customBgDropdown');
+            if (!dropdown) return;
+            const isOpen = dropdown.classList.toggle('open');
+            const trigger = document.getElementById('customBgTrigger');
+            if (trigger) trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (isOpen) {
+                dropdown.querySelectorAll('video').forEach(v => {
+                    v.play().catch(() => {});
+                });
             }
         }
 
+        function closeCustomBgDropdown() {
+            const dropdown = document.getElementById('customBgDropdown');
+            if (dropdown && dropdown.classList.contains('open')) {
+                dropdown.classList.remove('open');
+                const trigger = document.getElementById('customBgTrigger');
+                if (trigger) trigger.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function selectCustomBg(val) {
+            const bgSelect = document.getElementById('slideBgSelect');
+            if (bgSelect) {
+                bgSelect.value = val;
+                if (bgSelect.onchange) bgSelect.onchange();
+            }
+            syncCustomBgDropdown(val);
+            closeCustomBgDropdown();
+        }
+
+        function syncCustomBgDropdown(val) {
+            const bg = (val || '').trim();
+            const labelEl = document.getElementById('customBgTriggerLabel');
+            const thumbEl = document.getElementById('customBgTriggerThumb');
+            const menu = document.getElementById('customBgMenu');
+
+            // Update trigger label & thumb
+            if (labelEl) {
+                labelEl.textContent = bg ? bg : '(Sin fondo / Default)';
+            }
+            if (thumbEl) {
+                if (!bg) {
+                    thumbEl.innerHTML = '<span>🚫</span>';
+                } else {
+                    const isVid = /\.(mp4|webm|mov|m4v)$/i.test(bg);
+                    const mediaUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURIComponent(bg));
+                    if (isVid) {
+                        thumbEl.innerHTML = `<video src="${mediaUrl}" muted loop playsinline autoplay style="width: 100%; height: 100%; object-fit: cover;"></video>`;
+                    } else {
+                        thumbEl.innerHTML = `<img src="${mediaUrl}" alt="${bg}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    }
+                }
+            }
+
+            // Update selected class in menu items
+            if (menu) {
+                menu.querySelectorAll('.custom-bg-item').forEach(item => {
+                    const itemVal = item.getAttribute('data-value') || '';
+                    if (itemVal === bg) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('customBgDropdown');
+            if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target)) {
+                closeCustomBgDropdown();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeCustomBgDropdown();
+        });
+
+        // -------------------------------------------------------------
+        // SLIDE BACKGROUND ZOOM & MOVE CONTROLS
+        // -------------------------------------------------------------
         function updateBgSettingsVisibility() {
             const slide = getCurrentSlide();
             const group = document.getElementById('slideBgSettingsGroup');
