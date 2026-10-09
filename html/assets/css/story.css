@@ -762,10 +762,10 @@
         }
 
         .rsvp-menu-btn.selected {
-            background: rgba(255, 255, 255, 0.12);
-            color: #34d399;
-            border: 1.5px solid #34d399;
-            box-shadow: 0 0 10px rgba(52, 211, 153, 0.35);
+            background: rgba(255, 255, 255, 0.24);
+            color: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.55);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
             font-weight: 700;
         }
 
