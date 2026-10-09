@@ -7,42 +7,6 @@
 }
 
 @font-face {
-    font-family: 'Android Hollow';
-    src: url('/assets/fonts/Android%20Hollow.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Android Italic';
-    src: url('/assets/fonts/Android%20Italic.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Android Scratch';
-    src: url('/assets/fonts/Android%20Scratch.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Axera Round';
-    src: url('/assets/fonts/Axera%20Round.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'BLADRMF_';
-    src: url('/assets/fonts/BLADRMF_.TTF') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'BLANK SPACE';
-    src: url('/assets/fonts/BLANK%20SPACE.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'BabaPro-Bold';
     src: url('/assets/fonts/BabaPro-Bold.ttf') format('truetype');
     font-display: swap;
@@ -50,28 +14,19 @@
 
 @font-face {
     font-family: 'Beyonders';
-    src: url('/assets/fonts/Beyonders.otf') format('opentype'),
-         url('/assets/fonts/Beyonders.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Beyonders Italic';
-    src: url('/assets/fonts/Beyonders%20Italic.otf') format('opentype'),
-         url('/assets/fonts/Beyonders%20Italic.ttf') format('truetype');
+    src: url('/assets/fonts/Beyonders.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
     font-family: 'Dune_Rise';
-    src: url('/assets/fonts/Dune_Rise.otf') format('opentype'),
-         url('/assets/fonts/Dune_Rise.ttf') format('truetype');
+    src: url('/assets/fonts/Dune_Rise.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'ELIXIA';
-    src: url('/assets/fonts/ELIXIA.ttf') format('truetype');
+    font-family: 'Dune_Rise';
+    src: url('/assets/fonts/Dune_Rise.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -82,32 +37,8 @@
 }
 
 @font-face {
-    font-family: 'FoundationTitlesHand';
-    src: url('/assets/fonts/FoundationTitlesHand-SemiBold-v0.85.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'FoundationTitlesHand-SemiBold-v0.85';
     src: url('/assets/fonts/FoundationTitlesHand-SemiBold-v0.85.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Futuristic Armour';
-    src: url('/assets/fonts/Futuristic%20Armour.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Guardians';
-    src: url('/assets/fonts/Guardians.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Lightyear Design';
-    src: url('/assets/fonts/Lightyear%20Design.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -118,38 +49,20 @@
 }
 
 @font-face {
-    font-family: 'ND LOGOS REGULAR ITALIC';
-    src: url('/assets/fonts/ND%20LOGOS%20REGULAR%20ITALIC.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Nasalization Rg';
     src: url('/assets/fonts/Nasalization%20Rg.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Nebula-Hollow';
-    src: url('/assets/fonts/Nebula-Hollow.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Nebula-Regular';
-    src: url('/assets/fonts/Nebula-Regular.otf') format('opentype');
+    font-family: 'Quadrillion Sb It';
+    src: url('/assets/fonts/Quadrillion%20Sb%20It.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
     font-family: 'Quadrillion Sb';
     src: url('/assets/fonts/Quadrillion%20Sb.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Quadrillion Sb It';
-    src: url('/assets/fonts/Quadrillion%20Sb%20It.otf') format('opentype');
     font-display: swap;
 }
 
@@ -185,29 +98,25 @@
 
 @font-face {
     font-family: 'Space Crusaders';
-    src: url('/assets/fonts/Space%20Crusaders.otf') format('opentype'),
-         url('/assets/fonts/Space%20Crusaders.ttf') format('truetype');
+    src: url('/assets/fonts/Space%20Crusaders.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Space Crusaders Italic';
-    src: url('/assets/fonts/Space%20Crusaders%20Italic.otf') format('opentype'),
-         url('/assets/fonts/Space%20Crusaders%20Italic.ttf') format('truetype');
+    font-family: 'Space Crusaders';
+    src: url('/assets/fonts/Space%20Crusaders.ttf') format('truetype');
     font-display: swap;
 }
 
 @font-face {
     font-family: 'Space Quest';
-    src: url('/assets/fonts/Space%20Quest.otf') format('opentype'),
-         url('/assets/fonts/Space%20Quest.ttf') format('truetype');
+    src: url('/assets/fonts/Space%20Quest.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Space Quest Italic';
-    src: url('/assets/fonts/Space%20Quest%20Italic.otf') format('opentype'),
-         url('/assets/fonts/Space%20Quest%20Italic.ttf') format('truetype');
+    font-family: 'Space Quest';
+    src: url('/assets/fonts/Space%20Quest.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -219,15 +128,13 @@
 
 @font-face {
     font-family: 'Space Rave';
-    src: url('/assets/fonts/Space%20Rave.otf') format('opentype'),
-         url('/assets/fonts/Space%20Rave.ttf') format('truetype');
+    src: url('/assets/fonts/Space%20Rave.otf') format('opentype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Space Rave Italic';
-    src: url('/assets/fonts/Space%20Rave%20Italic.otf') format('opentype'),
-         url('/assets/fonts/Space%20Rave%20Italic.ttf') format('truetype');
+    font-family: 'Space Rave';
+    src: url('/assets/fonts/Space%20Rave.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -238,20 +145,8 @@
 }
 
 @font-face {
-    font-family: 'Starjhol';
-    src: url('/assets/fonts/Starjhol.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Starjout';
     src: url('/assets/fonts/Starjout.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Stjldbl1';
-    src: url('/assets/fonts/Stjldbl1.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -287,8 +182,13 @@
 
 @font-face {
     font-family: 'Varino - Normal';
-    src: url('/assets/fonts/Varino%20-%20Normal.otf') format('opentype'),
-         url('/assets/fonts/Varino%20-%20Normal.ttf') format('truetype');
+    src: url('/assets/fonts/Varino%20-%20Normal.otf') format('opentype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Varino - Normal';
+    src: url('/assets/fonts/Varino%20-%20Normal.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -305,32 +205,14 @@
 }
 
 @font-face {
-    font-family: 'alienleague3dital';
-    src: url('/assets/fonts/alienleague3dital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'alienleaguebold';
     src: url('/assets/fonts/alienleaguebold.ttf') format('truetype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'alienleaguebolditalic';
-    src: url('/assets/fonts/alienleaguebolditalic.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'alienleaguecond';
     src: url('/assets/fonts/alienleaguecond.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleaguecondital';
-    src: url('/assets/fonts/alienleaguecondital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -365,20 +247,8 @@
 }
 
 @font-face {
-    font-family: 'alienleagueii3dital';
-    src: url('/assets/fonts/alienleagueii3dital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'alienleagueiibold';
     src: url('/assets/fonts/alienleagueiibold.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiiboldital';
-    src: url('/assets/fonts/alienleagueiiboldital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -389,20 +259,8 @@
 }
 
 @font-face {
-    font-family: 'alienleagueiicondital';
-    src: url('/assets/fonts/alienleagueiicondital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'alienleagueiiexpand';
     src: url('/assets/fonts/alienleagueiiexpand.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'alienleagueiiexpandital';
-    src: url('/assets/fonts/alienleagueiiexpandital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -419,12 +277,6 @@
 }
 
 @font-face {
-    font-family: 'alienleagueiiital';
-    src: url('/assets/fonts/alienleagueiiital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'alienleagueiileft';
     src: url('/assets/fonts/alienleagueiileft.ttf') format('truetype');
     font-display: swap;
@@ -437,12 +289,6 @@
 }
 
 @font-face {
-    font-family: 'alienleagueital';
-    src: url('/assets/fonts/alienleagueital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'alienleagueleft';
     src: url('/assets/fonts/alienleagueleft.ttf') format('truetype');
     font-display: swap;
@@ -451,12 +297,6 @@
 @font-face {
     font-family: 'alienleagueout';
     src: url('/assets/fonts/alienleagueout.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Aveny T';
-    src: url('/assets/fonts/aveny-t-medium.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -491,20 +331,8 @@
 }
 
 @font-face {
-    font-family: 'mandalore3dital';
-    src: url('/assets/fonts/mandalore3dital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'mandalorecond';
     src: url('/assets/fonts/mandalorecond.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorecondital';
-    src: url('/assets/fonts/mandalorecondital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -515,38 +343,14 @@
 }
 
 @font-face {
-    font-family: 'mandaloregradital';
-    src: url('/assets/fonts/mandaloregradital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'mandalorehalf';
     src: url('/assets/fonts/mandalorehalf.ttf') format('truetype');
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'mandalorehalfital';
-    src: url('/assets/fonts/mandalorehalfital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloreital';
-    src: url('/assets/fonts/mandaloreital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'mandalorelaser';
     src: url('/assets/fonts/mandalorelaser.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelaserital';
-    src: url('/assets/fonts/mandalorelaserital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -563,32 +367,8 @@
 }
 
 @font-face {
-    font-family: 'mandalorelaserroughital';
-    src: url('/assets/fonts/mandalorelaserroughital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelasersemital';
-    src: url('/assets/fonts/mandalorelasersemital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelasersuperital';
-    src: url('/assets/fonts/mandalorelasersuperital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'mandalorelasertitle';
     src: url('/assets/fonts/mandalorelasertitle.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandalorelasertitleital';
-    src: url('/assets/fonts/mandalorelasertitleital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -605,32 +385,8 @@
 }
 
 @font-face {
-    font-family: 'mandaloreroughital';
-    src: url('/assets/fonts/mandaloreroughital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloresemital';
-    src: url('/assets/fonts/mandaloresemital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloresuperital';
-    src: url('/assets/fonts/mandaloresuperital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'mandaloretitle';
     src: url('/assets/fonts/mandaloretitle.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'mandaloretitleital';
-    src: url('/assets/fonts/mandaloretitleital.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -641,20 +397,8 @@
 }
 
 @font-face {
-    font-family: 'mandalorexpandital';
-    src: url('/assets/fonts/mandalorexpandital.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'space age';
     src: url('/assets/fonts/space%20age.ttf') format('truetype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'spacefr';
-    src: url('/assets/fonts/spacefr.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -666,7 +410,12 @@
 
 @font-face {
     font-family: 'terminator real nfi';
-    src: url('/assets/fonts/terminator%20real%20nfi.otf') format('opentype'),
-         url('/assets/fonts/terminator%20real%20nfi.ttf') format('truetype');
+    src: url('/assets/fonts/terminator%20real%20nfi.otf') format('opentype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'terminator real nfi';
+    src: url('/assets/fonts/terminator%20real%20nfi.ttf') format('truetype');
     font-display: swap;
 }

@@ -2567,37 +2567,14 @@
         }
     };
 
-    const AVAILABLE_FONTS = [
-        "Montserrat", "Aveny T", "Syncopate", "Varino - Normal", "Beyonders",
-        "Beyonders Italic", "Dune_Rise", "ELIXIA", "Ethnocentric-Regular",
-        "future-earth", "mandalore", "Space Crusaders", "Android", "Android Hollow",
-        "Android Italic", "Android Scratch", "Axera Round", "BLADRMF_", "BLANK SPACE",
-        "BabaPro-Bold", "FoundationTitlesHand-SemiBold-v0.85", "Futuristic Armour",
-        "Guardians", "Lightyear Design", "ND LOGOS REGULAR", "ND LOGOS REGULAR ITALIC",
-        "Nasalization Rg", "Nebula-Hollow", "Nebula-Regular", "Quadrillion Sb",
-        "Quadrillion Sb It", "ROBOTECH GP", "SPACE ARMOR", "SPACEBAR", "STJEDISE",
-        "SciFly-Sans", "Space Quest", "Space Quest Italic", "Space Rangers",
-        "Space Rave", "Space Rave Italic", "Starjedi", "Starjhol", "Starjout",
-        "Stjldbl1", "Stjldbl2", "Striker PersonalUseOnly", "Strjmono",
-        "Transformers Movie", "Universe PersonalUseOnly", "alienleague", "alienleague3d",
-        "alienleague3dital", "alienleaguebold", "alienleaguebolditalic", "alienleaguecond",
-        "alienleaguecondital", "alienleagueexpand", "alienleaguegrad", "alienleaguegradbold",
-        "alienleagueii", "alienleagueii3d", "alienleagueii3dital", "alienleagueiibold",
-        "alienleagueiiboldital", "alienleagueiicond", "alienleagueiicondital",
-        "alienleagueiiexpand", "alienleagueiiexpandital", "alienleagueiigrad",
-        "alienleagueiigradbold", "alienleagueiiital", "alienleagueiileft",
-        "alienleagueiiout", "alienleagueital", "alienleagueleft", "alienleagueout",
-        "aveny-t-medium", "good timing bd", "mandalore3d", "mandalore3dital",
-        "mandalorecond", "mandalorecondital", "mandaloregrad", "mandaloregradital",
-        "mandalorehalf", "mandalorehalfital", "mandaloreital", "mandalorelaser",
-        "mandalorelaserital", "mandalorelaserleft", "mandalorelaserrough",
-        "mandalorelaserroughital", "mandalorelasersemital", "mandalorelasersuperital",
-        "mandalorelasertitle", "mandalorelasertitleital", "mandaloreleft",
-        "mandalorerough", "mandaloreroughital", "mandaloresemital",
-        "mandaloresuperital", "mandaloretitle", "mandaloretitleital",
-        "mandalorexpand", "mandalorexpandital", "space age", "spacefr", "spacefri",
-        "terminator real nfi"
-    ];
+    const AVAILABLE_FONTS = Array.from(new Set([
+        "Montserrat", "Aveny T", "Syncopate",
+        {% if fonts %}
+        {% for f in fonts %}
+        "{{ f.family }}",
+        {% endfor %}
+        {% endif %}
+    ])).sort((a, b) => a.localeCompare(b));
 
     function populateFontSelect(selectId, selectedVal) {
         const sel = document.getElementById(selectId);
