@@ -1707,9 +1707,10 @@
         }
 
         .font-card {
-            display: grid;
-            grid-template-columns: 36px 1fr;
-            align-items: center;
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
             gap: 14px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--card-border);
@@ -1724,9 +1725,12 @@
         }
 
         .font-card-col-action {
+            flex: 0 0 34px !important;
+            width: 34px !important;
             display: flex;
             align-items: center;
             justify-content: center;
+            align-self: center !important;
         }
 
         .font-card-col-action .btn-delete-icon {
@@ -1738,14 +1742,42 @@
             border-radius: 8px;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: all 0.15s;
+        }
+
+        .font-card-col-action .btn-delete-icon:disabled,
+        .font-card-col-action .btn-delete-icon.btn-disabled {
+            opacity: 0.22 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(1);
+            pointer-events: auto !important;
+        }
+
+        .font-card-col-action .btn-delete-icon:disabled:hover,
+        .font-card-col-action .btn-delete-icon.btn-disabled:hover {
+            background: transparent !important;
+            color: inherit !important;
+        }
+
+        .badge-in-use {
+            background: rgba(212, 175, 55, 0.18) !important;
+            border: 1px solid rgba(212, 175, 55, 0.45) !important;
+            color: #ffd978 !important;
+            font-size: 0.65rem !important;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .font-card-col-content {
+            flex: 1 1 auto !important;
             display: flex;
             flex-direction: column;
             gap: 6px;
-            min-width: 0;
+            min-width: 0 !important;
         }
 
         .font-card-header {
@@ -2392,7 +2424,10 @@
                                 {% for f in fonts %}
                                     <div class="font-card" data-filename="{{ f.filename }}" data-family="{{ f.family }}">
                                         <div class="font-card-col-action">
-                                            <button type="button" class="btn-rename-icon btn-delete-icon" onclick="deleteFont('{{ f.filename }}', '{{ f.family }}', this)" title="Eliminar tipografía">🗑️</button>
+                                            <button type="button"
+                                                    class="btn-rename-icon btn-delete-icon {% if f.in_use %}btn-disabled{% endif %}"
+                                                    {% if f.in_use %}disabled title="Esta fuente está en uso en los estilos o slides"{% else %}title="Eliminar tipografía"{% endif %}
+                                                    onclick="deleteFont('{{ f.filename }}', '{{ f.family }}', this)">🗑️</button>
                                         </div>
                                         <div class="font-card-col-content">
                                             <div class="font-card-header">
@@ -2400,6 +2435,7 @@
                                                     <span class="font-card-name" title="{{ f.family }}">{{ f.family }}</span>
                                                     <span class="media-badge" style="font-size: 0.65rem; padding: 2px 6px;">{{ f.ext }}</span>
                                                     <span style="font-size: 0.72rem; color: var(--text-muted);">{{ f.size_kb }} KB</span>
+                                                    <span class="badge-in-use in-use-tag" style="{% if not f.in_use %}display: none;{% endif %}">En uso</span>
                                                 </div>
                                             </div>
                                             <div class="font-card-preview" style="font-family: '{{ f.family }}', sans-serif;">
@@ -2548,6 +2584,7 @@
             renderHeaderEditor();
         } else if (tabId === 'tab-fonts') {
             window.location.hash = 'fuentes';
+            updateFontsInUseUI();
         } else {
             window.location.hash = 'slides';
         }
@@ -2750,6 +2787,7 @@
         const fontBadge = document.getElementById('styleFontFamilyBadge');
         if (fontBadge) fontBadge.textContent = val;
         applyStylesToDOM(stylesData);
+        updateFontsInUseUI();
     }
 
     function onColorPickerChange(val) {
@@ -3017,6 +3055,7 @@
         if (fontBadge) fontBadge.textContent = val;
         applyStylesToDOM(stylesData);
         updateHeaderSampleCard();
+        updateFontsInUseUI();
     }
 
     function onHeaderColorPickerChange(val) {
@@ -4613,8 +4652,59 @@
         }
     }
 
+    function getUsedFontsSet() {
+        const used = new Set();
+        if (typeof stylesData === 'object' && stylesData) {
+            Object.values(stylesData).forEach(val => {
+                if (val && typeof val === 'object' && val.fontFamily) {
+                    used.add(String(val.fontFamily).trim().toLowerCase());
+                }
+            });
+        }
+        if (typeof slidesData === 'object' && Array.isArray(slidesData)) {
+            slidesData.forEach(slide => {
+                if (slide && Array.isArray(slide.elements)) {
+                    slide.elements.forEach(el => {
+                        if (el && (el.fontFamily || el.font)) {
+                            used.add(String(el.fontFamily || el.font).trim().toLowerCase());
+                        }
+                    });
+                }
+            });
+        }
+        return used;
+    }
+
+    function updateFontsInUseUI() {
+        const used = getUsedFontsSet();
+        const cards = document.querySelectorAll('#fontsGallery .font-card');
+        cards.forEach(card => {
+            const family = String(card.getAttribute('data-family') || '').trim().toLowerCase();
+            const isInUse = used.has(family);
+            const btn = card.querySelector('.btn-delete-icon');
+            const inUseTag = card.querySelector('.in-use-tag');
+
+            if (btn) {
+                btn.disabled = isInUse;
+                if (isInUse) {
+                    btn.classList.add('btn-disabled');
+                    btn.setAttribute('title', 'Esta fuente está en uso en los estilos o slides');
+                } else {
+                    btn.classList.remove('btn-disabled');
+                    btn.setAttribute('title', 'Eliminar tipografía');
+                }
+            }
+
+            if (inUseTag) {
+                inUseTag.style.display = isInUse ? 'inline-flex' : 'none';
+            }
+        });
+    }
+
     async function deleteFont(filename, family, btnElement = null) {
-        if (!confirm(`¿Eliminar la tipografía "${family}" (${filename}) permanentemente?`)) {
+        const used = getUsedFontsSet();
+        if (used.has(String(family).trim().toLowerCase())) {
+            showToast(`No se puede eliminar la fuente "${family}" porque está en uso`, true);
             return;
         }
 
@@ -4865,6 +4955,7 @@
         renderStylesEditor();
         renderHeaderEditor();
         applyStylesToDOM(stylesData);
+        updateFontsInUseUI();
 
         // Asynchronously discover any newly added fonts in /assets/fonts/
         fetch('/assets/fonts/').then(r => r.json()).then(files => {

@@ -547,6 +547,12 @@ class TestGoogleSheetsTable(unittest.TestCase):
                         res_nf = client.post("/panel/delete-font", json={"filename": "NonExistent.ttf"})
                         self.assertEqual(res_nf.status_code, 404)
 
+                        # Delete: In-use protection
+                        with patch("app.is_font_in_use", return_value=True):
+                            res_in_use = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"})
+                            self.assertEqual(res_in_use.status_code, 400)
+                            self.assertIn("en uso", res_in_use.get_json()["error"].lower())
+
                         # Successful delete
                         res_del = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"})
                         self.assertEqual(res_del.status_code, 200)

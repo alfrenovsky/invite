@@ -236,6 +236,28 @@ def save_styles(styles_dict):
         json.dump(styles_dict, f, indent=2, ensure_ascii=False)
 
 
+def is_font_in_use(family, styles=None, slides=None):
+    if not family:
+        return False
+    fam_norm = family.strip().lower()
+    if styles is None:
+        styles = load_styles()
+    for s_val in styles.values():
+        if isinstance(s_val, dict):
+            ff = (s_val.get("fontFamily") or "").strip().lower()
+            if ff == fam_norm:
+                return True
+    if slides is None:
+        slides = load_slides()
+    for slide in slides:
+        for el in slide.get("elements", []):
+            if isinstance(el, dict):
+                el_ff = (el.get("fontFamily") or el.get("font") or "").strip().lower()
+                if el_ff == fam_norm:
+                    return True
+    return False
+
+
 def get_backgrounds_dir():
     candidates = [
         "/app/backgrounds",
@@ -564,6 +586,8 @@ def panel_view():
     backgrounds = get_backgrounds_list()
     styles = load_styles()
     fonts = get_fonts_list()
+    for f in fonts:
+        f["in_use"] = is_font_in_use(f.get("family"), styles, slides)
     return render_template("panel.html", slides=slides, backgrounds=backgrounds, styles=styles, fonts=fonts)
 
 
@@ -1003,6 +1027,10 @@ def panel_delete_font():
     target_path = os.path.join(fonts_dir, filename)
     if not os.path.isfile(target_path):
         return jsonify({"ok": False, "error": f"La fuente '{filename}' no existe"}), 404
+
+    family = os.path.splitext(filename)[0]
+    if is_font_in_use(family):
+        return jsonify({"ok": False, "error": f"La fuente '{family}' está en uso en los estilos o slides y no puede eliminarse"}), 400
 
     try:
         os.remove(target_path)
