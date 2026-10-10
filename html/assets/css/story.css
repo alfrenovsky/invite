@@ -385,6 +385,7 @@
         }
 
         .slide-el-location,
+        .slide-el-link,
         .slide-el-countdown {
             display: inline-flex;
             justify-content: center;
@@ -1724,15 +1725,17 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Instagram-like Location Sticker */
+        /* Instagram-like Location & Link Sticker */
         .instagram-location-sticker,
-        .location-sticker {
+        .instagram-link-sticker,
+        .location-sticker,
+        .link-sticker {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             background: #ffffff;
-            color: #0488db;
+            color: var(--sticker-color, #0488db);
             padding: 7px 16px 7px 12px;
             border-radius: 12px;
             text-decoration: none !important;
@@ -1746,15 +1749,37 @@
 
         .instagram-location-sticker:hover,
         .instagram-location-sticker:active,
+        .instagram-link-sticker:hover,
+        .instagram-link-sticker:active,
         .location-sticker:hover,
-        .location-sticker:active {
+        .location-sticker:active,
+        .link-sticker:hover,
+        .link-sticker:active {
             transform: scale(1.04);
             box-shadow: 0 6px 22px rgba(0, 0, 0, 0.32);
         }
 
+        /* Solid Style Variant */
+        .instagram-location-sticker.sticker-style-solid,
+        .instagram-link-sticker.sticker-style-solid,
+        .location-sticker.sticker-style-solid,
+        .link-sticker.sticker-style-solid {
+            background: var(--sticker-color, #0488db);
+            color: #ffffff;
+        }
+
+        .instagram-location-sticker.sticker-style-solid .location-sticker-text,
+        .instagram-link-sticker.sticker-style-solid .location-sticker-text,
+        .location-sticker.sticker-style-solid .location-sticker-text,
+        .link-sticker.sticker-style-solid .location-sticker-text {
+            color: #ffffff !important;
+        }
+
         .instagram-location-sticker .location-pin-icon,
+        .instagram-link-sticker .location-pin-icon,
         .location-sticker .location-pin-icon,
-        .location-sticker-icon {
+        .location-sticker-icon,
+        .sticker-icon {
             width: 20px;
             height: 20px;
             flex-shrink: 0;
@@ -1762,12 +1787,14 @@
         }
 
         .instagram-location-sticker .location-sticker-text,
-        .location-sticker .location-sticker-text {
+        .instagram-link-sticker .location-sticker-text,
+        .location-sticker .location-sticker-text,
+        .link-sticker .location-sticker-text {
             font-family: 'Aveny T', sans-serif !important;
             font-weight: 500;
             font-size: clamp(0.95rem, 3.4vw, 1.25rem);
             letter-spacing: 0.5px;
-            color: #0488db;
+            color: var(--sticker-color, #0488db);
             line-height: 1.1;
             text-transform: uppercase !important;
             white-space: nowrap;
