@@ -1062,7 +1062,7 @@
 
         // Expandable RSVP Guest Cards (Accordion toggle, 3 status buttons, live name sync)
         const MENU_ICONS = {
-            'general': '🥩',
+            'general': '🍽️',
             'vegetariano': '🥬',
             'vegano': '🌱'
         };
@@ -1089,7 +1089,7 @@
                 }
                 const selBtn = card.querySelector('.rsvp-menu-btn.selected');
                 const selMenu = selBtn ? (selBtn.getAttribute('data-menu') || 'general') : 'general';
-                menuIcon.textContent = MENU_ICONS[selMenu] || '🥩';
+                menuIcon.textContent = MENU_ICONS[selMenu] || '🍽️';
             }
 
             function updateGlutenIconDisplay(status) {

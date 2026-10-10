@@ -11,7 +11,7 @@
             {% if conf == 'si' %}
                 {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
                 {% elif current_menu == 'vegetariano' %}{% set menu_icon = '🥬' %}
-                {% else %}{% set menu_icon = '🥩' %}
+                {% else %}{% set menu_icon = '🍽️' %}
                 {% endif %}
             {% endif %}
             <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}">
