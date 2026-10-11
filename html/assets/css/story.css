@@ -1595,7 +1595,7 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: 14px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         }
 
@@ -1603,9 +1603,9 @@
             display: flex;
             align-items: center;
             margin-top: 0;
-            margin-bottom: 1em;
+            margin-bottom: 6px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-            padding-bottom: 0.5em;
+            padding-bottom: 4px;
         }
 
         .rsvp-payment-header-text {
@@ -1620,13 +1620,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 4px;
             flex-wrap: wrap;
             width: 100%;
         }
 
         .rsvp-payment-title {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 600;
             color: #ffffff;
             letter-spacing: 0.3px;
@@ -1636,14 +1636,14 @@
         .payment-alias-badge {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px;
-            padding: 3px 9px;
+            padding: 2px 8px;
             color: #ffffff;
             font-family: inherit;
-            font-size: 0.73rem;
+            font-size: 0.72rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -1662,7 +1662,7 @@
         }
 
         .payment-alias-icon {
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             line-height: 1;
         }
 
@@ -1673,12 +1673,12 @@
         .rsvp-payment-breakdown {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            margin-bottom: 1em;
-            font-size: 0.82rem;
+            gap: 4px;
+            margin-bottom: 6px;
+            font-size: 0.80rem;
             background: rgba(0, 0, 0, 0.22);
             border-radius: 10px;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
@@ -1696,9 +1696,9 @@
             font-weight: 700;
             color: #34d399;
             border-top: 1px dashed rgba(255, 255, 255, 0.15);
-            padding-top: 6px;
-            margin-top: 4px;
-            font-size: 0.92rem;
+            padding-top: 4px;
+            margin-top: 3px;
+            font-size: 0.88rem;
         }
 
         .rsvp-upload-wrapper {
@@ -1708,7 +1708,7 @@
         .upload-dropzone {
             border: 1.5px dashed rgba(255, 255, 255, 0.3);
             border-radius: 12px;
-            padding: 10px 12px;
+            padding: 8px 10px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -1731,22 +1731,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 3px;
             color: rgba(255, 255, 255, 0.9);
         }
 
         .upload-cloud-icon {
             color: #38bdf8;
+            width: 20px;
+            height: 20px;
         }
 
         .upload-btn-label {
-            font-size: 0.85rem;
+            font-size: 0.80rem;
             font-weight: 600;
             letter-spacing: 0.2px;
         }
 
         .upload-hint {
-            font-size: 0.70rem;
+            font-size: 0.67rem;
             color: rgba(255, 255, 255, 0.55);
         }
 

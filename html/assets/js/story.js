@@ -1045,7 +1045,8 @@
             const rawMonto = card.getAttribute('data-monto') || '';
             const monto = parseCurrencyAmount(rawMonto);
 
-            if (status === 'si' && monto > 0) {
+            const isConfirmedOrPending = (status !== 'no');
+            if (isConfirmedOrPending && monto > 0) {
                 const nInput = card.querySelector('input[name^="nombre_"]');
                 const aInput = card.querySelector('input[name^="apellido_"]');
                 const nameEl = card.querySelector('.rsvp-guest-name') || card.querySelector('.guest-header-name');
