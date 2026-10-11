@@ -13,8 +13,9 @@
 {% set bg_y = slide.bg_y if (slide and slide.bg_y is defined and slide.bg_y is not none) else 0 %}
 {% set bg_zoom = ((slide.bg_zoom if (slide and slide.bg_zoom is defined and slide.bg_zoom is not none) else 100) / 100) %}
 
-<div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" {% if slide and slide.id == 'triste' %}id="tristeSlide"{% endif %} data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
-     style="{% if slide and slide.id == 'triste' and not all_rejected %}display: none;{% endif %}">
+{% set is_hidden_slide = slide and (slide.hidden or slide.oculto or slide.id == 'triste') %}
+<div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" {% if is_hidden_slide %}data-hidden="true" id="tristeSlide"{% endif %} data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
+     style="{% if is_hidden_slide and not all_rejected %}display: none;{% endif %}">
 
     {% if bg_url %}
         <div class="story-bg-layer-wrap">

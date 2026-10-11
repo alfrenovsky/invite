@@ -829,16 +829,16 @@
     function updateSlideList() {
         const slidesContainer = document.getElementById('storySlides');
         if (!slidesContainer) return;
-        const tristeSlide = slidesContainer.querySelector('.story-slide[data-slide-id="triste"]');
+        const hiddenSlides = Array.from(slidesContainer.querySelectorAll('.story-slide[data-hidden="true"], .story-slide[data-slide-id="triste"]'));
         const allRejected = checkAllRejected();
-        if (tristeSlide) {
-            tristeSlide.style.display = allRejected ? '' : 'none';
+        hiddenSlides.forEach(hSlide => {
+            hSlide.style.display = allRejected ? '' : 'none';
             if (!allRejected) {
-                tristeSlide.classList.remove('active');
-                tristeSlide.style.opacity = '0';
-                tristeSlide.style.visibility = 'hidden';
+                hSlide.classList.remove('active');
+                hSlide.style.opacity = '0';
+                hSlide.style.visibility = 'hidden';
             }
-        }
+        });
         slides = Array.from(slidesContainer.querySelectorAll('.story-slide')).filter(s => s.style.display !== 'none');
         buildProgressBars();
     }
@@ -1223,6 +1223,13 @@
                             if (gid) dirtyGuests.add(gid);
                         });
                         flushAutoSave();
+
+                        // Automatically jump to the enabled hidden slide (e.g. Gato Triste)
+                        const targetIdx = slides.findIndex(s => s.getAttribute('data-hidden') === 'true' || s.getAttribute('data-slide-id') === 'triste');
+                        if (targetIdx !== -1) {
+                            stopAutoplay();
+                            goToSlide(targetIdx);
+                        }
                     } else {
                         queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                     }
@@ -1349,6 +1356,12 @@
                             if (gid) dirtyGuests.add(gid);
                         });
                         flushAutoSave();
+
+                        const targetIdx = slides.findIndex(s => s.getAttribute('data-hidden') === 'true' || s.getAttribute('data-slide-id') === 'triste');
+                        if (targetIdx !== -1) {
+                            stopAutoplay();
+                            goToSlide(targetIdx);
+                        }
                     } else {
                         queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                     }

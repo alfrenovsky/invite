@@ -143,6 +143,10 @@ def load_slides():
         if "elements" not in s or not isinstance(s["elements"], list):
             s["elements"] = []
         s["template"] = "slides/custom.html"
+        if "title" not in s:
+            s["title"] = s.get("id", "")
+        if "hidden" not in s:
+            s["hidden"] = (s.get("id") == "triste")
 
     return slides
 
@@ -817,8 +821,21 @@ def panel_update_slide(slide_id):
             except (ValueError, TypeError):
                 pass
 
+    new_id = data.get("id") or data.get("new_id")
+    if new_id:
+        clean_new_id = re.sub(r"[^a-zA-Z0-9_-]", "_", str(new_id).strip().lower())
+        if clean_new_id and clean_new_id != slide_id:
+            if any(s["id"] == clean_new_id for s in slides if s != target_slide):
+                return jsonify({"ok": False, "error": f"El ID '{clean_new_id}' ya está en uso por otro slide"}), 400
+            target_slide["id"] = clean_new_id
+
+    if "hidden" in data:
+        target_slide["hidden"] = bool(data["hidden"])
+
+    target_slide["title"] = target_slide["id"]
+
     for key, val in data.items():
-        if key not in ("slide_id", "background", "duration", "bg_zoom", "bg_x", "bg_y"):
+        if key not in ("slide_id", "background", "duration", "bg_zoom", "bg_x", "bg_y", "id", "new_id", "hidden"):
             target_slide[key] = val
 
     save_slides(slides)
@@ -848,11 +865,9 @@ def panel_create_slide():
     else:
         data = request.form.to_dict()
 
-    title = (data.get("title") or "").strip()
-    raw_id = (data.get("id") or "").strip()
-    if not raw_id:
-        slug = re.sub(r"[^a-zA-Z0-9_]", "_", title.lower()) if title else f"slide_{int(time.time())}"
-        raw_id = slug or f"slide_{int(time.time())}"
+    raw_id = (data.get("id") or data.get("title") or "").strip()
+    slug = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_id.lower()) if raw_id else f"slide_{int(time.time())}"
+    raw_id = slug or f"slide_{int(time.time())}"
 
     slides = load_slides()
     slide_id = raw_id
@@ -874,10 +889,11 @@ def panel_create_slide():
 
     new_slide = {
         "id": slide_id,
-        "title": title or slide_id,
+        "title": slide_id,
         "template": "slides/custom.html",
         "duration": duration,
         "enabled": True,
+        "hidden": bool(data.get("hidden", False)),
         "background": data.get("background", ""),
         "bg_zoom": _safe_float(data.get("bg_zoom"), 100.0),
         "bg_x": _safe_float(data.get("bg_x"), 0.0),

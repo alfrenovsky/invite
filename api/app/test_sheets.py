@@ -648,6 +648,48 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 called_data = mock_update.call_args[0][1]
                 self.assertEqual(called_data["nombre"], "Carlos")
 
+    def test_slide_id_editing_and_hidden_parameter(self):
+        from app import app
+        with app.test_client() as client:
+            with patch("app.is_dev_mode", return_value=True):
+                existing_slides = [
+                    {"id": "portada", "template": "slides/custom.html", "duration": 4000, "hidden": False},
+                    {"id": "fecha", "template": "slides/custom.html", "duration": 5000, "hidden": False},
+                    {"id": "triste", "template": "slides/custom.html", "duration": 0, "hidden": True}
+                ]
+                with patch("app.load_slides", return_value=existing_slides), patch("app.save_slides") as mock_save:
+                    # 1. Update slide ID successfully
+                    res_up = client.post("/panel/slide/portada", json={"id": "bienvenida", "hidden": True})
+                    self.assertEqual(res_up.status_code, 200)
+                    saved_data = mock_save.call_args[0][0]
+                    target = next(s for s in saved_data if s["id"] == "bienvenida")
+                    self.assertTrue(target["hidden"])
+
+                    # 2. Prevent collision with another existing slide ID
+                    res_coll = client.post("/panel/slide/fecha", json={"id": "triste"})
+                    self.assertEqual(res_coll.status_code, 400)
+                    self.assertIn("en uso", res_coll.get_json()["error"])
+
+            # 3. Hidden slide SSR rendering: display: none when not all rejected, visible when all rejected
+            code = parse_and_validate_token._cache_token = compute_check_code("familia_test")
+            attending_guests = [{"id": "g1", "invitacion_id": "familia_test", "confirmacion": "si"}]
+            rejected_guests = [{"id": "g1", "invitacion_id": "familia_test", "confirmacion": "no"}]
+            slides_with_hidden = [{"id": "gato", "template": "slides/custom.html", "hidden": True, "elements": []}]
+
+            with patch("app.table.get_by_invitacion", return_value=attending_guests), \
+                 patch("app.load_slides", return_value=slides_with_hidden):
+                res_attending = client.get(f"/i/familia_test_{code}/slide/gato")
+                self.assertEqual(res_attending.status_code, 200)
+                self.assertIn(b"data-hidden=\"true\"", res_attending.data)
+                self.assertIn(b"display: none;", res_attending.data)
+
+            with patch("app.table.get_by_invitacion", return_value=rejected_guests), \
+                 patch("app.load_slides", return_value=slides_with_hidden):
+                res_rejected = client.get(f"/i/familia_test_{code}/slide/gato")
+                self.assertEqual(res_rejected.status_code, 200)
+                self.assertIn(b"data-hidden=\"true\"", res_rejected.data)
+                self.assertNotIn(b"display: none;", res_rejected.data)
+
 
 if __name__ == "__main__":
     unittest.main()

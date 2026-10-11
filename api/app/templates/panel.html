@@ -2630,9 +2630,9 @@
                                 <div
                                     style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                                     <div class="form-group">
-                                        <label for="slideTitleInput">Título del Slide</label>
-                                        <input type="text" class="form-input" id="slideTitleInput"
-                                            placeholder="ej. Portada, Fiesta, etc.">
+                                        <label for="slideIdInput">ID / Slug del Slide</label>
+                                        <input type="text" class="form-input" id="slideIdInput"
+                                            placeholder="ej. portada, fecha, lugar" spellcheck="false" autocomplete="off">
                                     </div>
                                     <div class="form-group">
                                         <label for="slideDurationInput">
@@ -2642,6 +2642,13 @@
                                         <input type="number" class="form-input" id="slideDurationInput" min="0"
                                             step="500" value="7000">
                                     </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 14px;">
+                                    <label class="custom-checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                                        <input type="checkbox" id="slideHiddenCheck" style="width: 17px; height: 17px; cursor: pointer;">
+                                        <span style="font-size: 0.88rem; color: #e2e8f0; font-weight: 600;">Slide oculto</span>
+                                        <span class="sub-label-hint" style="color: #94a3b8; font-size: 0.78rem;">(Se habilita automáticamente cuando ningún invitado asiste)</span>
+                                    </label>
                                 </div>
 
                                 <div class="form-group">
@@ -3430,13 +3437,9 @@
             <h3 class="section-title" style="margin-bottom: 16px;">
                 <span>+ Nuevo Slide</span>
             </h3>
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label for="newSlideTitle">Título del Slide</label>
-                <input type="text" class="form-input" id="newSlideTitle" placeholder="ej. Fiesta, Regalos, etc.">
-            </div>
             <div class="form-group" style="margin-bottom: 18px;">
-                <label for="newSlideId">Identificador / Slug (opcional)</label>
-                <input type="text" class="form-input" id="newSlideId" placeholder="ej. fiesta">
+                <label for="newSlideId">ID / Slug del Slide</label>
+                <input type="text" class="form-input" id="newSlideId" placeholder="ej. fiesta, fotos, itinerario" spellcheck="false" autocomplete="off">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" class="btn-ctrl" onclick="closeNewSlideModal()">Cancelar</button>
@@ -4293,10 +4296,19 @@
                 numSpan.textContent = idx + 1;
 
                 const titleSpan = document.createElement('span');
-                titleSpan.textContent = slide.title || slide.id;
+                titleSpan.textContent = slide.id;
 
                 chip.appendChild(numSpan);
                 chip.appendChild(titleSpan);
+
+                if (slide.hidden) {
+                    const hiddenIcon = document.createElement('span');
+                    hiddenIcon.style.cssText = 'font-size: 0.72rem; opacity: 0.75; margin-left: 3px;';
+                    hiddenIcon.textContent = '👁️';
+                    hiddenIcon.title = 'Slide oculto (solo si nadie asiste)';
+                    chip.appendChild(hiddenIcon);
+                }
+
                 if (isDirty) {
                     const dirtyDot = document.createElement('span');
                     dirtyDot.className = 'slide-chip-dirty-dot';
@@ -4338,6 +4350,10 @@
             const slide = getCurrentSlide();
             if (!slide) return;
 
+            if (!slide._origId) {
+                slide._origId = slide.id;
+            }
+
             if (!Array.isArray(slide.elements)) {
                 slide.elements = [];
             }
@@ -4347,11 +4363,35 @@
                 badgeId.textContent = slide.id;
             }
 
-            const titleInput = document.getElementById('slideTitleInput');
-            if (titleInput) {
-                titleInput.value = slide.title || '';
-                titleInput.oninput = () => {
-                    slide.title = titleInput.value;
+            const idInput = document.getElementById('slideIdInput');
+            if (idInput) {
+                idInput.value = slide.id || '';
+                idInput.oninput = () => {
+                    const clean = idInput.value.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const collision = slidesData.some(s => s !== slide && s.id === clean);
+                    if (collision) {
+                        idInput.style.borderColor = '#ef4444';
+                        idInput.title = 'Este ID ya está en uso por otro slide';
+                    } else {
+                        idInput.style.borderColor = '';
+                        idInput.title = '';
+                        slide.id = clean;
+                        currentSlideId = clean;
+                        if (badgeId) badgeId.textContent = clean;
+                        renderSlideChips();
+                        updateLivePreview();
+                    }
+                };
+                idInput.onblur = () => {
+                    idInput.value = slide.id;
+                };
+            }
+
+            const hiddenCheck = document.getElementById('slideHiddenCheck');
+            if (hiddenCheck) {
+                hiddenCheck.checked = Boolean(slide.hidden);
+                hiddenCheck.onchange = () => {
+                    slide.hidden = hiddenCheck.checked;
                     renderSlideChips();
                     updateLivePreview();
                 };
@@ -5485,15 +5525,17 @@
                 btn.innerHTML = '<span>Guardando...</span>';
             }
 
+            const origId = slide._origId || slide.id;
             try {
-                const res = await fetch(`/panel/slide/${encodeURIComponent(slide.id)}`, {
+                const res = await fetch(`/panel/slide/${encodeURIComponent(origId)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(slide)
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    const snapIdx = savedSlidesSnapshot.findIndex(s => s.id === slide.id);
+                    slide._origId = slide.id;
+                    const snapIdx = savedSlidesSnapshot.findIndex(s => s.id === origId || s.id === slide.id);
                     if (snapIdx >= 0) {
                         savedSlidesSnapshot[snapIdx] = JSON.parse(JSON.stringify(slide));
                     } else {
@@ -5501,7 +5543,7 @@
                     }
                     updateDirtySlideChipsUI();
 
-                    showToast(`Slide "${slide.title || slide.id}" guardado con éxito`);
+                    showToast(`Slide "${slide.id}" guardado con éxito`);
                     if (indicator) {
                         indicator.style.display = 'block';
                         setTimeout(() => { indicator.style.display = 'none'; }, 2500);
@@ -5552,12 +5594,10 @@
 
         function openNewSlideModal() {
             const modal = document.getElementById('newSlideModal');
-            const titleInput = document.getElementById('newSlideTitle');
             const idInput = document.getElementById('newSlideId');
-            if (titleInput) titleInput.value = '';
             if (idInput) idInput.value = '';
             if (modal) modal.style.display = 'flex';
-            if (titleInput) titleInput.focus();
+            if (idInput) idInput.focus();
         }
 
         function closeNewSlideModal() {
@@ -5566,16 +5606,14 @@
         }
 
         async function confirmCreateSlide() {
-            const titleInput = document.getElementById('newSlideTitle');
             const idInput = document.getElementById('newSlideId');
-            const title = titleInput ? titleInput.value.trim() : '';
             const id = idInput ? idInput.value.trim() : '';
 
             try {
                 const res = await fetch('/panel/slides/new', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, id })
+                    body: JSON.stringify({ id })
                 });
                 const data = await res.json();
                 if (data.ok && data.slide) {
@@ -5584,7 +5622,7 @@
                     closeNewSlideModal();
                     selectSlide(data.slide.id);
                     updateDirtySlideChipsUI();
-                    showToast(`Slide "${data.slide.title || data.slide.id}" creado`);
+                    showToast(`Slide "${data.slide.id}" creado`);
                 } else {
                     showToast(data.error || 'Error al crear slide', true);
                 }
@@ -5601,7 +5639,7 @@
                 return;
             }
 
-            if (!confirm(`¿Eliminar permanentemente el slide "${slide.title || slide.id}"?`)) {
+            if (!confirm(`¿Eliminar permanentemente el slide "${slide.id}"?`)) {
                 return;
             }
 
@@ -5617,7 +5655,7 @@
                     const nextSlide = slidesData[currIdx] || slidesData[currIdx - 1] || slidesData[0];
                     selectSlide(nextSlide.id);
                     updateDirtySlideChipsUI();
-                    showToast(`Slide "${slide.title || slide.id}" eliminado`);
+                    showToast(`Slide "${slide.id}" eliminado`);
                 } else {
                     showToast(data.error || 'Error al eliminar slide', true);
                 }
