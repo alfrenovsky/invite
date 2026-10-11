@@ -1052,8 +1052,8 @@
                 const nameEl = card.querySelector('.rsvp-guest-name') || card.querySelector('.guest-header-name');
                 let name = (nInput && nInput.value.trim()) 
                     ? `${nInput.value.trim()} ${aInput ? aInput.value.trim() : ''}`.trim() 
-                    : (nameEl ? nameEl.textContent.trim() : 'Invitado');
-                if (!name) name = 'Invitado';
+                    : (nameEl ? nameEl.textContent.trim() : 'Acompañante');
+                if (!name || name.toLowerCase() === 'invitado') name = 'Acompañante';
 
                 attendingItems.push({ name, monto });
                 total += monto;
@@ -1552,7 +1552,7 @@
             function syncGuestName() {
                 const n = inputNombre ? inputNombre.value.trim() : '';
                 const a = inputApellido ? inputApellido.value.trim() : '';
-                const full = (n || a) ? `${n} ${a}`.trim() : 'Invitado';
+                const full = (n || a) ? `${n} ${a}`.trim() : 'Acompañante';
                 if (nameDisplay) {
                     nameDisplay.textContent = full;
                 }
@@ -1569,7 +1569,7 @@
                 inputNombre.addEventListener('blur', () => {
                     const activeNames = getActiveGuestFirstNames();
                     if (activeNames.length === 0) {
-                        const restored = card.dataset.lastValidNombre || 'Invitado';
+                        const restored = card.dataset.lastValidNombre || 'Acompañante';
                         inputNombre.value = restored;
                         syncGuestName();
                         showToast('Debe haber al menos un nombre');

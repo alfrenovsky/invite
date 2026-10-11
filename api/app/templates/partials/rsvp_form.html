@@ -16,9 +16,9 @@
             {% endif %}
             <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}" data-monto="{{ guest.montotarjeta or '' }}" data-comprobante="{{ guest.comprobante or '' }}">
                 <!-- Guest Header Row (One Line with Bullet, Full Name, Gluten Icon, and Menu Icon) -->
-                <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}">
+                <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}">
                     <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
-                    <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}</span>
+                    <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
                     <span class="rsvp-header-icons">
                         <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}" style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
                             <img src="/assets/sin_gluten.svg" alt="Sin gluten" class="rsvp-gluten-badge">
