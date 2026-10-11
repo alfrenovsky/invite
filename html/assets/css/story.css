@@ -1583,6 +1583,238 @@
             background: rgba(231, 76, 60, 0.08);
         }
 
+        /* Payment Section & Proof of Payment Upload */
+        .rsvp-payment-section {
+            margin-top: 14px;
+            width: 100%;
+        }
+
+        .rsvp-payment-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .rsvp-payment-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding-bottom: 10px;
+        }
+
+        .rsvp-payment-icon {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .rsvp-payment-header-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: left;
+        }
+
+        .rsvp-payment-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.3px;
+        }
+
+        .rsvp-payment-subtitle {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .rsvp-payment-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+            font-size: 0.82rem;
+            background: rgba(0, 0, 0, 0.22);
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .payment-breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .payment-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: #34d399;
+            border-top: 1px dashed rgba(255, 255, 255, 0.15);
+            padding-top: 6px;
+            margin-top: 4px;
+            font-size: 0.92rem;
+        }
+
+        .rsvp-upload-wrapper {
+            position: relative;
+        }
+
+        .upload-dropzone {
+            border: 1.5px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.03);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .upload-dropzone:hover {
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.08);
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.15);
+        }
+
+        .upload-dropzone:active {
+            transform: scale(0.98);
+        }
+
+        .upload-dropzone-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .upload-cloud-icon {
+            color: #38bdf8;
+        }
+
+        .upload-btn-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        .upload-hint {
+            font-size: 0.70rem;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .upload-progress-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            font-size: 0.82rem;
+            color: #38bdf8;
+        }
+
+        .upload-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(56, 189, 248, 0.3);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .upload-success-state {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(52, 211, 153, 0.12);
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            border-radius: 12px;
+        }
+
+        .upload-success-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .upload-success-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: #34d399;
+            color: #064e3b;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .upload-success-label {
+            font-size: 0.80rem;
+            color: #ffffff;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upload-success-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-comprobante-link {
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(56, 189, 248, 0.12);
+            transition: all 0.2s ease;
+        }
+
+        .btn-comprobante-link:hover {
+            background: rgba(56, 189, 248, 0.25);
+            color: #ffffff;
+        }
+
+        .btn-comprobante-change {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.72rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-comprobante-change:hover {
+            border-color: #ffffff;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
 
 
 

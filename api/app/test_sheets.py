@@ -11,6 +11,7 @@ from sheets import (
     parse_and_validate_token,
     clean_phone_number,
     generate_whatsapp_url,
+    parse_currency_amount,
 )
 
 
@@ -715,6 +716,86 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertIn(b"data-hidden=\"true\"", res_rejected.data)
                 self.assertNotIn(b"display: none;", res_rejected.data)
 
+    def test_parse_currency_amount(self):
+        self.assertEqual(parse_currency_amount("50000"), 50000.0)
+        self.assertEqual(parse_currency_amount("$ 50.000"), 50000.0)
+        self.assertEqual(parse_currency_amount("$ 50.000,50"), 50000.5)
+        self.assertEqual(parse_currency_amount("$45,50"), 45.5)
+        self.assertEqual(parse_currency_amount(""), 0.0)
+        self.assertEqual(parse_currency_amount(None), 0.0)
+
+    def test_upload_comprobante_and_propagation(self):
+        import io
+        from app import app
+        with app.test_client() as client:
+            code = compute_check_code("familia_pago")
+            token = f"familia_pago_{code}"
+            dummy_guests = [
+                {"id": "g1", "invitacion_id": "familia_pago", "nombre": "Juan"},
+                {"id": "g2", "invitacion_id": "familia_pago", "nombre": "Maria"},
+            ]
+            with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
+                 patch("app.table.update_record") as mock_update:
+                data = {"file": (io.BytesIO(b"%PDF-1.4 mock content"), "comprobante.pdf")}
+                res = client.post(f"/i/{token}/comprobante", data=data, content_type="multipart/form-data")
+                self.assertEqual(res.status_code, 200)
+                body = res.get_json()
+                self.assertTrue(body["ok"])
+                self.assertIn("/comprobantes/", body["url"])
+                self.assertTrue(body["url"].endswith(".pdf"))
+                # Verify update was called for BOTH guests of that invitation
+                self.assertEqual(mock_update.call_count, 2)
+                called_ids = [call[0][0] for call in mock_update.call_args_list]
+                self.assertIn("g1", called_ids)
+                self.assertIn("g2", called_ids)
+
+    def test_upload_comprobante_disallowed_extension(self):
+        import io
+        from app import app
+        with app.test_client() as client:
+            code = compute_check_code("familia_pago")
+            token = f"familia_pago_{code}"
+            data = {"file": (io.BytesIO(b"malicious script"), "hack.exe")}
+            res = client.post(f"/i/{token}/comprobante", data=data, content_type="multipart/form-data")
+            self.assertEqual(res.status_code, 400)
+            self.assertFalse(res.get_json()["ok"])
+            self.assertIn("Formato no permitido", res.get_json()["error"])
+
+    def test_delete_comprobante(self):
+        from app import app
+        with app.test_client() as client:
+            code = compute_check_code("familia_pago")
+            token = f"familia_pago_{code}"
+            dummy_guests = [
+                {"id": "g1", "invitacion_id": "familia_pago", "comprobante": "http://test/file.pdf"},
+            ]
+            with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
+                 patch("app.table.update_record") as mock_update:
+                res = client.delete(f"/i/{token}/comprobante")
+                self.assertEqual(res.status_code, 200)
+                self.assertTrue(res.get_json()["ok"])
+                mock_update.assert_called_once_with("g1", {"comprobante": ""})
+
+    def test_flush_invitacion_cache_endpoint(self):
+        from app import app
+        with app.test_client() as client:
+            code = compute_check_code("familia_flush")
+            token = f"familia_flush_{code}"
+            with patch("app.table.flush_local_to_remote", return_value=3) as mock_flush:
+                # 1. Valid invitation token
+                res = client.post(f"/i/{token}/flush")
+                self.assertEqual(res.status_code, 200)
+                body = res.get_json()
+                self.assertTrue(body["ok"])
+                self.assertEqual(body["flushed"], 3)
+                mock_flush.assert_called_once()
+
+                # 2. Invalid token
+                res_invalid = client.post("/i/familia_flush_wrongcode/flush")
+                self.assertEqual(res_invalid.status_code, 403)
+                self.assertFalse(res_invalid.get_json()["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()
+

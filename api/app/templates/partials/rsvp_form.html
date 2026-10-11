@@ -1,5 +1,5 @@
 <div class="interactive-content rsvp-form-container">
-    <form id="storyRsvpForm">
+    <form id="storyRsvpForm" data-existing-comprobante="{{ existing_comprobante or '' }}">
         <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
         
         <div id="rsvpCardsContainer" class="rsvp-guest-list">
@@ -14,7 +14,7 @@
                 {% else %}{% set menu_icon = '🍽️' %}
                 {% endif %}
             {% endif %}
-            <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}">
+            <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}" data-monto="{{ guest.montotarjeta or '' }}" data-comprobante="{{ guest.comprobante or '' }}">
                 <!-- Guest Header Row (One Line with Bullet, Full Name, Gluten Icon, and Menu Icon) -->
                 <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Invitado{% endif %}">
                     <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
@@ -73,6 +73,55 @@
                 </div>
             </div>
             {% endfor %}
+        </div>
+
+        <!-- Payment Section (Tarjeta de la fiesta & Comprobante) -->
+        <div id="rsvpPaymentSection" class="rsvp-payment-section" style="display: none;">
+            <div class="rsvp-payment-card">
+                <div class="rsvp-payment-header">
+                    <span class="rsvp-payment-icon">💳</span>
+                    <div class="rsvp-payment-header-text">
+                        <span class="rsvp-payment-title">Tarjeta de la fiesta</span>
+                        <span class="rsvp-payment-subtitle">Monto correspondiente a los invitados que asisten</span>
+                    </div>
+                </div>
+
+                <div class="rsvp-payment-breakdown" id="paymentBreakdown">
+                    <!-- Detalle dinámico calculado por JS -->
+                </div>
+
+                <div class="rsvp-upload-wrapper" id="rsvpUploadWrapper">
+                    <input type="file" id="comprobanteFileInput" accept=".pdf,image/jpeg,image/png,image/webp" style="display: none;">
+
+                    <div id="uploadPrompt" class="upload-dropzone" role="button" tabindex="0" title="Seleccionar comprobante de pago">
+                        <div class="upload-dropzone-content">
+                            <svg class="upload-cloud-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <span class="upload-btn-label">Subir comprobante de pago</span>
+                            <span class="upload-hint">Formatos: PDF o foto (JPG, PNG)</span>
+                        </div>
+                    </div>
+
+                    <div id="uploadProgress" class="upload-progress-state" style="display: none;">
+                        <div class="upload-spinner"></div>
+                        <span>Subiendo comprobante...</span>
+                    </div>
+
+                    <div id="uploadSuccess" class="upload-success-state" style="display: none;">
+                        <div class="upload-success-left">
+                            <span class="upload-success-badge">✓</span>
+                            <span class="upload-success-label" id="uploadedFilename">Comprobante recibido</span>
+                        </div>
+                        <div class="upload-success-actions">
+                            <a id="btnViewComprobante" href="#" target="_blank" rel="noopener noreferrer" class="btn-comprobante-link">Ver archivo ↗</a>
+                            <button type="button" id="btnChangeComprobante" class="btn-comprobante-change">Cambiar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="autosave-status" id="autoSaveStatus" style="margin-top: 14px;">

@@ -350,7 +350,11 @@
 
     function goToSlide(index) {
         if (slides.length === 0) return;
-        flushAutoSave();
+        if (index !== currentIndex) {
+            handleFormSlideExit();
+        } else {
+            flushAutoSave();
+        }
         if (index < 0) index = 0;
         if (index >= slides.length) index = slides.length - 1;
 
@@ -966,6 +970,245 @@
         iconsContainer.innerHTML = html;
     }
 
+    // ==============================================================
+    // 💳 Payment Calculation & Proof of Payment Upload
+    // ==============================================================
+    function getInvitationToken() {
+        const container = document.getElementById('storyContainer');
+        if (container && container.dataset.token) return container.dataset.token;
+        const match = window.location.pathname.match(/\/(?:i|invitacion)\/([^/]+)/);
+        return match ? match[1] : '';
+    }
+
+    function flushGoogleSheetsCache() {
+        const token = getInvitationToken();
+        if (!token) return;
+        try {
+            fetch(`/i/${encodeURIComponent(token)}/flush`, {
+                method: 'POST',
+                keepalive: true
+            }).catch(() => {});
+        } catch (e) {}
+    }
+
+    async function handleFormSlideExit() {
+        const currentSlide = slides[currentIndex];
+        const isFormSlide = currentSlide && (currentSlide.getAttribute('data-slide-id') === 'rsvp' || currentSlide.querySelector('.rsvp-form-container'));
+        if (!isFormSlide) return;
+
+        if (dirtyGuests.size > 0 || isSaving) {
+            await flushAutoSave();
+        }
+        flushGoogleSheetsCache();
+    }
+    function parseCurrencyAmount(val) {
+        if (!val) return 0;
+        let s = String(val).trim().replace(/[^\d,\.]/g, '');
+        if (!s) return 0;
+        if (s.includes(',') && s.includes('.')) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else if (s.includes(',')) {
+            s = s.replace(',', '.');
+        } else if (s.includes('.')) {
+            const parts = s.split('.');
+            if (parts.length > 1 && parts.slice(1).every(p => p.length === 3)) {
+                s = parts.join('');
+            }
+        }
+        const n = parseFloat(s);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function formatCurrency(val) {
+        try {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                maximumFractionDigits: 0
+            }).format(val);
+        } catch (e) {
+            return '$ ' + Math.round(val).toLocaleString('es-AR');
+        }
+    }
+
+    function updatePaymentSection() {
+        const paymentSection = document.getElementById('rsvpPaymentSection');
+        const breakdownEl = document.getElementById('paymentBreakdown');
+        if (!paymentSection || !breakdownEl) return;
+
+        const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]'));
+        let total = 0;
+        const attendingItems = [];
+
+        cards.forEach(card => {
+            const status = card.getAttribute('data-status') || '';
+            const rawMonto = card.getAttribute('data-monto') || '';
+            const monto = parseCurrencyAmount(rawMonto);
+
+            if (status === 'si' && monto > 0) {
+                const nInput = card.querySelector('input[name^="nombre_"]');
+                const aInput = card.querySelector('input[name^="apellido_"]');
+                const nameEl = card.querySelector('.rsvp-guest-name') || card.querySelector('.guest-header-name');
+                let name = (nInput && nInput.value.trim()) 
+                    ? `${nInput.value.trim()} ${aInput ? aInput.value.trim() : ''}`.trim() 
+                    : (nameEl ? nameEl.textContent.trim() : 'Invitado');
+                if (!name) name = 'Invitado';
+
+                attendingItems.push({ name, monto });
+                total += monto;
+            }
+        });
+
+        if (total > 0 && attendingItems.length > 0) {
+            let rowsHtml = '';
+            attendingItems.forEach(item => {
+                rowsHtml += `
+                    <div class="payment-breakdown-row">
+                        <span>${item.name}</span>
+                        <span>${formatCurrency(item.monto)}</span>
+                    </div>
+                `;
+            });
+            rowsHtml += `
+                <div class="payment-total-row">
+                    <span>Total a transferir</span>
+                    <span>${formatCurrency(total)}</span>
+                </div>
+            `;
+            breakdownEl.innerHTML = rowsHtml;
+            paymentSection.style.display = 'block';
+        } else {
+            paymentSection.style.display = 'none';
+        }
+    }
+
+    function initComprobanteUploader() {
+        const fileInput = document.getElementById('comprobanteFileInput');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadSuccess = document.getElementById('uploadSuccess');
+        const uploadedFilename = document.getElementById('uploadedFilename');
+        const btnViewComprobante = document.getElementById('btnViewComprobante');
+        const btnChangeComprobante = document.getElementById('btnChangeComprobante');
+        const rsvpForm = document.getElementById('storyRsvpForm');
+
+        if (!fileInput || !uploadPrompt || !rsvpForm) return;
+
+        function setComprobanteState(url, filename) {
+            if (url) {
+                rsvpForm.setAttribute('data-existing-comprobante', url);
+                document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
+                    c.setAttribute('data-comprobante', url);
+                });
+                if (btnViewComprobante) {
+                    btnViewComprobante.href = url;
+                }
+                if (uploadedFilename) {
+                    uploadedFilename.textContent = filename || 'Comprobante recibido';
+                    uploadedFilename.title = filename || 'Comprobante recibido';
+                }
+                uploadPrompt.style.display = 'none';
+                uploadProgress.style.display = 'none';
+                uploadSuccess.style.display = 'flex';
+            } else {
+                rsvpForm.removeAttribute('data-existing-comprobante');
+                uploadPrompt.style.display = 'block';
+                uploadProgress.style.display = 'none';
+                uploadSuccess.style.display = 'none';
+            }
+        }
+
+        // Initialize state from existing comprobante
+        const existingUrl = rsvpForm.getAttribute('data-existing-comprobante') || '';
+        if (existingUrl) {
+            const rawName = existingUrl.split('/').pop() || 'Comprobante';
+            setComprobanteState(existingUrl, rawName);
+        } else {
+            setComprobanteState('', '');
+        }
+
+        // Click on dropzone opens file picker
+        uploadPrompt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+        uploadPrompt.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput.click();
+            }
+        });
+
+        // Click on "Cambiar" opens file picker to replace file
+        if (btnChangeComprobante) {
+            btnChangeComprobante.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput.click();
+            });
+        }
+
+        // Handle file change
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) return;
+
+            const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
+            if (!allowedExts.includes(ext)) {
+                showToast('Formato no permitido. Subí PDF o foto (JPG, PNG).');
+                fileInput.value = '';
+                return;
+            }
+
+            const maxSize = 15 * 1024 * 1024; // 15MB
+            if (file.size > maxSize) {
+                showToast('El archivo es demasiado grande (máximo 15MB)');
+                fileInput.value = '';
+                return;
+            }
+
+            const token = getInvitationToken();
+            if (!token) {
+                showToast('Error: No se encontró el token de la invitación');
+                fileInput.value = '';
+                return;
+            }
+
+            uploadPrompt.style.display = 'none';
+            uploadSuccess.style.display = 'none';
+            uploadProgress.style.display = 'flex';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`/i/${encodeURIComponent(token)}/comprobante`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok && data.ok) {
+                    setComprobanteState(data.url, file.name);
+                    showToast('¡Comprobante subido con éxito!');
+                } else {
+                    showToast(data.error || 'Error al subir comprobante');
+                    const curUrl = rsvpForm.getAttribute('data-existing-comprobante');
+                    setComprobanteState(curUrl, curUrl ? curUrl.split('/').pop() : '');
+                }
+            } catch (err) {
+                console.error('Error uploading comprobante:', err);
+                showToast('Error de conexión al subir comprobante');
+                const curUrl = rsvpForm.getAttribute('data-existing-comprobante');
+                setComprobanteState(curUrl, curUrl ? curUrl.split('/').pop() : '');
+            } finally {
+                fileInput.value = '';
+            }
+        });
+    }
+
     function bindInteractiveEvents() {
         // Edit RSVP Button on GatoTriste slide
         const btnEditRsvp = document.getElementById('btnEditRsvp');
@@ -1259,6 +1502,7 @@
                     updateMenuIconDisplay(val);
                     updateGlutenIconDisplay(val);
                     updateSlideList();
+                    updatePaymentSection();
 
                     if (checkAllRejected()) {
                         document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
@@ -1315,6 +1559,7 @@
                     card.dataset.lastValidNombre = n;
                 }
                 updateStoryGuestNames();
+                updatePaymentSection();
                 queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
             }
 
@@ -1390,8 +1635,10 @@
                         }
                     }
 
+                    card.setAttribute('data-status', radio.value);
                     updateDietIcons(card);
                     updateSlideList();
+                    updatePaymentSection();
 
                     if (checkAllRejected()) {
                         document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
@@ -1453,6 +1700,7 @@
                 const full = (n || a) ? `${n} ${a}`.trim() : 'Acompañante';
                 if (headerName) headerName.textContent = full;
                 if (chipName) chipName.textContent = full;
+                updatePaymentSection();
                 queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
             }
 
@@ -1465,6 +1713,9 @@
                 inputApellido.addEventListener('blur', () => flushAutoSave());
             }
         });
+
+        initComprobanteUploader();
+        updatePaymentSection();
     }
 
     // Immediate save on clicking or tapping outside the RSVP form
@@ -1472,17 +1723,19 @@
         const form = document.getElementById('storyRsvpForm');
         if (!form) return;
         if (!form.contains(e.target)) {
-            flushAutoSave();
+            flushAutoSave().then(() => {
+                flushGoogleSheetsCache();
+            });
         }
     }
     document.addEventListener('pointerdown', handleOutsideFormClick, { passive: true });
     document.addEventListener('click', handleOutsideFormClick, { passive: true });
 
     // Page exit listeners
-    window.addEventListener('beforeunload', flushAutoSave);
-    window.addEventListener('pagehide', flushAutoSave);
+    window.addEventListener('beforeunload', handleFormSlideExit);
+    window.addEventListener('pagehide', handleFormSlideExit);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') flushAutoSave();
+        if (document.visibilityState === 'hidden') handleFormSlideExit();
     });
 
     // ==============================================================

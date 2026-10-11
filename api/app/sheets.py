@@ -26,6 +26,7 @@ FIELDNAMES = [
     "celiaco",
     "url",
     "whatsapp",
+    "comprobante",
 ]
 
 
@@ -83,6 +84,29 @@ def parse_and_validate_token(token: str, salt: str = None):
         if provided_code.lower() == expected_code.lower():
             return slug
     return None
+
+
+def parse_currency_amount(val) -> float:
+    if not val:
+        return 0.0
+    val_str = str(val).strip()
+    if not val_str:
+        return 0.0
+    val_str = re.sub(r"[^\d,\.]", "", val_str)
+    if not val_str:
+        return 0.0
+    if "," in val_str and "." in val_str:
+        val_str = val_str.replace(".", "").replace(",", ".")
+    elif "," in val_str:
+        val_str = val_str.replace(",", ".")
+    elif "." in val_str:
+        parts = val_str.split(".")
+        if len(parts) > 1 and all(len(p) == 3 for p in parts[1:]):
+            val_str = "".join(parts)
+    try:
+        return float(val_str)
+    except ValueError:
+        return 0.0
 
 
 class GoogleSheetsTable:
@@ -270,6 +294,8 @@ class GoogleSheetsTable:
             item["whatsapp"] = generate_whatsapp_url(phone_val, item["url"])
         else:
             item["whatsapp"] = str(item.get("whatsapp", ""))
+
+        item["comprobante"] = str(rec.get("comprobante", "") or "")
 
 
         # Build row according to FIELDNAMES

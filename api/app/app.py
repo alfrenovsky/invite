@@ -3,9 +3,10 @@ import time
 import json
 import re
 import urllib.parse
-from flask import Flask, request, jsonify, render_template, abort, send_file
+import uuid
+from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory
 from werkzeug.utils import secure_filename
-from sheets import GoogleSheetsTable, parse_and_validate_token
+from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL
 
 
 app = Flask(__name__)
@@ -469,6 +470,8 @@ def get_guest_context(validated_slug):
 
 
 
+    existing_comprobante = next((g.get("comprobante") for g in guests if g.get("comprobante")), "")
+
     return {
         "invitacion_id": validated_slug,
         "invitation_url": invitation_url,
@@ -484,6 +487,7 @@ def get_guest_context(validated_slug):
         "active_slides": active_slides,
         "styles": load_styles(),
         "config_version": int(time.time()),
+        "existing_comprobante": existing_comprobante,
     }
 
 
@@ -591,9 +595,86 @@ def get_single_slide(token, slide_id):
     return render_template(slide["template"], slide=slide, **context)
 
 
+COMPROBANTES_DIR = os.environ.get("COMPROBANTES_DIR", "/data/comprobantes")
+os.makedirs(COMPROBANTES_DIR, exist_ok=True)
+ALLOWED_COMPROBANTE_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
 
 
+@app.post("/i/<token>/comprobante")
+@app.post("/invitacion/<token>/comprobante")
+def upload_comprobante(token):
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
+        return jsonify({"ok": False, "error": "Token de invitación inválido o no autorizado"}), 403
 
+    if "file" not in request.files:
+        return jsonify({"ok": False, "error": "No se envió ningún archivo de comprobante"}), 400
+
+    file = request.files["file"]
+    if not file or not file.filename:
+        return jsonify({"ok": False, "error": "Archivo no seleccionado"}), 400
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_COMPROBANTE_EXTENSIONS:
+        return jsonify({"ok": False, "error": "Formato no permitido. Por favor subí un archivo PDF o una imagen (JPG, PNG, WEBP)."}), 400
+
+    os.makedirs(COMPROBANTES_DIR, exist_ok=True)
+
+    safe_slug = re.sub(r"[^a-zA-Z0-9_-]", "_", validated_slug)
+    timestamp = int(time.time())
+    unique_suffix = uuid.uuid4().hex[:6]
+    filename = f"comprobante_{safe_slug}_{timestamp}_{unique_suffix}{ext}"
+    filepath = os.path.join(COMPROBANTES_DIR, filename)
+    file.save(filepath)
+
+    base_domain = BASE_URL.rstrip("/")
+    comprobante_url = f"{base_domain}/comprobantes/{filename}"
+
+    guests = table.get_by_invitacion(validated_slug)
+    for g in guests:
+        table.update_record(g["id"], {"comprobante": comprobante_url})
+
+    return jsonify({
+        "ok": True,
+        "url": comprobante_url,
+        "filename": filename
+    })
+
+
+@app.delete("/i/<token>/comprobante")
+@app.delete("/invitacion/<token>/comprobante")
+def delete_comprobante(token):
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
+        return jsonify({"ok": False, "error": "Token de invitación inválido o no autorizado"}), 403
+
+    guests = table.get_by_invitacion(validated_slug)
+    for g in guests:
+        table.update_record(g["id"], {"comprobante": ""})
+
+    return jsonify({"ok": True, "message": "Comprobante desvinculado con éxito"})
+
+
+@app.get("/comprobantes/<path:filename>")
+def serve_comprobante(filename):
+    return send_from_directory(COMPROBANTES_DIR, filename)
+
+
+@app.post("/i/<token>/flush")
+@app.post("/invitacion/<token>/flush")
+def flush_invitacion_cache(token):
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
+        return jsonify({"ok": False, "error": "Token de invitación inválido o no autorizado"}), 403
+
+    flushed = table.flush_local_to_remote()
+    return jsonify({"ok": True, "flushed": flushed})
+
+
+@app.post("/invitados/flush")
+def flush_all_cache():
+    flushed = table.flush_local_to_remote()
+    return jsonify({"ok": True, "flushed": flushed})
 
 
 @app.get("/form")
