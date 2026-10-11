@@ -4703,8 +4703,15 @@
                     const textGroup = document.createElement('div');
                     textGroup.className = 'form-group';
                     textGroup.innerHTML = `
-                    <label>Contenido del Texto</label>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <label>Contenido del Texto</label>
+                        <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input'));">Insertar {name}</span>
+                    </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
+                    <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                        <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">{name}</span>
+                        <span>Se reemplaza con los nombres de los invitados (ej: <em>Juan y María</em>)</span>
+                    </div>
                 `;
                     const textarea = textGroup.querySelector('textarea');
                     textarea.oninput = (e) => {
@@ -5268,6 +5275,11 @@
                 rsvpBody.style.display = 'none';
             }
 
+            function replacePreviewVariables(str) {
+                if (!str) return '';
+                return str.replace(/\{(?:name|names|nombre|nombres)\}/gi, 'Juan y María');
+            }
+
             // Render live overlay elements
             if (overlay) {
                 overlay.innerHTML = '';
@@ -5284,7 +5296,7 @@
                             textDiv.style.width = `${widthVal}%`;
                             textDiv.style.maxWidth = `${widthVal}%`;
                             textDiv.style.transform = 'translate(-50%, -50%)';
-                            textDiv.textContent = el.content || '';
+                            textDiv.textContent = replacePreviewVariables(el.content || '');
                             overlay.appendChild(textDiv);
                         } else if (el.type === 'location' || el.type === 'link') {
                             const locDiv = document.createElement('div');
@@ -5310,7 +5322,7 @@
                             locDiv.innerHTML = `
                             <div class="instagram-location-sticker instagram-link-sticker sticker-style-${stickerStyle}" style="--sticker-color: ${stickerColor};">
                                 ${iconSvg}
-                                <span class="location-sticker-text">${escapeHtml(el.content || 'ENLACE')}</span>
+                                <span class="location-sticker-text">${escapeHtml(replacePreviewVariables(el.content || 'ENLACE'))}</span>
                             </div>
                         `;
                             overlay.appendChild(locDiv);

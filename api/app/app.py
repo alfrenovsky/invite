@@ -398,6 +398,33 @@ def is_dev_mode():
     )
 
 
+def format_group_names(names, fallback="Familia / Pareja"):
+    clean_names = [str(n).strip() for n in names if n and str(n).strip()]
+    if len(clean_names) == 1:
+        return clean_names[0]
+    elif len(clean_names) == 2:
+        return f"{clean_names[0]} y {clean_names[1]}"
+    elif len(clean_names) > 2:
+        return f"{', '.join(clean_names[:-1])} y {clean_names[-1]}"
+    return fallback
+
+
+def replace_guest_names(text, group_names=""):
+    if not text:
+        return ""
+    return re.sub(r'\{(?:name|names|nombre|nombres)\}', str(group_names or ""), str(text), flags=re.IGNORECASE)
+
+
+@app.template_filter("replace_guest_names")
+def replace_guest_names_filter(text, group_names=""):
+    return replace_guest_names(text, group_names)
+
+
+@app.context_processor
+def utility_processor():
+    return dict(replace_guest_names=replace_guest_names)
+
+
 def get_guest_context(validated_slug):
     try:
         guests = table.get_by_invitacion(validated_slug)
@@ -408,14 +435,8 @@ def get_guest_context(validated_slug):
         return None
 
     names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
-    if len(names) == 1:
-        group_names = names[0]
-    elif len(names) == 2:
-        group_names = f"{names[0]} y {names[1]}"
-    elif len(names) > 2:
-        group_names = f"{', '.join(names[:-1])} y {names[-1]}"
-    else:
-        group_names = "Familia / Pareja"
+    fallback_title = validated_slug.replace("_", " ").replace("-", " ").title() if validated_slug else "Familia / Pareja"
+    group_names = format_group_names(names, fallback=fallback_title or "Familia / Pareja")
 
     confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
     rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
@@ -1164,6 +1185,16 @@ def update_invitado(record_id):
         return jsonify({"ok": False, "error": "JSON inválido"}), 400
 
     try:
+        # Prevent clearing the only remaining name in an invitation
+        if "nombre" in data and not str(data["nombre"]).strip():
+            existing = table.get_by_id(record_id)
+            if existing:
+                inv_id = existing.get("invitacion_id")
+                siblings = table.get_by_invitacion(inv_id) if inv_id else []
+                other_names = [s.get("nombre", "").strip() for s in siblings if str(s.get("id")) != str(record_id) and s.get("nombre", "").strip()]
+                if not other_names:
+                    data["nombre"] = existing.get("nombre", "")
+
         updated = table.update_record(record_id, data)
         if not updated:
             return jsonify({"ok": False, "error": "Invitado no encontrado"}), 404

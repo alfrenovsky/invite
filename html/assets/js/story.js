@@ -1060,6 +1060,46 @@
             savedGuestStates[guestId] = JSON.stringify(getGuestPayload(card));
         });
 
+        // Dynamic Guest Names Variable Engine ({name})
+        let lastValidGroupNames = '';
+
+        function formatGuestNames(namesList) {
+            if (!namesList || namesList.length === 0) return '';
+            if (namesList.length === 1) return namesList[0];
+            if (namesList.length === 2) return `${namesList[0]} y ${namesList[1]}`;
+            return `${namesList.slice(0, -1).join(', ')} y ${namesList[namesList.length - 1]}`;
+        }
+
+        function getActiveGuestFirstNames() {
+            const nameInputs = Array.from(document.querySelectorAll('.rsvp-guest-card input[name^="nombre_"], .rsvp-card input[name^="nombre_"]'));
+            const names = [];
+            nameInputs.forEach(input => {
+                const val = input.value.trim();
+                if (val) names.push(val);
+            });
+            return names;
+        }
+
+        function updateStoryGuestNames() {
+            const currentNames = getActiveGuestFirstNames();
+            let formattedNames = '';
+            if (currentNames.length > 0) {
+                formattedNames = formatGuestNames(currentNames);
+                lastValidGroupNames = formattedNames;
+            } else {
+                formattedNames = lastValidGroupNames || '';
+            }
+
+            if (!formattedNames) return;
+
+            document.querySelectorAll('[data-raw-content]').forEach(el => {
+                const raw = el.getAttribute('data-raw-content');
+                if (raw && /\{(?:name|names|nombre|nombres)\}/i.test(raw)) {
+                    el.textContent = raw.replace(/\{(?:name|names|nombre|nombres)\}/gi, formattedNames);
+                }
+            });
+        }
+
         // Expandable RSVP Guest Cards (Accordion toggle, 3 status buttons, live name sync)
         const MENU_ICONS = {
             'general': '🍽️',
@@ -1209,6 +1249,10 @@
                 });
             }
 
+            if (inputNombre && inputNombre.value.trim()) {
+                card.dataset.lastValidNombre = inputNombre.value.trim();
+            }
+
             // 3. Name & Lastname Live Sync
             function syncGuestName() {
                 const n = inputNombre ? inputNombre.value.trim() : '';
@@ -1217,12 +1261,25 @@
                 if (nameDisplay) {
                     nameDisplay.textContent = full;
                 }
+                if (n) {
+                    card.dataset.lastValidNombre = n;
+                }
+                updateStoryGuestNames();
                 queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
             }
 
             if (inputNombre) {
                 inputNombre.addEventListener('input', syncGuestName);
-                inputNombre.addEventListener('blur', () => flushAutoSave());
+                inputNombre.addEventListener('blur', () => {
+                    const activeNames = getActiveGuestFirstNames();
+                    if (activeNames.length === 0) {
+                        const restored = card.dataset.lastValidNombre || 'Invitado';
+                        inputNombre.value = restored;
+                        syncGuestName();
+                        showToast('Debe haber al menos un nombre');
+                    }
+                    flushAutoSave();
+                });
             }
             if (inputApellido) {
                 inputApellido.addEventListener('input', syncGuestName);
@@ -1233,6 +1290,9 @@
             updateMenuIconDisplay(card.getAttribute('data-status'));
             updateGlutenIconDisplay(card.getAttribute('data-status'));
         });
+
+        // Initialize story texts with current names
+        updateStoryGuestNames();
 
         // RSVP Form Radio & Input Bindings (Legacy or Detailed)
         const cards = Array.from(document.querySelectorAll('.rsvp-card'));

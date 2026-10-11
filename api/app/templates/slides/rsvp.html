@@ -26,7 +26,8 @@
                             {% for el in (slide.elements if slide else []) or [] %}
                                 {% if el.type == 'text' %}
                                     <div class="slide-el slide-el-{{ el.style or 'body' }}"
-                                         style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%);">{{ el.content | trim }}</div>
+                                         data-raw-content="{{ el.content }}"
+                                         style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%);">{{ el.content | replace_guest_names(group_names) | trim }}</div>
                                 {% elif el.type in ('location', 'link') %}
                                     {% set sticker_icon = el.icon or ('location' if el.type == 'location' else 'link') %}
                                     {% set sticker_color = el.color or '#0488db' %}
@@ -68,7 +69,7 @@
                                                     </g>
                                                 </svg>
                                             {% endif %}
-                                            <span class="location-sticker-text">{{ el.content | trim }}</span>
+                                            <span class="location-sticker-text" data-raw-content="{{ el.content }}">{{ el.content | replace_guest_names(group_names) | trim }}</span>
                                         </a>
                                     </div>
                                 {% elif el.type == 'countdown' %}

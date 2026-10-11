@@ -594,6 +594,60 @@ class TestGoogleSheetsTable(unittest.TestCase):
                         self.assertTrue(res_del.get_json()["ok"])
                         self.assertFalse(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
 
+    def test_guest_names_formatting_and_escape_variable(self):
+        from app import app, format_group_names, replace_guest_names
+
+        # 1. Grammar joining in Spanish
+        self.assertEqual(format_group_names(["Alfredo"]), "Alfredo")
+        self.assertEqual(format_group_names(["Alfredo", "Celia"]), "Alfredo y Celia")
+        self.assertEqual(format_group_names(["Alfredo", "Celia", "Juan"]), "Alfredo, Celia y Juan")
+        self.assertEqual(format_group_names(["Alfredo", "Celia", "Juan", "Pedro"]), "Alfredo, Celia, Juan y Pedro")
+        self.assertEqual(format_group_names([], fallback="Familia / Pareja"), "Familia / Pareja")
+        self.assertEqual(format_group_names(["", "   "], fallback="Invitados"), "Invitados")
+
+        # 2. Escape sequence replacement ({name}, {nombre}, {nombres}, {NAME})
+        self.assertEqual(replace_guest_names("¡Hola {name}!", "Juan"), "¡Hola Juan!")
+        self.assertEqual(replace_guest_names("Bienvenidos {nombre}", "Juan y María"), "Bienvenidos Juan y María")
+        self.assertEqual(replace_guest_names("Para {NOMBRES}", "Juan, María y Pedro"), "Para Juan, María y Pedro")
+        self.assertEqual(replace_guest_names("Mesa de {NAME}", "Celia"), "Mesa de Celia")
+
+        # 3. SSR Slide rendering replacing {name}
+        with app.test_client() as client:
+            code = parse_and_validate_token._cache_token = compute_check_code("familia_gomez")
+            dummy_guests = [
+                {"id": "g1", "invitacion_id": "familia_gomez", "nombre": "Juan", "apellido": "Gómez"},
+                {"id": "g2", "invitacion_id": "familia_gomez", "nombre": "María", "apellido": "López"},
+            ]
+            dummy_slides = [{
+                "id": "slide_saludo",
+                "title": "Saludo",
+                "template": "slides/custom.html",
+                "enabled": True,
+                "elements": [
+                    {"type": "text", "style": "title", "content": "¡Hola {name}!"},
+                    {"type": "location", "content": "Mesa de {nombre}", "url": "https://maps.google.com"}
+                ]
+            }]
+            with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
+                 patch("app.load_slides", return_value=dummy_slides):
+                res = client.get(f"/i/familia_gomez_{code}/slide/slide_saludo")
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(b"data-raw-content=\"\xc2\xa1Hola {name}!\"", res.data)
+                self.assertIn(b"\xc2\xa1Hola Juan y Mar\xc3\xada!", res.data)
+                self.assertIn(b"Mesa de Juan y Mar\xc3\xada", res.data)
+
+        # 4. Backend safeguard: do not allow clearing the sole remaining name
+        with app.test_client() as client:
+            sole_guest = {"id": "g_sole", "invitacion_id": "inv_sole", "nombre": "Carlos"}
+            with patch("app.table.get_by_id", return_value=sole_guest), \
+                 patch("app.table.get_by_invitacion", return_value=[sole_guest]), \
+                 patch("app.table.update_record", return_value=sole_guest) as mock_update:
+                res = client.put("/invitados/g_sole", json={"nombre": "   "})
+                self.assertEqual(res.status_code, 200)
+                # The name should NOT have been cleared to empty, but preserved as 'Carlos'
+                called_data = mock_update.call_args[0][1]
+                self.assertEqual(called_data["nombre"], "Carlos")
+
 
 if __name__ == "__main__":
     unittest.main()
