@@ -795,6 +795,31 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res_invalid.status_code, 403)
                 self.assertFalse(res_invalid.get_json()["ok"])
 
+    def test_payment_alias_cbu_rendering(self):
+        from app import app
+        with app.test_client() as client:
+            code = compute_check_code("familia_alias")
+            token = f"familia_alias_{code}"
+            dummy_guests = [
+                {"id": "g1", "invitacion_id": "familia_alias", "nombre": "Juan", "apellido": "Perez", "montotarjeta": "50000"}
+            ]
+            dummy_slides = [{
+                "id": "slide_rsvp",
+                "template": "slides/custom.html",
+                "enabled": True,
+                "elements": [
+                    {"type": "form", "alias_cbu": "ALIAS.TEST.BODA"}
+                ]
+            }]
+            with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
+                 patch("app.load_slides", return_value=dummy_slides):
+                res = client.get(f"/i/{token}")
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(b"payment-alias-badge", res.data)
+                self.assertIn(b"data-copy-val=\"ALIAS.TEST.BODA\"", res.data)
+                self.assertIn(b"ALIAS.TEST.BODA", res.data)
+                self.assertNotIn(b"rsvp-payment-icon", res.data)
+
 
 if __name__ == "__main__":
     unittest.main()

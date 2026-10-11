@@ -472,6 +472,18 @@ def get_guest_context(validated_slug):
 
     existing_comprobante = next((g.get("comprobante") for g in guests if g.get("comprobante")), "")
 
+    alias_cbu = ""
+    for s in active_slides:
+        if s.get("alias_cbu"):
+            alias_cbu = s.get("alias_cbu")
+            break
+        for e in s.get("elements", []):
+            if e.get("type") == "form" and e.get("alias_cbu"):
+                alias_cbu = e.get("alias_cbu")
+                break
+            if e.get("type") == "copy" and e.get("copy_val") and not alias_cbu:
+                alias_cbu = e.get("copy_val")
+
     return {
         "invitacion_id": validated_slug,
         "invitation_url": invitation_url,
@@ -488,6 +500,7 @@ def get_guest_context(validated_slug):
         "styles": load_styles(),
         "config_version": int(time.time()),
         "existing_comprobante": existing_comprobante,
+        "alias_cbu": alias_cbu,
     }
 
 

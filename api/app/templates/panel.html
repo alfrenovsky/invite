@@ -4861,10 +4861,28 @@
                     formNote.className = 'form-group';
                     formNote.innerHTML = `
                     <div style="font-size: 0.82rem; color: #cbd5e0; background: rgba(72, 187, 120, 0.1); border: 1px solid rgba(72, 187, 120, 0.25); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;">
-                        <strong style="color: #68d391;">Formulario RSVP del Grupo:</strong> Muestra los nombres de los invitados, opciones de asistencia (✓ Asiste / ✗ No), selección de menú (General, Vegetariano, Vegano, Celíaco) y auto-guardado en tiempo real.
+                        <strong style="color: #68d391;">Formulario RSVP del Grupo:</strong> Muestra los nombres de los invitados, opciones de asistencia (✓ Asiste / ✗ No), selección de menú (General, Vegetariano, Vegano, Celíaco), tarjeta de la fiesta y comprobante de pago.
                     </div>
                 `;
                     card.appendChild(formNote);
+
+                    // Field to edit Alias / CBU for Tarjeta de la fiesta
+                    const aliasGroup = document.createElement('div');
+                    aliasGroup.className = 'form-group';
+                    aliasGroup.innerHTML = `
+                    <label>Alias / CBU para Transferencia</label>
+                    <input type="text" class="form-input el-alias-cbu" placeholder="Ej: BODA.CELIA.ALFREDO" value="${escapeHtml(el.alias_cbu || '')}">
+                    <span style="font-size: 0.73rem; color: var(--text-muted); margin-top: 4px; display: block;">
+                        Se mostrará como un botón copiable detrás de "Tarjeta de la fiesta" en el formulario.
+                    </span>
+                `;
+                    const aliasInput = aliasGroup.querySelector('input');
+                    aliasInput.oninput = (e) => {
+                        el.alias_cbu = e.target.value.trim();
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    };
+                    card.appendChild(aliasGroup);
                 } else {
                     // Text Content input
                     const textGroup = document.createElement('div');
@@ -5648,7 +5666,17 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.72em; color: #68d391; margin-top: 10px; font-family: 'Montserrat', sans-serif;">
+                                <div class="rsvp-payment-card" style="margin-top: 10px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px; padding: 8px 12px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 5px; margin-bottom: 6px;">
+                                        <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">Tarjeta de la fiesta</span>
+                                        ${(el.alias_cbu) ? `<span style="font-size: 0.70rem; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 2px 7px; color: #fff;">📋 ${escapeHtml(el.alias_cbu)}</span>` : ''}
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #34d399; font-weight: 700;">
+                                        <span>Total a transferir</span>
+                                        <span>$ 50.000</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.72em; color: #68d391; margin-top: 8px; font-family: 'Montserrat', sans-serif;">
                                     <span>✓ Respuestas guardadas</span>
                                 </div>
                             </div>
