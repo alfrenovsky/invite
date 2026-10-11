@@ -2753,6 +2753,11 @@
                                             <span>🔗 Enlace / Link</span>
                                         </button>
                                         <button type="button" class="btn-ctrl btn-ctrl-secondary"
+                                            id="btnAddCopyElement" onclick="addCopyElement()"
+                                            style="border-color: rgba(16, 185, 129, 0.45); color: #34d399;">
+                                            <span>📋 Copiar (Alias/CBU)</span>
+                                        </button>
+                                        <button type="button" class="btn-ctrl btn-ctrl-secondary"
                                             id="btnAddCountdownElement" onclick="addCountdownElement()"
                                             style="border-color: rgba(237, 137, 54, 0.45); color: #f6ad55;">
                                             <span>⏱️ Countdown</span>
@@ -4456,16 +4461,21 @@
                 card.id = 'elCard_' + idx;
 
                 const isLocation = el.type === 'location' || el.type === 'link';
+                const isCopy = el.type === 'copy';
                 const isCountdown = el.type === 'countdown';
                 const isForm = el.type === 'form';
-                const isTransformable = isLocation || isCountdown;
+                const isTransformable = isLocation || isCopy || isCountdown;
 
                 // Header
                 const header = document.createElement('div');
                 header.className = 'element-header';
                 let titleHtml = '#' + (idx + 1) + ' Elemento de Texto';
                 let titleStyle = '';
-                if (isLocation) {
+                if (isCopy) {
+                    const iconEmoji = el.icon === 'bank' ? '🏛️' : (el.icon === 'card' ? '💳' : (el.icon === 'copy' ? '📋' : '🔗'));
+                    titleHtml = `${iconEmoji} #${idx + 1} Sticker Copiar (${escapeHtml(el.content || 'Sin texto')})`;
+                    titleStyle = `color: ${el.color || '#34d399'};`;
+                } else if (isLocation) {
                     const iconEmoji = el.icon === 'spotify' ? '🟢' : (el.icon === 'music' ? '🎵' : (el.icon === 'photos' ? '📸' : (el.icon === 'location' ? '📍' : '🔗')));
                     titleHtml = `${iconEmoji} #${idx + 1} Enlace / Sticker (${escapeHtml(el.content || 'Sin texto')})`;
                     titleStyle = `color: ${el.color || '#63b3ed'};`;
@@ -4711,6 +4721,123 @@
                     card.appendChild(colorGroup);
 
                     // 5. Style Variant (Fondo Blanco vs Fondo de Color)
+                    const styleGroup = document.createElement('div');
+                    styleGroup.className = 'form-group';
+                    styleGroup.innerHTML = `
+                    <label>Estilo de Fondo</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="style-pill-btn ${currentStyle === 'classic' ? 'selected' : ''}" data-style="classic">Píldora Blanca</button>
+                        <button type="button" class="style-pill-btn ${currentStyle === 'solid' ? 'selected' : ''}" data-style="solid">Fondo de Color</button>
+                    </div>
+                `;
+                    styleGroup.querySelectorAll('.style-pill-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            styleGroup.querySelectorAll('.style-pill-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            el.style = btn.dataset.style;
+                            updateLivePreview();
+                        };
+                    });
+                    card.appendChild(styleGroup);
+                } else if (isCopy) {
+                    const currentIcon = el.icon || 'copy';
+                    const currentColor = el.color || '#10b981';
+                    const currentStyle = el.style || 'classic';
+
+                    // 1. Text Content Input
+                    const textGroup = document.createElement('div');
+                    textGroup.className = 'form-group';
+                    textGroup.innerHTML = `
+                    <label>Texto Visible del Sticker (Aveny-T Mayúsculas)</label>
+                    <input type="text" class="form-input el-text-content" placeholder="Ej: ALIAS: BODA.CELIA.ALFREDO, CBU, BANCO" value="${escapeHtml(el.content || '')}">
+                `;
+                    const textInput = textGroup.querySelector('input');
+                    textInput.oninput = (e) => {
+                        el.content = e.target.value;
+                        updateLivePreview();
+                    };
+                    card.appendChild(textGroup);
+
+                    // 2. Value to Copy Input
+                    const copyValGroup = document.createElement('div');
+                    copyValGroup.className = 'form-group';
+                    copyValGroup.innerHTML = `
+                    <label style="display: flex; justify-content: space-between;">
+                        <span>Texto / Valor a Copiar</span>
+                        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: normal;">Alias o CBU limpio</span>
+                    </label>
+                    <input type="text" class="form-input el-copy-content" placeholder="Ej: BODA.CELIA.ALFREDO (si está vacío, copia el texto visible)" value="${escapeHtml(el.copy_val || '')}">
+                `;
+                    const copyValInput = copyValGroup.querySelector('input');
+                    copyValInput.oninput = (e) => {
+                        el.copy_val = e.target.value;
+                    };
+                    card.appendChild(copyValGroup);
+
+                    // 3. Icon Picker
+                    const iconGroup = document.createElement('div');
+                    iconGroup.className = 'form-group';
+                    iconGroup.innerHTML = `
+                    <label>Ícono del Sticker</label>
+                    <div class="link-icon-grid">
+                        <button type="button" class="link-icon-btn ${currentIcon === 'copy' ? 'selected' : ''}" data-icon="copy">📋 Copiar</button>
+                        <button type="button" class="link-icon-btn ${currentIcon === 'bank' ? 'selected' : ''}" data-icon="bank">🏛️ Banco</button>
+                        <button type="button" class="link-icon-btn ${currentIcon === 'card' ? 'selected' : ''}" data-icon="card">💳 Tarjeta</button>
+                        <button type="button" class="link-icon-btn ${currentIcon === 'link' ? 'selected' : ''}" data-icon="link">🔗 Enlace</button>
+                    </div>
+                `;
+                    iconGroup.querySelectorAll('.link-icon-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            iconGroup.querySelectorAll('.link-icon-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            el.icon = btn.dataset.icon;
+                            updateLivePreview();
+                        };
+                    });
+                    card.appendChild(iconGroup);
+
+                    // 4. Color Picker + Palette
+                    const colorGroup = document.createElement('div');
+                    colorGroup.className = 'form-group';
+                    colorGroup.innerHTML = `
+                    <label>Color del Sticker</label>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="color-dot-btn ${currentColor === '#10b981' ? 'selected' : ''}" data-color="#10b981" style="background:#10b981;" title="Verde Esmeralda"></button>
+                        <button type="button" class="color-dot-btn ${currentColor === '#0488db' ? 'selected' : ''}" data-color="#0488db" style="background:#0488db;" title="Azul"></button>
+                        <button type="button" class="color-dot-btn ${currentColor === '#d4af37' ? 'selected' : ''}" data-color="#d4af37" style="background:#d4af37;" title="Dorado"></button>
+                        <button type="button" class="color-dot-btn ${currentColor === '#8b5cf6' ? 'selected' : ''}" data-color="#8b5cf6" style="background:#8b5cf6;" title="Púrpura"></button>
+                        <button type="button" class="color-dot-btn ${currentColor === '#1a202c' ? 'selected' : ''}" data-color="#1a202c" style="background:#1a202c;" title="Oscuro"></button>
+                        <input type="color" class="custom-color-input" value="${currentColor.startsWith('#') ? currentColor : '#10b981'}">
+                        <span class="color-hex-badge" style="font-size: 0.82rem; font-family: monospace; color: var(--text-muted);">${currentColor}</span>
+                    </div>
+                `;
+                    const colorPicker = colorGroup.querySelector('.custom-color-input');
+                    const hexBadge = colorGroup.querySelector('.color-hex-badge');
+                    function updatePaletteSelection(c) {
+                        colorGroup.querySelectorAll('.color-dot-btn').forEach(btn => {
+                            btn.classList.toggle('selected', btn.dataset.color.toLowerCase() === c.toLowerCase());
+                        });
+                    }
+                    colorPicker.oninput = (e) => {
+                        const val = e.target.value;
+                        el.color = val;
+                        hexBadge.textContent = val;
+                        updatePaletteSelection(val);
+                        updateLivePreview();
+                    };
+                    colorGroup.querySelectorAll('.color-dot-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const val = btn.dataset.color;
+                            el.color = val;
+                            colorPicker.value = val;
+                            hexBadge.textContent = val;
+                            updatePaletteSelection(val);
+                            updateLivePreview();
+                        };
+                    });
+                    card.appendChild(colorGroup);
+
+                    // 5. Style Variant (Píldora Blanca vs Fondo de Color)
                     const styleGroup = document.createElement('div');
                     styleGroup.className = 'form-group';
                     styleGroup.innerHTML = `
@@ -5066,6 +5193,30 @@
             updateLivePreview();
         }
 
+        function addCopyElement(icon = 'copy', content = 'BODA.CELIA.ALFREDO', color = '#10b981') {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+            if (!Array.isArray(slide.elements)) slide.elements = [];
+
+            slide.elements.push({
+                id: 'el_' + Date.now(),
+                type: 'copy',
+                icon: icon,
+                color: color,
+                style: 'classic',
+                content: content,
+                copy_val: content,
+                x: 0,
+                y: 0,
+                w: null,
+                rotate: 0,
+                zoom: 100
+            });
+
+            renderElementsList();
+            updateLivePreview();
+        }
+
         function addLocationElement() {
             addLinkElement('location', 'Luna India, Coquimbito', '#0488db');
         }
@@ -5216,7 +5367,21 @@
             const innerWhite = isSolid ? 'var(--sticker-color, #0488db)' : '#ffffff';
             const strokeColor = isSolid ? 'var(--sticker-color, #0488db)' : '#ffffff';
 
-            if (icon === 'spotify') {
+            if (icon === 'copy') {
+                return `<svg class="sticker-icon copy-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>`;
+            } else if (icon === 'bank') {
+                return `<svg class="sticker-icon bank-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"/>
+                </svg>`;
+            } else if (icon === 'card') {
+                return `<svg class="sticker-icon card-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>`;
+            } else if (icon === 'spotify') {
                 return `<svg class="sticker-icon sticker-icon-spotify" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                     <circle cx="12" cy="12" r="11"/>
                     <path fill="${innerWhite}" d="M16.5 15.6a.6.6 0 0 1-.8.2c-2.2-1.3-5-1.6-8.2-.9a.6.6 0 1 1-.2-1.1c3.5-.8 6.6-.5 9 1a.6.6 0 0 1 .2.8zm1.1-2.5a.7.7 0 0 1-1 .2c-2.5-1.5-6.3-2-9.2-1.1a.7.7 0 0 1-.4-1.4c3.4-1 7.6-.5 10.4 1.2.3.2.4.7.2 1.1zm.1-2.6c-3-1.8-8-1.9-10.8-1a.9.9 0 1 1-.5-1.7c3.4-1 8.8-.8 12.3 1.2a.9.9 0 1 1-1 1.5z"/>
@@ -5346,9 +5511,10 @@
                             textDiv.style.transform = 'translate(-50%, -50%)';
                             textDiv.textContent = replacePreviewVariables(el.content || '');
                             overlay.appendChild(textDiv);
-                        } else if (el.type === 'location' || el.type === 'link') {
+                        } else if (el.type === 'location' || el.type === 'link' || el.type === 'copy') {
                             const locDiv = document.createElement('div');
-                            locDiv.className = 'slide-el slide-el-location slide-el-link preview-location-el preview-link-el';
+                            const isCopyEl = el.type === 'copy';
+                            locDiv.className = `slide-el slide-el-location slide-el-link ${isCopyEl ? 'slide-el-copy preview-copy-el' : 'preview-link-el'}`;
                             const posX = el.x !== undefined ? el.x : 0;
                             const posY = el.y !== undefined ? el.y : 0;
                             const rotVal = el.rotate !== undefined ? el.rotate : 0;
@@ -5362,15 +5528,15 @@
                             locDiv.style.transform = `translate(-50%, -50%) rotate(${rotVal}deg) scale(${zoomVal / 100})`;
                             locDiv.style.transformOrigin = 'center center';
 
-                            const stickerColor = el.color || '#0488db';
+                            const stickerColor = el.color || (isCopyEl ? '#10b981' : '#0488db');
                             const stickerStyle = el.style || 'classic';
-                            const stickerIcon = el.icon || (el.type === 'location' ? 'location' : 'link');
+                            const stickerIcon = el.icon || (el.type === 'location' ? 'location' : (isCopyEl ? 'copy' : 'link'));
                             const iconSvg = getStickerIconSvg(stickerIcon, stickerColor, stickerStyle);
 
                             locDiv.innerHTML = `
-                            <div class="instagram-location-sticker instagram-link-sticker sticker-style-${stickerStyle}" style="--sticker-color: ${stickerColor};">
+                            <div class="instagram-location-sticker instagram-link-sticker ${isCopyEl ? 'instagram-copy-sticker' : ''} sticker-style-${stickerStyle}" style="--sticker-color: ${stickerColor}; cursor: ${isCopyEl ? 'pointer' : 'default'};">
                                 ${iconSvg}
-                                <span class="location-sticker-text">${escapeHtml(replacePreviewVariables(el.content || 'ENLACE'))}</span>
+                                <span class="location-sticker-text">${escapeHtml(replacePreviewVariables(el.content || (isCopyEl ? 'COPIAR ALIAS' : 'ENLACE')))}</span>
                             </div>
                         `;
                             overlay.appendChild(locDiv);

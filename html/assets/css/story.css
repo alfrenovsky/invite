@@ -386,6 +386,7 @@
 
         .slide-el-location,
         .slide-el-link,
+        .slide-el-copy,
         .slide-el-countdown {
             display: inline-flex;
             justify-content: center;
@@ -1725,11 +1726,13 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Instagram-like Location & Link Sticker */
+        /* Instagram-like Location, Link & Copy Sticker */
         .instagram-location-sticker,
         .instagram-link-sticker,
+        .instagram-copy-sticker,
         .location-sticker,
-        .link-sticker {
+        .link-sticker,
+        .copy-sticker {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -1738,6 +1741,9 @@
             color: var(--sticker-color, #0488db);
             padding: 7px 16px 7px 12px;
             border-radius: 12px;
+            border: none;
+            outline: none;
+            font-family: inherit;
             text-decoration: none !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.12);
             transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
@@ -1751,27 +1757,39 @@
         .instagram-location-sticker:active,
         .instagram-link-sticker:hover,
         .instagram-link-sticker:active,
+        .instagram-copy-sticker:hover,
+        .instagram-copy-sticker:active,
         .location-sticker:hover,
         .location-sticker:active,
         .link-sticker:hover,
-        .link-sticker:active {
+        .link-sticker:active,
+        .copy-sticker:hover,
+        .copy-sticker:active {
             transform: scale(1.04);
             box-shadow: 0 6px 22px rgba(0, 0, 0, 0.32);
+        }
+
+        .instagram-copy-sticker:active {
+            transform: scale(0.96);
         }
 
         /* Solid Style Variant */
         .instagram-location-sticker.sticker-style-solid,
         .instagram-link-sticker.sticker-style-solid,
+        .instagram-copy-sticker.sticker-style-solid,
         .location-sticker.sticker-style-solid,
-        .link-sticker.sticker-style-solid {
+        .link-sticker.sticker-style-solid,
+        .copy-sticker.sticker-style-solid {
             background: var(--sticker-color, #0488db);
             color: #ffffff;
         }
 
         .instagram-location-sticker.sticker-style-solid .location-sticker-text,
         .instagram-link-sticker.sticker-style-solid .location-sticker-text,
+        .instagram-copy-sticker.sticker-style-solid .location-sticker-text,
         .location-sticker.sticker-style-solid .location-sticker-text,
-        .link-sticker.sticker-style-solid .location-sticker-text {
+        .link-sticker.sticker-style-solid .location-sticker-text,
+        .copy-sticker.sticker-style-solid .location-sticker-text {
             color: #ffffff !important;
         }
 

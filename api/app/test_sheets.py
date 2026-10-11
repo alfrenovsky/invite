@@ -638,7 +638,8 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 "enabled": True,
                 "elements": [
                     {"type": "text", "style": "title", "content": "(Te|Los) esperamos {name}!"},
-                    {"type": "location", "content": "Mesa de {nombre}", "url": "https://maps.google.com"}
+                    {"type": "location", "content": "Mesa de {nombre}", "url": "https://maps.google.com"},
+                    {"type": "copy", "icon": "bank", "content": "Alias: BODA.CELIA.ALFREDO", "copy_val": "BODA.CELIA.ALFREDO"}
                 ]
             }]
             with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
@@ -648,6 +649,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertIn(b"data-raw-content=\"(Te|Los) esperamos {name}!\"", res.data)
                 self.assertIn(b"Los esperamos Juan y Mar\xc3\xada!", res.data)
                 self.assertIn(b"Mesa de Juan y Mar\xc3\xada", res.data)
+                self.assertIn(b"instagram-copy-sticker", res.data)
+                self.assertIn(b"data-copy-val=\"BODA.CELIA.ALFREDO\"", res.data)
+                self.assertIn(b"bank-icon", res.data)
 
             # Singular guest check
             single_guest = [{"id": "g1", "invitacion_id": "familia_gomez", "nombre": "Juan", "apellido": "Gómez"}]

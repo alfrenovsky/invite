@@ -995,7 +995,7 @@
             };
         });
 
-        // Copy Alias Handler
+        // Copy Alias & Copy Sticker Handlers
         const btnCopyAlias = document.getElementById('btnCopyAlias');
         if (btnCopyAlias) {
             btnCopyAlias.onclick = (e) => {
@@ -1009,6 +1009,35 @@
                 });
             };
         }
+
+        document.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.instagram-copy-sticker, .slide-el-copy, [data-copy-val]');
+            if (!copyBtn) return;
+            e.stopPropagation();
+            e.preventDefault();
+            const val = copyBtn.getAttribute('data-copy-val') || copyBtn.querySelector('.location-sticker-text')?.textContent?.trim() || copyBtn.textContent.trim();
+            if (val) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(val).then(() => {
+                        showToast(`¡Copiado: ${val}!`);
+                    }).catch(() => {
+                        showToast(`Copiado: ${val}`);
+                    });
+                } else {
+                    try {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = val;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        showToast(`¡Copiado: ${val}!`);
+                    } catch (err) {
+                        showToast(`Copiado: ${val}`);
+                    }
+                }
+            }
+        });
 
         // Google Calendar Buttons & Stickers
         const containerEl = document.getElementById("storyContainer");
