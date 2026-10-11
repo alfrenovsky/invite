@@ -1585,7 +1585,7 @@
 
         /* Payment Section & Proof of Payment Upload */
         .rsvp-payment-section {
-            margin-top: 14px;
+            margin-top: 0;
             width: 100%;
         }
 
@@ -1602,9 +1602,10 @@
         .rsvp-payment-header {
             display: flex;
             align-items: center;
-            margin-bottom: 6px;
+            margin-top: 0;
+            margin-bottom: 1em;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-            padding-bottom: 6px;
+            padding-bottom: 0.5em;
         }
 
         .rsvp-payment-header-text {
@@ -1621,6 +1622,7 @@
             justify-content: space-between;
             gap: 8px;
             flex-wrap: wrap;
+            width: 100%;
         }
 
         .rsvp-payment-title {
@@ -1628,6 +1630,7 @@
             font-weight: 600;
             color: #ffffff;
             letter-spacing: 0.3px;
+            margin: 0;
         }
 
         .payment-alias-badge {
@@ -1667,16 +1670,11 @@
             letter-spacing: 0.2px;
         }
 
-        .rsvp-payment-subtitle {
-            font-size: 0.72rem;
-            color: rgba(255, 255, 255, 0.65);
-        }
-
         .rsvp-payment-breakdown {
             display: flex;
             flex-direction: column;
             gap: 5px;
-            margin-bottom: 8px;
+            margin-bottom: 1em;
             font-size: 0.82rem;
             background: rgba(0, 0, 0, 0.22);
             border-radius: 10px;

@@ -79,18 +79,15 @@
         <div id="rsvpPaymentSection" class="rsvp-payment-section" style="display: none;">
             <div class="rsvp-payment-card">
                 <div class="rsvp-payment-header">
-                    <div class="rsvp-payment-header-text">
-                        <div class="rsvp-payment-title-row">
-                            <span class="rsvp-payment-title">Tarjeta de la fiesta</span>
-                            {% set current_alias = alias_cbu or (el.alias_cbu if el is defined and el.alias_cbu else '') %}
-                            {% if current_alias %}
-                            <button type="button" class="payment-alias-badge" data-copy-val="{{ current_alias }}" title="Tocar para copiar Alias o CBU">
-                                <span class="payment-alias-icon">📋</span>
-                                <span class="payment-alias-text">{{ current_alias }}</span>
-                            </button>
-                            {% endif %}
-                        </div>
-                        <span class="rsvp-payment-subtitle">Monto correspondiente a los invitados que asisten</span>
+                    <div class="rsvp-payment-title-row">
+                        <span class="rsvp-payment-title">Tarjeta de la fiesta</span>
+                        {% set current_alias = alias_cbu or (el.alias_cbu if el is defined and el.alias_cbu else '') %}
+                        {% if current_alias %}
+                        <button type="button" class="payment-alias-badge" data-copy-val="{{ current_alias }}" title="Tocar para copiar Alias o CBU">
+                            <span class="payment-alias-icon">Transferir a 📋</span>
+                            <span class="payment-alias-text">{{ current_alias }}</span>
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
 
