@@ -1367,15 +1367,36 @@
                 count = lastValidCount || 2;
             }
 
+            // Retrieve price for the first guest in the invitation
+            let cardValue = '';
+            const container = document.getElementById('storyContainer');
+            if (container && container.getAttribute('data-card-value')) {
+                cardValue = container.getAttribute('data-card-value');
+            }
+            if (!cardValue) {
+                const firstCard = document.querySelector('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]');
+                if (firstCard) {
+                    const rawMonto = firstCard.getAttribute('data-monto') || '';
+                    const m = parseCurrencyAmount(rawMonto);
+                    if (m > 0) {
+                        cardValue = formatCurrency(m);
+                    }
+                }
+            }
+
             document.querySelectorAll('[data-raw-content]').forEach(el => {
                 const raw = el.getAttribute('data-raw-content');
                 if (!raw) return;
                 const hasNamesVar = /\{(?:name|names|nombre|nombres)\}/i.test(raw);
+                const hasValueVar = /\{(?:value|valor|precio|monto)\}/i.test(raw);
                 const hasSingPlur = /\(([^|()]*)\|([^|()]*)\)/.test(raw);
-                if (hasNamesVar || hasSingPlur) {
+                if (hasNamesVar || hasValueVar || hasSingPlur) {
                     let text = raw;
                     if (hasNamesVar && formattedNames) {
                         text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, formattedNames);
+                    }
+                    if (hasValueVar) {
+                        text = text.replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, cardValue || '');
                     }
                     if (hasSingPlur) {
                         text = text.replace(/\(([^|()]*)\|([^|()]*)\)/g, (match, sing, plur) => {

@@ -4890,13 +4890,20 @@
                     textGroup.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <label>Contenido del Texto</label>
-                        <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input'));">Insertar {name}</span>
+                        <div style="display: flex; gap: 8px;">
+                            <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input'));">Insertar {name}</span>
+                            <span style="font-size: 0.72rem; color: #34d399; cursor: pointer;" title="Hacé clic para insertar {value}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {value}'; ta.dispatchEvent(new Event('input'));">Insertar {value}</span>
+                        </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
                     <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">{name}</span>
                             <span>Nombres de los invitados (ej: <em>Juan y María</em>)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #34d399;">{value}</span>
+                            <span>Precio de la tarjeta del 1er invitado (ej: <em>$ 45.000</em>)</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">(a|b)</span>
@@ -5508,6 +5515,7 @@
                 if (!str) return '';
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, 'Juan y María')
+                    .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, '$ 45.000')
                     .replace(/\(([^|()]*)\|([^|()]*)\)/g, '$2');
             }
 

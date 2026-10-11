@@ -598,7 +598,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
                         self.assertFalse(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
 
     def test_guest_names_formatting_and_escape_variable(self):
-        from app import app, format_group_names, replace_guest_names
+        from app import app, format_group_names, replace_guest_names, format_currency_ar
 
         # 1. Grammar joining in Spanish
         self.assertEqual(format_group_names(["Alfredo"]), "Alfredo")
@@ -613,6 +613,17 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(replace_guest_names("Bienvenidos {nombre}", "Juan y María"), "Bienvenidos Juan y María")
         self.assertEqual(replace_guest_names("Para {NOMBRES}", "Juan, María y Pedro"), "Para Juan, María y Pedro")
         self.assertEqual(replace_guest_names("Mesa de {NAME}", "Celia"), "Mesa de Celia")
+
+        # 2b. Price / Value variable replacement ({value}, {valor}, {monto}, {precio})
+        self.assertEqual(format_currency_ar("90000"), "$ 90.000")
+        self.assertEqual(format_currency_ar("45.000"), "$ 45.000")
+        self.assertEqual(format_currency_ar(""), "")
+        self.assertEqual(replace_guest_names("Tarjeta: {value}", card_value="$ 90.000"), "Tarjeta: $ 90.000")
+        self.assertEqual(replace_guest_names("Tarjeta: ${value}", card_value="$ 90.000"), "Tarjeta: $ 90.000")
+        self.assertEqual(replace_guest_names("Valor: {valor}", card_value="$ 45.000"), "Valor: $ 45.000")
+        self.assertEqual(replace_guest_names("Costo: {PRECIO}", card_value="$ 45.000"), "Costo: $ 45.000")
+        self.assertEqual(replace_guest_names("Monto: {monto}", card_value="$ 45.000"), "Monto: $ 45.000")
+        self.assertEqual(replace_guest_names("Hola {name}, tarjeta {value}", "Juan", card_value="$ 90.000"), "Hola Juan, tarjeta $ 90.000")
 
         # 3. Singular vs Plural conditional pattern (a|b)
         self.assertEqual(replace_guest_names("(Te|Los) esperamos {name}", "Juan", count=1), "Te esperamos Juan")

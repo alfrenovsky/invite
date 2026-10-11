@@ -414,11 +414,39 @@ def format_group_names(names, fallback="Familia / Pareja"):
     return fallback
 
 
-def replace_guest_names(text, group_names="", count=None):
+def format_currency_ar(val):
+    if not val:
+        return ""
+    s = str(val).strip()
+    clean = re.sub(r'[^\d,.]', '', s)
+    if not clean:
+        return ""
+    if ',' in clean and '.' in clean:
+        clean = clean.replace('.', '').replace(',', '.')
+    elif ',' in clean:
+        clean = clean.replace(',', '.')
+    elif '.' in clean:
+        parts = clean.split('.')
+        if len(parts) > 1 and all(len(p) == 3 for p in parts[1:]):
+            clean = "".join(parts)
+    try:
+        n = round(float(clean))
+        formatted_number = f"{n:,}".replace(",", ".")
+        return f"$ {formatted_number}"
+    except (ValueError, TypeError):
+        return str(val)
+
+
+def replace_guest_names(text, group_names="", count=None, card_value=""):
     if not text:
         return ""
     res = str(text)
     res = re.sub(r'\{(?:name|names|nombre|nombres)\}', str(group_names or ""), res, flags=re.IGNORECASE)
+    if card_value:
+        res = re.sub(r'(\$\s*)?\{(?:value|valor|precio|monto)\}', str(card_value), res, flags=re.IGNORECASE)
+    else:
+        res = re.sub(r'\{(?:value|valor|precio|monto)\}', "", res, flags=re.IGNORECASE)
+
     if count is None:
         count = 2 if (" y " in str(group_names) or ", " in str(group_names) or "Familia" in str(group_names) or "Pareja" in str(group_names)) else 1
 
@@ -431,8 +459,8 @@ def replace_guest_names(text, group_names="", count=None):
 
 
 @app.template_filter("replace_guest_names")
-def replace_guest_names_filter(text, group_names="", count=None):
-    return replace_guest_names(text, group_names, count)
+def replace_guest_names_filter(text, group_names="", count=None, card_value=""):
+    return replace_guest_names(text, group_names, count, card_value)
 
 
 @app.context_processor
@@ -466,6 +494,7 @@ def get_guest_context(validated_slug):
             invitation_url = g["url"]
             break
 
+    card_value = format_currency_ar(guests[0].get("montotarjeta", "")) if guests else ""
     active_slides = [s for s in load_slides() if s.get("enabled", True)]
 
 
@@ -490,6 +519,7 @@ def get_guest_context(validated_slug):
         "guests": guests,
         "group_names": group_names,
         "names_count": names_count,
+        "card_value": card_value,
         "confirmed_count": confirmed_count,
         "rejected_count": rejected_count,
         "pending_count": pending_count,
