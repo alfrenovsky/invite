@@ -1062,6 +1062,7 @@
 
         // Dynamic Guest Names Variable Engine ({name})
         let lastValidGroupNames = '';
+        let lastValidCount = 2;
 
         function formatGuestNames(namesList) {
             if (!namesList || namesList.length === 0) return '';
@@ -1083,19 +1084,32 @@
         function updateStoryGuestNames() {
             const currentNames = getActiveGuestFirstNames();
             let formattedNames = '';
-            if (currentNames.length > 0) {
+            let count = currentNames.length;
+            if (count > 0) {
                 formattedNames = formatGuestNames(currentNames);
                 lastValidGroupNames = formattedNames;
+                lastValidCount = count;
             } else {
                 formattedNames = lastValidGroupNames || '';
+                count = lastValidCount || 2;
             }
-
-            if (!formattedNames) return;
 
             document.querySelectorAll('[data-raw-content]').forEach(el => {
                 const raw = el.getAttribute('data-raw-content');
-                if (raw && /\{(?:name|names|nombre|nombres)\}/i.test(raw)) {
-                    el.textContent = raw.replace(/\{(?:name|names|nombre|nombres)\}/gi, formattedNames);
+                if (!raw) return;
+                const hasNamesVar = /\{(?:name|names|nombre|nombres)\}/i.test(raw);
+                const hasSingPlur = /\(([^|()]*)\|([^|()]*)\)/.test(raw);
+                if (hasNamesVar || hasSingPlur) {
+                    let text = raw;
+                    if (hasNamesVar && formattedNames) {
+                        text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, formattedNames);
+                    }
+                    if (hasSingPlur) {
+                        text = text.replace(/\(([^|()]*)\|([^|()]*)\)/g, (match, sing, plur) => {
+                            return count === 1 ? sing : plur;
+                        });
+                    }
+                    el.textContent = text;
                 }
             });
         }

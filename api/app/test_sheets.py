@@ -364,8 +364,10 @@ class TestGoogleSheetsTable(unittest.TestCase):
     def test_panel_route_dev_mode_and_production_protection(self):
         from app import app
         with app.test_client() as client:
-            # 1. Dev mode active -> 200 OK (isolate save_slides so tests don't overwrite user slides.json)
-            with patch("app.is_dev_mode", return_value=True), patch("app.save_slides"):
+            test_slides = [{"id": "portada", "title": "Portada", "background": "sample.jpeg", "enabled": True}]
+            with patch("app.is_dev_mode", return_value=True), \
+                 patch("app.save_slides"), \
+                 patch("app.load_slides", return_value=test_slides):
                 res = client.get("/panel")
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Panel de Control", res.data)
@@ -611,7 +613,18 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(replace_guest_names("Para {NOMBRES}", "Juan, María y Pedro"), "Para Juan, María y Pedro")
         self.assertEqual(replace_guest_names("Mesa de {NAME}", "Celia"), "Mesa de Celia")
 
-        # 3. SSR Slide rendering replacing {name}
+        # 3. Singular vs Plural conditional pattern (a|b)
+        self.assertEqual(replace_guest_names("(Te|Los) esperamos {name}", "Juan", count=1), "Te esperamos Juan")
+        self.assertEqual(replace_guest_names("(Te|Los) esperamos {name}", "Juan y María", count=2), "Los esperamos Juan y María")
+        self.assertEqual(replace_guest_names("¡Bienvenido(|s)!", "Juan", count=1), "¡Bienvenido!")
+        self.assertEqual(replace_guest_names("¡Bienvenido(|s)!", "Juan y María", count=2), "¡Bienvenidos!")
+        self.assertEqual(replace_guest_names("(Te|Los) esperamos (Estacionamiento)", "Juan", count=1), "Te esperamos (Estacionamiento)")
+        self.assertEqual(replace_guest_names("(Te|Los) esperamos (Estacionamiento)", "Juan y María", count=2), "Los esperamos (Estacionamiento)")
+        # Inferred from group_names when count is None
+        self.assertEqual(replace_guest_names("(Te|Los) queremos", "Pedro"), "Te queremos")
+        self.assertEqual(replace_guest_names("(Te|Los) queremos", "Pedro y Ana"), "Los queremos")
+
+        # 4. SSR Slide rendering replacing {name} and (a|b)
         with app.test_client() as client:
             code = parse_and_validate_token._cache_token = compute_check_code("familia_gomez")
             dummy_guests = [
@@ -624,7 +637,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 "template": "slides/custom.html",
                 "enabled": True,
                 "elements": [
-                    {"type": "text", "style": "title", "content": "¡Hola {name}!"},
+                    {"type": "text", "style": "title", "content": "(Te|Los) esperamos {name}!"},
                     {"type": "location", "content": "Mesa de {nombre}", "url": "https://maps.google.com"}
                 ]
             }]
@@ -632,9 +645,17 @@ class TestGoogleSheetsTable(unittest.TestCase):
                  patch("app.load_slides", return_value=dummy_slides):
                 res = client.get(f"/i/familia_gomez_{code}/slide/slide_saludo")
                 self.assertEqual(res.status_code, 200)
-                self.assertIn(b"data-raw-content=\"\xc2\xa1Hola {name}!\"", res.data)
-                self.assertIn(b"\xc2\xa1Hola Juan y Mar\xc3\xada!", res.data)
+                self.assertIn(b"data-raw-content=\"(Te|Los) esperamos {name}!\"", res.data)
+                self.assertIn(b"Los esperamos Juan y Mar\xc3\xada!", res.data)
                 self.assertIn(b"Mesa de Juan y Mar\xc3\xada", res.data)
+
+            # Singular guest check
+            single_guest = [{"id": "g1", "invitacion_id": "familia_gomez", "nombre": "Juan", "apellido": "Gómez"}]
+            with patch("app.table.get_by_invitacion", return_value=single_guest), \
+                 patch("app.load_slides", return_value=dummy_slides):
+                res = client.get(f"/i/familia_gomez_{code}/slide/slide_saludo")
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(b"Te esperamos Juan!", res.data)
 
         # 4. Backend safeguard: do not allow clearing the sole remaining name
         with app.test_client() as client:

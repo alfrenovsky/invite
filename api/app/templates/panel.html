@@ -4748,9 +4748,15 @@
                         <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input'));">Insertar {name}</span>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
-                    <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
-                        <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">{name}</span>
-                        <span>Se reemplaza con los nombres de los invitados (ej: <em>Juan y María</em>)</span>
+                    <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">{name}</span>
+                            <span>Nombres de los invitados (ej: <em>Juan y María</em>)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">(a|b)</span>
+                            <span>Singular o plural según cantidad (ej: <em>(Te|Los) esperamos</em>)</span>
+                        </div>
                     </div>
                 `;
                     const textarea = textGroup.querySelector('textarea');
@@ -5317,7 +5323,9 @@
 
             function replacePreviewVariables(str) {
                 if (!str) return '';
-                return str.replace(/\{(?:name|names|nombre|nombres)\}/gi, 'Juan y María');
+                return str
+                    .replace(/\{(?:name|names|nombre|nombres)\}/gi, 'Juan y María')
+                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, '$2');
             }
 
             // Render live overlay elements

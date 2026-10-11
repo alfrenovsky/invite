@@ -413,15 +413,25 @@ def format_group_names(names, fallback="Familia / Pareja"):
     return fallback
 
 
-def replace_guest_names(text, group_names=""):
+def replace_guest_names(text, group_names="", count=None):
     if not text:
         return ""
-    return re.sub(r'\{(?:name|names|nombre|nombres)\}', str(group_names or ""), str(text), flags=re.IGNORECASE)
+    res = str(text)
+    res = re.sub(r'\{(?:name|names|nombre|nombres)\}', str(group_names or ""), res, flags=re.IGNORECASE)
+    if count is None:
+        count = 2 if (" y " in str(group_names) or ", " in str(group_names) or "Familia" in str(group_names) or "Pareja" in str(group_names)) else 1
+
+    def _replace_plural(match):
+        singular, plural = match.group(1), match.group(2)
+        return singular if count == 1 else plural
+
+    res = re.sub(r'\(([^|()]*)\|([^|()]*)\)', _replace_plural, res)
+    return res
 
 
 @app.template_filter("replace_guest_names")
-def replace_guest_names_filter(text, group_names=""):
-    return replace_guest_names(text, group_names)
+def replace_guest_names_filter(text, group_names="", count=None):
+    return replace_guest_names(text, group_names, count)
 
 
 @app.context_processor
@@ -441,6 +451,7 @@ def get_guest_context(validated_slug):
     names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
     fallback_title = validated_slug.replace("_", " ").replace("-", " ").title() if validated_slug else "Familia / Pareja"
     group_names = format_group_names(names, fallback=fallback_title or "Familia / Pareja")
+    names_count = len(names) if len(names) > 0 else 2
 
     confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
     rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
@@ -463,6 +474,7 @@ def get_guest_context(validated_slug):
         "invitation_url": invitation_url,
         "guests": guests,
         "group_names": group_names,
+        "names_count": names_count,
         "confirmed_count": confirmed_count,
         "rejected_count": rejected_count,
         "pending_count": pending_count,
