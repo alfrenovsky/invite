@@ -570,7 +570,7 @@
         .custom-bg-item-thumb video {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             display: block;
         }
 
@@ -691,14 +691,17 @@
             position: relative;
             width: 100%;
             aspect-ratio: 9 / 16;
-            background: #000;
+            background: #111622;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
         }
 
         .bg-thumb {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             transition: transform 0.3s;
         }
 
@@ -1685,7 +1688,7 @@
             left: 50%;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             object-position: center;
             transform-origin: center center;
             pointer-events: none;
@@ -1703,7 +1706,7 @@
             left: 50%;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             object-position: center;
             transform-origin: center center;
             z-index: 1;
@@ -5467,6 +5470,7 @@
 
             // Background
             const bg = (slide.background || '').trim();
+            const cleanBg = bg.replace(/^temp\//, '');
             const bgImg = document.getElementById('previewBgImg');
             const bgVid = document.getElementById('previewBgVideo');
             const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? (slide.bg_zoom / 100) : 1;
@@ -5474,8 +5478,8 @@
             const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
             const transformStr = `translate(-50%, -50%) translate(${bgX}%, ${bgY}%) scale(${bgZoom})`;
 
-            if (bg) {
-                const bgUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURI(bg));
+            if (cleanBg) {
+                const bgUrl = cleanBg.startsWith('/') ? cleanBg : ('/assets/backgrounds/' + encodeURI(cleanBg));
                 if (isVideoFile(bg)) {
                     if (bgImg) bgImg.style.display = 'none';
                     if (bgVid) {
@@ -6458,9 +6462,9 @@
                     const isVid = /\.(mp4|webm|mov|m4v)$/i.test(bg);
                     const mediaUrl = bg.startsWith('/') ? bg : ('/assets/backgrounds/' + encodeURI(bg));
                     if (isVid) {
-                        thumbEl.innerHTML = `<video src="${mediaUrl}" muted loop playsinline autoplay style="width: 100%; height: 100%; object-fit: cover;"></video>`;
+                        thumbEl.innerHTML = `<video src="${mediaUrl}" muted loop playsinline autoplay style="width: 100%; height: 100%; object-fit: contain;"></video>`;
                     } else {
-                        thumbEl.innerHTML = `<img src="${mediaUrl}" alt="${bg}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        thumbEl.innerHTML = `<img src="${mediaUrl}" alt="${bg}" style="width: 100%; height: 100%; object-fit: contain;">`;
                     }
                 }
             }
