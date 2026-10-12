@@ -363,8 +363,16 @@ def _get_wedding_stats(table) -> str:
         return "No hay conexión disponible con la base de datos."
 
     try:
+        # 1. Flush pending local writes to Google Sheets
+        if hasattr(tbl, "flush_local_to_remote"):
+            try:
+                tbl.flush_local_to_remote()
+            except Exception as fe:
+                _log(f"Warning flushing local changes before stats: {fe}")
+
+        # 2. Force-refresh cache directly from Google Sheets
         if hasattr(tbl, "get_all"):
-            records = tbl.get_all() or []
+            records = tbl.get_all(force_remote=True) or []
         elif hasattr(tbl, "get_all_records"):
             records = tbl.get_all_records() or []
         else:
@@ -377,13 +385,13 @@ def _get_wedding_stats(table) -> str:
         pagados = sum(1 for r in records if str(r.get("pagado", "")).strip())
 
         return (
-            f"📊 <b>Estado de la boda:</b>\n\n"
+            f"📊 <b>Estado de la boda (en vivo):</b>\n\n"
             f"👥 Total invitados: <b>{total_records}</b>\n"
             f"✅ Confirmados: <b>{confirmados}</b>\n"
             f"❌ No asisten: <b>{rechazados}</b>\n"
             f"⏳ Pendientes: <b>{pendientes}</b>\n"
-            f"💳 Tarjetas pagadas: <b>{pagados}</b>\n"
-            f"🕒 Actualizado: {_get_tz_now_str()}"
+            f"💳 Tarjetas pagadas: <b>{pagados}</b>\n\n"
+            f"🔄 <i>Sincronizado con Google Sheets:</i> {_get_tz_now_str()}"
         )
     except Exception as e:
         _log(f"Error fetching wedding stats: {e}")

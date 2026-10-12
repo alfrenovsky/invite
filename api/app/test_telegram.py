@@ -107,6 +107,8 @@ class TestTelegramBot(unittest.TestCase):
             }
         }
         telegram_bot._handle_update(update, table=mock_table)
+        mock_table.flush_local_to_remote.assert_called_once()
+        mock_table.get_all.assert_called_once_with(force_remote=True)
         mock_send.assert_called_once()
         text = mock_send.call_args[0][1]
         self.assertIn("Total invitados: <b>4</b>", text)
@@ -114,6 +116,7 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("No asisten: <b>1</b>", text)
         self.assertIn("Pendientes: <b>1</b>", text)
         self.assertIn("Tarjetas pagadas: <b>1</b>", text)
+        self.assertIn("Sincronizado con Google Sheets", text)
 
     @patch("telegram_bot.send_message")
     def test_handle_stop(self, mock_send):
