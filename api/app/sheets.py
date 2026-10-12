@@ -27,6 +27,7 @@ FIELDNAMES = [
     "url",
     "whatsapp",
     "comprobante",
+    "pagado",
 ]
 
 
@@ -296,6 +297,7 @@ class GoogleSheetsTable:
             item["whatsapp"] = str(item.get("whatsapp", ""))
 
         item["comprobante"] = str(rec.get("comprobante", "") or "")
+        item["pagado"] = str(rec.get("pagado", "") or "").strip()
 
 
         # Build row according to FIELDNAMES

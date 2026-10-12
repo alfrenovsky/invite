@@ -1036,14 +1036,18 @@
         const breakdownEl = document.getElementById('paymentBreakdown');
         if (!paymentSection || !breakdownEl) return;
 
+        const aliasBadge = paymentSection.querySelector('.payment-alias-badge');
+        const uploadWrapper = document.getElementById('rsvpUploadWrapper');
+
         const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]'));
-        let total = 0;
+        let unpaidTotal = 0;
         const attendingItems = [];
 
         cards.forEach(card => {
             const status = card.getAttribute('data-status') || '';
             const rawMonto = card.getAttribute('data-monto') || '';
             const monto = parseCurrencyAmount(rawMonto);
+            const isPaid = !!(card.getAttribute('data-pagado') || '').trim();
 
             const isConfirmedOrPending = (status !== 'no');
             if (isConfirmedOrPending && monto > 0) {
@@ -1055,32 +1059,65 @@
                     : (nameEl ? nameEl.textContent.trim() : 'Acompañante');
                 if (!name || name.toLowerCase() === 'invitado') name = 'Acompañante';
 
-                attendingItems.push({ name, monto });
-                total += monto;
+                attendingItems.push({ name, monto, isPaid });
+                if (!isPaid) {
+                    unpaidTotal += monto;
+                }
             }
         });
 
-        if (total > 0 && attendingItems.length > 0) {
+        if (attendingItems.length === 0) {
+            paymentSection.style.display = 'none';
+            return;
+        }
+
+        // Case 1: All attending guests have their payment registered
+        if (unpaidTotal === 0) {
             let rowsHtml = '';
             attendingItems.forEach(item => {
                 rowsHtml += `
                     <div class="payment-breakdown-row">
                         <span>${item.name}</span>
-                        <span>${formatCurrency(item.monto)}</span>
+                        <span class="payment-paid-badge">✓ Pago registrado</span>
                     </div>
                 `;
             });
             rowsHtml += `
-                <div class="payment-total-row">
-                    <span>Total a transferir</span>
-                    <span>${formatCurrency(total)}</span>
+                <div class="payment-registered-card">
+                    <span class="payment-registered-icon">✓</span>
+                    <span>Pago registrado</span>
                 </div>
             `;
             breakdownEl.innerHTML = rowsHtml;
+            if (aliasBadge) aliasBadge.style.display = 'none';
+            if (uploadWrapper) uploadWrapper.style.display = 'none';
             paymentSection.style.display = 'block';
-        } else {
-            paymentSection.style.display = 'none';
+            return;
         }
+
+        // Case 2: At least one attending guest has pending payment
+        let rowsHtml = '';
+        attendingItems.forEach(item => {
+            rowsHtml += `
+                <div class="payment-breakdown-row">
+                    <span>${item.name}</span>
+                    ${item.isPaid 
+                        ? '<span class="payment-paid-badge">✓ Pago registrado</span>' 
+                        : `<span>${formatCurrency(item.monto)}</span>`
+                    }
+                </div>
+            `;
+        });
+        rowsHtml += `
+            <div class="payment-total-row">
+                <span>Total a transferir</span>
+                <span>${formatCurrency(unpaidTotal)}</span>
+            </div>
+        `;
+        breakdownEl.innerHTML = rowsHtml;
+        if (aliasBadge) aliasBadge.style.display = '';
+        if (uploadWrapper) uploadWrapper.style.display = '';
+        paymentSection.style.display = 'block';
     }
 
     function initComprobanteUploader() {
