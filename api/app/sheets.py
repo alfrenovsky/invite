@@ -35,8 +35,8 @@ INVITATION_SALT = os.environ.get("INVITATION_SALT", "boda_celia_y_alfredo_2027_s
 BASE_URL = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
 CACHE_FILE_PATH = os.environ.get("CACHE_FILE_PATH", "/data/sheet_cache.json")
 LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/data/api.log")
-TTL_READ = int(os.environ.get("TTL_READ", 600))  # 10 minutes default
-TTL_WRITE = int(os.environ.get("TTL_WRITE", 120))  # 2 minutes default
+TTL_READ = int(os.environ.get("TTL_READ", 60))  # 10 minutes default
+TTL_WRITE = int(os.environ.get("TTL_WRITE", 60))  # 2 minutes default
 
 
 def compute_check_code(invitacion_id: str, salt: str = None) -> str:
