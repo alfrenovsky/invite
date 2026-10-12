@@ -109,10 +109,9 @@
                     {% include slide.template %}
                 {% endfor %}
             </div>
+            {% include "partials/toast.html" %}
         </div>
     </div>
-
-    {% include "partials/toast.html" %}
 
     <!-- Story Client Script (no-cache with auto-versioning) -->
     <script src="/assets/js/story.js?v={{ config_version }}" defer></script>

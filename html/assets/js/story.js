@@ -1239,6 +1239,111 @@
             };
         });
 
+        // Full-Screen Copy Feedback Celebration
+        const copyOverlay = document.getElementById('copyCelebrationOverlay');
+        const copyValBadge = document.getElementById('copyCelebrationVal');
+        let copyCelebrationTimeout = null;
+
+        function triggerCopyCelebration(targetEl, val) {
+            // Haptic vibration feedback
+            if (navigator.vibrate) {
+                try { navigator.vibrate(40); } catch (_) {}
+            }
+
+            if (!copyOverlay) {
+                showToast(`¡Copiado: ${val}!`);
+                return;
+            }
+
+            if (copyCelebrationTimeout) {
+                clearTimeout(copyCelebrationTimeout);
+                copyCelebrationTimeout = null;
+            }
+
+            if (copyValBadge) {
+                copyValBadge.textContent = val;
+                copyValBadge.style.display = val ? 'inline-block' : 'none';
+            }
+
+            // Calculate origin relative to story container
+            let pctX = 50;
+            let pctY = 50;
+            if (targetEl && targetEl.getBoundingClientRect) {
+                const btnRect = targetEl.getBoundingClientRect();
+                const contRect = (container || document.body).getBoundingClientRect();
+                if (contRect.width > 0 && contRect.height > 0) {
+                    pctX = Math.round(((btnRect.left + btnRect.width / 2 - contRect.left) / contRect.width) * 100);
+                    pctY = Math.round(((btnRect.top + btnRect.height / 2 - contRect.top) / contRect.height) * 100);
+                    pctX = Math.max(0, Math.min(100, pctX));
+                    pctY = Math.max(0, Math.min(100, pctY));
+                }
+            }
+
+            copyOverlay.style.setProperty('--origin-x', `${pctX}%`);
+            copyOverlay.style.setProperty('--origin-y', `${pctY}%`);
+
+            copyOverlay.classList.remove('fading-out');
+            copyOverlay.classList.add('active');
+
+            // Pause story auto-advance during celebration
+            isPaused = true;
+
+            // Display for ~0.6s, then smooth fade-out (~0.26s)
+            copyCelebrationTimeout = setTimeout(() => {
+                copyOverlay.classList.add('fading-out');
+                copyCelebrationTimeout = setTimeout(() => {
+                    copyOverlay.classList.remove('active', 'fading-out');
+                    copyCelebrationTimeout = null;
+                    isPaused = false;
+                }, 260);
+            }, 850);
+        }
+
+        // Tap on overlay to dismiss early
+        if (copyOverlay) {
+            copyOverlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (copyCelebrationTimeout) {
+                    clearTimeout(copyCelebrationTimeout);
+                    copyOverlay.classList.add('fading-out');
+                    copyCelebrationTimeout = setTimeout(() => {
+                        copyOverlay.classList.remove('active', 'fading-out');
+                        copyCelebrationTimeout = null;
+                        isPaused = false;
+                    }, 180);
+                }
+            });
+        }
+
+        function copyTextToClipboard(text, targetEl) {
+            if (!text) return;
+
+            if (targetEl && targetEl.classList) {
+                targetEl.classList.add('copy-pressed');
+                setTimeout(() => targetEl.classList.remove('copy-pressed'), 250);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    triggerCopyCelebration(targetEl, text);
+                }).catch(() => {
+                    triggerCopyCelebration(targetEl, text);
+                });
+            } else {
+                try {
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = text;
+                    tempInput.style.position = 'fixed';
+                    tempInput.style.opacity = '0';
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                } catch (_) {}
+                triggerCopyCelebration(targetEl, text);
+            }
+        }
+
         // Copy Alias & Copy Sticker Handlers
         const btnCopyAlias = document.getElementById('btnCopyAlias');
         if (btnCopyAlias) {
@@ -1246,11 +1351,7 @@
                 e.stopPropagation();
                 const aliasEl = document.getElementById('aliasText');
                 const alias = aliasEl ? aliasEl.textContent.trim() : 'BODA.CELIA.ALFREDO';
-                navigator.clipboard.writeText(alias).then(() => {
-                    showToast('¡Alias copiado al portapapeles!');
-                }).catch(() => {
-                    showToast('Alias: ' + alias);
-                });
+                copyTextToClipboard(alias, btnCopyAlias);
             };
         }
 
@@ -1261,25 +1362,7 @@
             e.preventDefault();
             const val = copyBtn.getAttribute('data-copy-val') || copyBtn.querySelector('.location-sticker-text')?.textContent?.trim() || copyBtn.textContent.trim();
             if (val) {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(val).then(() => {
-                        showToast(`¡Copiado: ${val}!`);
-                    }).catch(() => {
-                        showToast(`Copiado: ${val}`);
-                    });
-                } else {
-                    try {
-                        const tempInput = document.createElement('textarea');
-                        tempInput.value = val;
-                        document.body.appendChild(tempInput);
-                        tempInput.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(tempInput);
-                        showToast(`¡Copiado: ${val}!`);
-                    } catch (err) {
-                        showToast(`Copiado: ${val}`);
-                    }
-                }
+                copyTextToClipboard(val, copyBtn);
             }
         });
 
