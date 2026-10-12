@@ -182,6 +182,46 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("comprobante_123.pdf", msg)
         self.assertIn("https://example.com/comprobante_123.pdf", msg)
 
+    @patch("telegram_bot.send_message")
+    def test_handle_webhook_update(self, mock_send):
+        update = {
+            "update_id": 10,
+            "message": {
+                "chat": {"id": 11111},
+                "from": {"first_name": "Alfredo"},
+                "text": "/start boda_cya_admin_telegram_2027"
+            }
+        }
+        res = telegram_bot.handle_webhook_update(update)
+        self.assertTrue(res)
+        self.assertTrue(telegram_bot.is_subscribed(11111))
+        mock_send.assert_called_once()
+
+    def test_flask_webhook_endpoint(self):
+        from app import app
+        client = app.test_client()
+
+        # 1. Invalid secret token header -> 403
+        res = client.post(
+            "/telegram/webhook",
+            json={"update_id": 1},
+            headers={"X-Telegram-Bot-Api-Secret-Token": "wrong_secret"}
+        )
+        self.assertEqual(res.status_code, 403)
+
+        # 2. Valid secret token header -> 200
+        with patch("telegram_bot.handle_webhook_update") as mock_handler:
+            mock_handler.return_value = True
+            res = client.post(
+                "/telegram/webhook",
+                json={"update_id": 1},
+                headers={"X-Telegram-Bot-Api-Secret-Token": "boda_cya_admin_telegram_2027"}
+            )
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertTrue(data["ok"])
+            mock_handler.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

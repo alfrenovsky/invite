@@ -1401,6 +1401,21 @@ def get_telegram_auth_link():
     })
 
 
+@app.post("/telegram/webhook")
+def telegram_webhook():
+    secret_header = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if telegram_bot.TELEGRAM_AUTH_SECRET and secret_header:
+        if secret_header != telegram_bot.TELEGRAM_AUTH_SECRET:
+            return jsonify({"ok": False, "error": "Secret token inválido"}), 403
+
+    payload = request.get_json(force=True, silent=True)
+    if not payload:
+        return jsonify({"ok": False, "error": "JSON inválido"}), 400
+
+    processed = telegram_bot.handle_webhook_update(payload, table)
+    return jsonify({"ok": processed})
+
+
 @app.get("/health")
 def health():
     return jsonify({"status": "ok"})

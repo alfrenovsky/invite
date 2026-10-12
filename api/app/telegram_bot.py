@@ -143,10 +143,14 @@ def call_telegram_api(method: str, payload: dict = None) -> dict | None:
             return json.loads(body)
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="ignore") if hasattr(e, "read") else ""
-        logger.warning(f"[TELEGRAM:API_ERROR] {method} failed with code {e.code}: {err_body}")
+        try:
+            return json.loads(err_body)
+        except Exception:
+            pass
+        _log(f"[API_ERROR] {method} failed with code {e.code}: {err_body}")
         return None
     except Exception as e:
-        logger.warning(f"[TELEGRAM:CONN_ERROR] {method} connection failed: {e}")
+        _log(f"[CONN_ERROR] {method} connection failed: {e}")
         return None
 
 
@@ -408,16 +412,32 @@ def _handle_update(update: dict, table=None):
     )
 
 
+def handle_webhook_update(update: dict, table=None) -> bool:
+    """Processes an incoming Telegram webhook update."""
+    if not isinstance(update, dict):
+        return False
+    try:
+        _handle_update(update, table or _table_ref)
+        return True
+    except Exception as e:
+        _log(f"Error handling webhook update: {e}")
+        return False
+
+
 def _polling_loop(table=None):
     global _is_polling
     offset = 0
-    _log(f"Starting long polling for @{TELEGRAM_BOT_NAME}...")
-
-    # Clear old webhook if any existed
-    call_telegram_api("deleteWebhook")
+    _log(f"Starting bot worker for @{TELEGRAM_BOT_NAME}...")
 
     while _is_polling:
         try:
+            # Check if webhook is active
+            wh_info = call_telegram_api("getWebhookInfo")
+            if wh_info and wh_info.get("ok") and wh_info.get("result", {}).get("url"):
+                # Webhook is active, standby without calling getUpdates to prevent 409 Conflict
+                time.sleep(30)
+                continue
+
             res = call_telegram_api("getUpdates", {"offset": offset, "timeout": 25, "limit": 50})
             if res and res.get("ok"):
                 updates = res.get("result", [])
@@ -427,6 +447,8 @@ def _polling_loop(table=None):
                         _handle_update(u, table)
                     except Exception as ex:
                         _log(f"Error handling update: {ex}")
+            elif res and res.get("error_code") == 409:
+                time.sleep(30)
             else:
                 time.sleep(2)
         except Exception as e:
