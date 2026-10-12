@@ -1,0 +1,187 @@
+import json
+import os
+import tempfile
+import unittest
+from unittest.mock import patch, MagicMock
+
+import telegram_bot
+
+
+class TestTelegramBot(unittest.TestCase):
+
+    def setUp(self):
+        # Create a temporary file for subscribers
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.subscribers_path = os.path.join(self.temp_dir.name, "subscribers.json")
+        telegram_bot.SUBSCRIBERS_FILE = self.subscribers_path
+        telegram_bot._subscribers_cache = None
+        telegram_bot._last_opened.clear()
+        telegram_bot._dirty_rsvp_sessions.clear()
+
+        # Mock token and secret
+        telegram_bot.TELEGRAM_BOT_TOKEN = "test_bot_token_123"
+        telegram_bot.TELEGRAM_BOT_NAME = "celiayalfredo_bot"
+        telegram_bot.TELEGRAM_AUTH_SECRET = "boda_cya_admin_telegram_2027"
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_get_auth_link(self):
+        link = telegram_bot.get_auth_link()
+        self.assertEqual(link, "https://t.me/celiayalfredo_bot?start=boda_cya_admin_telegram_2027")
+
+    def test_subscriber_management(self):
+        self.assertFalse(telegram_bot.is_subscribed(123456))
+        
+        # Add subscriber
+        added = telegram_bot.add_subscriber(123456, {"username": "alfredo", "first_name": "Alfredo"})
+        self.assertTrue(added)
+        self.assertTrue(telegram_bot.is_subscribed(123456))
+
+        # Adding same subscriber again returns False
+        self.assertFalse(telegram_bot.add_subscriber(123456))
+
+        # Verify persisted on disk
+        self.assertTrue(os.path.exists(self.subscribers_path))
+        with open(self.subscribers_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            self.assertEqual(len(data["subscribers"]), 1)
+            self.assertEqual(data["subscribers"][0]["chat_id"], 123456)
+
+        # Remove subscriber
+        removed = telegram_bot.remove_subscriber(123456)
+        self.assertTrue(removed)
+        self.assertFalse(telegram_bot.is_subscribed(123456))
+
+    @patch("telegram_bot.send_message")
+    def test_handle_start_unauthorized(self, mock_send):
+        update = {
+            "update_id": 1,
+            "message": {
+                "chat": {"id": 99999},
+                "from": {"first_name": "Intruder"},
+                "text": "/start"
+            }
+        }
+        telegram_bot._handle_update(update)
+        self.assertFalse(telegram_bot.is_subscribed(99999))
+        mock_send.assert_called_once()
+        self.assertIn("Bot privado", mock_send.call_args[0][1])
+
+    @patch("telegram_bot.send_message")
+    def test_handle_start_authorized(self, mock_send):
+        update = {
+            "update_id": 2,
+            "message": {
+                "chat": {"id": 88888},
+                "from": {"first_name": "Alfredo", "username": "alfrenovsky"},
+                "text": "/start boda_cya_admin_telegram_2027"
+            }
+        }
+        telegram_bot._handle_update(update)
+        self.assertTrue(telegram_bot.is_subscribed(88888))
+        mock_send.assert_called_once()
+        self.assertIn("Autorizado con éxito", mock_send.call_args[0][1])
+
+    @patch("telegram_bot.send_message")
+    def test_handle_status_authorized(self, mock_send):
+        # First subscribe
+        telegram_bot.add_subscriber(88888)
+
+        mock_table = MagicMock()
+        mock_table.get_all_records.return_value = [
+            {"nombre": "Celia", "confirmacion": "si", "pagado": "si"},
+            {"nombre": "Alfredo", "confirmacion": "si", "pagado": ""},
+            {"nombre": "Ari", "confirmacion": "no", "pagado": ""},
+            {"nombre": "Invitado", "confirmacion": "", "pagado": ""},
+        ]
+
+        update = {
+            "update_id": 3,
+            "message": {
+                "chat": {"id": 88888},
+                "from": {"first_name": "Alfredo"},
+                "text": "/status"
+            }
+        }
+        telegram_bot._handle_update(update, table=mock_table)
+        mock_send.assert_called_once()
+        text = mock_send.call_args[0][1]
+        self.assertIn("Total invitados: <b>4</b>", text)
+        self.assertIn("Confirmados: <b>2</b>", text)
+        self.assertIn("No asisten: <b>1</b>", text)
+        self.assertIn("Pendientes: <b>1</b>", text)
+        self.assertIn("Tarjetas pagadas: <b>1</b>", text)
+
+    @patch("telegram_bot.send_message")
+    def test_handle_stop(self, mock_send):
+        telegram_bot.add_subscriber(88888)
+        self.assertTrue(telegram_bot.is_subscribed(88888))
+
+        update = {
+            "update_id": 4,
+            "message": {
+                "chat": {"id": 88888},
+                "from": {"first_name": "Alfredo"},
+                "text": "/stop"
+            }
+        }
+        telegram_bot._handle_update(update)
+        self.assertFalse(telegram_bot.is_subscribed(88888))
+        mock_send.assert_called_once()
+        self.assertIn("Notificaciones desactivadas", mock_send.call_args[0][1])
+
+    @patch("telegram_bot.broadcast_message")
+    def test_notify_invitation_opened_and_cooldown(self, mock_broadcast):
+        guests = [{"nombre": "Celia", "apellido": "Muzaber"}]
+        
+        # 1st open: triggers notification
+        telegram_bot.notify_invitation_opened("celia_y_alfredo", guests)
+        self.assertEqual(mock_broadcast.call_count, 1)
+        msg = mock_broadcast.call_args[0][0]
+        self.assertIn("Invitación abierta", msg)
+        self.assertIn("Celia Muzaber", msg)
+
+        # 2nd open immediately after: suppressed by cooldown!
+        telegram_bot.notify_invitation_opened("celia_y_alfredo", guests)
+        self.assertEqual(mock_broadcast.call_count, 1)
+
+    @patch("telegram_bot.broadcast_message")
+    def test_rsvp_dirty_session_and_flush_notification(self, mock_broadcast):
+        # Modifying form marks session dirty (no broadcast)
+        telegram_bot.mark_invitation_dirty("celia_y_alfredo")
+        self.assertEqual(mock_broadcast.call_count, 0)
+
+        # Leaving form calls flush -> triggers single consolidated broadcast
+        guests = [
+            {"nombre": "Celia", "apellido": "Muzaber", "confirmacion": "si", "menu": "general", "celiaco": "si"},
+            {"nombre": "Alfredo", "apellido": "Rezinovsky", "confirmacion": "si", "menu": "general", "celiaco": ""},
+            {"nombre": "Ari", "apellido": "Gato", "confirmacion": "no"}
+        ]
+        telegram_bot.notify_rsvp_on_flush("celia_y_alfredo", guests)
+        self.assertEqual(mock_broadcast.call_count, 1)
+        msg = mock_broadcast.call_args[0][0]
+        self.assertIn("Confirmación RSVP actualizada", msg)
+        self.assertIn("Celia Muzaber", msg)
+        self.assertIn("✅ Asiste (Menú: General, 🌾 Sin gluten)", msg)
+        self.assertIn("Alfredo Rezinovsky", msg)
+        self.assertIn("Ari Gato", msg)
+        self.assertIn("❌ No asiste", msg)
+
+        # Next flush without changes -> does NOT broadcast again (no spam)
+        telegram_bot.notify_rsvp_on_flush("celia_y_alfredo", guests)
+        self.assertEqual(mock_broadcast.call_count, 1)
+
+    @patch("telegram_bot.broadcast_message")
+    def test_notify_comprobante_uploaded(self, mock_broadcast):
+        guests = [{"nombre": "Celia", "apellido": "Muzaber"}]
+        telegram_bot.notify_comprobante_uploaded("celia_y_alfredo", "comprobante_123.pdf", "https://example.com/comprobante_123.pdf", guests)
+        self.assertEqual(mock_broadcast.call_count, 1)
+        msg = mock_broadcast.call_args[0][0]
+        self.assertIn("Comprobante de pago recibido", msg)
+        self.assertIn("comprobante_123.pdf", msg)
+        self.assertIn("https://example.com/comprobante_123.pdf", msg)
+
+
+if __name__ == "__main__":
+    unittest.main()

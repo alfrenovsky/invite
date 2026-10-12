@@ -7,6 +7,7 @@ import uuid
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL
+import telegram_bot
 
 
 app = Flask(__name__)
@@ -581,6 +582,11 @@ def index_page(token=None):
     if not context:
         return render_template("blank.html")
 
+    try:
+        telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []))
+    except Exception as e:
+        app.logger.warning(f"Error notifying invitation opened via Telegram: {e}")
+
     return render_template(
         "index.html",
         token=token,
@@ -677,6 +683,11 @@ def upload_comprobante(token):
     for g in guests:
         table.update_record(g["id"], {"comprobante": comprobante_url})
 
+    try:
+        telegram_bot.notify_comprobante_uploaded(validated_slug, filename, comprobante_url, guests)
+    except Exception as e:
+        app.logger.warning(f"Error notifying comprobante upload via Telegram: {e}")
+
     return jsonify({
         "ok": True,
         "url": comprobante_url,
@@ -711,6 +722,13 @@ def flush_invitacion_cache(token):
         return jsonify({"ok": False, "error": "Token de invitación inválido o no autorizado"}), 403
 
     flushed = table.flush_local_to_remote()
+
+    try:
+        guests = table.get_by_invitacion(validated_slug)
+        telegram_bot.notify_rsvp_on_flush(validated_slug, guests)
+    except Exception as e:
+        app.logger.warning(f"Error notifying RSVP flush via Telegram: {e}")
+
     return jsonify({"ok": True, "flushed": flushed})
 
 
@@ -1350,6 +1368,11 @@ def update_invitado(record_id):
         updated = table.update_record(record_id, data)
         if not updated:
             return jsonify({"ok": False, "error": "Invitado no encontrado"}), 404
+
+        inv_id = updated.get("invitacion_id") or updated.get("invitacion")
+        if inv_id:
+            telegram_bot.mark_invitation_dirty(inv_id)
+
         return jsonify({"ok": True, "data": updated})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
@@ -1367,6 +1390,16 @@ def delete_invitado(record_id):
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@app.get("/telegram/auth-link")
+@require_api_key
+def get_telegram_auth_link():
+    return jsonify({
+        "ok": True,
+        "auth_link": telegram_bot.get_auth_link(),
+        "bot_name": telegram_bot.TELEGRAM_BOT_NAME,
+        "subscribers": telegram_bot._load_subscribers()
+    })
+
 
 @app.get("/health")
 def health():
@@ -1375,4 +1408,6 @@ def health():
 
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+    if not debug_mode or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        telegram_bot.start_telegram_bot(table)
     app.run(host="0.0.0.0", port=5000, debug=debug_mode)
