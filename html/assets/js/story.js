@@ -240,11 +240,9 @@
             }
         });
 
-        // En slides con formulario RSVP desactivar tap-zones para garantizar cero interferencias con el formulario
-        const hasForm = !!(currentSlide && currentSlide.querySelector('.rsvp-form-container'));
-        const disableTaps = (currentSlideId === 'rsvp') || hasForm;
-        if (tapLeft) tapLeft.style.pointerEvents = disableTaps ? 'none' : 'auto';
-        if (tapRight) tapRight.style.pointerEvents = disableTaps ? 'none' : 'auto';
+        // Mantener tap-zones activas en todos los slides
+        if (tapLeft) tapLeft.style.pointerEvents = 'auto';
+        if (tapRight) tapRight.style.pointerEvents = 'auto';
     }
 
     function updateStoryScale() {
@@ -394,11 +392,20 @@
     // 👆 Tap & Desktop Button Handlers
     // ==============================================================
     let isSwiping = false;
+    let lastSwipeTime = 0;
 
     function handleTap(direction) {
-        if (isSwiping || isPullingToRefresh) return;
+        if (isSwiping || isPullingToRefresh || (Date.now() - lastSwipeTime < 300)) return;
         if (direction === 'next') nextSlide(true);
         else prevSlide();
+    }
+
+    function isInteractiveElement(target) {
+        if (!target) return false;
+        if (target.closest('input, textarea, select, button, a, label, [role="button"], [contenteditable="true"]')) return true;
+        if (target.closest('.top-bar, .top-bar-btn, .progress-bar-slot, [data-copy-val]')) return true;
+        if (target.closest('.rsvp-guest-card, .rsvp-payment-card, .autosave-status, .upload-dropzone')) return true;
+        return false;
     }
 
     if (tapLeft) {
@@ -415,6 +422,21 @@
     }
     if (btnDesktopPrev) btnDesktopPrev.addEventListener('click', () => prevSlide());
     if (btnDesktopNext) btnDesktopNext.addEventListener('click', () => nextSlide(true));
+
+    if (container) {
+        container.addEventListener('click', (e) => {
+            if (isSwiping || isPullingToRefresh || (Date.now() - lastSwipeTime < 300)) return;
+            if (isInteractiveElement(e.target)) return;
+
+            const rect = container.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            if (clickX < rect.width / 2) {
+                handleTap('prev');
+            } else {
+                handleTap('next');
+            }
+        });
+    }
 
     // ==============================================================
     // 🔄 Mobile Pull to Refresh & Horizontal Swipe Engine
@@ -472,7 +494,7 @@
             const diffX = touchStartX - currentX;
             const diffY = currentY - touchStartY; // Positive when pulling DOWN
 
-            if (Math.abs(diffX) > 10) {
+            if (Math.abs(diffX) > 15 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
                 isSwiping = true;
                 if (holdTimeout) clearTimeout(holdTimeout);
                 isPaused = false;
@@ -530,16 +552,12 @@
                 }
             }
 
-            // On RSVP slide or any slide with form, never trigger swipe navigation from form touches
-            const target = e.target;
-            if (target && target.closest('.rsvp-form-container')) {
-                setTimeout(() => { isSwiping = false; }, 50);
-                return;
-            }
-
-            // Detect horizontal swipe: distance >= 25px, within 750ms
-            const minSwipeDistance = 25;
-            if (Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(touchStartY - touchEndY) * 0.65 && duration < 750) {
+            // Detect horizontal swipe: distance >= 30px, horizontal dominance, within 800ms
+            const minSwipeDistance = 30;
+            const isHorizontalDominant = Math.abs(diffX) >= minSwipeDistance && Math.abs(diffX) > Math.abs(diffY) * 1.2;
+            if (isHorizontalDominant && duration < 800) {
+                isSwiping = true;
+                lastSwipeTime = Date.now();
                 if (diffX > 0) {
                     nextSlide(true);
                 } else {
@@ -1438,17 +1456,6 @@
             };
         });
 
-        // Prevent tap-zones and swipe navigation when interacting inside form (except copy buttons)
-        document.querySelectorAll('.rsvp-form-container').forEach(formCont => {
-            ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
-                formCont.addEventListener(evtType, (e) => {
-                    if (e.target.closest('.payment-alias-badge, .instagram-copy-sticker, [data-copy-val]')) {
-                        return;
-                    }
-                    e.stopPropagation();
-                }, { passive: false });
-            });
-        });
 
         // RSVP Form Initial Snapshots
         document.querySelectorAll('[data-guest-id]').forEach(card => {
