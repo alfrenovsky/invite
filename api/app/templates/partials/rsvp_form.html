@@ -1,7 +1,7 @@
 <div class="interactive-content rsvp-form-container">
     <form id="storyRsvpForm" data-existing-comprobante="{{ existing_comprobante or '' }}">
         <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
-        
+
         <div id="rsvpCardsContainer" class="rsvp-guest-list">
             {% for guest in guests %}
             {% set conf = guest.confirmacion or '' %}
@@ -9,24 +9,31 @@
             {% set is_celiac = (guest.celiaco == 'si' or guest.pa_celiaco == 'si') %}
             {% set menu_icon = '' %}
             {% if conf == 'si' %}
-                {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
-                {% elif current_menu == 'vegetariano' %}{% set menu_icon = '🥬' %}
-                {% else %}{% set menu_icon = '🍽️' %}
-                {% endif %}
+            {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
+            {% elif current_menu == 'vegetariano' %}{% set menu_icon = '🥬' %}
+            {% else %}{% set menu_icon = '🍽️' %}
             {% endif %}
-            <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}" data-monto="{{ guest.montotarjeta or '' }}" data-comprobante="{{ guest.comprobante or '' }}">
+            {% endif %}
+            <div class="rsvp-guest-card" data-guest-id="{{ guest.id }}" data-status="{{ conf }}"
+                data-monto="{{ guest.montotarjeta or '' }}" data-comprobante="{{ guest.comprobante or '' }}">
                 <!-- Guest Header Row (One Line with Bullet, Full Name, Gluten Icon, and Menu Icon) -->
-                <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false" aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}">
-                    <span class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}" id="bullet_{{ guest.id }}"></span>
-                    <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
+                <div class="rsvp-guest-row rsvp-card-header" tabindex="0" role="button" aria-expanded="false"
+                    aria-label="Confirmación de {% if guest.nombre or guest.apellido %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}">
+                    <span
+                        class="rsvp-bullet {% if conf == 'si' %}bullet-si{% elif conf == 'no' %}bullet-no{% else %}bullet-pending{% endif %}"
+                        id="bullet_{{ guest.id }}"></span>
+                    <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido
+                        %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
                     <span class="rsvp-header-icons">
-                        <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}" style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
+                        <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}"
+                            style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
                             <img src="/assets/sin_gluten.svg" alt="Sin gluten" class="rsvp-gluten-badge">
                         </span>
                         <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{{ menu_icon }}</span>
                     </span>
                     <span class="rsvp-chevron" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </span>
@@ -36,35 +43,52 @@
                 <div class="rsvp-guest-body">
                     <!-- 3 Status Buttons (Text Only, No Emojis) -->
                     <div class="rsvp-status-buttons" role="group" aria-label="Estado de asistencia">
-                        <button type="button" class="rsvp-status-btn btn-asiste {% if conf == 'si' %}selected{% endif %}" data-val="si">Asiste</button>
-                        <button type="button" class="rsvp-status-btn btn-no {% if conf == 'no' %}selected{% endif %}" data-val="no">No asiste</button>
-                        <button type="button" class="rsvp-status-btn btn-pendiente {% if conf != 'si' and conf != 'no' %}selected{% endif %}" data-val="">Pendiente</button>
+                        <button type="button"
+                            class="rsvp-status-btn btn-asiste {% if conf == 'si' %}selected{% endif %}"
+                            data-val="si">Asiste</button>
+                        <button type="button" class="rsvp-status-btn btn-no {% if conf == 'no' %}selected{% endif %}"
+                            data-val="no">No asiste</button>
+                        <button type="button"
+                            class="rsvp-status-btn btn-pendiente {% if conf != 'si' and conf != 'no' %}selected{% endif %}"
+                            data-val="">Pendiente</button>
                     </div>
 
                     <!-- Name & Lastname Inputs -->
                     <div class="rsvp-guest-inputs">
                         <div class="rsvp-field">
                             <label for="nombre_{{ guest.id }}">Nombre</label>
-                            <input type="text" id="nombre_{{ guest.id }}" name="nombre_{{ guest.id }}" class="guest-input-nombre" value="{{ guest.nombre or '' }}" placeholder="Nombre" autocomplete="off">
+                            <input type="text" id="nombre_{{ guest.id }}" name="nombre_{{ guest.id }}"
+                                class="guest-input-nombre" value="{{ guest.nombre or '' }}" placeholder="Nombre"
+                                autocomplete="off">
                         </div>
                         <div class="rsvp-field">
                             <label for="apellido_{{ guest.id }}">Apellido</label>
-                            <input type="text" id="apellido_{{ guest.id }}" name="apellido_{{ guest.id }}" class="guest-input-apellido" value="{{ guest.apellido or '' }}" placeholder="Apellido" autocomplete="off">
+                            <input type="text" id="apellido_{{ guest.id }}" name="apellido_{{ guest.id }}"
+                                class="guest-input-apellido" value="{{ guest.apellido or '' }}" placeholder="Apellido"
+                                autocomplete="off">
                         </div>
                     </div>
 
                     <!-- Dietary Menu Buttons (Shown only if confirmed) -->
                     {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
-                    <div class="rsvp-menu-section" id="menu_section_{{ guest.id }}" style="{% if conf != 'si' %}display: none;{% endif %}">
+                    <div class="rsvp-menu-section" id="menu_section_{{ guest.id }}"
+                        style="{% if conf != 'si' %}display: none;{% endif %}">
                         <label class="rsvp-menu-label">Menú</label>
                         <div class="rsvp-menu-buttons" role="group" aria-label="Menú">
-                            <button type="button" class="rsvp-menu-btn {% if current_menu == 'general' %}selected{% endif %}" data-menu="general">General</button>
-                            <button type="button" class="rsvp-menu-btn {% if current_menu == 'vegetariano' %}selected{% endif %}" data-menu="vegetariano">Vegetariano</button>
-                            <button type="button" class="rsvp-menu-btn {% if current_menu == 'vegano' %}selected{% endif %}" data-menu="vegano">Vegano</button>
+                            <button type="button"
+                                class="rsvp-menu-btn {% if current_menu == 'general' %}selected{% endif %}"
+                                data-menu="general">General</button>
+                            <button type="button"
+                                class="rsvp-menu-btn {% if current_menu == 'vegetariano' %}selected{% endif %}"
+                                data-menu="vegetariano">Vegetariano</button>
+                            <button type="button"
+                                class="rsvp-menu-btn {% if current_menu == 'vegano' %}selected{% endif %}"
+                                data-menu="vegano">Vegano</button>
                         </div>
                         <div class="rsvp-celiac-wrapper">
                             <label class="rsvp-celiac-label" for="celiaco_{{ guest.id }}">
-                                <input type="checkbox" id="celiaco_{{ guest.id }}" name="celiaco_{{ guest.id }}" class="rsvp-celiac-checkbox" value="si" {% if is_celiac %}checked{% endif %}>
+                                <input type="checkbox" id="celiaco_{{ guest.id }}" name="celiaco_{{ guest.id }}"
+                                    class="rsvp-celiac-checkbox" value="si" {% if is_celiac %}checked{% endif %}>
                                 <span class="rsvp-celiac-custom-box" aria-hidden="true"></span>
                                 <span class="rsvp-celiac-text">Sin gluten</span>
                             </label>
@@ -83,7 +107,8 @@
                         <span class="rsvp-payment-title">Tarjeta de la fiesta</span>
                         {% set current_alias = alias_cbu or (el.alias_cbu if el is defined and el.alias_cbu else '') %}
                         {% if current_alias %}
-                        <button type="button" class="payment-alias-badge" data-copy-val="{{ current_alias }}" title="Tocar para copiar Alias o CBU">
+                        <button type="button" class="payment-alias-badge" data-copy-val="{{ current_alias }}"
+                            title="Tocar para copiar Alias o CBU">
                             <span class="payment-alias-icon">Transferir a 📋</span>
                             <span class="payment-alias-text">{{ current_alias }}</span>
                         </button>
@@ -96,16 +121,20 @@
                 </div>
 
                 <div class="rsvp-upload-wrapper" id="rsvpUploadWrapper">
-                    <input type="file" id="comprobanteFileInput" accept=".pdf,image/jpeg,image/png,image/webp" style="display: none;">
+                    <input type="file" id="comprobanteFileInput" accept=".pdf,image/jpeg,image/png,image/webp"
+                        style="display: none;">
 
-                    <div id="uploadPrompt" class="upload-dropzone" role="button" tabindex="0" title="Seleccionar comprobante de pago">
+                    <div id="uploadPrompt" class="upload-dropzone" role="button" tabindex="0"
+                        title="Seleccionar comprobante de pago">
                         <div class="upload-dropzone-content">
-                            <svg class="upload-cloud-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            <svg class="upload-cloud-icon" viewBox="0 0 24 24" width="24" height="24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
                             </svg>
-                            <span class="upload-btn-label">Subir comprobante de pago o mandalo por WhatsApp</span>
+                            <span class="upload-btn-label">Subir comprobante de pago</span>
+                            <span class="upload-btn-label">o mandarlo por WhatsApp</span>
                         </div>
                     </div>
 
@@ -120,8 +149,10 @@
                             <span class="upload-success-label" id="uploadedFilename">Comprobante recibido</span>
                         </div>
                         <div class="upload-success-actions">
-                            <a id="btnViewComprobante" href="#" target="_blank" rel="noopener noreferrer" class="btn-comprobante-link">Ver archivo ↗</a>
-                            <button type="button" id="btnChangeComprobante" class="btn-comprobante-change">Cambiar</button>
+                            <a id="btnViewComprobante" href="#" target="_blank" rel="noopener noreferrer"
+                                class="btn-comprobante-link">Ver archivo ↗</a>
+                            <button type="button" id="btnChangeComprobante"
+                                class="btn-comprobante-change">Cambiar</button>
                         </div>
                     </div>
                 </div>

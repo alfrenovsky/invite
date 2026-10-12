@@ -1356,15 +1356,15 @@
         }
 
         document.addEventListener('click', (e) => {
-            const copyBtn = e.target.closest('.instagram-copy-sticker, .slide-el-copy, [data-copy-val]');
+            const copyBtn = e.target.closest('.instagram-copy-sticker, .slide-el-copy, [data-copy-val], .payment-alias-badge');
             if (!copyBtn) return;
             e.stopPropagation();
             e.preventDefault();
-            const val = copyBtn.getAttribute('data-copy-val') || copyBtn.querySelector('.location-sticker-text')?.textContent?.trim() || copyBtn.textContent.trim();
+            const val = copyBtn.getAttribute('data-copy-val') || copyBtn.querySelector('.location-sticker-text, .payment-alias-text')?.textContent?.trim() || copyBtn.textContent.trim();
             if (val) {
                 copyTextToClipboard(val, copyBtn);
             }
-        });
+        }, true);
 
         // Google Calendar Buttons & Stickers
         const containerEl = document.getElementById("storyContainer");
@@ -1401,10 +1401,13 @@
             };
         });
 
-        // Prevent tap-zones and swipe navigation when interacting inside form
+        // Prevent tap-zones and swipe navigation when interacting inside form (except copy buttons)
         document.querySelectorAll('.rsvp-form-container').forEach(formCont => {
             ['pointerdown', 'touchstart', 'click'].forEach(evtType => {
                 formCont.addEventListener(evtType, (e) => {
+                    if (e.target.closest('.payment-alias-badge, .instagram-copy-sticker, [data-copy-val]')) {
+                        return;
+                    }
                     e.stopPropagation();
                 }, { passive: false });
             });
