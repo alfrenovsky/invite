@@ -1572,6 +1572,35 @@
                     e.stopPropagation();
 
                     const val = btn.getAttribute('data-val') || '';
+
+                    // Require both Nombre and Apellido to confirm ("si")
+                    if (val === 'si') {
+                        const n = inputNombre ? inputNombre.value.trim() : '';
+                        const a = inputApellido ? inputApellido.value.trim() : '';
+                        if (!n || !a) {
+                            btn.classList.add('btn-flash-error');
+                            setTimeout(() => btn.classList.remove('btn-flash-error'), 600);
+
+                            guestCards.forEach(c => {
+                                if (c !== card) {
+                                    c.classList.remove('expanded');
+                                    const h = c.querySelector('.rsvp-card-header');
+                                    if (h) h.setAttribute('aria-expanded', 'false');
+                                }
+                            });
+                            card.classList.add('expanded');
+                            if (header) header.setAttribute('aria-expanded', 'true');
+
+                            const emptyInput = (!n) ? inputNombre : inputApellido;
+                            if (emptyInput) {
+                                emptyInput.focus();
+                                emptyInput.classList.add('input-flash-error');
+                                setTimeout(() => emptyInput.classList.remove('input-flash-error'), 1000);
+                            }
+                            return;
+                        }
+                    }
+
                     card.setAttribute('data-status', val);
 
                     // Update button styling
@@ -1663,6 +1692,35 @@
                 if (n) {
                     card.dataset.lastValidNombre = n;
                 }
+
+                // If currently confirmed ("si") and either nombre or apellido is removed, revert to "pendiente"
+                const currentStatus = card.getAttribute('data-status') || '';
+                if (currentStatus === 'si' && (!n || !a)) {
+                    card.setAttribute('data-status', '');
+
+                    statusButtons.forEach(b => {
+                        if (b.getAttribute('data-val') === '') {
+                            b.classList.add('selected');
+                        } else {
+                            b.classList.remove('selected');
+                        }
+                    });
+
+                    if (bullet) {
+                        bullet.classList.remove('bullet-si', 'bullet-no');
+                        bullet.classList.add('bullet-pending');
+                    }
+
+                    const menuSection = card.querySelector('.rsvp-menu-section');
+                    if (menuSection) {
+                        menuSection.style.display = 'none';
+                    }
+
+                    updateMenuIconDisplay('');
+                    updateGlutenIconDisplay('');
+                    updateSlideList();
+                }
+
                 updateStoryGuestNames();
                 updatePaymentSection();
                 queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
@@ -1670,16 +1728,7 @@
 
             if (inputNombre) {
                 inputNombre.addEventListener('input', syncGuestName);
-                inputNombre.addEventListener('blur', () => {
-                    const activeNames = getActiveGuestFirstNames();
-                    if (activeNames.length === 0) {
-                        const restored = card.dataset.lastValidNombre || 'Acompañante';
-                        inputNombre.value = restored;
-                        syncGuestName();
-                        showToast('Debe haber al menos un nombre');
-                    }
-                    flushAutoSave();
-                });
+                inputNombre.addEventListener('blur', () => flushAutoSave());
             }
             if (inputApellido) {
                 inputApellido.addEventListener('input', syncGuestName);
