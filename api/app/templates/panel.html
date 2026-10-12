@@ -4358,9 +4358,7 @@
             const slide = getCurrentSlide();
             if (!slide) return;
 
-            if (!slide._origId) {
-                slide._origId = slide.id;
-            }
+            slide._origId = slide.id;
 
             if (!Array.isArray(slide.elements)) {
                 slide.elements = [];
@@ -5740,11 +5738,13 @@
             }
 
             const origId = slide._origId || slide.id;
+            const slidePayload = { ...slide };
+            delete slidePayload._origId;
             try {
                 const res = await fetch(`/panel/slide/${encodeURIComponent(origId)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(slide)
+                    body: JSON.stringify(slidePayload)
                 });
                 const data = await res.json();
                 if (data.ok) {
@@ -5788,10 +5788,15 @@
             renderSlideChips();
 
             try {
+                const cleanSlides = slidesData.map(s => {
+                    const c = { ...s };
+                    delete c._origId;
+                    return c;
+                });
                 const res = await fetch('/panel/slides', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(slidesData)
+                    body: JSON.stringify(cleanSlides)
                 });
                 const data = await res.json();
                 if (data.ok) {

@@ -142,6 +142,7 @@ def load_slides():
         slides = [dict(s) for s in SLIDES_CONFIG_DEFAULT]
 
     for s in slides:
+        s.pop("_origId", None)
         if "elements" not in s or not isinstance(s["elements"], list):
             s["elements"] = []
         s["template"] = "slides/custom.html"
@@ -155,6 +156,7 @@ def load_slides():
 
 def save_slides(slides_list):
     for s in slides_list:
+        s.pop("_origId", None)
         if "elements" not in s or not isinstance(s["elements"], list):
             s["elements"] = []
         s["template"] = "slides/custom.html"
@@ -963,7 +965,7 @@ def panel_update_slide(slide_id):
         abort(404)
 
     slides = load_slides()
-    target_slide = next((s for s in slides if s["id"] == slide_id), None)
+    target_slide = next((s for s in slides if s["id"] == slide_id or s.get("title") == slide_id or s.get("_origId") == slide_id), None)
     if not target_slide:
         return jsonify({"ok": False, "error": f"Slide {slide_id} no encontrado"}), 404
 
