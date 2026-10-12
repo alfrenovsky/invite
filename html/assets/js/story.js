@@ -1288,7 +1288,7 @@
             // Pause story auto-advance during celebration
             isPaused = true;
 
-            // Display for ~0.6s, then smooth fade-out (~0.26s)
+            // Display for at least 1s full view, then smooth fade-out (~0.26s)
             copyCelebrationTimeout = setTimeout(() => {
                 copyOverlay.classList.add('fading-out');
                 copyCelebrationTimeout = setTimeout(() => {
@@ -1296,7 +1296,7 @@
                     copyCelebrationTimeout = null;
                     isPaused = false;
                 }, 260);
-            }, 850);
+            }, 1350);
         }
 
         // Tap on overlay to dismiss early
