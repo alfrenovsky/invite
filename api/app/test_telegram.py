@@ -89,12 +89,14 @@ class TestTelegramBot(unittest.TestCase):
         telegram_bot.add_subscriber(88888)
 
         mock_table = MagicMock()
-        mock_table.get_all_records.return_value = [
+        sample_records = [
             {"nombre": "Celia", "confirmacion": "si", "pagado": "si"},
             {"nombre": "Alfredo", "confirmacion": "si", "pagado": ""},
             {"nombre": "Ari", "confirmacion": "no", "pagado": ""},
             {"nombre": "Invitado", "confirmacion": "", "pagado": ""},
         ]
+        mock_table.get_all.return_value = sample_records
+        mock_table.get_all_records.return_value = sample_records
 
         update = {
             "update_id": 3,
@@ -148,11 +150,11 @@ class TestTelegramBot(unittest.TestCase):
 
     @patch("telegram_bot.broadcast_message")
     def test_rsvp_dirty_session_and_flush_notification(self, mock_broadcast):
-        # Modifying form marks session dirty (no broadcast)
-        telegram_bot.mark_invitation_dirty("celia_y_alfredo")
+        # Modifying form marks session dirty with uppercase/spaces/dashes (no broadcast)
+        telegram_bot.mark_invitation_dirty("Celia_y_Alfredo")
         self.assertEqual(mock_broadcast.call_count, 0)
 
-        # Leaving form calls flush -> triggers single consolidated broadcast
+        # Leaving form calls flush with lowercase slug -> triggers single consolidated broadcast
         guests = [
             {"nombre": "Celia", "apellido": "Muzaber", "confirmacion": "si", "menu": "general", "celiaco": "si"},
             {"nombre": "Alfredo", "apellido": "Rezinovsky", "confirmacion": "si", "menu": "general", "celiaco": ""},

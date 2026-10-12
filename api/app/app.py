@@ -1371,7 +1371,7 @@ def update_invitado(record_id):
 
         inv_id = updated.get("invitacion_id") or updated.get("invitacion")
         if inv_id:
-            telegram_bot.mark_invitation_dirty(inv_id)
+            telegram_bot.mark_invitation_dirty(inv_id, table=table)
 
         return jsonify({"ok": True, "data": updated})
     except Exception as e:

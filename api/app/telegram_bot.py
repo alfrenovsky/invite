@@ -29,11 +29,16 @@ OPEN_COOLDOWN_SECONDS = 1800
 # Threading locks and trackers
 _lock = threading.RLock()
 _subscribers_cache = None
-_last_opened = {}  # {invitacion_id: timestamp}
-_dirty_rsvp_sessions = set()  # set of invitacion_id that had updates during current visit
+_last_opened = {}  # {clean_id: timestamp}
+_dirty_rsvp_sessions = {}  # {clean_id: {"time": timestamp, "table": table}}
+_rsvp_debounce_timers = {}  # {clean_id: Timer}
 _polling_thread = None
 _is_polling = False
 _table_ref = None
+
+
+def _normalize_slug(slug: str) -> str:
+    return str(slug or "").strip().lower().replace(" ", "_").replace("-", "_")
 
 
 def get_auth_link() -> str:
@@ -197,7 +202,7 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list):
         return
 
     now = time.time()
-    clean_id = str(invitacion_id).strip()
+    clean_id = _normalize_slug(invitacion_id)
 
     with _lock:
         last = _last_opened.get(clean_id, 0)
@@ -224,30 +229,77 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list):
     broadcast_message(msg)
 
 
-def mark_invitation_dirty(invitacion_id: str):
+def mark_invitation_dirty(invitacion_id: str, table=None):
     """
     Marks an invitation as modified during the active visit.
-    No notification is sent here (avoids form keystroke/click spam).
+    Also starts a 5-second debounce timer that automatically flushes
+    if the user does not leave the slide immediately.
     """
     if not invitacion_id:
         return
+
+    clean_id = _normalize_slug(invitacion_id)
+    tbl = table or _table_ref
+
     with _lock:
-        _dirty_rsvp_sessions.add(str(invitacion_id).strip())
+        _dirty_rsvp_sessions[clean_id] = {"time": time.time(), "table": tbl}
+
+        # Cancel prior timer if active
+        prev_timer = _rsvp_debounce_timers.get(clean_id)
+        if prev_timer:
+            try:
+                prev_timer.cancel()
+            except Exception:
+                pass
+
+        def _delayed_flush():
+            with _lock:
+                if clean_id not in _dirty_rsvp_sessions:
+                    return
+                session_data = _dirty_rsvp_sessions.get(clean_id, {})
+                t_ref = session_data.get("table") or _table_ref
+
+            guest_list = []
+            if t_ref:
+                try:
+                    guest_list = t_ref.get_by_invitacion(clean_id)
+                except Exception as ex:
+                    _log(f"Error fetching guests for delayed flush: {ex}")
+
+            notify_rsvp_on_flush(clean_id, guest_list)
+
+        timer = threading.Timer(5.0, _delayed_flush)
+        timer.daemon = True
+        _rsvp_debounce_timers[clean_id] = timer
+        timer.start()
 
 
-def notify_rsvp_on_flush(invitacion_id: str, guest_records: list):
+def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
     """
-    Sent ONLY when leaving the form page/slide and flushing changes.
+    Sent when leaving the form page/slide, or via delayed debounce timer.
     Consolidates the full group RSVP status into a single clean message.
     """
     if not TELEGRAM_BOT_TOKEN or not invitacion_id:
         return
 
-    clean_id = str(invitacion_id).strip()
+    clean_id = _normalize_slug(invitacion_id)
     with _lock:
         if clean_id not in _dirty_rsvp_sessions:
             return
-        _dirty_rsvp_sessions.remove(clean_id)
+        session_data = _dirty_rsvp_sessions.pop(clean_id, {})
+        timer = _rsvp_debounce_timers.pop(clean_id, None)
+        if timer:
+            try:
+                timer.cancel()
+            except Exception:
+                pass
+
+    tbl = session_data.get("table") or _table_ref
+    if (not guest_records) and tbl:
+        try:
+            guest_records = tbl.get_by_invitacion(clean_id)
+        except Exception:
+            guest_records = []
 
     group_title = clean_id.replace("_", " ").title()
     lines = [
@@ -285,7 +337,7 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
     if not TELEGRAM_BOT_TOKEN:
         return
 
-    clean_id = str(invitacion_id or "").strip()
+    clean_id = _normalize_slug(invitacion_id)
     group_title = clean_id.replace("_", " ").title()
     names = [f"{g.get('nombre', '')} {g.get('apellido', '')}".strip() or "Acompañante" for g in (guest_records or [])]
     names_str = ", ".join(names) if names else group_title
@@ -306,11 +358,18 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
 # ==============================================================
 
 def _get_wedding_stats(table) -> str:
-    if not table:
+    tbl = table or _table_ref
+    if not tbl:
         return "No hay conexión disponible con la base de datos."
 
     try:
-        records = table.get_all_records() or []
+        if hasattr(tbl, "get_all"):
+            records = tbl.get_all() or []
+        elif hasattr(tbl, "get_all_records"):
+            records = tbl.get_all_records() or []
+        else:
+            records = []
+
         total_records = len(records)
         confirmados = sum(1 for r in records if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado"))
         rechazados = sum(1 for r in records if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
@@ -327,7 +386,7 @@ def _get_wedding_stats(table) -> str:
             f"🕒 Actualizado: {_get_tz_now_str()}"
         )
     except Exception as e:
-        logger.error(f"[TELEGRAM] Error fetching wedding stats: {e}")
+        _log(f"Error fetching wedding stats: {e}")
         return "Error al obtener estadísticas de Google Sheets."
 
 
