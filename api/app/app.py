@@ -8,6 +8,11 @@ from flask import Flask, request, jsonify, render_template, abort, send_file, se
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL
 import telegram_bot
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    Image = None
+    ImageOps = None
 
 
 app = Flask(__name__)
@@ -469,6 +474,59 @@ def replace_guest_names_filter(text, group_names="", count=None, card_value=""):
 @app.context_processor
 def utility_processor():
     return dict(replace_guest_names=replace_guest_names)
+
+
+TARGET_CANVAS_W = 1080
+TARGET_CANVAS_H = 2340
+
+
+def crop_slide_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=85):
+    if not Image or not slide_id or not bg_filename:
+        return False
+
+    bg_clean = (bg_filename or "").strip()
+    if not bg_clean or bg_clean.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) or bg_clean.startswith("/"):
+        return False
+
+    bg_name = os.path.basename(bg_clean.replace("temp/", ""))
+    bg_dir = get_backgrounds_dir()
+    src_path = os.path.join(bg_dir, bg_name)
+    if not os.path.isfile(src_path):
+        return False
+
+    temp_dir = os.path.join(bg_dir, "temp")
+    os.makedirs(temp_dir, exist_ok=True)
+    clean_slide_id = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
+    dest_path = os.path.join(temp_dir, f"{clean_slide_id}.webp")
+
+    try:
+        orig = Image.open(src_path)
+        orig = ImageOps.exif_transpose(orig).convert("RGB")
+        im_w, im_h = orig.size
+
+        s_factor = max(TARGET_CANVAS_W / im_w, TARGET_CANVAS_H / im_h)
+        z = (float(bg_zoom) if bg_zoom is not None else 100.0) / 100.0
+        dx = ((float(bg_x) if bg_x is not None else 0.0) / 100.0) * TARGET_CANVAS_W
+        dy = ((float(bg_y) if bg_y is not None else 0.0) / 100.0) * TARGET_CANVAS_H
+
+        final_w = int(round(im_w * s_factor * z))
+        final_h = int(round(im_h * s_factor * z))
+
+        cx = TARGET_CANVAS_W / 2.0 + dx
+        cy = TARGET_CANVAS_H / 2.0 + dy
+
+        top_left_x = int(round(cx - final_w / 2.0))
+        top_left_y = int(round(cy - final_h / 2.0))
+
+        scaled = orig.resize((final_w, final_h), Image.Resampling.LANCZOS)
+        canvas = Image.new("RGB", (TARGET_CANVAS_W, TARGET_CANVAS_H), (0, 0, 0))
+        canvas.paste(scaled, (top_left_x, top_left_y))
+
+        canvas.save(dest_path, "WEBP", quality=quality, method=6)
+        return True
+    except Exception as e:
+        print(f"Error cropping slide image '{slide_id}': {e}")
+        return False
 
 
 def resolve_invitation_slide(slide):
@@ -1001,6 +1059,7 @@ def panel_update_slide(slide_id):
             except (ValueError, TypeError):
                 pass
 
+    clean_new_id = None
     new_id = data.get("id") or data.get("new_id")
     if new_id:
         clean_new_id = re.sub(r"[^a-zA-Z0-9_-]", "_", str(new_id).strip().lower())
@@ -1019,15 +1078,43 @@ def panel_update_slide(slide_id):
             target_slide[key] = val
 
     if any(k in data for k in ("background", "bg_zoom", "bg_x", "bg_y", "id", "new_id")):
-        for sid in (slide_id, target_slide.get("id"), data.get("id"), data.get("new_id")):
-            if sid:
-                clean_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(sid).strip().lower())
-                temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{clean_sid}.webp")
+        # If slide ID changed, remove old temp file
+        if clean_new_id and clean_new_id != slide_id:
+            old_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
+            old_temp = os.path.join(get_backgrounds_dir(), "temp", f"{old_sid}.webp")
+            if os.path.isfile(old_temp):
+                try:
+                    os.remove(old_temp)
+                except Exception:
+                    pass
+
+        # Automatically regenerate the new WebP crop on save
+        bg_val = (target_slide.get("background") or "").strip()
+        if bg_val and not bg_val.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) and not bg_val.startswith("/"):
+            success = crop_slide_image(
+                target_slide["id"],
+                bg_val,
+                bg_x=target_slide.get("bg_x", 0.0),
+                bg_y=target_slide.get("bg_y", 0.0),
+                bg_zoom=target_slide.get("bg_zoom", 100.0),
+            )
+            if not success:
+                sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(target_slide["id"]).strip().lower())
+                temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{sid}.webp")
                 if os.path.isfile(temp_file):
                     try:
                         os.remove(temp_file)
                     except Exception:
                         pass
+        else:
+            # If background was removed or changed to video, clean up any existing temp WebP
+            sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(target_slide["id"]).strip().lower())
+            temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{sid}.webp")
+            if os.path.isfile(temp_file):
+                try:
+                    os.remove(temp_file)
+                except Exception:
+                    pass
 
     save_slides(slides)
     return jsonify({"ok": True, "slide": target_slide, "message": "Slide actualizado"})
