@@ -3471,13 +3471,25 @@
         let currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
         let activeStyleKey = 'title'; // 'title' | 'tag' | 'body'
 
+        function getComparableSlide(slide) {
+            if (!slide) return null;
+            const copy = { ...slide };
+            delete copy._origId;
+            const sorted = {};
+            Object.keys(copy).sort().forEach(k => {
+                sorted[k] = copy[k];
+            });
+            return sorted;
+        }
+
         function isSlideDirty(slideId) {
             if (!slideId) return false;
             const current = slidesData.find(s => s.id === slideId);
-            const saved = savedSlidesSnapshot.find(s => s.id === slideId);
-            if (!current && !saved) return false;
-            if (!current || !saved) return true;
-            return JSON.stringify(current) !== JSON.stringify(saved);
+            if (!current) return false;
+            const origId = current._origId || slideId;
+            const saved = savedSlidesSnapshot.find(s => s.id === slideId || s.id === origId);
+            if (!saved) return true;
+            return JSON.stringify(getComparableSlide(current)) !== JSON.stringify(getComparableSlide(saved));
         }
 
         function updateDirtySlideChipsUI() {
@@ -5749,11 +5761,12 @@
                 const data = await res.json();
                 if (data.ok) {
                     slide._origId = slide.id;
+                    const cleanSnap = getComparableSlide(slide);
                     const snapIdx = savedSlidesSnapshot.findIndex(s => s.id === origId || s.id === slide.id);
                     if (snapIdx >= 0) {
-                        savedSlidesSnapshot[snapIdx] = JSON.parse(JSON.stringify(slide));
+                        savedSlidesSnapshot[snapIdx] = cleanSnap;
                     } else {
-                        savedSlidesSnapshot.push(JSON.parse(JSON.stringify(slide)));
+                        savedSlidesSnapshot.push(cleanSnap);
                     }
                     updateDirtySlideChipsUI();
 
@@ -5800,7 +5813,7 @@
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    savedSlidesSnapshot = JSON.parse(JSON.stringify(slidesData));
+                    savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
                     updateDirtySlideChipsUI();
                     showToast('Orden de slides actualizado');
                 } else {
@@ -5837,7 +5850,7 @@
                 const data = await res.json();
                 if (data.ok && data.slide) {
                     slidesData.push(data.slide);
-                    savedSlidesSnapshot.push(JSON.parse(JSON.stringify(data.slide)));
+                    savedSlidesSnapshot.push(getComparableSlide(data.slide));
                     closeNewSlideModal();
                     selectSlide(data.slide.id);
                     updateDirtySlideChipsUI();
