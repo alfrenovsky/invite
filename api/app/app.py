@@ -471,19 +471,6 @@ def utility_processor():
     return dict(replace_guest_names=replace_guest_names)
 
 
-def resolve_invitation_slide(slide):
-    if not slide:
-        return slide
-    slide_copy = dict(slide)
-    bg = (slide_copy.get("background") or "").strip()
-    if bg and not bg.startswith("/") and not bg.startswith("temp/"):
-        bg_dir = get_backgrounds_dir()
-        temp_path = os.path.join(bg_dir, "temp", bg)
-        if os.path.exists(temp_path):
-            slide_copy["background"] = f"temp/{bg}"
-    return slide_copy
-
-
 def get_guest_context(validated_slug):
     try:
         guests = table.get_by_invitacion(validated_slug)
@@ -511,7 +498,7 @@ def get_guest_context(validated_slug):
             break
 
     card_value = format_currency_ar(guests[0].get("montotarjeta", "")) if guests else ""
-    active_slides = [resolve_invitation_slide(s) for s in load_slides() if s.get("enabled", True)]
+    active_slides = [s for s in load_slides() if s.get("enabled", True)]
 
 
 
@@ -652,7 +639,7 @@ def get_single_slide(token, slide_id):
     if not context:
         return render_template("blank.html"), 404
 
-    slide = next((resolve_invitation_slide(s) for s in load_slides() if s["id"] == slide_id and s.get("enabled", True)), None)
+    slide = next((s for s in load_slides() if s["id"] == slide_id and s.get("enabled", True)), None)
     if not slide:
         return "Slide no encontrada o deshabilitada", 404
 
