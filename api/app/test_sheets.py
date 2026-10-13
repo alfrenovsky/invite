@@ -442,6 +442,81 @@ class TestGoogleSheetsTable(unittest.TestCase):
                     self.assertEqual(len(loaded), 1)
                     self.assertEqual(loaded[0]["template"], "slides/custom.html")
 
+    def test_resolve_invitation_slide_and_temp_behavior(self):
+        from app import app, resolve_invitation_slide
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bg_dir = os.path.join(tmpdir, "backgrounds")
+            temp_dir = os.path.join(bg_dir, "temp")
+            os.makedirs(temp_dir, exist_ok=True)
+
+            # Per-slide WebP file (named after slide id 'fecha')
+            temp_file = os.path.join(temp_dir, "fecha.webp")
+            with open(temp_file, "w") as f:
+                f.write("dummy-webp")
+
+            with patch("app.get_backgrounds_dir", return_value=bg_dir):
+                # 1. Slide with existing temp webp -> background resolves to temp/{slide_id}.webp and coords reset
+                slide_with_temp = {
+                    "id": "fecha",
+                    "background": "ConGlobo.jpg",
+                    "bg_x": -0.9,
+                    "bg_y": -3.5,
+                    "bg_zoom": 160.0
+                }
+                resolved = resolve_invitation_slide(slide_with_temp)
+                self.assertEqual(resolved["background"], "temp/fecha.webp")
+                self.assertEqual(resolved["bg_x"], 0)
+                self.assertEqual(resolved["bg_y"], 0)
+                self.assertEqual(resolved["bg_zoom"], 100)
+
+                # Original dictionary was not modified
+                self.assertEqual(slide_with_temp["background"], "ConGlobo.jpg")
+                self.assertEqual(slide_with_temp["bg_zoom"], 160.0)
+
+                # 2. Slide without temp file -> leaves original background and transforms intact
+                slide_without_temp = {
+                    "id": "portada",
+                    "background": "Other.jpg",
+                    "bg_x": 5.0,
+                    "bg_y": 10.0,
+                    "bg_zoom": 120.0
+                }
+                resolved_no_temp = resolve_invitation_slide(slide_without_temp)
+                self.assertEqual(resolved_no_temp["background"], "Other.jpg")
+                self.assertEqual(resolved_no_temp["bg_x"], 5.0)
+                self.assertEqual(resolved_no_temp["bg_y"], 10.0)
+                self.assertEqual(resolved_no_temp["bg_zoom"], 120.0)
+
+                # 3. Video slides are never modified
+                for vid in ("clip.mp4", "intro.webm", "sample.mov"):
+                    slide_video = {
+                        "id": "video",
+                        "background": vid,
+                        "bg_x": 0,
+                        "bg_y": 0,
+                        "bg_zoom": 100
+                    }
+                    resolved_video = resolve_invitation_slide(slide_video)
+                    self.assertEqual(resolved_video["background"], vid)
+
+                # 4. Invalidation on slide update in panel removes temp/{slide_id}.webp
+                with app.test_client() as client:
+                    with patch("app.is_dev_mode", return_value=True), \
+                         patch("app.load_slides", return_value=[dict(slide_with_temp)]), \
+                         patch("app.save_slides"):
+                        self.assertTrue(os.path.isfile(temp_file))
+                        client.post("/panel/slide/fecha", json={"bg_zoom": 150.0})
+                        self.assertFalse(os.path.isfile(temp_file))
+
+                        # Recreate and verify deletion invalidates
+                        with open(temp_file, "w") as f:
+                            f.write("dummy-webp")
+                        self.assertTrue(os.path.isfile(temp_file))
+                        client.post("/panel/slide/fecha/delete")
+                        self.assertFalse(os.path.isfile(temp_file))
+
     def test_panel_styles_and_slides_download_upload(self):
         import io
         import json
@@ -688,7 +763,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
     def test_slide_id_editing_and_hidden_parameter(self):
         from app import app
         with app.test_client() as client:
-            with patch("app.is_dev_mode", return_value=True):
+            with patch("app.is_dev_mode", return_value=True), patch("app.get_backgrounds_dir", return_value="/tmp/test_bg_dir"):
                 existing_slides = [
                     {"id": "portada", "template": "slides/custom.html", "duration": 4000, "hidden": False},
                     {"id": "fecha", "template": "slides/custom.html", "duration": 5000, "hidden": False},

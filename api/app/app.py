@@ -471,6 +471,30 @@ def utility_processor():
     return dict(replace_guest_names=replace_guest_names)
 
 
+def resolve_invitation_slide(slide):
+    if not slide:
+        return slide
+    slide_copy = dict(slide)
+    slide_id = slide_copy.get("id")
+    bg = (slide_copy.get("background") or "").strip()
+    # Don't touch videos, empty backgrounds, or slides without id
+    if not slide_id or not bg or bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) or bg.startswith("/"):
+        return slide_copy
+
+    clean_slide_id = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
+    bg_dir = get_backgrounds_dir()
+    temp_webp_name = f"{clean_slide_id}.webp"
+    temp_path = os.path.join(bg_dir, "temp", temp_webp_name)
+    if os.path.isfile(temp_path):
+        slide_copy["background"] = f"temp/{temp_webp_name}"
+        # Pre-cropped temp image already has crop and zoom applied:
+        # reset coordinates so client CSS does not double-crop or double-zoom
+        slide_copy["bg_x"] = 0
+        slide_copy["bg_y"] = 0
+        slide_copy["bg_zoom"] = 100
+    return slide_copy
+
+
 def get_guest_context(validated_slug):
     try:
         guests = table.get_by_invitacion(validated_slug)
@@ -498,7 +522,7 @@ def get_guest_context(validated_slug):
             break
 
     card_value = format_currency_ar(guests[0].get("montotarjeta", "")) if guests else ""
-    active_slides = [s for s in load_slides() if s.get("enabled", True)]
+    active_slides = [resolve_invitation_slide(s) for s in load_slides() if s.get("enabled", True)]
 
 
 
@@ -639,7 +663,7 @@ def get_single_slide(token, slide_id):
     if not context:
         return render_template("blank.html"), 404
 
-    slide = next((s for s in load_slides() if s["id"] == slide_id and s.get("enabled", True)), None)
+    slide = next((resolve_invitation_slide(s) for s in load_slides() if s["id"] == slide_id and s.get("enabled", True)), None)
     if not slide:
         return "Slide no encontrada o deshabilitada", 404
 
@@ -994,6 +1018,17 @@ def panel_update_slide(slide_id):
         if key not in ("slide_id", "background", "duration", "bg_zoom", "bg_x", "bg_y", "id", "new_id", "hidden"):
             target_slide[key] = val
 
+    if any(k in data for k in ("background", "bg_zoom", "bg_x", "bg_y", "id", "new_id")):
+        for sid in (slide_id, target_slide.get("id"), data.get("id"), data.get("new_id")):
+            if sid:
+                clean_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(sid).strip().lower())
+                temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{clean_sid}.webp")
+                if os.path.isfile(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except Exception:
+                        pass
+
     save_slides(slides)
     return jsonify({"ok": True, "slide": target_slide, "message": "Slide actualizado"})
 
@@ -1070,6 +1105,14 @@ def panel_delete_slide(slide_id):
     filtered = [s for s in slides if s["id"] != slide_id]
     if len(filtered) == len(slides):
         return jsonify({"ok": False, "error": f"Slide '{slide_id}' no encontrado"}), 404
+
+    clean_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
+    temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{clean_sid}.webp")
+    if os.path.isfile(temp_file):
+        try:
+            os.remove(temp_file)
+        except Exception:
+            pass
 
     save_slides(filtered)
     return jsonify({"ok": True, "slide_id": slide_id, "message": f"Slide '{slide_id}' eliminado"})

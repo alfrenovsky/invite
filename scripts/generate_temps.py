@@ -10,6 +10,7 @@ import os
 import sys
 import json
 import argparse
+import re
 from PIL import Image, ImageOps
 
 TARGET_W, TARGET_H = 1080, 2340
@@ -19,15 +20,19 @@ BG_DIR = os.path.join(BASE_DIR, 'data', 'backgrounds')
 TEMP_DIR = os.path.join(BG_DIR, 'temp')
 
 
-def crop_image(bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=90):
+def crop_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=85):
+    if not slide_id or not bg_filename:
+        return False
+
+    clean_slide_id = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
     bg_clean = os.path.basename(bg_filename.replace('temp/', ''))
     src_path = os.path.join(BG_DIR, bg_clean)
     if not os.path.exists(src_path):
-        print(f"⚠️ Warning: Source background not found: {src_path}")
+        print(f"⚠️ Warning: Source background not found for slide '{slide_id}': {src_path}")
         return False
 
     os.makedirs(TEMP_DIR, exist_ok=True)
-    dest_path = os.path.join(TEMP_DIR, bg_clean)
+    dest_path = os.path.join(TEMP_DIR, f"{clean_slide_id}.webp")
 
     orig = Image.open(src_path)
     orig = ImageOps.exif_transpose(orig).convert('RGB')
@@ -52,10 +57,10 @@ def crop_image(bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=90):
     canvas = Image.new('RGB', (TARGET_W, TARGET_H), (0, 0, 0))
     canvas.paste(scaled, (top_left_x, top_left_y))
 
-    canvas.save(dest_path, 'JPEG', quality=quality, optimize=True)
+    canvas.save(dest_path, 'WEBP', quality=quality, method=6)
     orig_kb = os.path.getsize(src_path) / 1024
     dest_kb = os.path.getsize(dest_path) / 1024
-    print(f"✅ Generated {dest_path}: {orig_kb:.0f} KB -> {dest_kb:.0f} KB (scaled {final_w}x{final_h} at offset ({top_left_x}, {top_left_y}))")
+    print(f"✅ Generated {dest_path}: {orig_kb:.0f} KB -> {dest_kb:.0f} KB ({final_w}x{final_h} WebP)")
     return True
 
 
@@ -90,7 +95,7 @@ def main():
         bg_zoom = float(slide.get("bg_zoom", 100.0) or 100.0)
 
         print(f"Processing slide '{slide_id}' ({bg}): zoom={bg_zoom}%, x={bg_x}%, y={bg_y}%")
-        crop_image(bg, bg_x=bg_x, bg_y=bg_y, bg_zoom=bg_zoom)
+        crop_image(slide_id, bg, bg_x=bg_x, bg_y=bg_y, bg_zoom=bg_zoom)
 
 
 if __name__ == '__main__':
