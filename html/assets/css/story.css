@@ -340,6 +340,8 @@
             pointer-events: none;
             overflow: hidden;
             z-index: 10;
+            perspective: 1000px;
+            transform-style: preserve-3d;
         }
 
         .slide-el {
@@ -349,6 +351,8 @@
             word-break: break-word;
             pointer-events: auto;
             white-space: pre-line;
+            transform-style: preserve-3d;
+            backface-visibility: visible;
         }
 
         .slide-el-title {

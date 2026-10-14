@@ -1538,6 +1538,197 @@
             color: #fff;
         }
 
+        /* 3D Gizmo & Preview Selection */
+        .preview-text-el {
+            cursor: pointer;
+            transition: outline 0.15s;
+        }
+
+        .preview-text-el:hover {
+            outline: 1.5px dashed rgba(56, 189, 248, 0.5);
+            outline-offset: 4px;
+            border-radius: 4px;
+        }
+
+        .preview-text-el.is-selected {
+            outline: 2px solid #38bdf8 !important;
+            outline-offset: 4px;
+            border-radius: 4px;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+        }
+
+        .preview-gizmo-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            overflow: visible;
+        }
+
+        .gizmo-overlay {
+            position: absolute;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .gizmo-header-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(14, 20, 30, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 20px;
+            padding: 3px 8px 3px 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+        }
+
+        .gizmo-angle-badge {
+            font-size: 0.72rem;
+            font-family: monospace;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        .gizmo-btn-reset {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fbd38d;
+            border-radius: 12px;
+            padding: 1px 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .gizmo-btn-reset:hover {
+            background: rgba(212, 175, 55, 0.3);
+            color: #fff;
+        }
+
+        .gizmo-btn-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 0 3px;
+            line-height: 1;
+        }
+
+        .gizmo-btn-close:hover {
+            color: #fc8181;
+        }
+
+        .gizmo-disc-wrap {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gizmo-svg {
+            width: 120px;
+            height: 120px;
+            overflow: visible;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+        }
+
+        .gizmo-ring {
+            fill: none;
+            stroke-width: 2.5;
+            transition: stroke-width 0.15s, opacity 0.15s;
+            cursor: grab;
+        }
+
+        .gizmo-ring:hover {
+            stroke-width: 4;
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+
+        .gizmo-ring-z {
+            stroke: #34d399; /* Green for Z Roll */
+            opacity: 0.85;
+        }
+
+        .gizmo-ring-y {
+            stroke: #38bdf8; /* Blue for Y Yaw */
+            opacity: 0.85;
+        }
+
+        .gizmo-ring-x {
+            stroke: #f59e0b; /* Amber for X Pitch */
+            opacity: 0.85;
+        }
+
+        .gizmo-handle {
+            cursor: grab;
+            stroke: #ffffff;
+            stroke-width: 1.5;
+            transition: r 0.15s;
+        }
+
+        .gizmo-handle:hover {
+            r: 7;
+        }
+
+        .gizmo-handle-z { fill: #34d399; }
+        .gizmo-handle-y { fill: #38bdf8; }
+        .gizmo-handle-x { fill: #f59e0b; }
+
+        .gizmo-trackball-zone {
+            fill: rgba(30, 41, 59, 0.55);
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 1;
+            cursor: move;
+            transition: fill 0.15s, stroke 0.15s;
+        }
+
+        .gizmo-trackball-zone:hover {
+            fill: rgba(56, 189, 248, 0.15);
+            stroke: #38bdf8;
+        }
+
+        .gizmo-center-dot {
+            fill: #ffffff;
+            cursor: move;
+            filter: drop-shadow(0 0 3px #38bdf8);
+        }
+
+        .gizmo-hint {
+            font-size: 0.68rem;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+            white-space: nowrap;
+            margin-top: 2px;
+        }
+
+        .btn-3d-preset {
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #cbd5e0;
+            transition: all 0.15s;
+        }
+
+        .btn-3d-preset:hover {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: #38bdf8;
+            color: #fff;
+        }
+
         .style-picker-group {
             display: flex;
             gap: 10px;
@@ -3547,6 +3738,9 @@
                                 <!-- Dynamic Elements Layer -->
                                 <div class="slide-elements-layer" id="previewElementsLayer"></div>
 
+                                <!-- Interactive 3D Gizmo Layer -->
+                                <div id="previewGizmoContainer" class="preview-gizmo-container" style="display: none;"></div>
+
                                 <!-- Special RSVP Slide Content Preview -->
                                 <div class="slide-body slide-rsvp-preview" id="previewRsvpBody" style="display: none;">
                                     <span class="slide-tag">RSVP</span>
@@ -4498,6 +4692,7 @@
         }
 
         function selectSlide(slideId) {
+            deselectElement();
             currentSlideId = slideId;
             renderSlideChips();
             loadSlideIntoForm();
@@ -4588,6 +4783,7 @@
         }
 
         const collapsedElementIds = new Set();
+        let selectedElementId = null;
 
         function getElementHeaderData(el, idx) {
             let typeBadgeClass = 'type-badge-body';
@@ -4725,6 +4921,12 @@
                 const card = document.createElement('div');
                 card.className = 'element-card' + (isCollapsed ? ' collapsed' : '');
                 card.id = 'elCard_' + el.id;
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-del-el') || e.target.closest('.element-collapse-icon')) return;
+                    if (el.type === 'text' && selectedElementId !== el.id) {
+                        selectElementForEditing(el.id);
+                    }
+                });
 
                 const isLocation = el.type === 'location' || el.type === 'link';
                 const isCopy = el.type === 'copy';
@@ -5232,6 +5434,10 @@
                 const currH = el.h !== undefined ? el.h : (isForm ? 70 : 100);
                 const currRot = el.rotate !== undefined ? el.rotate : 0;
                 const currZoom = el.zoom !== undefined ? el.zoom : 100;
+                const currRotX = el.rot_x !== undefined ? el.rot_x : 0;
+                const currRotY = el.rot_y !== undefined ? el.rot_y : 0;
+                const currRotZ = el.rotate !== undefined ? el.rotate : 0;
+                const currPers = el.perspective !== undefined ? el.perspective : 800;
 
                 posRow.innerHTML = `
                 <!-- Horizontal X -->
@@ -5306,6 +5512,77 @@
                     <div class="pos-input-group">
                         <input type="range" class="pos-range-slider" id="sliderZoom_${idx}" min="50" max="200" step="5" value="${currZoom}">
                         <input type="number" class="pos-num-input" id="numZoom_${idx}" min="50" max="200" step="5" value="${currZoom}">
+                    </div>
+                </div>
+                ` : ''}
+
+                ${el.type === 'text' ? `
+                <!-- 3D Transform Controls for Text -->
+                <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.14);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 5px;">
+                            <span>🧊</span> Transformación 3D & Giro
+                        </span>
+                        <button type="button" class="btn-3d-preset" style="font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); cursor: pointer;" onclick="resetElement3D('${el.id}')" title="Restablecer a plano 2D">
+                            ↺ Reset 2D
+                        </button>
+                    </div>
+
+                    <!-- 3D Presets -->
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <button type="button" class="btn-3d-preset" style="font-size: 0.72rem; padding: 3px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); cursor: pointer;" onclick="apply3DPreset('${el.id}', 'flat')">🎯 Plano</button>
+                        <button type="button" class="btn-3d-preset" style="font-size: 0.72rem; padding: 3px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); cursor: pointer;" onclick="apply3DPreset('${el.id}', 'left')">📐 Persp. Izq</button>
+                        <button type="button" class="btn-3d-preset" style="font-size: 0.72rem; padding: 3px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); cursor: pointer;" onclick="apply3DPreset('${el.id}', 'right')">📐 Persp. Der</button>
+                        <button type="button" class="btn-3d-preset" style="font-size: 0.72rem; padding: 3px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); cursor: pointer;" onclick="apply3DPreset('${el.id}', 'cinema')">🎬 Cine</button>
+                        <button type="button" class="btn-3d-preset" style="font-size: 0.72rem; padding: 3px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); cursor: pointer;" onclick="apply3DPreset('${el.id}', 'iso')">🧊 Isométrico</button>
+                    </div>
+
+                    <!-- Pitch X Slider -->
+                    <div style="margin-bottom: 8px;">
+                        <div class="pos-slider-header">
+                            <span style="color: #f59e0b;">Inclinación Vertical (X Pitch)</span>
+                            <span class="pos-val-badge" id="badgeRotX_${idx}">${currRotX}°</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderRotX_${idx}" min="-60" max="60" step="1" value="${currRotX}">
+                            <input type="number" class="pos-num-input" id="numRotX_${idx}" min="-60" max="60" step="1" value="${currRotX}">
+                        </div>
+                    </div>
+
+                    <!-- Yaw Y Slider -->
+                    <div style="margin-bottom: 8px;">
+                        <div class="pos-slider-header">
+                            <span style="color: #38bdf8;">Inclinación Horizontal (Y Yaw)</span>
+                            <span class="pos-val-badge" id="badgeRotY_${idx}">${currRotY}°</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderRotY_${idx}" min="-60" max="60" step="1" value="${currRotY}">
+                            <input type="number" class="pos-num-input" id="numRotY_${idx}" min="-60" max="60" step="1" value="${currRotY}">
+                        </div>
+                    </div>
+
+                    <!-- Roll Z Slider -->
+                    <div style="margin-bottom: 8px;">
+                        <div class="pos-slider-header">
+                            <span style="color: #34d399;">Rotación en Plano (Z Roll)</span>
+                            <span class="pos-val-badge" id="badgeRotZ_${idx}">${currRotZ}°</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderRotZ_${idx}" min="-180" max="180" step="1" value="${currRotZ}">
+                            <input type="number" class="pos-num-input" id="numRotZ_${idx}" min="-180" max="180" step="1" value="${currRotZ}">
+                        </div>
+                    </div>
+
+                    <!-- Perspective Slider -->
+                    <div>
+                        <div class="pos-slider-header">
+                            <span style="color: #cbd5e0;">Perspectiva / Profundidad</span>
+                            <span class="pos-val-badge" id="badgePers_${idx}">${currPers}px</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderPers_${idx}" min="300" max="2000" step="50" value="${currPers}">
+                            <input type="number" class="pos-num-input" id="numPers_${idx}" min="300" max="2000" step="50" value="${currPers}">
+                        </div>
                     </div>
                 </div>
                 ` : ''}
@@ -5422,6 +5699,80 @@
 
                     sliderZoom.oninput = (e) => syncZoom(e.target.value);
                     numZoom.oninput = (e) => syncZoom(e.target.value);
+                }
+
+                if (el.type === 'text') {
+                    // Bind Pitch X
+                    const sliderRotX = posRow.querySelector(`#sliderRotX_${idx}`);
+                    const numRotX = posRow.querySelector(`#numRotX_${idx}`);
+                    const badgeRotX = posRow.querySelector(`#badgeRotX_${idx}`);
+
+                    const syncRotX = (val) => {
+                        let parsed = parseInt(val, 10);
+                        if (isNaN(parsed)) parsed = 0;
+                        parsed = Math.max(-60, Math.min(60, parsed));
+                        el.rot_x = parsed;
+                        if (sliderRotX) sliderRotX.value = parsed;
+                        if (numRotX) numRotX.value = parsed;
+                        if (badgeRotX) badgeRotX.textContent = `${parsed}°`;
+                        updateLivePreview();
+                    };
+                    if (sliderRotX) sliderRotX.oninput = (e) => syncRotX(e.target.value);
+                    if (numRotX) numRotX.oninput = (e) => syncRotX(e.target.value);
+
+                    // Bind Yaw Y
+                    const sliderRotY = posRow.querySelector(`#sliderRotY_${idx}`);
+                    const numRotY = posRow.querySelector(`#numRotY_${idx}`);
+                    const badgeRotY = posRow.querySelector(`#badgeRotY_${idx}`);
+
+                    const syncRotY = (val) => {
+                        let parsed = parseInt(val, 10);
+                        if (isNaN(parsed)) parsed = 0;
+                        parsed = Math.max(-60, Math.min(60, parsed));
+                        el.rot_y = parsed;
+                        if (sliderRotY) sliderRotY.value = parsed;
+                        if (numRotY) numRotY.value = parsed;
+                        if (badgeRotY) badgeRotY.textContent = `${parsed}°`;
+                        updateLivePreview();
+                    };
+                    if (sliderRotY) sliderRotY.oninput = (e) => syncRotY(e.target.value);
+                    if (numRotY) numRotY.oninput = (e) => syncRotY(e.target.value);
+
+                    // Bind Roll Z
+                    const sliderRotZ = posRow.querySelector(`#sliderRotZ_${idx}`);
+                    const numRotZ = posRow.querySelector(`#numRotZ_${idx}`);
+                    const badgeRotZ = posRow.querySelector(`#badgeRotZ_${idx}`);
+
+                    const syncRotZ = (val) => {
+                        let parsed = parseInt(val, 10);
+                        if (isNaN(parsed)) parsed = 0;
+                        parsed = Math.max(-180, Math.min(180, parsed));
+                        el.rotate = parsed;
+                        if (sliderRotZ) sliderRotZ.value = parsed;
+                        if (numRotZ) numRotZ.value = parsed;
+                        if (badgeRotZ) badgeRotZ.textContent = `${parsed}°`;
+                        updateLivePreview();
+                    };
+                    if (sliderRotZ) sliderRotZ.oninput = (e) => syncRotZ(e.target.value);
+                    if (numRotZ) numRotZ.oninput = (e) => syncRotZ(e.target.value);
+
+                    // Bind Perspective
+                    const sliderPers = posRow.querySelector(`#sliderPers_${idx}`);
+                    const numPers = posRow.querySelector(`#numPers_${idx}`);
+                    const badgePers = posRow.querySelector(`#badgePers_${idx}`);
+
+                    const syncPers = (val) => {
+                        let parsed = parseInt(val, 10);
+                        if (isNaN(parsed)) parsed = 800;
+                        parsed = Math.max(300, Math.min(2000, parsed));
+                        el.perspective = parsed;
+                        if (sliderPers) sliderPers.value = parsed;
+                        if (numPers) numPers.value = parsed;
+                        if (badgePers) badgePers.textContent = `${parsed}px`;
+                        updateLivePreview();
+                    };
+                    if (sliderPers) sliderPers.oninput = (e) => syncPers(e.target.value);
+                    if (numPers) numPers.oninput = (e) => syncPers(e.target.value);
                 }
 
                 if (isForm) {
@@ -5588,6 +5939,9 @@
             const removed = slide.elements.splice(index, 1);
             if (removed && removed[0] && removed[0].id) {
                 collapsedElementIds.delete(removed[0].id);
+                if (removed[0].id === selectedElementId) {
+                    deselectElement();
+                }
             }
             renderElementsList();
             updateLivePreview();
@@ -5824,17 +6178,31 @@
                 if (Array.isArray(slide.elements)) {
                     slide.elements.forEach(el => {
                         if (el.type === 'text') {
+                            const isSelected = selectedElementId === el.id;
                             const textDiv = document.createElement('div');
-                            textDiv.className = `slide-el slide-el-${el.style || 'body'} preview-text-el style-${el.style || 'body'}`;
+                            textDiv.className = `slide-el slide-el-${el.style || 'body'} preview-text-el style-${el.style || 'body'}${isSelected ? ' is-selected' : ''}`;
+                            textDiv.dataset.elId = el.id;
                             const posX = el.x !== undefined ? el.x : 0;
                             const posY = el.y !== undefined ? el.y : 0;
                             const widthVal = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 88;
+                            const rotX = (el.rot_x !== undefined && el.rot_x !== null) ? el.rot_x : 0;
+                            const rotY = (el.rot_y !== undefined && el.rot_y !== null) ? el.rot_y : 0;
+                            const rotZ = (el.rotate !== undefined && el.rotate !== null) ? el.rotate : 0;
+                            const pers = (el.perspective !== undefined && el.perspective !== null) ? el.perspective : 800;
+
                             textDiv.style.left = `calc(50% + ${posX}%)`;
                             textDiv.style.top = `calc(50% + ${posY}%)`;
                             textDiv.style.width = `${widthVal}%`;
                             textDiv.style.maxWidth = `${widthVal}%`;
-                            textDiv.style.transform = 'translate(-50%, -50%)';
+                            textDiv.style.transform = `translate(-50%, -50%) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg)`;
+                            textDiv.style.transformStyle = 'preserve-3d';
                             textDiv.textContent = replacePreviewVariables(el.content || '');
+
+                            textDiv.onclick = (e) => {
+                                e.stopPropagation();
+                                selectElementForEditing(el.id);
+                            };
+
                             overlay.appendChild(textDiv);
                         } else if (el.type === 'location' || el.type === 'link' || el.type === 'copy') {
                             const locDiv = document.createElement('div');
@@ -5994,6 +6362,22 @@
                 }
             }
 
+            // Update Gizmo if an element is selected
+            if (selectedElementId) {
+                const selectedEl = Array.isArray(slide.elements) ? slide.elements.find(e => e.id === selectedElementId) : null;
+                if (selectedEl && selectedEl.type === 'text') {
+                    renderGizmo(selectedEl);
+                } else {
+                    deselectElement();
+                }
+            } else {
+                const gizmoContainer = document.getElementById('previewGizmoContainer');
+                if (gizmoContainer) {
+                    gizmoContainer.style.display = 'none';
+                    gizmoContainer.innerHTML = '';
+                }
+            }
+
             updateStoryPreviewScale();
             updateDirtySlideChipsUI();
         }
@@ -6011,6 +6395,323 @@
 
         window.addEventListener('resize', updateStoryPreviewScale);
         window.addEventListener('DOMContentLoaded', updateStoryPreviewScale);
+
+        // -------------------------------------------------------------
+        // 3D TEXT TRANSFORM & GIZMO ENGINE
+        // -------------------------------------------------------------
+        function selectElementForEditing(elId) {
+            selectedElementId = elId;
+            if (collapsedElementIds.has(elId)) {
+                collapsedElementIds.delete(elId);
+                const card = document.getElementById('elCard_' + elId);
+                if (card) {
+                    card.classList.remove('collapsed');
+                    const icon = card.querySelector('.element-collapse-icon');
+                    if (icon) icon.textContent = '▼';
+                }
+            }
+            const card = document.getElementById('elCard_' + elId);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            updateLivePreview();
+        }
+
+        function deselectElement() {
+            selectedElementId = null;
+            const gizmoContainer = document.getElementById('previewGizmoContainer');
+            if (gizmoContainer) {
+                gizmoContainer.style.display = 'none';
+                gizmoContainer.innerHTML = '';
+            }
+            document.querySelectorAll('.preview-text-el.is-selected').forEach(el => el.classList.remove('is-selected'));
+        }
+
+        function syncPanel3DControls(el) {
+            if (!el) return;
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            const idx = slide.elements.findIndex(e => e.id === el.id);
+            if (idx < 0) return;
+
+            const sliderRotX = document.getElementById(`sliderRotX_${idx}`);
+            const numRotX = document.getElementById(`numRotX_${idx}`);
+            const badgeRotX = document.getElementById(`badgeRotX_${idx}`);
+            if (sliderRotX) sliderRotX.value = el.rot_x || 0;
+            if (numRotX) numRotX.value = el.rot_x || 0;
+            if (badgeRotX) badgeRotX.textContent = `${el.rot_x || 0}°`;
+
+            const sliderRotY = document.getElementById(`sliderRotY_${idx}`);
+            const numRotY = document.getElementById(`numRotY_${idx}`);
+            const badgeRotY = document.getElementById(`badgeRotY_${idx}`);
+            if (sliderRotY) sliderRotY.value = el.rot_y || 0;
+            if (numRotY) numRotY.value = el.rot_y || 0;
+            if (badgeRotY) badgeRotY.textContent = `${el.rot_y || 0}°`;
+
+            const sliderRotZ = document.getElementById(`sliderRotZ_${idx}`);
+            const numRotZ = document.getElementById(`numRotZ_${idx}`);
+            const badgeRotZ = document.getElementById(`badgeRotZ_${idx}`);
+            if (sliderRotZ) sliderRotZ.value = el.rotate || 0;
+            if (numRotZ) numRotZ.value = el.rotate || 0;
+            if (badgeRotZ) badgeRotZ.textContent = `${el.rotate || 0}°`;
+
+            const sliderPers = document.getElementById(`sliderPers_${idx}`);
+            const numPers = document.getElementById(`numPers_${idx}`);
+            const badgePers = document.getElementById(`badgePers_${idx}`);
+            if (sliderPers) sliderPers.value = el.perspective || 800;
+            if (numPers) numPers.value = el.perspective || 800;
+            if (badgePers) badgePers.textContent = `${el.perspective || 800}px`;
+
+            const sliderX = document.getElementById(`sliderX_${idx}`);
+            const numX = document.getElementById(`numX_${idx}`);
+            const badgeX = document.getElementById(`badgeX_${idx}`);
+            if (sliderX) sliderX.value = el.x || 0;
+            if (numX) numX.value = el.x || 0;
+            if (badgeX) badgeX.textContent = `${el.x || 0}%`;
+
+            const sliderY = document.getElementById(`sliderY_${idx}`);
+            const numY = document.getElementById(`numY_${idx}`);
+            const badgeY = document.getElementById(`badgeY_${idx}`);
+            if (sliderY) sliderY.value = el.y || 0;
+            if (numY) numY.value = el.y || 0;
+            if (badgeY) badgeY.textContent = `${el.y || 0}%`;
+        }
+
+        function resetElement3D(elId) {
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            const el = slide.elements.find(e => e.id === elId);
+            if (!el) return;
+            el.rot_x = 0;
+            el.rot_y = 0;
+            el.rotate = 0;
+            el.perspective = 800;
+            updateLivePreview();
+            syncPanel3DControls(el);
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+        }
+
+        function apply3DPreset(elId, preset) {
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            const el = slide.elements.find(e => e.id === elId);
+            if (!el) return;
+
+            if (preset === 'flat') {
+                el.rot_x = 0;
+                el.rot_y = 0;
+                el.rotate = 0;
+            } else if (preset === 'left') {
+                el.rot_x = 8;
+                el.rot_y = 28;
+                el.rotate = -3;
+            } else if (preset === 'right') {
+                el.rot_x = 8;
+                el.rot_y = -28;
+                el.rotate = 3;
+            } else if (preset === 'cinema') {
+                el.rot_x = 42;
+                el.rot_y = 0;
+                el.rotate = 0;
+            } else if (preset === 'iso') {
+                el.rot_x = 25;
+                el.rot_y = -35;
+                el.rotate = 15;
+            }
+            if (el.perspective === undefined) el.perspective = 800;
+            updateLivePreview();
+            syncPanel3DControls(el);
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+        }
+
+        function renderGizmo(el) {
+            const gizmoContainer = document.getElementById('previewGizmoContainer');
+            if (!gizmoContainer || !el) return;
+
+            gizmoContainer.style.display = 'block';
+            gizmoContainer.innerHTML = '';
+
+            const posX = el.x !== undefined ? el.x : 0;
+            const posY = el.y !== undefined ? el.y : 0;
+            const rotX = el.rot_x !== undefined ? el.rot_x : 0;
+            const rotY = el.rot_y !== undefined ? el.rot_y : 0;
+            const rotZ = el.rotate !== undefined ? el.rotate : 0;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'gizmo-overlay';
+            overlay.id = 'activeGizmoOverlay';
+            overlay.style.left = `calc(50% + ${posX}%)`;
+            overlay.style.top = `calc(50% + ${posY}%)`;
+            overlay.style.transform = 'translate(-50%, -50%)';
+
+            overlay.innerHTML = `
+                <div class="gizmo-header-bar" onclick="event.stopPropagation();">
+                    <span class="gizmo-angle-badge" id="gizmoAngleBadge">X:${rotX}° Y:${rotY}° Z:${rotZ}°</span>
+                    <button type="button" class="gizmo-btn-reset" onclick="event.stopPropagation(); resetElement3D('${el.id}')" title="Resetear giro 3D">↺ Reset</button>
+                    <button type="button" class="gizmo-btn-close" onclick="event.stopPropagation(); deselectElement()" title="Cerrar Gizmo">✕</button>
+                </div>
+                <div class="gizmo-disc-wrap">
+                    <svg class="gizmo-svg" viewBox="-60 -60 120 120" id="gizmoSvg">
+                        <!-- Outer Roll Z ring (Emerald) -->
+                        <circle class="gizmo-ring gizmo-ring-z" cx="0" cy="0" r="54" id="gizmoRingZ" />
+                        <circle class="gizmo-handle gizmo-handle-z" cx="0" cy="-54" r="5" id="gizmoHandleZ" />
+
+                        <!-- Trackball Sphere Zone (Pitch X / Yaw Y) -->
+                        <circle class="gizmo-trackball-zone" cx="0" cy="0" r="42" id="gizmoTrackball" />
+
+                        <!-- Horizontal Yaw Y Ellipse (Sky Blue) -->
+                        <ellipse class="gizmo-ring gizmo-ring-y" cx="0" cy="0" rx="42" ry="14" id="gizmoRingY" />
+                        <circle class="gizmo-handle gizmo-handle-y" cx="42" cy="0" r="4" id="gizmoHandleY" />
+
+                        <!-- Vertical Pitch X Ellipse (Amber) -->
+                        <ellipse class="gizmo-ring gizmo-ring-x" cx="0" cy="0" rx="14" ry="42" id="gizmoRingX" />
+                        <circle class="gizmo-handle gizmo-handle-x" cx="0" cy="-42" r="4" id="gizmoHandleX" />
+
+                        <!-- Center Position Dot (White / Move) -->
+                        <circle class="gizmo-center-dot" cx="0" cy="0" r="6" id="gizmoCenterDot" />
+                    </svg>
+                </div>
+                <span class="gizmo-hint">Arrastrá para rotar 3D</span>
+            `;
+
+            gizmoContainer.appendChild(overlay);
+            attachGizmoListeners(el, overlay);
+        }
+
+        function attachGizmoListeners(el, overlay) {
+            const svg = overlay.querySelector('#gizmoSvg');
+            const trackball = overlay.querySelector('#gizmoTrackball');
+            const ringY = overlay.querySelector('#gizmoRingY');
+            const handleY = overlay.querySelector('#gizmoHandleY');
+            const ringX = overlay.querySelector('#gizmoRingX');
+            const handleX = overlay.querySelector('#gizmoHandleX');
+            const ringZ = overlay.querySelector('#gizmoRingZ');
+            const handleZ = overlay.querySelector('#gizmoHandleZ');
+            const centerDot = overlay.querySelector('#gizmoCenterDot');
+            const badge = overlay.querySelector('#gizmoAngleBadge');
+
+            function updateBadge() {
+                if (badge) {
+                    badge.textContent = `X:${el.rot_x || 0}° Y:${el.rot_y || 0}° Z:${el.rotate || 0}°`;
+                }
+            }
+
+            function updateTargetTransform() {
+                const textEl = document.querySelector(`.preview-text-el[data-el-id="${el.id}"]`);
+                if (textEl) {
+                    const pers = el.perspective || 800;
+                    textEl.style.transform = `translate(-50%, -50%) perspective(${pers}px) rotateX(${el.rot_x || 0}deg) rotateY(${el.rot_y || 0}deg) rotateZ(${el.rotate || 0}deg)`;
+                }
+                updateBadge();
+                syncPanel3DControls(el);
+            }
+
+            function updateOverlayPosition() {
+                overlay.style.left = `calc(50% + ${el.x || 0}%)`;
+                overlay.style.top = `calc(50% + ${el.y || 0}%)`;
+                const textEl = document.querySelector(`.preview-text-el[data-el-id="${el.id}"]`);
+                if (textEl) {
+                    textEl.style.left = `calc(50% + ${el.x || 0}%)`;
+                    textEl.style.top = `calc(50% + ${el.y || 0}%)`;
+                }
+                syncPanel3DControls(el);
+            }
+
+            let isDragging = false;
+            let dragMode = null;
+            let startClientX = 0;
+            let startClientY = 0;
+            let initRotX = 0;
+            let initRotY = 0;
+            let initRotZ = 0;
+            let initX = 0;
+            let initY = 0;
+            let startAngle = 0;
+            let centerScreenX = 0;
+            let centerScreenY = 0;
+
+            function onPointerDown(e, mode) {
+                e.stopPropagation();
+                e.preventDefault();
+                isDragging = true;
+                dragMode = mode;
+                startClientX = e.clientX;
+                startClientY = e.clientY;
+                initRotX = el.rot_x !== undefined ? el.rot_x : 0;
+                initRotY = el.rot_y !== undefined ? el.rot_y : 0;
+                initRotZ = el.rotate !== undefined ? el.rotate : 0;
+                initX = el.x !== undefined ? el.x : 0;
+                initY = el.y !== undefined ? el.y : 0;
+
+                const rect = svg.getBoundingClientRect();
+                centerScreenX = rect.left + rect.width / 2;
+                centerScreenY = rect.top + rect.height / 2;
+                startAngle = Math.atan2(e.clientY - centerScreenY, e.clientX - centerScreenX) * (180 / Math.PI);
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const dx = e.clientX - startClientX;
+                const dy = e.clientY - startClientY;
+
+                if (dragMode === 'trackball') {
+                    const newRotY = Math.max(-60, Math.min(60, Math.round(initRotY + dx * 0.7)));
+                    const newRotX = Math.max(-60, Math.min(60, Math.round(initRotX - dy * 0.7)));
+                    el.rot_y = newRotY;
+                    el.rot_x = newRotX;
+                    updateTargetTransform();
+                } else if (dragMode === 'yaw') {
+                    const newRotY = Math.max(-60, Math.min(60, Math.round(initRotY + dx * 0.8)));
+                    el.rot_y = newRotY;
+                    updateTargetTransform();
+                } else if (dragMode === 'pitch') {
+                    const newRotX = Math.max(-60, Math.min(60, Math.round(initRotX - dy * 0.8)));
+                    el.rot_x = newRotX;
+                    updateTargetTransform();
+                } else if (dragMode === 'roll') {
+                    const currentAngle = Math.atan2(e.clientY - centerScreenY, e.clientX - centerScreenX) * (180 / Math.PI);
+                    let diff = currentAngle - startAngle;
+                    let newRotZ = Math.round(initRotZ + diff);
+                    while (newRotZ > 180) newRotZ -= 360;
+                    while (newRotZ < -180) newRotZ += 360;
+                    el.rotate = newRotZ;
+                    updateTargetTransform();
+                } else if (dragMode === 'translate') {
+                    const viewport = document.getElementById('previewStorySlide');
+                    const vRect = viewport ? viewport.getBoundingClientRect() : { width: 360, height: 640 };
+                    const deltaXPercent = (dx / (vRect.width || 360)) * 100;
+                    const deltaYPercent = (dy / (vRect.height || 640)) * 100;
+                    el.x = Math.max(-60, Math.min(60, Math.round(initX + deltaXPercent)));
+                    el.y = Math.max(-60, Math.min(60, Math.round(initY + deltaYPercent)));
+                    updateOverlayPosition();
+                }
+            }
+
+            function onPointerUp(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    dragMode = null;
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                }
+            }
+
+            if (trackball) trackball.onpointerdown = (e) => onPointerDown(e, 'trackball');
+            if (ringY) ringY.onpointerdown = (e) => onPointerDown(e, 'yaw');
+            if (handleY) handleY.onpointerdown = (e) => onPointerDown(e, 'yaw');
+            if (ringX) ringX.onpointerdown = (e) => onPointerDown(e, 'pitch');
+            if (handleX) handleX.onpointerdown = (e) => onPointerDown(e, 'pitch');
+            if (ringZ) ringZ.onpointerdown = (e) => onPointerDown(e, 'roll');
+            if (handleZ) handleZ.onpointerdown = (e) => onPointerDown(e, 'roll');
+            if (centerDot) centerDot.onpointerdown = (e) => onPointerDown(e, 'translate');
+        }
 
         // Ticking loop for countdown elements in live preview
         setInterval(() => {
@@ -6860,8 +7561,16 @@
             let initialBgY = 0;
 
             previewSlideViewport.addEventListener('mousedown', (e) => {
-                if (e.target.closest('.interactive-content') || e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) {
+                if (e.target.closest('.interactive-content') ||
+                    e.target.closest('button') ||
+                    e.target.closest('a') ||
+                    e.target.closest('input') ||
+                    e.target.closest('.preview-gizmo-container') ||
+                    e.target.closest('.preview-text-el')) {
                     return;
+                }
+                if (selectedElementId) {
+                    deselectElement();
                 }
                 const slide = getCurrentSlide();
                 if (!slide || !slide.background) return;
