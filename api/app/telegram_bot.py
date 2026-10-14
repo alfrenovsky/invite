@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import geo
 
 logger = logging.getLogger("telegram_bot")
 
@@ -193,7 +194,7 @@ def broadcast_message(text: str, parse_mode: str = "HTML"):
 # 🎯 Notification Event Handlers
 # ==============================================================
 
-def notify_invitation_opened(invitacion_id: str, guest_records: list):
+def notify_invitation_opened(invitacion_id: str, guest_records: list, location_info: dict = None):
     """
     Notifies when a guest opens the invitation.
     Respects a 30-minute cooldown per invitation_id to prevent spam.
@@ -220,16 +221,19 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list):
     names_str = ", ".join(names) if names else clean_id.replace("_", " ").title()
     group_title = clean_id.replace("_", " ").title()
 
+    loc_str = geo.format_location_summary(location_info)
+    loc_line = f"\n{loc_str}" if loc_str else ""
+
     msg = (
         f"💌 <b>Invitación abierta</b>\n"
         f"👥 <b>Grupo:</b> {group_title}\n"
-        f"👤 <b>Invitados:</b> {names_str}\n"
+        f"👤 <b>Invitados:</b> {names_str}{loc_line}\n"
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
     )
     broadcast_message(msg)
 
 
-def mark_invitation_dirty(invitacion_id: str, table=None):
+def mark_invitation_dirty(invitacion_id: str, table=None, location_info: dict = None):
     """
     Marks an invitation as modified during the active visit.
     Also starts a 5-second debounce timer that automatically flushes
@@ -242,7 +246,9 @@ def mark_invitation_dirty(invitacion_id: str, table=None):
     tbl = table or _table_ref
 
     with _lock:
-        _dirty_rsvp_sessions[clean_id] = {"time": time.time(), "table": tbl}
+        prev_session = _dirty_rsvp_sessions.get(clean_id, {})
+        loc = location_info or prev_session.get("location_info")
+        _dirty_rsvp_sessions[clean_id] = {"time": time.time(), "table": tbl, "location_info": loc}
 
         # Cancel prior timer if active
         prev_timer = _rsvp_debounce_timers.get(clean_id)
@@ -266,7 +272,7 @@ def mark_invitation_dirty(invitacion_id: str, table=None):
                 except Exception as ex:
                     _log(f"Error fetching guests for delayed flush: {ex}")
 
-            notify_rsvp_on_flush(clean_id, guest_list)
+            notify_rsvp_on_flush(clean_id, guest_list, location_info=session_data.get("location_info"))
 
         timer = threading.Timer(5.0, _delayed_flush)
         timer.daemon = True
@@ -274,7 +280,7 @@ def mark_invitation_dirty(invitacion_id: str, table=None):
         timer.start()
 
 
-def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
+def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None, location_info: dict = None):
     """
     Sent when leaving the form page/slide, or via delayed debounce timer.
     Consolidates the full group RSVP status into a single clean message.
@@ -301,6 +307,9 @@ def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
         except Exception:
             guest_records = []
 
+    loc = location_info or session_data.get("location_info")
+    loc_str = geo.format_location_summary(loc)
+
     group_title = clean_id.replace("_", " ").title()
     lines = [
         "📋 <b>Confirmación RSVP actualizada</b>",
@@ -325,6 +334,9 @@ def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
         else:
             status_text = "⏳ Pendiente"
             lines.append(f"• <b>{nombre}</b>: {status_text}")
+
+    if loc_str:
+        lines.append(f"\n{loc_str}")
 
     lines.append(f"\n🕒 <b>Hora:</b> {_get_tz_now_str()}")
     broadcast_message("\n".join(lines))

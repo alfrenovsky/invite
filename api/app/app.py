@@ -2,12 +2,14 @@ import os
 import time
 import json
 import re
+import threading
 import urllib.parse
 import uuid
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL
 import telegram_bot
+import geo
 try:
     from PIL import Image, ImageOps
 except ImportError:
@@ -666,16 +668,68 @@ def index_page(token=None):
     if not context:
         return render_template("blank.html")
 
-    try:
-        telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []))
-    except Exception as e:
-        app.logger.warning(f"Error notifying invitation opened via Telegram: {e}")
+    # Delayed fallback: if no client beacon arrives in 5s (e.g. JS disabled), notify with IP location
+    client_ip = geo.get_client_ip(request.headers, request.remote_addr)
+    def _delayed_open_fallback():
+        with telegram_bot._lock:
+            last = telegram_bot._last_opened.get(validated_slug, 0)
+            if time.time() - last < 10:
+                return
+        try:
+            loc = geo.resolve_ip_location(client_ip)
+            telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []), location_info=loc)
+        except Exception as ex:
+            app.logger.warning(f"Error in delayed invitation opened fallback: {ex}")
+
+    fallback_timer = threading.Timer(5.0, _delayed_open_fallback)
+    fallback_timer.daemon = True
+    fallback_timer.start()
 
     return render_template(
         "index.html",
         token=token,
         **context
     )
+
+
+@app.post("/i/<token>/opened")
+@app.post("/invitacion/<token>/opened")
+@app.post("/api/invitacion/<token>/opened")
+def record_invitation_opened(token):
+    validated_slug = parse_and_validate_token(token)
+    if not validated_slug:
+        return jsonify({"ok": False, "error": "Token de invitación inválido o no autorizado"}), 403
+
+    context = get_guest_context(validated_slug)
+    guests = context.get("guests", []) if context else []
+
+    data = request.get_json(silent=True) or {}
+    lat = data.get("lat")
+    lon = data.get("lon")
+    accuracy = data.get("accuracy")
+
+    location_info = None
+    if lat is not None and lon is not None:
+        try:
+            location_info = {
+                "type": "gps",
+                "lat": float(lat),
+                "lon": float(lon),
+                "accuracy": float(accuracy) if accuracy is not None else None
+            }
+        except (ValueError, TypeError):
+            location_info = None
+
+    if not location_info:
+        client_ip = geo.get_client_ip(request.headers, request.remote_addr)
+        location_info = geo.resolve_ip_location(client_ip)
+
+    try:
+        telegram_bot.notify_invitation_opened(validated_slug, guests, location_info=location_info)
+    except Exception as e:
+        app.logger.warning(f"Error notifying invitation opened via Telegram: {e}")
+
+    return jsonify({"ok": True, "location_type": location_info.get("type") if location_info else None})
 
 
 @app.get("/i/<token>/slides")
@@ -809,7 +863,20 @@ def flush_invitacion_cache(token):
 
     try:
         guests = table.get_by_invitacion(validated_slug)
-        telegram_bot.notify_rsvp_on_flush(validated_slug, guests)
+        data = request.get_json(silent=True) or {}
+        lat = data.get("lat")
+        lon = data.get("lon")
+        acc = data.get("accuracy")
+        loc = None
+        if lat is not None and lon is not None:
+            try:
+                loc = {"type": "gps", "lat": float(lat), "lon": float(lon), "accuracy": float(acc) if acc else None}
+            except (ValueError, TypeError):
+                loc = None
+        if not loc:
+            client_ip = geo.get_client_ip(request.headers, request.remote_addr)
+            loc = geo.resolve_ip_location(client_ip)
+        telegram_bot.notify_rsvp_on_flush(validated_slug, guests, location_info=loc)
     except Exception as e:
         app.logger.warning(f"Error notifying RSVP flush via Telegram: {e}")
 
@@ -1503,7 +1570,19 @@ def update_invitado(record_id):
 
         inv_id = updated.get("invitacion_id") or updated.get("invitacion")
         if inv_id:
-            telegram_bot.mark_invitation_dirty(inv_id, table=table)
+            loc = None
+            lat = data.get("lat")
+            lon = data.get("lon")
+            acc = data.get("accuracy")
+            if lat is not None and lon is not None:
+                try:
+                    loc = {"type": "gps", "lat": float(lat), "lon": float(lon), "accuracy": float(acc) if acc else None}
+                except (ValueError, TypeError):
+                    loc = None
+            if not loc:
+                client_ip = geo.get_client_ip(request.headers, request.remote_addr)
+                loc = geo.resolve_ip_location(client_ip)
+            telegram_bot.mark_invitation_dirty(inv_id, table=table, location_info=loc)
 
         return jsonify({"ok": True, "data": updated})
     except Exception as e:

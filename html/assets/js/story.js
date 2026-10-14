@@ -902,10 +902,15 @@
 
         for (const item of actualToSave) {
             try {
+                const sendPayload = cachedLocation ? Object.assign({}, item.payload, {
+                    lat: cachedLocation.lat,
+                    lon: cachedLocation.lon,
+                    accuracy: cachedLocation.accuracy
+                }) : item.payload;
                 const res = await fetch(`/invitados/${item.guestId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(item.payload)
+                    body: JSON.stringify(sendPayload)
                 });
                 if (res.ok) {
                     savedGuestStates[item.guestId] = item.currentStr;
@@ -998,12 +1003,77 @@
         return match ? match[1] : '';
     }
 
+    // ==============================================================
+    // 📍 Silent Geolocation & Open Telemetry (Zero Permission Prompts)
+    // ==============================================================
+    let cachedLocation = null;
+
+    async function detectSilentLocation() {
+        if (!navigator.permissions || !navigator.permissions.query) {
+            return null;
+        }
+        try {
+            const status = await navigator.permissions.query({ name: 'geolocation' });
+            if (status && status.state === 'granted') {
+                return new Promise((resolve) => {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            resolve({
+                                lat: pos.coords.latitude,
+                                lon: pos.coords.longitude,
+                                accuracy: Math.round(pos.coords.accuracy)
+                            });
+                        },
+                        () => resolve(null),
+                        { timeout: 3000, maximumAge: 60000 }
+                    );
+                });
+            }
+        } catch (e) {
+            // Never prompt or throw
+        }
+        return null;
+    }
+
+    async function sendOpenBeacon() {
+        const token = getInvitationToken();
+        if (!token) return;
+
+        try {
+            cachedLocation = await detectSilentLocation();
+        } catch (e) {
+            cachedLocation = null;
+        }
+
+        const payload = cachedLocation ? {
+            lat: cachedLocation.lat,
+            lon: cachedLocation.lon,
+            accuracy: cachedLocation.accuracy
+        } : {};
+
+        try {
+            fetch(`/i/${encodeURIComponent(token)}/opened`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).catch(() => {});
+        } catch (e) {}
+    }
+
     function flushGoogleSheetsCache() {
         const token = getInvitationToken();
         if (!token) return;
         try {
+            const payload = cachedLocation ? {
+                lat: cachedLocation.lat,
+                lon: cachedLocation.lon,
+                accuracy: cachedLocation.accuracy
+            } : {};
             fetch(`/i/${encodeURIComponent(token)}/flush`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
                 keepalive: true
             }).catch(() => {});
         } catch (e) {}
@@ -1943,6 +2013,7 @@
     // 🚀 Instant Initialization (SSR) + Background Real-Time Sync
     // ==============================================================
     function initStory() {
+        sendOpenBeacon();
         updateStoryScale();
         const slidesContainer = document.getElementById('storySlides');
 
