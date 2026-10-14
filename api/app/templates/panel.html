@@ -1367,31 +1367,159 @@
             border: 1px solid var(--card-border);
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
             gap: 14px;
             position: relative;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
         }
 
         .element-card:hover {
             border-color: var(--card-hover-border);
         }
 
+        .element-card.collapsed {
+            padding: 10px 14px;
+            gap: 0;
+            background: rgba(14, 20, 30, 0.45);
+        }
+
+        .element-card.collapsed .element-body {
+            display: none;
+        }
+
         .element-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 8px;
+            padding: 4px 6px;
+            margin: -4px -6px;
+            transition: background 0.15s;
         }
 
-        .element-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #cbd5e0;
+        .element-header:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .element-header-left {
             display: flex;
             align-items: center;
             gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .element-collapse-icon {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .element-index-badge {
+            font-size: 0.76rem;
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .element-type-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.02em;
+            flex-shrink: 0;
+        }
+
+        .type-badge-title {
+            background: rgba(212, 175, 55, 0.18);
+            color: #f6e05e;
+            border: 1px solid rgba(212, 175, 55, 0.35);
+        }
+
+        .type-badge-tag {
+            background: rgba(237, 137, 54, 0.18);
+            color: #fbd38d;
+            border: 1px solid rgba(237, 137, 54, 0.35);
+        }
+
+        .type-badge-body {
+            background: rgba(99, 179, 237, 0.15);
+            color: #90cdf4;
+            border: 1px solid rgba(99, 179, 237, 0.3);
+        }
+
+        .type-badge-link {
+            background: rgba(66, 153, 225, 0.18);
+            color: #63b3ed;
+            border: 1px solid rgba(66, 153, 225, 0.35);
+        }
+
+        .type-badge-copy {
+            background: rgba(56, 161, 105, 0.18);
+            color: #68d391;
+            border: 1px solid rgba(56, 161, 105, 0.35);
+        }
+
+        .type-badge-countdown {
+            background: rgba(246, 173, 85, 0.18);
+            color: #f6ad55;
+            border: 1px solid rgba(246, 173, 85, 0.35);
+        }
+
+        .type-badge-form {
+            background: rgba(72, 187, 120, 0.18);
+            color: #48bb78;
+            border: 1px solid rgba(72, 187, 120, 0.35);
+        }
+
+        .element-content-preview {
+            font-size: 0.83rem;
+            color: #e2e8f0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .element-content-preview.is-empty {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .element-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .element-body {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
 
         .btn-del-el {
@@ -2740,11 +2868,21 @@
                             <!-- Elements CRUD Section -->
                             <section class="panel-card">
                                 <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                    <h3 class="section-title" style="margin-bottom: 0;">
-                                        <span>Elementos</span>
-                                        <span class="count" id="elementsCountBadge">0</span>
-                                    </h3>
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3 class="section-title" style="margin-bottom: 0;">
+                                            <span>Elementos</span>
+                                            <span class="count" id="elementsCountBadge">0</span>
+                                        </h3>
+                                        <div style="display: inline-flex; gap: 4px; margin-left: 4px;">
+                                            <button type="button" class="btn-ctrl" onclick="collapseAllElements()" style="padding: 2px 7px; font-size: 0.72rem; border-color: rgba(255,255,255,0.15);" title="Colapsar todos los elementos">
+                                                ▾ Colapsar
+                                            </button>
+                                            <button type="button" class="btn-ctrl" onclick="expandAllElements()" style="padding: 2px 7px; font-size: 0.72rem; border-color: rgba(255,255,255,0.15);" title="Expandir todos los elementos">
+                                                ▸ Expandir
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                         <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnAddTextElement"
                                             onclick="addTextElement()">
@@ -4449,6 +4587,118 @@
             renderElementsList();
         }
 
+        const collapsedElementIds = new Set();
+
+        function getElementHeaderData(el, idx) {
+            let typeBadgeClass = 'type-badge-body';
+            let typeIcon = '📄';
+            let typeText = 'Texto';
+            let contentSnippet = (el.content || '').trim().replace(/\s+/g, ' ');
+
+            if (el.type === 'copy') {
+                typeBadgeClass = 'type-badge-copy';
+                typeIcon = el.icon === 'bank' ? '🏛️' : (el.icon === 'card' ? '💳' : (el.icon === 'copy' ? '📋' : '🔗'));
+                typeText = el.icon === 'bank' ? 'Banco' : (el.icon === 'card' ? 'Tarjeta' : (el.icon === 'copy' ? 'Copiar' : 'Enlace'));
+                contentSnippet = (el.content || el.copy_val || '').trim();
+            } else if (el.type === 'location' || el.type === 'link') {
+                typeBadgeClass = 'type-badge-link';
+                typeIcon = el.icon === 'spotify' ? '🟢' : (el.icon === 'music' ? '🎵' : (el.icon === 'photos' ? '📸' : (el.icon === 'location' ? '📍' : '🔗')));
+                typeText = el.icon === 'location' ? 'Ubicación' : (el.icon === 'spotify' ? 'Spotify' : (el.icon === 'music' ? 'Música' : (el.icon === 'photos' ? 'Fotos' : 'Enlace')));
+                contentSnippet = (el.content || el.url || '').trim();
+            } else if (el.type === 'countdown') {
+                typeBadgeClass = 'type-badge-countdown';
+                typeIcon = '⏱️';
+                typeText = 'Countdown';
+                const targetStr = el.target_date ? (' · ' + el.target_date.replace('T', ' ')) : '';
+                contentSnippet = (el.title || 'Falta poco').trim() + targetStr;
+            } else if (el.type === 'form') {
+                typeBadgeClass = 'type-badge-form';
+                typeIcon = '📝';
+                typeText = 'Formulario RSVP';
+                contentSnippet = el.alias_cbu ? ('Alias: ' + el.alias_cbu) : 'Confirmación de invitados';
+            } else {
+                // Text element
+                const st = el.style || 'body';
+                if (st === 'title') {
+                    typeBadgeClass = 'type-badge-title';
+                    typeIcon = '🔤';
+                    typeText = 'Título';
+                } else if (st === 'tag') {
+                    typeBadgeClass = 'type-badge-tag';
+                    typeIcon = '🏷️';
+                    typeText = 'Tag';
+                } else {
+                    typeBadgeClass = 'type-badge-body';
+                    typeIcon = '📄';
+                    typeText = 'Texto';
+                }
+            }
+
+            const isEmpty = !contentSnippet;
+            const displayText = isEmpty ? '(Sin texto)' : (contentSnippet.length > 40 ? contentSnippet.substring(0, 40) + '…' : contentSnippet);
+
+            return {
+                typeBadgeClass,
+                typeIcon,
+                typeText,
+                displayText,
+                fullText: contentSnippet || '(Sin contenido)',
+                isEmpty
+            };
+        }
+
+        function updateElementCardHeader(el, idx) {
+            const card = document.getElementById('elCard_' + el.id);
+            if (!card) return;
+            const data = getElementHeaderData(el, idx);
+            const badge = card.querySelector('.element-type-badge');
+            const preview = card.querySelector('.element-content-preview');
+            if (badge) {
+                badge.className = 'element-type-badge ' + data.typeBadgeClass;
+                badge.innerHTML = `<span>${data.typeIcon}</span><span>${data.typeText}</span>`;
+            }
+            if (preview) {
+                preview.textContent = data.displayText;
+                preview.title = data.fullText;
+                preview.classList.toggle('is-empty', data.isEmpty);
+            }
+        }
+
+        function toggleElementCollapse(elId, event) {
+            if (event && event.target && event.target.closest('.btn-del-el')) return;
+            if (collapsedElementIds.has(elId)) {
+                collapsedElementIds.delete(elId);
+            } else {
+                collapsedElementIds.add(elId);
+            }
+            const card = document.getElementById('elCard_' + elId);
+            if (card) {
+                const isCollapsed = collapsedElementIds.has(elId);
+                card.classList.toggle('collapsed', isCollapsed);
+                const icon = card.querySelector('.element-collapse-icon');
+                if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
+            }
+        }
+
+        function collapseAllElements() {
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            slide.elements.forEach((el, idx) => {
+                if (!el.id) el.id = 'el_' + Date.now() + '_' + idx;
+                collapsedElementIds.add(el.id);
+            });
+            renderElementsList();
+        }
+
+        function expandAllElements() {
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            slide.elements.forEach(el => {
+                if (el.id) collapsedElementIds.delete(el.id);
+            });
+            renderElementsList();
+        }
+
         function renderElementsList() {
             const slide = getCurrentSlide();
             const container = document.getElementById('elementsListContainer');
@@ -4469,9 +4719,12 @@
             }
 
             slide.elements.forEach((el, idx) => {
+                if (!el.id) el.id = 'el_' + Date.now() + '_' + idx;
+                const isCollapsed = collapsedElementIds.has(el.id);
+
                 const card = document.createElement('div');
-                card.className = 'element-card';
-                card.id = 'elCard_' + idx;
+                card.className = 'element-card' + (isCollapsed ? ' collapsed' : '');
+                card.id = 'elCard_' + el.id;
 
                 const isLocation = el.type === 'location' || el.type === 'link';
                 const isCopy = el.type === 'copy';
@@ -4480,35 +4733,32 @@
                 const isTransformable = isLocation || isCopy || isCountdown;
 
                 // Header
+                const headerData = getElementHeaderData(el, idx);
                 const header = document.createElement('div');
                 header.className = 'element-header';
-                let titleHtml = '#' + (idx + 1) + ' Elemento de Texto';
-                let titleStyle = '';
-                if (isCopy) {
-                    const iconEmoji = el.icon === 'bank' ? '🏛️' : (el.icon === 'card' ? '💳' : (el.icon === 'copy' ? '📋' : '🔗'));
-                    titleHtml = `${iconEmoji} #${idx + 1} Sticker Copiar (${escapeHtml(el.content || 'Sin texto')})`;
-                    titleStyle = `color: ${el.color || '#34d399'};`;
-                } else if (isLocation) {
-                    const iconEmoji = el.icon === 'spotify' ? '🟢' : (el.icon === 'music' ? '🎵' : (el.icon === 'photos' ? '📸' : (el.icon === 'location' ? '📍' : '🔗')));
-                    titleHtml = `${iconEmoji} #${idx + 1} Enlace / Sticker (${escapeHtml(el.content || 'Sin texto')})`;
-                    titleStyle = `color: ${el.color || '#63b3ed'};`;
-                } else if (isCountdown) {
-                    titleHtml = '⏱️ #' + (idx + 1) + ' Cuenta Regresiva (Instagram Countdown)';
-                    titleStyle = 'color: #f6ad55;';
-                } else if (isForm) {
-                    titleHtml = '📝 #' + (idx + 1) + ' Formulario de Confirmación (RSVP)';
-                    titleStyle = 'color: #48bb78;';
-                }
-
+                header.onclick = (e) => toggleElementCollapse(el.id, e);
                 header.innerHTML = `
-                <span class="element-title" style="${titleStyle}">
-                    <span>${titleHtml}</span>
-                </span>
-                <button type="button" class="btn-del-el" onclick="removeElement(${idx})" title="Eliminar este elemento">
-                    🗑️ Eliminar
-                </button>
+                <div class="element-header-left">
+                    <span class="element-collapse-icon">${isCollapsed ? '▶' : '▼'}</span>
+                    <span class="element-index-badge">#${idx + 1}</span>
+                    <span class="element-type-badge ${headerData.typeBadgeClass}">
+                        <span>${headerData.typeIcon}</span><span>${headerData.typeText}</span>
+                    </span>
+                    <span class="element-content-preview ${headerData.isEmpty ? 'is-empty' : ''}" title="${escapeHtml(headerData.fullText)}">
+                        ${escapeHtml(headerData.displayText)}
+                    </span>
+                </div>
+                <div class="element-header-actions">
+                    <button type="button" class="btn-del-el" onclick="event.stopPropagation(); removeElement(${idx});" title="Eliminar este elemento">
+                        🗑️ Eliminar
+                    </button>
+                </div>
             `;
                 card.appendChild(header);
+
+                // Body container for inputs and sliders
+                const body = document.createElement('div');
+                body.className = 'element-body';
 
                 if (isCountdown) {
                     // Title input
@@ -4522,8 +4772,9 @@
                     titleInput.oninput = (e) => {
                         el.title = e.target.value;
                         updateLivePreview();
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(titleGroup);
+                    body.appendChild(titleGroup);
 
                     // Date & Time pickers
                     const fullTarget = el.target_date || '2027-03-19T18:00';
@@ -4590,12 +4841,13 @@
                         const m = minSelect.value || '00';
                         el.target_date = `${d}T${h}:${m}`;
                         updateLivePreview();
+                        updateElementCardHeader(el, idx);
                     };
                     datePicker.oninput = syncTargetDate;
                     datePicker.onchange = syncTargetDate;
                     hourSelect.onchange = syncTargetDate;
                     minSelect.onchange = syncTargetDate;
-                    card.appendChild(dtRow);
+                    body.appendChild(dtRow);
 
                     // Precision selector
                     const precGroup = document.createElement('div');
@@ -4614,7 +4866,7 @@
                         el.precision = e.target.value;
                         updateLivePreview();
                     };
-                    card.appendChild(precGroup);
+                    body.appendChild(precGroup);
                 } else if (isLocation) {
                     const currentIcon = el.icon || (el.type === 'location' ? 'location' : 'link');
                     const currentColor = el.color || '#0488db';
@@ -4631,8 +4883,9 @@
                     textInput.oninput = (e) => {
                         el.content = e.target.value;
                         updateLivePreview();
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(textGroup);
+                    body.appendChild(textGroup);
 
                     // 2. URL Input
                     const urlGroup = document.createElement('div');
@@ -4647,8 +4900,9 @@
                     const urlInput = urlGroup.querySelector('input');
                     urlInput.oninput = (e) => {
                         el.url = e.target.value;
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(urlGroup);
+                    body.appendChild(urlGroup);
 
                     // 3. Icon Picker
                     const iconGroup = document.createElement('div');
@@ -4686,9 +4940,10 @@
                                 updatePaletteSelection('#e1306c');
                             }
                             updateLivePreview();
+                            updateElementCardHeader(el, idx);
                         };
                     });
-                    card.appendChild(iconGroup);
+                    body.appendChild(iconGroup);
 
                     // 4. Color Picker + Palette
                     const colorGroup = document.createElement('div');
@@ -4731,7 +4986,7 @@
                             updateLivePreview();
                         };
                     });
-                    card.appendChild(colorGroup);
+                    body.appendChild(colorGroup);
 
                     // 5. Style Variant (Fondo Blanco vs Fondo de Color)
                     const styleGroup = document.createElement('div');
@@ -4751,7 +5006,7 @@
                             updateLivePreview();
                         };
                     });
-                    card.appendChild(styleGroup);
+                    body.appendChild(styleGroup);
                 } else if (isCopy) {
                     const currentIcon = el.icon || 'copy';
                     const currentColor = el.color || '#10b981';
@@ -4768,8 +5023,9 @@
                     textInput.oninput = (e) => {
                         el.content = e.target.value;
                         updateLivePreview();
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(textGroup);
+                    body.appendChild(textGroup);
 
                     // 2. Value to Copy Input
                     const copyValGroup = document.createElement('div');
@@ -4784,8 +5040,9 @@
                     const copyValInput = copyValGroup.querySelector('input');
                     copyValInput.oninput = (e) => {
                         el.copy_val = e.target.value;
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(copyValGroup);
+                    body.appendChild(copyValGroup);
 
                     // 3. Icon Picker
                     const iconGroup = document.createElement('div');
@@ -4805,9 +5062,10 @@
                             btn.classList.add('selected');
                             el.icon = btn.dataset.icon;
                             updateLivePreview();
+                            updateElementCardHeader(el, idx);
                         };
                     });
-                    card.appendChild(iconGroup);
+                    body.appendChild(iconGroup);
 
                     // 4. Color Picker + Palette
                     const colorGroup = document.createElement('div');
@@ -4848,7 +5106,7 @@
                             updateLivePreview();
                         };
                     });
-                    card.appendChild(colorGroup);
+                    body.appendChild(colorGroup);
 
                     // 5. Style Variant (Píldora Blanca vs Fondo de Color)
                     const styleGroup = document.createElement('div');
@@ -4868,7 +5126,7 @@
                             updateLivePreview();
                         };
                     });
-                    card.appendChild(styleGroup);
+                    body.appendChild(styleGroup);
                 } else if (isForm) {
                     const formNote = document.createElement('div');
                     formNote.className = 'form-group';
@@ -4877,7 +5135,7 @@
                         <strong style="color: #68d391;">Formulario RSVP del Grupo:</strong> Muestra los nombres de los invitados, opciones de asistencia (✓ Asiste / ✗ No), selección de menú (General, Vegetariano, Vegano, Celíaco), tarjeta de la fiesta y comprobante de pago.
                     </div>
                 `;
-                    card.appendChild(formNote);
+                    body.appendChild(formNote);
 
                     // Field to edit Alias / CBU for Tarjeta de la fiesta
                     const aliasGroup = document.createElement('div');
@@ -4894,8 +5152,9 @@
                         el.alias_cbu = e.target.value.trim();
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(aliasGroup);
+                    body.appendChild(aliasGroup);
                 } else {
                     // Text Content input
                     const textGroup = document.createElement('div');
@@ -4928,8 +5187,9 @@
                     textarea.oninput = (e) => {
                         el.content = e.target.value;
                         updateLivePreview();
+                        updateElementCardHeader(el, idx);
                     };
-                    card.appendChild(textGroup);
+                    body.appendChild(textGroup);
 
                     // Style selector: Title, Tag, Body
                     const currentStyle = el.style || 'body';
@@ -4956,9 +5216,10 @@
                             el.style = chosenStyle;
                             optBtns.forEach(b => b.classList.toggle('active', b === btn));
                             updateLivePreview();
+                            updateElementCardHeader(el, idx);
                         };
                     });
-                    card.appendChild(styleGroup);
+                    body.appendChild(styleGroup);
                 }
 
                 // Position controls: Horizontal X, Vertical Y, Width W & Height H
@@ -5183,7 +5444,8 @@
                     numH.oninput = (e) => syncH(e.target.value);
                 }
 
-                card.appendChild(posRow);
+                body.appendChild(posRow);
+                card.appendChild(body);
                 container.appendChild(card);
             });
         }
@@ -5193,7 +5455,7 @@
             if (!slide) return;
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
-            slide.elements.push({
+            const newEl = {
                 id: 'el_' + Date.now(),
                 type: 'text',
                 content: 'Nuevo texto',
@@ -5201,10 +5463,14 @@
                 x: 0,
                 y: 0,
                 w: 88
-            });
+            };
+            slide.elements.push(newEl);
+            collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
             updateLivePreview();
+            const newCard = document.getElementById('elCard_' + newEl.id);
+            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addLinkElement(icon = 'link', content = 'ENLACE', color = '#2196f3') {
@@ -5212,7 +5478,7 @@
             if (!slide) return;
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
-            slide.elements.push({
+            const newEl = {
                 id: 'el_' + Date.now(),
                 type: 'link',
                 icon: icon,
@@ -5225,10 +5491,14 @@
                 w: null,
                 rotate: 0,
                 zoom: 100
-            });
+            };
+            slide.elements.push(newEl);
+            collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
             updateLivePreview();
+            const newCard = document.getElementById('elCard_' + newEl.id);
+            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addCopyElement(icon = 'copy', content = 'BODA.CELIA.ALFREDO', color = '#10b981') {
@@ -5236,7 +5506,7 @@
             if (!slide) return;
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
-            slide.elements.push({
+            const newEl = {
                 id: 'el_' + Date.now(),
                 type: 'copy',
                 icon: icon,
@@ -5249,10 +5519,14 @@
                 w: null,
                 rotate: 0,
                 zoom: 100
-            });
+            };
+            slide.elements.push(newEl);
+            collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
             updateLivePreview();
+            const newCard = document.getElementById('elCard_' + newEl.id);
+            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addLocationElement() {
@@ -5264,7 +5538,7 @@
             if (!slide) return;
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
-            slide.elements.push({
+            const newEl = {
                 id: 'el_' + Date.now(),
                 type: 'countdown',
                 title: 'FALTA POCO',
@@ -5275,10 +5549,14 @@
                 w: null,
                 rotate: 0,
                 zoom: 100
-            });
+            };
+            slide.elements.push(newEl);
+            collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
             updateLivePreview();
+            const newCard = document.getElementById('elCard_' + newEl.id);
+            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addFormElement() {
@@ -5286,24 +5564,31 @@
             if (!slide) return;
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
-            slide.elements.push({
+            const newEl = {
                 id: 'el_' + Date.now(),
                 type: 'form',
                 x: 0,
                 y: 0,
                 w: 92,
                 h: 70
-            });
+            };
+            slide.elements.push(newEl);
+            collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
             updateLivePreview();
+            const newCard = document.getElementById('elCard_' + newEl.id);
+            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function removeElement(index) {
             const slide = getCurrentSlide();
             if (!slide || !Array.isArray(slide.elements)) return;
 
-            slide.elements.splice(index, 1);
+            const removed = slide.elements.splice(index, 1);
+            if (removed && removed[0] && removed[0].id) {
+                collapsedElementIds.delete(removed[0].id);
+            }
             renderElementsList();
             updateLivePreview();
         }
