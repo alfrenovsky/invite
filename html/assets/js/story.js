@@ -1963,6 +1963,7 @@
         const slide = slides[targetIdx] || slides[0];
         const preloader = document.getElementById('storyPreloader');
 
+        let failsafeTimer = null;
         let isFinished = false;
         function finish() {
             if (isFinished) return;
@@ -1987,9 +1988,9 @@
             preloadNextSlide(currentIndex + 1);
         }
 
-        const failsafeTimer = setTimeout(() => {
+        failsafeTimer = setTimeout(() => {
             finish();
-        }, 5000);
+        }, 3000);
 
         if (!slide) {
             finish();
@@ -2051,24 +2052,34 @@
     // 🚀 Instant Initialization (SSR) + Background Real-Time Sync
     // ==============================================================
     function initStory() {
-        sendOpenBeacon();
-        updateStoryScale();
-        const slidesContainer = document.getElementById('storySlides');
+        try {
+            updateStoryScale();
+            const slidesContainer = document.getElementById('storySlides');
 
-        if (!slidesContainer) return;
+            if (!slidesContainer) return;
 
-        updateSlideList();
-        if (slides.length === 0) return;
+            updateSlideList();
+            if (slides.length === 0) return;
 
-        buildProgressBars();
-        bindInteractiveEvents();
+            buildProgressBars();
+            bindInteractiveEvents();
 
-        const targetIdx = getTargetIndexFromHash();
-        currentIndex = targetIdx;
-        elapsedTimeOnSlide = 0;
-        updateUrlHash(currentIndex);
-        showSlide(currentIndex);
-        preloadInitialSlide(targetIdx);
+            const targetIdx = getTargetIndexFromHash();
+            currentIndex = targetIdx;
+            elapsedTimeOnSlide = 0;
+            updateUrlHash(currentIndex);
+            showSlide(currentIndex);
+            preloadInitialSlide(targetIdx);
+        } catch (err) {
+            console.error('Error during initStory:', err);
+            const preloader = document.getElementById('storyPreloader');
+            if (preloader) {
+                preloader.classList.add('hidden');
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 420);
+            }
+        }
     }
 
     // Launch instant initialization
