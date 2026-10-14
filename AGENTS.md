@@ -156,7 +156,4 @@ All API routes are proxied through Nginx:
 10. **NEVER DEPLOY**: this is my job.
 11. **DONT WASTE TOKENS**: Dont do a log of thing i didnt ask without asking me first.
 12. **Atomic Commits**: Create atomic git commits containing only one single feature, change, or fix per commit.
-
-
-
-
+13. **Run in docker**: Don't run python outside the container.
