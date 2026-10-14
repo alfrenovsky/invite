@@ -1,4 +1,4 @@
-(function() {
+(function () {
     let slides = [];
     let progressSlots = [];
     const progressContainer = document.getElementById('progressBarsContainer');
@@ -6,8 +6,8 @@
     const tapRight = document.getElementById('tapRight');
     const btnDesktopPrev = document.getElementById('btnDesktopPrev');
     const btnDesktopNext = document.getElementById('btnDesktopNext');
-    const isMobileDevice = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                           (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches && window.screen.width <= 768);
+    const isMobileDevice = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches && window.screen.width <= 768);
     const isDesktop = !isMobileDevice;
 
     function applyDeviceModeClass() {
@@ -195,12 +195,12 @@
                     const isPreloading = preloader && !preloader.classList.contains('hidden') && preloader.style.display !== 'none';
                     if (!isPreloading) {
                         video.currentTime = 0;
-                        video.play().catch(() => {});
+                        video.play().catch(() => { });
                     }
                 }
                 if (audio) {
                     audio.currentTime = 0;
-                    audio.play().catch(() => {});
+                    audio.play().catch(() => { });
                 }
             } else {
                 if (video) {
@@ -1023,7 +1023,8 @@
     let cachedLocation = null;
 
     async function detectSilentLocation() {
-        if (!navigator.permissions || !navigator.permissions.query) {
+        //    if (!navigator.permissions || !navigator.permissions.query) {
+        if (!navigator.permissions) {
             return null;
         }
         try {
@@ -1071,8 +1072,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
                 keepalive: true
-            }).catch(() => {});
-        } catch (e) {}
+            }).catch(() => { });
+        } catch (e) { }
     }
 
     function flushGoogleSheetsCache() {
@@ -1089,8 +1090,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
                 keepalive: true
-            }).catch(() => {});
-        } catch (e) {}
+            }).catch(() => { });
+        } catch (e) { }
     }
 
     async function handleFormSlideExit() {
@@ -1156,8 +1157,8 @@
                 const nInput = card.querySelector('input[name^="nombre_"]');
                 const aInput = card.querySelector('input[name^="apellido_"]');
                 const nameEl = card.querySelector('.rsvp-guest-name') || card.querySelector('.guest-header-name');
-                let name = (nInput && nInput.value.trim()) 
-                    ? `${nInput.value.trim()} ${aInput ? aInput.value.trim() : ''}`.trim() 
+                let name = (nInput && nInput.value.trim())
+                    ? `${nInput.value.trim()} ${aInput ? aInput.value.trim() : ''}`.trim()
                     : (nameEl ? nameEl.textContent.trim() : 'Acompañante');
                 if (!name || name.toLowerCase() === 'invitado') name = 'Acompañante';
 
@@ -1203,10 +1204,10 @@
             rowsHtml += `
                 <div class="payment-breakdown-row">
                     <span>${item.name}</span>
-                    ${item.isPaid 
-                        ? '<span class="payment-paid-badge">✓ Pago registrado</span>' 
-                        : `<span>${formatCurrency(item.monto)}</span>`
-                    }
+                    ${item.isPaid
+                    ? '<span class="payment-paid-badge">✓ Pago registrado</span>'
+                    : `<span>${formatCurrency(item.monto)}</span>`
+                }
                 </div>
             `;
         });
@@ -1386,7 +1387,7 @@
         function triggerCopyCelebration(targetEl, val) {
             // Haptic vibration feedback
             if (navigator.vibrate) {
-                try { navigator.vibrate(40); } catch (_) {}
+                try { navigator.vibrate(40); } catch (_) { }
             }
 
             if (!copyOverlay) {
@@ -1478,7 +1479,7 @@
                     tempInput.select();
                     document.execCommand('copy');
                     document.body.removeChild(tempInput);
-                } catch (_) {}
+                } catch (_) { }
                 triggerCopyCelebration(targetEl, text);
             }
         }
@@ -2049,7 +2050,7 @@
             const video = curSlide ? curSlide.querySelector('video') : null;
             if (video) {
                 video.currentTime = 0;
-                video.play().catch(() => {});
+                video.play().catch(() => { });
             }
 
             startSlideTimer();
