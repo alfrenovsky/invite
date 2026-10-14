@@ -20,7 +20,7 @@
     {% if bg_url %}
         <div class="story-bg-layer-wrap">
             {% if is_vid %}
-                <video class="story-video-bg story-bg-media" src="{{ bg_url }}" muted loop playsinline autoplay
+                <video class="story-video-bg story-bg-media" src="{{ bg_url }}" preload="auto" muted loop playsinline autoplay
                        style="transform: translate(-50%, -50%) translate({{ bg_x }}%, {{ bg_y }}%) scale({{ bg_zoom }});"></video>
             {% else %}
                 <img class="story-bg-image story-bg-media" src="{{ bg_url }}" alt=""

@@ -183,8 +183,20 @@
                             }
                         };
                     }
-                    video.currentTime = 0;
-                    video.play().catch(() => {});
+                    if (!video.dataset.syncBound) {
+                        video.dataset.syncBound = 'true';
+                        video.addEventListener('waiting', () => { isBuffering = true; });
+                        video.addEventListener('stalled', () => { isBuffering = true; });
+                        video.addEventListener('playing', () => { isBuffering = false; });
+                        video.addEventListener('canplay', () => { isBuffering = false; });
+                    }
+
+                    const preloader = document.getElementById('storyPreloader');
+                    const isPreloading = preloader && !preloader.classList.contains('hidden') && preloader.style.display !== 'none';
+                    if (!isPreloading) {
+                        video.currentTime = 0;
+                        video.play().catch(() => {});
+                    }
                 }
                 if (audio) {
                     audio.currentTime = 0;
@@ -320,7 +332,7 @@
                 return;
             }
 
-            if (!isPaused) {
+            if (!isPaused && !isBuffering) {
                 elapsedTimeOnSlide = now - slideStartTime;
             } else {
                 slideStartTime = now - elapsedTimeOnSlide;
@@ -358,9 +370,11 @@
 
         currentIndex = index;
         elapsedTimeOnSlide = 0;
+        isBuffering = false;
         updateUrlHash(currentIndex);
         showSlide(currentIndex);
         startSlideTimer();
+        preloadNextSlide(currentIndex + 1);
     }
 
     function stopAutoplay() {
@@ -2010,6 +2024,99 @@
     });
 
     // ==============================================================
+    // 📥 Critical Media Preloader & Lookahead Buffering
+    // ==============================================================
+    let isBuffering = false;
+
+    function preloadInitialSlide(targetIdx) {
+        const slide = slides[targetIdx] || slides[0];
+        const preloader = document.getElementById('storyPreloader');
+
+        let isFinished = false;
+        function finish() {
+            if (isFinished) return;
+            isFinished = true;
+            if (failsafeTimer) clearTimeout(failsafeTimer);
+
+            if (preloader) {
+                preloader.classList.add('hidden');
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 420);
+            }
+
+            const curSlide = slides[currentIndex];
+            const video = curSlide ? curSlide.querySelector('video') : null;
+            if (video) {
+                video.currentTime = 0;
+                video.play().catch(() => {});
+            }
+
+            startSlideTimer();
+            preloadNextSlide(currentIndex + 1);
+        }
+
+        const failsafeTimer = setTimeout(() => {
+            finish();
+        }, 5000);
+
+        if (!slide) {
+            finish();
+            return;
+        }
+
+        const video = slide.querySelector('video');
+        const img = slide.querySelector('img.story-bg-image');
+
+        if (video) {
+            video.preload = 'auto';
+            if (video.readyState >= 3) {
+                finish();
+                return;
+            }
+            const onReady = () => {
+                video.removeEventListener('canplaythrough', onReady);
+                video.removeEventListener('loadeddata', onReady);
+                finish();
+            };
+            video.addEventListener('canplaythrough', onReady, { once: true });
+            video.addEventListener('loadeddata', onReady, { once: true });
+            if (video.readyState === 0) {
+                video.load();
+            }
+        } else if (img) {
+            if (img.complete && img.naturalWidth > 0) {
+                finish();
+                return;
+            }
+            img.onload = finish;
+            img.onerror = finish;
+        } else {
+            finish();
+        }
+    }
+
+    function preloadNextSlide(nextIdx) {
+        if (nextIdx < 0 || nextIdx >= slides.length) return;
+        const nextSlide = slides[nextIdx];
+        if (!nextSlide) return;
+
+        const nextVideo = nextSlide.querySelector('video');
+        if (nextVideo) {
+            nextVideo.preload = 'auto';
+            if (nextVideo.readyState === 0) {
+                nextVideo.load();
+            }
+        }
+
+        const nextImg = nextSlide.querySelector('img.story-bg-image');
+        if (nextImg && nextImg.src && !nextImg.complete) {
+            const tempImg = new Image();
+            tempImg.src = nextImg.src;
+        }
+    }
+
+    // ==============================================================
     // 🚀 Instant Initialization (SSR) + Background Real-Time Sync
     // ==============================================================
     function initStory() {
@@ -2026,7 +2133,11 @@
         bindInteractiveEvents();
 
         const targetIdx = getTargetIndexFromHash();
-        goToSlide(targetIdx);
+        currentIndex = targetIdx;
+        elapsedTimeOnSlide = 0;
+        updateUrlHash(currentIndex);
+        showSlide(currentIndex);
+        preloadInitialSlide(targetIdx);
     }
 
     // Launch instant initialization

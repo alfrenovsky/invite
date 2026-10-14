@@ -2468,5 +2468,46 @@
             letter-spacing: -0.2px;
         }
 
+        /* ==============================================================
+           🌟 Discrete Media Preloader Spinner
+           ============================================================== */
+        .story-preloader {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 10, 10, 0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            pointer-events: auto;
+            border-radius: inherit;
+        }
+
+        .story-preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .story-preloader-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(212, 175, 55, 0.2);
+            border-top-color: var(--accent, #d4af37);
+            border-radius: 50%;
+            animation: storyPreloadSpin 0.75s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+            box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+        }
+
+        @keyframes storyPreloadSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
 
 

@@ -11,7 +11,7 @@
                     {% if rsvp_bg_url %}
                         <div class="story-bg-layer-wrap">
                             {% if rsvp_is_vid %}
-                                <video class="story-video-bg story-bg-media" src="{{ rsvp_bg_url }}" muted loop playsinline autoplay
+                                <video class="story-video-bg story-bg-media" src="{{ rsvp_bg_url }}" preload="auto" muted loop playsinline autoplay
                                        style="transform: translate(-50%, -50%) translate({{ rsvp_bg_x }}%, {{ rsvp_bg_y }}%) scale({{ rsvp_bg_zoom }});"></video>
                             {% else %}
                                 <img class="story-bg-image story-bg-media" src="{{ rsvp_bg_url }}" alt=""
