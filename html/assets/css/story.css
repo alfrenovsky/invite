@@ -340,8 +340,6 @@
             pointer-events: none;
             overflow: hidden;
             z-index: 10;
-            perspective: 1000px;
-            transform-style: preserve-3d;
         }
 
         .slide-el {
@@ -353,6 +351,7 @@
             white-space: pre-line;
             transform-style: preserve-3d;
             backface-visibility: visible;
+            transform-origin: center center;
         }
 
         .slide-el-title {
