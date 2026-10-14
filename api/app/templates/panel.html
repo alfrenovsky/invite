@@ -1481,6 +1481,12 @@
             border: 1px solid rgba(56, 161, 105, 0.35);
         }
 
+        .type-badge-bg {
+            background: rgba(14, 165, 233, 0.18);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+
         .type-badge-countdown {
             background: rgba(246, 173, 85, 0.18);
             color: #f6ad55;
@@ -2965,94 +2971,12 @@
                                             step="500" value="7000">
                                     </div>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 14px;">
+                                <div class="form-group" style="margin-bottom: 0;">
                                     <label class="custom-checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
                                         <input type="checkbox" id="slideHiddenCheck" style="width: 17px; height: 17px; cursor: pointer;">
                                         <span style="font-size: 0.88rem; color: #e2e8f0; font-weight: 600;">Slide oculto</span>
                                         <span class="sub-label-hint" style="color: #94a3b8; font-size: 0.78rem;">(Se habilita automáticamente cuando ningún invitado asiste)</span>
                                     </label>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="customBgTrigger">Fondo / Video</label>
-                                    <select id="slideBgSelect" class="form-select" style="display: none;">
-                                        <option value="">(Sin fondo / Default)</option>
-                                        {% for bg in backgrounds %}
-                                        <option value="{{ bg }}">{{ bg }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="custom-bg-dropdown" id="customBgDropdown">
-                                        <button type="button" class="custom-bg-trigger" id="customBgTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleCustomBgDropdown()">
-                                            <span class="custom-bg-trigger-thumb" id="customBgTriggerThumb">
-                                                <span>🚫</span>
-                                            </span>
-                                            <span class="custom-bg-trigger-label" id="customBgTriggerLabel">(Sin fondo / Default)</span>
-                                            <span class="custom-bg-chevron">▼</span>
-                                        </button>
-                                        <div class="custom-bg-menu" id="customBgMenu" role="listbox">
-                                            <div class="custom-bg-item selected" data-value="" role="option" onclick="selectCustomBg(this.dataset.value)">
-                                                <div class="custom-bg-item-thumb">
-                                                    <span>🚫</span>
-                                                </div>
-                                                <div class="custom-bg-item-text">
-                                                    <span class="custom-bg-item-name">(Sin fondo / Default)</span>
-                                                    <span class="custom-bg-item-type">Predeterminado</span>
-                                                </div>
-                                                <span class="custom-bg-check">✓</span>
-                                            </div>
-                                            {% for bg in backgrounds %}
-                                            {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-                                            <div class="custom-bg-item" data-value="{{ bg }}" role="option" data-is-video="{{ 'true' if is_vid else 'false' }}" onclick="selectCustomBg(this.dataset.value)">
-                                                <div class="custom-bg-item-thumb">
-                                                    {% if is_vid %}
-                                                    <video src="/assets/backgrounds/{{ bg }}" muted loop playsinline></video>
-                                                    <span class="custom-bg-vid-badge">🎬</span>
-                                                    {% else %}
-                                                    <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" loading="lazy">
-                                                    {% endif %}
-                                                </div>
-                                                <div class="custom-bg-item-text">
-                                                    <span class="custom-bg-item-name" title="{{ bg }}">{{ bg }}</span>
-                                                    <span class="custom-bg-item-type">{% if is_vid %}Video{% else %}Imagen{% endif %}</span>
-                                                </div>
-                                                <span class="custom-bg-check">✓</span>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Background Position & Zoom Controls -->
-                                <div class="form-group" id="slideBgSettingsGroup"
-                                    style="display: none; margin-top: 10px;">
-                                    <div
-                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <label
-                                            style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes
-                                            de Fondo</label>
-                                        <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()"
-                                            style="padding: 3px 8px; font-size: 0.72rem;"
-                                            title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
-                                    </div>
-                                    <div
-                                        style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
-                                        <!-- Zoom Slider -->
-                                        <div
-                                            style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                            <span
-                                                style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">🔍
-                                                Zoom</span>
-                                            <input type="range" class="pos-range-slider" id="slideBgZoomSlider"
-                                                min="100" max="300" step="5" value="100"
-                                                oninput="onSlideBgZoomChange(this.value)">
-                                            <span class="style-prop-badge" id="slideBgZoomBadge"
-                                                style="min-width: 48px; text-align: center;">100%</span>
-                                        </div>
-                                        <div
-                                            style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
-                                            💡 <em>Arrastrá el fondo en el teléfono para moverlo libremente.</em>
-                                        </div>
-                                    </div>
                                 </div>
                             </section>
 
@@ -3099,6 +3023,110 @@
                                             style="border-color: rgba(72, 187, 120, 0.45); color: #48bb78;">
                                             <span>📝 Formulario</span>
                                         </button>
+                                    </div>
+                                </div>
+
+                                <!-- Background Element Card (Accordion Item #0) -->
+                                <div class="element-card collapsed" id="elCard_background" style="margin-bottom: 12px;">
+                                    <div class="element-header" onclick="chooseElement('background', event)">
+                                        <div class="element-header-left">
+                                            <span class="element-collapse-icon" id="bgCollapseIcon">▶</span>
+                                            <span class="element-index-badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8;">#0</span>
+                                            <span class="element-type-badge type-badge-bg" id="bgTypeBadge">
+                                                <span id="bgTypeIcon">🖼️</span><span>Fondo</span>
+                                            </span>
+                                            <span class="element-content-preview" id="bgContentPreview" title="Fondo del slide">
+                                                (Sin fondo / Default)
+                                            </span>
+                                        </div>
+                                        <div class="element-header-actions">
+                                            <button type="button" class="btn-ctrl" onclick="event.stopPropagation(); resetSlideBgTransforms();" style="padding: 2px 7px; font-size: 0.72rem;" title="Restablecer zoom a 100% y centrar">
+                                                ↺ Centrar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="element-body" id="bgElementBody" style="padding-top: 14px;">
+                                        <div class="form-group">
+                                            <label for="customBgTrigger">Fondo / Video</label>
+                                            <select id="slideBgSelect" class="form-select" style="display: none;">
+                                                <option value="">(Sin fondo / Default)</option>
+                                                {% for bg in backgrounds %}
+                                                <option value="{{ bg }}">{{ bg }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="custom-bg-dropdown" id="customBgDropdown">
+                                                <button type="button" class="custom-bg-trigger" id="customBgTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleCustomBgDropdown()">
+                                                    <span class="custom-bg-trigger-thumb" id="customBgTriggerThumb">
+                                                        <span>🚫</span>
+                                                    </span>
+                                                    <span class="custom-bg-trigger-label" id="customBgTriggerLabel">(Sin fondo / Default)</span>
+                                                    <span class="custom-bg-chevron">▼</span>
+                                                </button>
+                                                <div class="custom-bg-menu" id="customBgMenu" role="listbox">
+                                                    <div class="custom-bg-item selected" data-value="" role="option" onclick="selectCustomBg(this.dataset.value)">
+                                                        <div class="custom-bg-item-thumb">
+                                                            <span>🚫</span>
+                                                        </div>
+                                                        <div class="custom-bg-item-text">
+                                                            <span class="custom-bg-item-name">(Sin fondo / Default)</span>
+                                                            <span class="custom-bg-item-type">Predeterminado</span>
+                                                        </div>
+                                                        <span class="custom-bg-check">✓</span>
+                                                    </div>
+                                                    {% for bg in backgrounds %}
+                                                    {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                                    <div class="custom-bg-item" data-value="{{ bg }}" role="option" data-is-video="{{ 'true' if is_vid else 'false' }}" onclick="selectCustomBg(this.dataset.value)">
+                                                        <div class="custom-bg-item-thumb">
+                                                            {% if is_vid %}
+                                                            <video src="/assets/backgrounds/{{ bg }}" muted loop playsinline></video>
+                                                            <span class="custom-bg-vid-badge">🎬</span>
+                                                            {% else %}
+                                                            <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" loading="lazy">
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="custom-bg-item-text">
+                                                            <span class="custom-bg-item-name" title="{{ bg }}">{{ bg }}</span>
+                                                            <span class="custom-bg-item-type">{% if is_vid %}Video{% else %}Imagen{% endif %}</span>
+                                                        </div>
+                                                        <span class="custom-bg-check">✓</span>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Background Position & Zoom Controls -->
+                                        <div class="form-group" id="slideBgSettingsGroup"
+                                            style="display: none; margin-top: 10px;">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <label
+                                                    style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes
+                                                    de Fondo</label>
+                                                <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()"
+                                                    style="padding: 3px 8px; font-size: 0.72rem;"
+                                                    title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
+                                            </div>
+                                            <div
+                                                style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
+                                                <!-- Zoom Slider -->
+                                                <div
+                                                    style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                                    <span
+                                                        style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">🔍
+                                                        Zoom</span>
+                                                    <input type="range" class="pos-range-slider" id="slideBgZoomSlider"
+                                                        min="100" max="300" step="5" value="100"
+                                                        oninput="onSlideBgZoomChange(this.value)">
+                                                    <span class="style-prop-badge" id="slideBgZoomBadge"
+                                                        style="min-width: 48px; text-align: center;">100%</span>
+                                                </div>
+                                                <div
+                                                    style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
+                                                    💡 <em>Arrastrá el fondo en el teléfono para moverlo libremente.</em>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -4765,6 +4793,7 @@
                     slide.background = bgSelect.value;
                     syncCustomBgDropdown(bgSelect.value);
                     updateBgSettingsVisibility();
+                    updateBgCardHeader();
                     updateLivePreview();
                     updateBackgroundsInUseUI();
                 };
@@ -4779,11 +4808,135 @@
 
             updateBgSettingsVisibility();
 
+            // By default, collapse background and all elements
+            collapsedElementIds.add('background');
+            if (Array.isArray(slide.elements)) {
+                slide.elements.forEach(el => collapsedElementIds.add(el.id));
+            }
+
+            updateBgCardHeader();
+            updateAllCardsCollapseUI();
             renderElementsList();
         }
 
         const collapsedElementIds = new Set();
         let selectedElementId = null;
+
+        function updateBgCardHeader() {
+            const slide = getCurrentSlide();
+            const preview = document.getElementById('bgContentPreview');
+            const typeIcon = document.getElementById('bgTypeIcon');
+            if (!preview || !slide) return;
+
+            const bg = (slide.background || '').trim().replace(/^temp\//, '');
+            const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
+
+            if (!bg) {
+                if (typeIcon) typeIcon.textContent = '🚫';
+                preview.textContent = '(Sin fondo / Default)';
+                preview.title = 'Slide sin fondo asignado';
+                preview.classList.add('is-empty');
+            } else {
+                const isVid = isVideoFile(bg);
+                if (typeIcon) typeIcon.textContent = isVid ? '🎬' : '🖼️';
+                preview.classList.remove('is-empty');
+                const filename = bg.split('/').pop();
+                preview.textContent = `${filename} (${bgZoom}%)`;
+                preview.title = `${bg} (Zoom: ${bgZoom}%)`;
+            }
+        }
+
+        function updateAllCardsCollapseUI() {
+            const slide = getCurrentSlide();
+            // Background card
+            const bgCard = document.getElementById('elCard_background');
+            if (bgCard) {
+                const isCollapsed = collapsedElementIds.has('background');
+                bgCard.classList.toggle('collapsed', isCollapsed);
+                const icon = document.getElementById('bgCollapseIcon');
+                if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
+            }
+
+            // Dynamic element cards
+            if (slide && Array.isArray(slide.elements)) {
+                slide.elements.forEach(el => {
+                    const card = document.getElementById('elCard_' + el.id);
+                    if (card) {
+                        const isCollapsed = collapsedElementIds.has(el.id);
+                        card.classList.toggle('collapsed', isCollapsed);
+                        const icon = card.querySelector('.element-collapse-icon');
+                        if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
+                    }
+                });
+            }
+        }
+
+        function chooseElement(elId, event) {
+            if (event && event.target && (event.target.closest('.btn-del-el') || event.target.closest('.btn-ctrl'))) return;
+            const slide = getCurrentSlide();
+            const isCurrentlyOpen = !collapsedElementIds.has(elId);
+
+            if (isCurrentlyOpen) {
+                // If user clicks the already-open card, toggle it closed
+                collapsedElementIds.add(elId);
+                updateAllCardsCollapseUI();
+                if (elId === selectedElementId) {
+                    deselectElement();
+                }
+                return;
+            }
+
+            // Accordion: collapse background and all elements
+            collapsedElementIds.add('background');
+            if (slide && Array.isArray(slide.elements)) {
+                slide.elements.forEach(el => {
+                    collapsedElementIds.add(el.id);
+                });
+            }
+
+            // Expand only the chosen one
+            collapsedElementIds.delete(elId);
+            updateAllCardsCollapseUI();
+
+            // Scroll into view
+            const targetCard = document.getElementById(elId === 'background' ? 'elCard_background' : 'elCard_' + elId);
+            if (targetCard) {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // Sync with live preview
+            if (elId === 'background') {
+                deselectElement();
+            } else if (slide && Array.isArray(slide.elements)) {
+                const el = slide.elements.find(e => e.id === elId);
+                if (el && el.type === 'text') {
+                    selectElementForEditing(elId);
+                } else {
+                    deselectElement();
+                }
+            }
+        }
+
+        function toggleElementCollapse(elId, event) {
+            chooseElement(elId, event);
+        }
+
+        function collapseAllElements() {
+            const slide = getCurrentSlide();
+            collapsedElementIds.add('background');
+            if (slide && Array.isArray(slide.elements)) {
+                slide.elements.forEach(el => {
+                    collapsedElementIds.add(el.id);
+                });
+            }
+            updateAllCardsCollapseUI();
+            deselectElement();
+        }
+
+        function expandAllElements() {
+            collapsedElementIds.clear();
+            updateAllCardsCollapseUI();
+        }
 
         function getElementHeaderData(el, idx) {
             let typeBadgeClass = 'type-badge-body';
@@ -4860,57 +5013,24 @@
             }
         }
 
-        function toggleElementCollapse(elId, event) {
-            if (event && event.target && event.target.closest('.btn-del-el')) return;
-            if (collapsedElementIds.has(elId)) {
-                collapsedElementIds.delete(elId);
-            } else {
-                collapsedElementIds.add(elId);
-            }
-            const card = document.getElementById('elCard_' + elId);
-            if (card) {
-                const isCollapsed = collapsedElementIds.has(elId);
-                card.classList.toggle('collapsed', isCollapsed);
-                const icon = card.querySelector('.element-collapse-icon');
-                if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
-            }
-        }
-
-        function collapseAllElements() {
-            const slide = getCurrentSlide();
-            if (!slide || !Array.isArray(slide.elements)) return;
-            slide.elements.forEach((el, idx) => {
-                if (!el.id) el.id = 'el_' + Date.now() + '_' + idx;
-                collapsedElementIds.add(el.id);
-            });
-            renderElementsList();
-        }
-
-        function expandAllElements() {
-            const slide = getCurrentSlide();
-            if (!slide || !Array.isArray(slide.elements)) return;
-            slide.elements.forEach(el => {
-                if (el.id) collapsedElementIds.delete(el.id);
-            });
-            renderElementsList();
-        }
-
         function renderElementsList() {
             const slide = getCurrentSlide();
             const container = document.getElementById('elementsListContainer');
             const countBadge = document.getElementById('elementsCountBadge');
             if (!slide || !container) return;
 
-            if (countBadge) countBadge.textContent = slide.elements.length;
+            if (countBadge) countBadge.textContent = slide.elements.length + 1;
             container.innerHTML = '';
 
             if (slide.elements.length === 0) {
                 container.innerHTML = `
-                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.88rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px dashed var(--card-border);">
-                    No hay elementos en este slide.<br>
-                    Hacé clic en <strong>"+ Agregar Texto"</strong> para sumar uno.
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.84rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px dashed var(--card-border);">
+                    No hay elementos adicionales en este slide.<br>
+                    Hacé clic en <strong>"+ Texto"</strong> para sumar uno.
                 </div>
             `;
+                updateBgCardHeader();
+                updateAllCardsCollapseUI();
                 return;
             }
 
@@ -4922,7 +5042,7 @@
                 card.className = 'element-card' + (isCollapsed ? ' collapsed' : '');
                 card.id = 'elCard_' + el.id;
                 card.addEventListener('click', (e) => {
-                    if (e.target.closest('.btn-del-el') || e.target.closest('.element-collapse-icon')) return;
+                    if (e.target.closest('.btn-del-el') || e.target.closest('.element-header')) return;
                     if (el.type === 'text' && selectedElementId !== el.id) {
                         selectElementForEditing(el.id);
                     }
@@ -5816,10 +5936,13 @@
                 w: 88
             };
             slide.elements.push(newEl);
+            collapsedElementIds.add('background');
+            slide.elements.forEach(e => collapsedElementIds.add(e.id));
             collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
             updateLivePreview();
+            selectElementForEditing(newEl.id);
             const newCard = document.getElementById('elCard_' + newEl.id);
             if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -5844,6 +5967,8 @@
                 zoom: 100
             };
             slide.elements.push(newEl);
+            collapsedElementIds.add('background');
+            slide.elements.forEach(e => collapsedElementIds.add(e.id));
             collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
@@ -5872,6 +5997,8 @@
                 zoom: 100
             };
             slide.elements.push(newEl);
+            collapsedElementIds.add('background');
+            slide.elements.forEach(e => collapsedElementIds.add(e.id));
             collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
@@ -5902,6 +6029,8 @@
                 zoom: 100
             };
             slide.elements.push(newEl);
+            collapsedElementIds.add('background');
+            slide.elements.forEach(e => collapsedElementIds.add(e.id));
             collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
@@ -5924,6 +6053,8 @@
                 h: 70
             };
             slide.elements.push(newEl);
+            collapsedElementIds.add('background');
+            slide.elements.forEach(e => collapsedElementIds.add(e.id));
             collapsedElementIds.delete(newEl.id);
 
             renderElementsList();
@@ -6401,15 +6532,13 @@
         // -------------------------------------------------------------
         function selectElementForEditing(elId) {
             selectedElementId = elId;
-            if (collapsedElementIds.has(elId)) {
-                collapsedElementIds.delete(elId);
-                const card = document.getElementById('elCard_' + elId);
-                if (card) {
-                    card.classList.remove('collapsed');
-                    const icon = card.querySelector('.element-collapse-icon');
-                    if (icon) icon.textContent = '▼';
-                }
+            const slide = getCurrentSlide();
+            collapsedElementIds.add('background');
+            if (slide && Array.isArray(slide.elements)) {
+                slide.elements.forEach(e => collapsedElementIds.add(e.id));
             }
+            collapsedElementIds.delete(elId);
+            updateAllCardsCollapseUI();
             const card = document.getElementById('elCard_' + elId);
             if (card) {
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -7446,6 +7575,7 @@
                 if (bgSelect.onchange) bgSelect.onchange();
             }
             syncCustomBgDropdown(val);
+            updateBgCardHeader();
             closeCustomBgDropdown();
         }
 
@@ -7513,6 +7643,7 @@
             slide.bg_zoom = parseInt(val, 10) || 100;
             const badge = document.getElementById('slideBgZoomBadge');
             if (badge) badge.textContent = slide.bg_zoom + '%';
+            updateBgCardHeader();
             updateLivePreview();
         }
 
@@ -7547,6 +7678,7 @@
             if (zoomSlider) zoomSlider.value = 100;
             if (zoomBadge) zoomBadge.textContent = '100%';
 
+            updateBgCardHeader();
             updateLivePreview();
             showToast('↺ Fondo centrado y restablecido');
         }
@@ -7628,6 +7760,7 @@
                 if (zoomSlider) zoomSlider.value = nextZoom;
                 if (zoomBadge) zoomBadge.textContent = nextZoom + '%';
 
+                updateBgCardHeader();
                 updateLivePreview();
             }, { passive: false });
         }
