@@ -1009,8 +1009,11 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertIn("Tarjetas con confirmación parcial: <b>2</b>", stats)
         self.assertIn("Sin responder: <b>1</b>", stats)
 
-        # Check paid count
-        self.assertIn("Tarjetas pagadas: <b>2</b>", stats)
+        # Check payment section
+        self.assertIn("💳 <b>Pagos:</b>", stats)
+        self.assertIn("• ✅ Invitaciones pagadas: <b>1</b>", stats)
+        self.assertIn("• ⚠️ Invitaciones con pago parcial: <b>1</b>", stats)
+        self.assertIn("• 🎫 Tarjetas pagadas: <b>2</b>", stats)
 
 
 if __name__ == "__main__":

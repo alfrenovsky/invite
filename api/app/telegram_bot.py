@@ -395,6 +395,7 @@ def _get_wedding_stats(table) -> str:
         rechazados = sum(1 for r in records if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
         pendientes = total_records - confirmados - rechazados
         pagados = sum(1 for r in records if str(r.get("pagado", "")).strip())
+        tarjetas_pagadas = pagados
 
         # Group records by tarjeta / invitation
         groups = {}
@@ -409,6 +410,9 @@ def _get_wedding_stats(table) -> str:
         tarjetas_completas_no = 0
         tarjetas_pendientes = 0
         tarjetas_parciales = 0
+
+        inv_pagadas_completas = 0
+        inv_pagadas_parciales = 0
 
         for g in groups.values():
             g_total = len(g)
@@ -425,6 +429,22 @@ def _get_wedding_stats(table) -> str:
             else:
                 tarjetas_parciales += 1
 
+            # Payment evaluation for group/invitacion:
+            # If anyone confirmed 'si', only confirmed attendees need to pay.
+            # Otherwise (pending), consider all non-rejected members.
+            attending = [r for r in g if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado")]
+            if attending:
+                target = attending
+            else:
+                target = [r for r in g if str(r.get("confirmacion", "")).strip().lower() not in ("no", "rechazado")]
+
+            if target:
+                paid_in_group = sum(1 for r in target if str(r.get("pagado", "")).strip())
+                if paid_in_group == len(target) and paid_in_group > 0:
+                    inv_pagadas_completas += 1
+                elif paid_in_group > 0:
+                    inv_pagadas_parciales += 1
+
         return (
             f"📊 <b>Estado de la boda (en vivo):</b>\n\n"
             f"👤 <b>Invitados individuales:</b>\n"
@@ -438,7 +458,10 @@ def _get_wedding_stats(table) -> str:
             f"• ❌ Tarjetas completas que no asisten: <b>{tarjetas_completas_no}</b>\n"
             f"• ⚠️ Tarjetas con confirmación parcial: <b>{tarjetas_parciales}</b>\n"
             f"• ⏳ Sin responder: <b>{tarjetas_pendientes}</b>\n\n"
-            f"💳 Tarjetas pagadas: <b>{pagados}</b>\n\n"
+            f"💳 <b>Pagos:</b>\n"
+            f"• ✅ Invitaciones pagadas: <b>{inv_pagadas_completas}</b>\n"
+            f"• ⚠️ Invitaciones con pago parcial: <b>{inv_pagadas_parciales}</b>\n"
+            f"• 🎫 Tarjetas pagadas: <b>{tarjetas_pagadas}</b>\n\n"
             f"🔄 <i>Sincronizado con Google Sheets:</i> {_get_tz_now_str()}"
         )
     except Exception as e:
