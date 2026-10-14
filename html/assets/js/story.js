@@ -1018,36 +1018,41 @@
     }
 
     // ==============================================================
-    // 📍 Silent Geolocation & Open Telemetry (Zero Permission Prompts)
+    // 📍 Geolocation & Open Telemetry (Ask if not denied)
     // ==============================================================
     let cachedLocation = null;
 
-    async function detectSilentLocation() {
-        //    if (!navigator.permissions || !navigator.permissions.query) {
-        if (!navigator.permissions) {
+    async function detectLocation() {
+        if (!navigator.geolocation) {
             return null;
         }
-        try {
-            const status = await navigator.permissions.query({ name: 'geolocation' });
-            if (status && status.state === 'granted') {
-                return new Promise((resolve) => {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            resolve({
-                                lat: pos.coords.latitude,
-                                lon: pos.coords.longitude,
-                                accuracy: Math.round(pos.coords.accuracy)
-                            });
-                        },
-                        () => resolve(null),
-                        { timeout: 3000, maximumAge: 60000 }
-                    );
-                });
+
+        // If explicitly denied in past sessions, skip asking again
+        if (navigator.permissions && navigator.permissions.query) {
+            try {
+                const status = await navigator.permissions.query({ name: 'geolocation' });
+                if (status && status.state === 'denied') {
+                    return null;
+                }
+            } catch (e) {
+                // If query fails (e.g. mobile Safari), proceed to request
             }
-        } catch (e) {
-            // Never prompt or throw
         }
-        return null;
+
+        // Prompt user for permission (or return immediately if already granted)
+        return new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    resolve({
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        accuracy: Math.round(pos.coords.accuracy)
+                    });
+                },
+                () => resolve(null),
+                { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false }
+            );
+        });
     }
 
     async function sendOpenBeacon() {
@@ -1055,7 +1060,7 @@
         if (!token) return;
 
         try {
-            cachedLocation = await detectSilentLocation();
+            cachedLocation = await detectLocation();
         } catch (e) {
             cachedLocation = null;
         }

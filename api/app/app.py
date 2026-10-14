@@ -668,12 +668,12 @@ def index_page(token=None):
     if not context:
         return render_template("blank.html")
 
-    # Delayed fallback: if no client beacon arrives in 5s (e.g. JS disabled), notify with IP location
+    # Delayed fallback: if no client beacon arrives in 12s (e.g. JS disabled or prompt ignored), notify with IP location
     client_ip = geo.get_client_ip(request.headers, request.remote_addr)
     def _delayed_open_fallback():
         with telegram_bot._lock:
             last = telegram_bot._last_opened.get(validated_slug, 0)
-            if time.time() - last < 10:
+            if time.time() - last < 20:
                 return
         try:
             loc = geo.resolve_ip_location(client_ip)
@@ -681,7 +681,7 @@ def index_page(token=None):
         except Exception as ex:
             app.logger.warning(f"Error in delayed invitation opened fallback: {ex}")
 
-    fallback_timer = threading.Timer(5.0, _delayed_open_fallback)
+    fallback_timer = threading.Timer(12.0, _delayed_open_fallback)
     fallback_timer.daemon = True
     fallback_timer.start()
 
