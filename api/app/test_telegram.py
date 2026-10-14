@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import time
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -111,11 +112,11 @@ class TestTelegramBot(unittest.TestCase):
         mock_table.get_all.assert_called_once_with(force_remote=True)
         mock_send.assert_called_once()
         text = mock_send.call_args[0][1]
-        self.assertIn("Total invitados: <b>4</b>", text)
-        self.assertIn("Confirmados: <b>2</b>", text)
-        self.assertIn("No asisten: <b>1</b>", text)
-        self.assertIn("Pendientes: <b>1</b>", text)
-        self.assertIn("Tarjetas pagadas: <b>1</b>", text)
+        self.assertIn("• Total: <b>4</b>", text)
+        self.assertIn("• ✅ Confirmados: <b>2</b>", text)
+        self.assertIn("• ❌ No asisten: <b>1</b>", text)
+        self.assertIn("• ⏳ Pendientes: <b>1</b>", text)
+        self.assertIn("💳 Tarjetas pagadas: <b>1</b>", text)
         self.assertIn("Sincronizado con Google Sheets", text)
 
     @patch("telegram_bot.send_message")
@@ -150,6 +151,12 @@ class TestTelegramBot(unittest.TestCase):
         # 2nd open immediately after: suppressed by cooldown!
         telegram_bot.notify_invitation_opened("celia_y_alfredo", guests)
         self.assertEqual(mock_broadcast.call_count, 1)
+
+        # 3rd open after 61 seconds (past 1-min cooldown): triggers notification
+        now = time.time()
+        with patch("time.time", return_value=now + 65):
+            telegram_bot.notify_invitation_opened("celia_y_alfredo", guests)
+            self.assertEqual(mock_broadcast.call_count, 2)
 
     @patch("telegram_bot.broadcast_message")
     def test_rsvp_dirty_session_and_flush_notification(self, mock_broadcast):

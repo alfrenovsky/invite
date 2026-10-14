@@ -24,8 +24,8 @@ TELEGRAM_BOT_NAME = os.environ.get("TELEGRAM_BOT_NAME", "celiayalfredo_bot").str
 TELEGRAM_AUTH_SECRET = os.environ.get("TELEGRAM_AUTH_SECRET", "boda_cya_admin_telegram_2027").strip()
 SUBSCRIBERS_FILE = os.environ.get("TELEGRAM_SUBSCRIBERS_FILE", "/data/telegram_subscribers.json")
 
-# Cooldown for open notifications (30 minutes in seconds)
-OPEN_COOLDOWN_SECONDS = 1800
+# Cooldown for open notifications (default: 60s / 1 min)
+OPEN_COOLDOWN_SECONDS = int(os.environ.get("OPEN_COOLDOWN_SECONDS", "60"))
 
 # Threading locks and trackers
 _lock = threading.RLock()
