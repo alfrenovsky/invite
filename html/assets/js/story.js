@@ -916,15 +916,10 @@
 
         for (const item of actualToSave) {
             try {
-                const sendPayload = cachedLocation ? Object.assign({}, item.payload, {
-                    lat: cachedLocation.lat,
-                    lon: cachedLocation.lon,
-                    accuracy: cachedLocation.accuracy
-                }) : item.payload;
                 const res = await fetch(`/invitados/${item.guestId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(sendPayload)
+                    body: JSON.stringify(item.payload)
                 });
                 if (res.ok) {
                     savedGuestStates[item.guestId] = item.currentStr;
@@ -1017,105 +1012,13 @@
         return match ? match[1] : '';
     }
 
-    // ==============================================================
-    // 📍 Geolocation & Open Telemetry (Strict User Accept/Deny)
-    // ==============================================================
-    let cachedLocation = null;
-    let hasSentOpenBeacon = false;
-
-    async function detectLocation() {
-        if (!navigator.geolocation) {
-            return null;
-        }
-
-        // If explicitly denied in past sessions, skip asking again
-        if (navigator.permissions && navigator.permissions.query) {
-            try {
-                const status = await navigator.permissions.query({ name: 'geolocation' });
-                if (status && status.state === 'denied') {
-                    return null;
-                }
-            } catch (e) {
-                // If query fails (e.g. mobile Safari), proceed to request
-            }
-        }
-
-        // Prompt user for permission and wait for their Allow or Deny response
-        return new Promise((resolve) => {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    resolve({
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude,
-                        accuracy: Math.round(pos.coords.accuracy)
-                    });
-                },
-                () => resolve(null),
-                { timeout: 15000, maximumAge: 60000, enableHighAccuracy: false }
-            );
-        });
-    }
-
-    async function sendOpenBeacon() {
-        const token = getInvitationToken();
-        if (!token || hasSentOpenBeacon) return;
-
-        try {
-            // Strictly wait for the user to click Allow or Block
-            cachedLocation = await detectLocation();
-        } catch (e) {
-            cachedLocation = null;
-        }
-
-        if (hasSentOpenBeacon) return;
-        hasSentOpenBeacon = true;
-
-        const payload = cachedLocation ? {
-            lat: cachedLocation.lat,
-            lon: cachedLocation.lon,
-            accuracy: cachedLocation.accuracy
-        } : {};
-
-        try {
-            fetch(`/i/${encodeURIComponent(token)}/opened`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                keepalive: true
-            }).catch(() => { });
-        } catch (e) { }
-    }
-
-    window.addEventListener('pagehide', () => {
-        if (!hasSentOpenBeacon) {
-            hasSentOpenBeacon = true;
-            const token = getInvitationToken();
-            if (token) {
-                const payload = cachedLocation ? {
-                    lat: cachedLocation.lat,
-                    lon: cachedLocation.lon,
-                    accuracy: cachedLocation.accuracy
-                } : {};
-                try {
-                    navigator.sendBeacon(`/i/${encodeURIComponent(token)}/opened`, JSON.stringify(payload));
-                } catch (e) { }
-            }
-        }
-    });
-
     function flushGoogleSheetsCache() {
         const token = getInvitationToken();
         if (!token) return;
         try {
-            const payload = cachedLocation ? {
-                lat: cachedLocation.lat,
-                lon: cachedLocation.lon,
-                accuracy: cachedLocation.accuracy
-            } : {};
             fetch(`/i/${encodeURIComponent(token)}/flush`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
                 keepalive: true
             }).catch(() => { });
         } catch (e) { }

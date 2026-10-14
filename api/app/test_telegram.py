@@ -117,9 +117,9 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("• ❌ No asisten: <b>1</b>", text)
         self.assertIn("• ⏳ Pendientes: <b>1</b>", text)
         self.assertIn("💳 <b>Pagos:</b>", text)
-        self.assertIn("• ✅ Invitaciones pagadas: <b>0</b>", text)
+        self.assertIn("• ✅ Grupos completos pagados: <b>0</b>", text)
         self.assertIn("• ⚠️ Invitaciones con pago parcial: <b>1</b>", text)
-        self.assertIn("• 🎫 Tarjetas pagadas: <b>1</b>", text)
+        self.assertIn("• 🎫 Invitaciones individuales pagadas: <b>1</b>", text)
         self.assertIn("Sincronizado con Google Sheets", text)
 
     @patch("telegram_bot.send_message")

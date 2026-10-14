@@ -906,70 +906,6 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertIn(b"ALIAS.TEST.BODA", res.data)
                 self.assertNotIn(b"rsvp-payment-icon", res.data)
 
-    def test_silent_location_and_telegram_formatting(self):
-        import geo
-        import telegram_bot
-        from app import app
-
-        # Test geo.is_public_ip
-        self.assertFalse(geo.is_public_ip("127.0.0.1"))
-        self.assertFalse(geo.is_public_ip("192.168.1.1"))
-        self.assertFalse(geo.is_public_ip("10.0.0.1"))
-        self.assertFalse(geo.is_public_ip("invalid-ip"))
-        self.assertTrue(geo.is_public_ip("8.8.8.8"))
-        self.assertTrue(geo.is_public_ip("181.47.0.1"))
-
-        # Test geo.format_location_summary
-        gps_loc = {"type": "gps", "lat": -32.8908, "lon": -68.8272, "accuracy": 15}
-        formatted_gps = geo.format_location_summary(gps_loc)
-        self.assertIn("maps.google.com/?q=-32.8908,-68.8272", formatted_gps)
-        self.assertIn("±15m", formatted_gps)
-
-        ip_loc = {"type": "ip", "city": "Mendoza", "region": "Mendoza", "country": "Argentina"}
-        formatted_ip = geo.format_location_summary(ip_loc)
-        self.assertIn("Mendoza", formatted_ip)
-        self.assertIn("Argentina", formatted_ip)
-        self.assertNotIn("maps.google.com", formatted_ip)
-
-        local_ip_loc = {"type": "ip", "city": "Red local / Interna", "region": "", "country": "", "is_local": True}
-        self.assertEqual(geo.format_location_summary(local_ip_loc), "🏙️ <b>Ciudad:</b> Red local / Interna")
-
-        # Test Telegram message building with location
-        with patch("telegram_bot.broadcast_message") as mock_broadcast:
-            telegram_bot.notify_invitation_opened("test_group", [{"nombre": "Ana", "apellido": "Lopez"}], location_info=gps_loc)
-            self.assertTrue(mock_broadcast.called)
-            sent_text = mock_broadcast.call_args[0][0]
-            self.assertIn("maps.google.com/?q=-32.8908,-68.8272", sent_text)
-
-        # Test /i/<token>/opened endpoint with GPS and with IP fallback
-        code = compute_check_code("familia_geo")
-        token = f"familia_geo_{code}"
-        with app.test_client() as client:
-            with patch("telegram_bot.notify_invitation_opened") as mock_notify:
-                # With GPS
-                res_gps = client.post(f"/i/{token}/opened", json={"lat": -32.9, "lon": -68.8, "accuracy": 12})
-                self.assertEqual(res_gps.status_code, 200)
-                self.assertEqual(res_gps.get_json()["location_type"], "gps")
-                self.assertTrue(mock_notify.called)
-                loc_arg = mock_notify.call_args[1].get("location_info")
-                self.assertEqual(loc_arg["type"], "gps")
-                self.assertEqual(loc_arg["lat"], -32.9)
-
-            with patch("telegram_bot.notify_invitation_opened") as mock_notify, \
-                 patch("geo.resolve_ip_location", return_value={"type": "ip", "city": "Mendoza", "region": "Mendoza", "country": "Argentina"}):
-                # Without GPS (IP fallback)
-                res_ip = client.post(f"/i/{token}/opened", json={})
-                self.assertEqual(res_ip.status_code, 200)
-                self.assertEqual(res_ip.get_json()["location_type"], "ip")
-                self.assertTrue(mock_notify.called)
-                loc_arg = mock_notify.call_args[1].get("location_info")
-                self.assertEqual(loc_arg["type"], "ip")
-                self.assertEqual(loc_arg["city"], "Mendoza")
-
-            # Invalid token
-            res_bad = client.post("/i/familia_badtoken_123456/opened", json={})
-            self.assertEqual(res_bad.status_code, 403)
-
     def test_telegram_wedding_stats_tarjetas(self):
         import telegram_bot
 
@@ -1011,9 +947,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         # Check payment section
         self.assertIn("💳 <b>Pagos:</b>", stats)
-        self.assertIn("• ✅ Invitaciones pagadas: <b>1</b>", stats)
+        self.assertIn("• ✅ Grupos completos pagados: <b>1</b>", stats)
         self.assertIn("• ⚠️ Invitaciones con pago parcial: <b>1</b>", stats)
-        self.assertIn("• 🎫 Tarjetas pagadas: <b>2</b>", stats)
+        self.assertIn("• 🎫 Invitaciones individuales pagadas: <b>2</b>", stats)
 
 
 if __name__ == "__main__":
