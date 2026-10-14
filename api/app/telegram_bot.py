@@ -461,7 +461,7 @@ def _get_wedding_stats(table) -> str:
             f"💳 <b>Pagos:</b>\n"
             f"• ✅ Invitaciones pagadas: <b>{inv_pagadas_completas}</b>\n"
             f"• ⚠️ Invitaciones con pago parcial: <b>{inv_pagadas_parciales}</b>\n"
-            f"• 🎫 Tarjetas pagadas: <b>{tarjetas_pagadas}</b>\n\n"
+            f"• 🎫 Grupos pagados: <b>{tarjetas_pagadas}</b>\n\n"
             f"🔄 <i>Sincronizado con Google Sheets:</i> {_get_tz_now_str()}"
         )
     except Exception as e:
