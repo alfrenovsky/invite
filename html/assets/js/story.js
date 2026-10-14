@@ -1018,9 +1018,10 @@
     }
 
     // ==============================================================
-    // 📍 Geolocation & Open Telemetry (Ask if not denied)
+    // 📍 Geolocation & Open Telemetry (Strict User Accept/Deny)
     // ==============================================================
     let cachedLocation = null;
+    let hasSentOpenBeacon = false;
 
     async function detectLocation() {
         if (!navigator.geolocation) {
@@ -1039,7 +1040,7 @@
             }
         }
 
-        // Prompt user for permission (or return immediately if already granted)
+        // Prompt user for permission and wait for their Allow or Deny response
         return new Promise((resolve) => {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
@@ -1050,20 +1051,24 @@
                     });
                 },
                 () => resolve(null),
-                { timeout: 8000, maximumAge: 60000, enableHighAccuracy: false }
+                { timeout: 15000, maximumAge: 60000, enableHighAccuracy: false }
             );
         });
     }
 
     async function sendOpenBeacon() {
         const token = getInvitationToken();
-        if (!token) return;
+        if (!token || hasSentOpenBeacon) return;
 
         try {
+            // Strictly wait for the user to click Allow or Block
             cachedLocation = await detectLocation();
         } catch (e) {
             cachedLocation = null;
         }
+
+        if (hasSentOpenBeacon) return;
+        hasSentOpenBeacon = true;
 
         const payload = cachedLocation ? {
             lat: cachedLocation.lat,
@@ -1080,6 +1085,23 @@
             }).catch(() => { });
         } catch (e) { }
     }
+
+    window.addEventListener('pagehide', () => {
+        if (!hasSentOpenBeacon) {
+            hasSentOpenBeacon = true;
+            const token = getInvitationToken();
+            if (token) {
+                const payload = cachedLocation ? {
+                    lat: cachedLocation.lat,
+                    lon: cachedLocation.lon,
+                    accuracy: cachedLocation.accuracy
+                } : {};
+                try {
+                    navigator.sendBeacon(`/i/${encodeURIComponent(token)}/opened`, JSON.stringify(payload));
+                } catch (e) { }
+            }
+        }
+    });
 
     function flushGoogleSheetsCache() {
         const token = getInvitationToken();
