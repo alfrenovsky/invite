@@ -970,6 +970,48 @@ class TestGoogleSheetsTable(unittest.TestCase):
             res_bad = client.post("/i/familia_badtoken_123456/opened", json={})
             self.assertEqual(res_bad.status_code, 403)
 
+    def test_telegram_wedding_stats_tarjetas(self):
+        import telegram_bot
+
+        mock_tbl = MagicMock()
+        mock_tbl.get_all.return_value = [
+            # Tarjeta 1: Complete YES (2 guests)
+            {"id": "g1", "invitacion_id": "fam_si", "confirmacion": "si", "pagado": "si"},
+            {"id": "g2", "invitacion_id": "fam_si", "confirmacion": "si", "pagado": ""},
+            # Tarjeta 2: Complete NO (2 guests)
+            {"id": "g3", "invitacion_id": "fam_no", "confirmacion": "no", "pagado": ""},
+            {"id": "g4", "invitacion_id": "fam_no", "confirmacion": "rechazado", "pagado": ""},
+            # Tarjeta 3: Partial mixed yes/no (2 guests)
+            {"id": "g5", "invitacion_id": "fam_mix", "confirmacion": "si", "pagado": "si"},
+            {"id": "g6", "invitacion_id": "fam_mix", "confirmacion": "no", "pagado": ""},
+            # Tarjeta 4: Partial mixed yes/pending (2 guests)
+            {"id": "g7", "invitacion_id": "fam_pend_mix", "confirmacion": "si", "pagado": ""},
+            {"id": "g8", "invitacion_id": "fam_pend_mix", "confirmacion": "", "pagado": ""},
+            # Tarjeta 5: Full pending (2 guests)
+            {"id": "g9", "invitacion_id": "fam_pend", "confirmacion": "", "pagado": ""},
+            {"id": "g10", "invitacion_id": "fam_pend", "confirmacion": "", "pagado": ""},
+            # Tarjeta 6: Single guest Complete NO (fallback to id)
+            {"id": "g11", "confirmacion": "no", "pagado": ""},
+        ]
+
+        stats = telegram_bot._get_wedding_stats(mock_tbl)
+
+        # Check Individual counts
+        self.assertIn("Total: <b>11</b>", stats)
+        self.assertIn("Confirmados: <b>4</b>", stats)
+        self.assertIn("No asisten: <b>4</b>", stats)
+        self.assertIn("Pendientes: <b>3</b>", stats)
+
+        # Check Tarjeta counts
+        self.assertIn("Total tarjetas: <b>6</b>", stats)
+        self.assertIn("Completas confirmadas: <b>1</b>", stats)
+        self.assertIn("Tarjetas completas que no asisten: <b>2</b>", stats)
+        self.assertIn("Tarjetas con confirmación parcial: <b>2</b>", stats)
+        self.assertIn("Sin responder: <b>1</b>", stats)
+
+        # Check paid count
+        self.assertIn("Tarjetas pagadas: <b>2</b>", stats)
+
 
 if __name__ == "__main__":
     unittest.main()

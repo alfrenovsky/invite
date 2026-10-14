@@ -396,12 +396,48 @@ def _get_wedding_stats(table) -> str:
         pendientes = total_records - confirmados - rechazados
         pagados = sum(1 for r in records if str(r.get("pagado", "")).strip())
 
+        # Group records by tarjeta / invitation
+        groups = {}
+        for r in records:
+            inv_id = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+            if not inv_id:
+                inv_id = f"guest_{r.get('id', '')}"
+            groups.setdefault(inv_id, []).append(r)
+
+        total_tarjetas = len(groups)
+        tarjetas_completas_si = 0
+        tarjetas_completas_no = 0
+        tarjetas_pendientes = 0
+        tarjetas_parciales = 0
+
+        for g in groups.values():
+            g_total = len(g)
+            g_si = sum(1 for r in g if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado"))
+            g_no = sum(1 for r in g if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
+            g_pend = g_total - g_si - g_no
+
+            if g_si == g_total:
+                tarjetas_completas_si += 1
+            elif g_no == g_total:
+                tarjetas_completas_no += 1
+            elif g_pend == g_total:
+                tarjetas_pendientes += 1
+            else:
+                tarjetas_parciales += 1
+
         return (
             f"📊 <b>Estado de la boda (en vivo):</b>\n\n"
-            f"👥 Total invitados: <b>{total_records}</b>\n"
-            f"✅ Confirmados: <b>{confirmados}</b>\n"
-            f"❌ No asisten: <b>{rechazados}</b>\n"
-            f"⏳ Pendientes: <b>{pendientes}</b>\n"
+            f"👤 <b>Invitados individuales:</b>\n"
+            f"• Total: <b>{total_records}</b>\n"
+            f"• ✅ Confirmados: <b>{confirmados}</b>\n"
+            f"• ❌ No asisten: <b>{rechazados}</b>\n"
+            f"• ⏳ Pendientes: <b>{pendientes}</b>\n\n"
+            f"💌 <b>Tarjetas / Grupos:</b>\n"
+            f"• Total tarjetas: <b>{total_tarjetas}</b>\n"
+            f"• ✅ Completas confirmadas: <b>{tarjetas_completas_si}</b>\n"
+            f"• ❌ Tarjetas completas que no asisten: <b>{tarjetas_completas_no}</b>\n"
+            f"• ⚠️ Tarjetas con confirmación parcial: <b>{tarjetas_parciales}</b>\n"
+            f"• ⏳ Sin responder: <b>{tarjetas_pendientes}</b>\n\n"
             f"💳 Tarjetas pagadas: <b>{pagados}</b>\n\n"
             f"🔄 <i>Sincronizado con Google Sheets:</i> {_get_tz_now_str()}"
         )
