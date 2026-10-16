@@ -120,11 +120,34 @@ class TestGoogleSheetsTable(unittest.TestCase):
             {"id": "cel12345", "invitacion_id": "celia_y_alfredo", "nombre": "Celia", "apellido": "G"}
         ]
 
-        # Querying the new group causes a cache miss, which immediately triggers a remote sync from Google Sheets
+        # Simulate cache being older than cache_miss_min_age (10s)
+        cache = self.table._load_cache()
+        cache["last_remote_read"] = time.time() - 15
+        self.table._save_cache(cache)
+
+        # Querying the new group causes a cache miss, which triggers a remote sync from Google Sheets
         found = self.table.get_by_invitacion("celia_y_alfredo")
         self.assertEqual(len(found), 1)
         self.assertEqual(found[0]["nombre"], "Celia")
         self.assertEqual(self.mock_ws.get_all_records.call_count, 2)
+
+    def test_cache_miss_fresh_cache_skips_remote_sync(self):
+        # Initial cache only has one group
+        self.mock_ws.get_all_records.return_value = [
+            {"id": "abc12345", "invitacion_id": "familia_perez", "nombre": "Juan", "apellido": "Perez"}
+        ]
+        self.table.get_all()
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
+
+        # Cache is fresh (< 10 seconds old). Querying missing group should NOT call remote.
+        found = self.table.get_by_invitacion("celia_y_alfredo")
+        self.assertEqual(found, [])
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
+
+        # Querying missing id should NOT call remote either.
+        found_id = self.table.get_by_id("non_existent_id")
+        self.assertIsNone(found_id)
+        self.assertEqual(self.mock_ws.get_all_records.call_count, 1)
 
 
     def test_add_records(self):

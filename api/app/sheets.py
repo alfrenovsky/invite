@@ -37,6 +37,7 @@ CACHE_FILE_PATH = os.environ.get("CACHE_FILE_PATH", "/data/sheet_cache.json")
 LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/data/api.log")
 TTL_READ = int(os.environ.get("TTL_READ", 60))  # 10 minutes default
 TTL_WRITE = int(os.environ.get("TTL_WRITE", 60))  # 2 minutes default
+CACHE_MISS_MIN_AGE = int(os.environ.get("CACHE_MISS_MIN_AGE", 10))  # Minimum cache age (seconds) to force remote sync on cache miss
 
 
 def compute_check_code(invitacion_id: str, salt: str = None) -> str:
@@ -111,7 +112,7 @@ def parse_currency_amount(val) -> float:
 
 
 class GoogleSheetsTable:
-    def __init__(self, credentials_path=None, sheet_id=None, worksheet_name=None, cache_file_path=None, log_file_path=None, ttl_read=None, ttl_write=None):
+    def __init__(self, credentials_path=None, sheet_id=None, worksheet_name=None, cache_file_path=None, log_file_path=None, ttl_read=None, ttl_write=None, cache_miss_min_age=None):
         self.credentials_path = credentials_path or os.environ.get("GOOGLE_CREDENTIALS_PATH", "/secrets/credentials.json")
         self.sheet_id = sheet_id or os.environ.get("GOOGLE_SHEET_ID")
         self.worksheet_name = worksheet_name or os.environ.get("WORKSHEET_NAME", "Respuestas")
@@ -119,6 +120,7 @@ class GoogleSheetsTable:
         self.log_file_path = log_file_path or LOG_FILE_PATH
         self.ttl_read = ttl_read if ttl_read is not None else TTL_READ
         self.ttl_write = ttl_write if ttl_write is not None else TTL_WRITE
+        self.cache_miss_min_age = cache_miss_min_age if cache_miss_min_age is not None else CACHE_MISS_MIN_AGE
         self.lock = threading.RLock()
         self._ws = None
         self._stop_watcher = threading.Event()
@@ -215,6 +217,13 @@ class GoogleSheetsTable:
             return True
         last_read = cache_data.get("last_remote_read", 0)
         return (time.time() - last_read) >= self.ttl_read
+
+    def _get_cache_age(self, cache_data=None):
+        if cache_data is None:
+            cache_data = self._load_cache()
+        if not cache_data or "last_remote_read" not in cache_data:
+            return float("inf")
+        return time.time() - cache_data.get("last_remote_read", 0)
 
     def _generate_row_id(self, row_idx, timestamp_str=None):
         ts = timestamp_str or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -479,12 +488,16 @@ class GoogleSheetsTable:
         for rec in records:
             if str(rec.get("id")) == str(record_id):
                 return {"row_index": rec.get("_sheet_row"), "data": rec}
-        # Cache miss: force remote sync from Google Sheets in case this ID was newly created
-        records = self.get_all(force_remote=True)
-        for rec in records:
-            if str(rec.get("id")) == str(record_id):
-                self._log_event("SYNC", "REMOTE", f"Cache miss for record id '{record_id}'. Synced from Google Sheets and found record.")
-                return {"row_index": rec.get("_sheet_row"), "data": rec}
+        # Cache miss: only force remote sync if cache is older than cache_miss_min_age (e.g. 10s)
+        cache_age = self._get_cache_age()
+        if cache_age >= self.cache_miss_min_age:
+            records = self.get_all(force_remote=True)
+            for rec in records:
+                if str(rec.get("id")) == str(record_id):
+                    self._log_event("SYNC", "REMOTE", f"Cache miss for record id '{record_id}'. Synced from Google Sheets and found record.")
+                    return {"row_index": rec.get("_sheet_row"), "data": rec}
+        else:
+            self._log_event("READ", "CACHED", f"Cache miss for record id '{record_id}', skipping remote sync (cache age: {cache_age:.1f}s < {self.cache_miss_min_age}s)")
         return None
 
     def get_by_invitacion(self, invitacion_id):
@@ -501,20 +514,24 @@ class GoogleSheetsTable:
                 rec for rec in records
                 if str(rec.get("id", "")).strip().lower() == target
             ]
-        # Cache miss: if not found in local cache, force remote sync from Google Sheets!
+        # Cache miss: only force remote sync if cache is older than cache_miss_min_age (e.g. 10s)
         if not matched:
-            records = self.get_all(force_remote=True)
-            matched = [
-                rec for rec in records
-                if str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().lower().replace(" ", "_").replace("-", "_") == target
-            ]
-            if not matched:
+            cache_age = self._get_cache_age()
+            if cache_age >= self.cache_miss_min_age:
+                records = self.get_all(force_remote=True)
                 matched = [
                     rec for rec in records
-                    if str(rec.get("id", "")).strip().lower() == target
+                    if str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().lower().replace(" ", "_").replace("-", "_") == target
                 ]
-            if matched:
-                self._log_event("SYNC", "REMOTE", f"Cache miss for '{invitacion_id}'. Synced from Google Sheets and found {len(matched)} record(s).")
+                if not matched:
+                    matched = [
+                        rec for rec in records
+                        if str(rec.get("id", "")).strip().lower() == target
+                    ]
+                if matched:
+                    self._log_event("SYNC", "REMOTE", f"Cache miss for '{invitacion_id}'. Synced from Google Sheets and found {len(matched)} record(s).")
+            else:
+                self._log_event("READ", "CACHED", f"Cache miss for '{invitacion_id}', skipping remote sync (cache age: {cache_age:.1f}s < {self.cache_miss_min_age}s)")
         return matched
 
 
@@ -561,12 +578,16 @@ class GoogleSheetsTable:
                     break
 
             if not found_rec:
-                self.get_all(force_remote=True)
-                cache = self._load_cache()
-                for rec in cache.get("records", []):
-                    if str(rec.get("id")) == str(record_id):
-                        found_rec = rec
-                        break
+                cache_age = self._get_cache_age(cache)
+                if cache_age >= self.cache_miss_min_age:
+                    self.get_all(force_remote=True)
+                    cache = self._load_cache()
+                    for rec in cache.get("records", []):
+                        if str(rec.get("id")) == str(record_id):
+                            found_rec = rec
+                            break
+                else:
+                    self._log_event("WRITE", "CACHED", f"Cache miss for update '{record_id}', skipping remote sync (cache age: {cache_age:.1f}s < {self.cache_miss_min_age}s)")
 
             if not found_rec:
                 return None
