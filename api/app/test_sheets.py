@@ -985,6 +985,48 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertIn("• ⚠️ Invitaciones con pago parcial: <b>1</b>", stats)
         self.assertIn("• 🎫 Invitaciones individuales pagadas: <b>2</b>", stats)
 
+    def test_invitacion_id_change_auto_updates_url_and_whatsapp(self):
+        # 1. Sheet has a record where invitacion_id was changed to 'familia_nueva',
+        # but the url and whatsapp cells still hold the old URL/WA for 'familia_vieja'
+        old_code = compute_check_code("familia_vieja")
+        old_url = f"{BASE_URL}/i/familia_vieja_{old_code}"
+        old_wa = f"https://wa.me/5491112345678?text={old_url}"
+
+        sample_data = [
+            {
+                "id": "rec001",
+                "invitacion_id": "familia_nueva",
+                "telefono": "+54 9 11 1234-5678",
+                "url": old_url,
+                "whatsapp": old_wa,
+                "nombre": "Carlos",
+                "apellido": "Perez",
+            }
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+        self.mock_ws.batch_update.reset_mock()
+
+        records = self.table.get_all(force_remote=True)
+        new_code = compute_check_code("familia_nueva")
+        expected_url = f"{BASE_URL}/i/familia_nueva_{new_code}"
+
+        # URL and WhatsApp must be automatically updated to match familia_nueva
+        self.assertEqual(records[0]["url"], expected_url)
+        self.assertIn("familia_nueva", records[0]["whatsapp"])
+        self.assertIn(new_code, records[0]["whatsapp"])
+
+        # And batch_update must have been dispatched to Google Sheets to repair the row
+        self.assertEqual(self.mock_ws.batch_update.call_count, 1)
+
+        # 2. Local update_record changing invitacion_id also regenerates url and whatsapp
+        updated = self.table.update_record("rec001", {"invitacion_id": "amigos_futbol"})
+        futbol_code = compute_check_code("amigos_futbol")
+        expected_futbol_url = f"{BASE_URL}/i/amigos_futbol_{futbol_code}"
+
+        self.assertEqual(updated["url"], expected_futbol_url)
+        self.assertIn("amigos_futbol", updated["whatsapp"])
+        self.assertIn(futbol_code, updated["whatsapp"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -295,15 +295,33 @@ class GoogleSheetsTable:
         item["pa_vegetariano"] = "si" if pa_val == "vegetariano" else ""
         item["pa_vegano"] = "si" if pa_val == "vegano" else ""
 
-        if not item.get("url") and inv_val:
+        # Check URL validity for inv_val
+        url_val = str(rec.get("url", "") or "").strip()
+        normalized_slug = str(inv_val).strip().lower().replace(" ", "_").replace("-", "_") if inv_val else ""
+
+        url_is_valid = False
+        if url_val and normalized_slug:
+            token = url_val.rstrip("/").split("/")[-1]
+            if parse_and_validate_token(token) == normalized_slug:
+                url_is_valid = True
+
+        if inv_val and not url_is_valid:
             item["url"] = generate_invitation_url(inv_val)
         else:
-            item["url"] = str(item.get("url", ""))
+            item["url"] = url_val
 
-        if not item.get("whatsapp") and phone_val and item.get("url"):
-            item["whatsapp"] = generate_whatsapp_url(phone_val, item["url"])
+        # Check WhatsApp validity
+        wa_val = str(rec.get("whatsapp", "") or "").strip()
+        expected_wa = generate_whatsapp_url(phone_val, item["url"]) if (phone_val and item.get("url")) else ""
+
+        if expected_wa:
+            clean_phone = clean_phone_number(phone_val)
+            if not wa_val or not url_is_valid or (clean_phone and f"/{clean_phone}?" not in wa_val):
+                item["whatsapp"] = expected_wa
+            else:
+                item["whatsapp"] = wa_val
         else:
-            item["whatsapp"] = str(item.get("whatsapp", ""))
+            item["whatsapp"] = "" if not phone_val else wa_val
 
         item["comprobante"] = str(rec.get("comprobante", "") or "")
         item["pagado"] = str(rec.get("pagado", "") or "").strip()
@@ -423,8 +441,10 @@ class GoogleSheetsTable:
                     item["_sheet_row"] = idx
                     merged_records.append(item)
 
-                    needs_whatsapp = bool(rec.get("telefono") and not rec.get("whatsapp"))
-                    if not rec.get("id") or not rec.get("url") or needs_whatsapp:
+                    id_missing = not rec.get("id")
+                    url_changed = (item.get("url", "") != str(rec.get("url", "") or "").strip())
+                    wa_changed = (item.get("whatsapp", "") != str(rec.get("whatsapp", "") or "").strip())
+                    if id_missing or url_changed or wa_changed:
                         range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                         missing_updates.append({"range": range_name, "values": [row]})
 
