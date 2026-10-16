@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from sheets import generate_whatsapp_url, generate_invitation_url
 
 logger = logging.getLogger("telegram_bot")
 
@@ -483,6 +484,181 @@ def _get_wedding_stats(table) -> str:
         return "Error al obtener estadísticas de Google Sheets."
 
 
+def _send_chunked_messages(chat_id: int | str, header: str, items: list[str], max_len: int = 3500):
+    """
+    Sends a list of formatted item strings in chunks that fit within Telegram's 4096-character limit.
+    """
+    if not items:
+        if header:
+            send_message(chat_id, header)
+        return
+
+    current_chunk = [header] if header else []
+    current_len = len(header) + 2 if header else 0
+
+    for item in items:
+        item_len = len(item) + 2
+        if current_len + item_len > max_len and current_chunk:
+            send_message(chat_id, "\n\n".join(current_chunk))
+            current_chunk = [item]
+            current_len = item_len
+        else:
+            current_chunk.append(item)
+            current_len += item_len
+
+    if current_chunk:
+        send_message(chat_id, "\n\n".join(current_chunk))
+
+
+def _handle_send_command(chat_id: int | str, arg: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all()
+    if not records:
+        send_message(chat_id, "No se encontraron invitados.")
+        return
+
+    # Extract all distinct origins in records
+    available_origins = set()
+    for r in records:
+        dq = str(r.get("dequien", "") or "").strip()
+        if dq:
+            fw = dq.split()[0].capitalize()
+            if fw:
+                available_origins.add(fw)
+
+    sorted_origins = sorted(available_origins)
+    arg = (arg or "").strip()
+
+    if not arg:
+        origins_str = " · ".join(f"<code>{o}</code>" for o in sorted_origins) if sorted_origins else "Celia · Alfredo · Amigos"
+        examples = "\n".join(f"• <code>/send {o}</code>" for o in sorted_origins) if sorted_origins else "• <code>/send Celia</code>\n• <code>/send Alfredo</code>\n• <code>/send Amigos</code>"
+        send_message(
+            chat_id,
+            f"ℹ️ <b>Uso del comando /send:</b>\n"
+            f"<code>/send &lt;origen&gt;</code>\n\n"
+            f"Orígenes disponibles:\n{origins_str}\n\n"
+            f"Ejemplos:\n{examples}"
+        )
+        return
+
+    target_orig = arg.lower()
+    matching_guests = []
+    for r in records:
+        dq = str(r.get("dequien", "") or "").strip()
+        fw = dq.split()[0].lower() if dq else ""
+        if fw == target_orig:
+            phone = str(r.get("telefono", "") or "").strip()
+            abierto = str(r.get("abierto", "") or "").strip().lower()
+            if phone and abierto not in ("si", "sí", "true", "1"):
+                matching_guests.append(r)
+
+    display_orig = arg.capitalize()
+    if not matching_guests:
+        send_message(
+            chat_id,
+            f"✅ No hay invitaciones pendientes con teléfono para <b>{display_orig}</b>\n"
+            f"(todas fueron abiertas o no tienen teléfono registrado)."
+        )
+        return
+
+    header = f"📤 <b>Invitaciones para enviar ({display_orig}) - {len(matching_guests)} contactos:</b>"
+    items = []
+    for r in matching_guests:
+        nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+        wa_url = str(r.get("whatsapp", "") or "").strip()
+        if not wa_url and r.get("telefono") and r.get("url"):
+            wa_url = generate_whatsapp_url(r["telefono"], r["url"])
+        items.append(f"👤 <b>{nombre}</b>\n🔗 {wa_url}")
+
+    _send_chunked_messages(chat_id, header, items)
+
+
+def _handle_sintelefono_command(chat_id: int | str, arg: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all()
+    if not records:
+        send_message(chat_id, "No se encontraron invitados.")
+        return
+
+    # Group records by tarjeta / invitation
+    groups = {}
+    for r in records:
+        inv_id = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+        if not inv_id:
+            inv_id = f"guest_{r.get('id', '')}"
+        groups.setdefault(inv_id, []).append(r)
+
+    # Filter groups where NO guest in the group has a phone number
+    no_phone_groups = {}
+    for inv_id, recs in groups.items():
+        if all(not str(r.get("telefono", "") or "").strip() for r in recs):
+            dq = str(recs[0].get("dequien", "") or "").strip()
+            fw = dq.split()[0].capitalize() if dq else "Sin definir"
+            no_phone_groups.setdefault(fw, []).append((inv_id, recs))
+
+    arg = (arg or "").strip().lower()
+
+    # If no argument, show counts by origin and usage
+    if not arg:
+        total_no_phone = sum(len(g_list) for g_list in no_phone_groups.values())
+        lines = []
+        for orig, g_list in sorted(no_phone_groups.items(), key=lambda x: -len(x[1])):
+            lines.append(f"• <b>{orig}:</b> <b>{len(g_list)}</b> tarjetas")
+
+        origins_summary = "\n".join(lines) if lines else "Ninguna"
+        examples = "\n".join(f"• <code>/sintelefono {orig}</code>" for orig in sorted(no_phone_groups.keys()))
+        send_message(
+            chat_id,
+            f"📱 <b>Tarjetas sin teléfono ({total_no_phone} en total):</b>\n\n"
+            f"{origins_summary}\n\n"
+            f"Para ver los nombres y links de cada grupo:\n"
+            f"{examples}\n"
+            f"• <code>/sintelefono todos</code>"
+        )
+        return
+
+    selected_items = []
+    if arg in ("todos", "all"):
+        for orig, g_list in sorted(no_phone_groups.items()):
+            selected_items.extend(g_list)
+        title = "todas las tarjetas"
+    else:
+        matched_orig = None
+        for orig, g_list in no_phone_groups.items():
+            if orig.lower() == arg:
+                matched_orig = orig
+                selected_items.extend(g_list)
+                break
+        title = f"{matched_orig or arg.capitalize()}"
+
+    if not selected_items:
+        send_message(chat_id, f"✅ No hay tarjetas sin teléfono para <b>{title}</b>.")
+        return
+
+    header = f"📱 <b>Tarjetas sin teléfono ({title}) - {len(selected_items)} tarjetas:</b>"
+    items = []
+    for inv_id, recs in selected_items:
+        dq = str(recs[0].get("dequien", "") or "").strip()
+        names = [f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() for r in recs if f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()]
+        names_str = ", ".join(names) if names else inv_id
+        url = str(recs[0].get("url", "") or "").strip()
+        if not url:
+            url = generate_invitation_url(inv_id)
+
+        orig_label = f" ({dq})" if dq else ""
+        items.append(f"💌 <b>{inv_id}</b>{orig_label}\n👥 {names_str}\n🔗 {url}")
+
+    _send_chunked_messages(chat_id, header, items)
+
+
 def _handle_update(update: dict, table=None):
     msg = update.get("message") or update.get("edited_message")
     if not msg:
@@ -497,10 +673,13 @@ def _handle_update(update: dict, table=None):
     if not chat_id or not text:
         return
 
+    parts = text.split(maxsplit=1)
+    raw_cmd = parts[0].lower().split("@")[0]
+    arg = parts[1].strip() if len(parts) > 1 else ""
+
     # 1. /start command
-    if text.startswith("/start"):
-        parts = text.split()
-        provided_token = parts[1].strip() if len(parts) > 1 else ""
+    if raw_cmd == "/start":
+        provided_token = arg
 
         if provided_token == TELEGRAM_AUTH_SECRET:
             added = add_subscriber(chat_id, from_user)
@@ -513,6 +692,8 @@ def _handle_update(update: dict, table=None):
                 f"• 💳 Comprobantes de transferencia\n\n"
                 f"Comandos útiles:\n"
                 f"• /status - Ver resumen en tiempo real\n"
+                f"• /send &lt;origen&gt; - Links de WhatsApp (ej. /send Celia)\n"
+                f"• /sintelefono - Ver tarjetas que no tienen teléfono\n"
                 f"• /stop - Desactivar notificaciones"
             )
             send_message(chat_id, reply)
@@ -522,6 +703,8 @@ def _handle_update(update: dict, table=None):
                     chat_id,
                     f"👋 Hola <b>{user_name}</b>, ya estás registrado para recibir notificaciones.\n\n"
                     f"• /status - Ver estado de invitados\n"
+                    f"• /send &lt;origen&gt; - Links de WhatsApp (ej. /send Celia)\n"
+                    f"• /sintelefono - Ver tarjetas que no tienen teléfono\n"
                     f"• /stop - Desactivar notificaciones"
                 )
             else:
@@ -543,23 +726,35 @@ def _handle_update(update: dict, table=None):
         return
 
     # 3. /status command
-    if text == "/status":
+    if raw_cmd == "/status":
         stats_text = _get_wedding_stats(table or _table_ref)
         send_message(chat_id, stats_text)
         return
 
-    # 4. /stop command
-    if text == "/stop":
+    # 4. /send command
+    if raw_cmd == "/send":
+        _handle_send_command(chat_id, arg, table or _table_ref)
+        return
+
+    # 5. /sintelefono command
+    if raw_cmd in ("/sintelefono", "/nophone", "/sin_telefono"):
+        _handle_sintelefono_command(chat_id, arg, table or _table_ref)
+        return
+
+    # 6. /stop command
+    if raw_cmd == "/stop":
         remove_subscriber(chat_id)
         send_message(chat_id, "🔕 <b>Notificaciones desactivadas.</b> Para volver a activarlas, usá tu enlace de autorización.")
         return
 
-    # 5. Fallback help for authorized user
+    # 7. Fallback help for authorized user
     send_message(
         chat_id,
         f"👋 Hola <b>{user_name}</b>.\n\n"
         f"Comandos disponibles:\n"
         f"• /status - Ver resumen de confirmaciones y pagos\n"
+        f"• /send &lt;origen&gt; - Links de WhatsApp para enviar (ej. /send Celia)\n"
+        f"• /sintelefono - Ver tarjetas sin teléfono registrado\n"
         f"• /stop - Desactivar notificaciones"
     )
 

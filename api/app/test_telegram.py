@@ -241,6 +241,80 @@ class TestTelegramBot(unittest.TestCase):
             self.assertTrue(data["ok"])
             mock_handler.assert_called_once()
 
+    @patch("telegram_bot.send_message")
+    def test_handle_send_command(self, mock_send):
+        telegram_bot.add_subscriber(88888)
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = [
+            {"id": "1", "nombre": "Camila", "apellido": "Perez", "dequien": "Celia Familia", "telefono": "1111", "abierto": "", "url": "http://nos.vamos.acas.ar/i/camila_123"},
+            {"id": "2", "nombre": "Sofia", "apellido": "Gomez", "dequien": "Celia Amigos", "telefono": "2222", "abierto": "si", "url": "http://nos.vamos.acas.ar/i/sofia_123"},
+            {"id": "3", "nombre": "Lucia", "apellido": "Lopez", "dequien": "Celia Trabajo", "telefono": "", "abierto": "", "url": "http://nos.vamos.acas.ar/i/lucia_123"},
+            {"id": "4", "nombre": "Martin", "apellido": "Diaz", "dequien": "Alfredo Amigos", "telefono": "3333", "abierto": "", "url": "http://nos.vamos.acas.ar/i/martin_123"},
+        ]
+
+        # 1. /send with no argument -> usage instructions
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send"}}, table=mock_table)
+        self.assertIn("Uso del comando /send", mock_send.call_args[0][1])
+
+        # 2. /send Celia -> includes Camila (has phone, not opened), excludes Sofia (opened) and Lucia (no phone)
+        mock_send.reset_mock()
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send Celia"}}, table=mock_table)
+        call_text = mock_send.call_args[0][1]
+        self.assertIn("Camila Perez", call_text)
+        self.assertIn("wa.me/1111", call_text)
+        self.assertNotIn("Sofia Gomez", call_text)
+        self.assertNotIn("Lucia Lopez", call_text)
+
+        # 3. /send Alfredo -> includes Martin
+        mock_send.reset_mock()
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send Alfredo"}}, table=mock_table)
+        self.assertIn("Martin Diaz", mock_send.call_args[0][1])
+
+        # 4. /send Amigos -> no matches
+        mock_send.reset_mock()
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send Amigos"}}, table=mock_table)
+        self.assertIn("No hay invitaciones pendientes", mock_send.call_args[0][1])
+
+    @patch("telegram_bot.send_message")
+    def test_handle_sintelefono_command(self, mock_send):
+        telegram_bot.add_subscriber(88888)
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = [
+            # Group 1: fam_garcia (Celia) - 2 guests, NO phone
+            {"id": "1", "invitacion_id": "fam_garcia", "nombre": "Juan", "apellido": "Garcia", "dequien": "Celia Familia", "telefono": "", "url": "http://test/i/fam_garcia_111"},
+            {"id": "2", "invitacion_id": "fam_garcia", "nombre": "Maria", "apellido": "Garcia", "dequien": "Celia Familia", "telefono": "", "url": "http://test/i/fam_garcia_111"},
+            # Group 2: fam_perez (Alfredo) - 1 guest with phone, 1 without
+            {"id": "3", "invitacion_id": "fam_perez", "nombre": "Carlos", "apellido": "Perez", "dequien": "Alfredo Amigos", "telefono": "4444", "url": "http://test/i/fam_perez_222"},
+            {"id": "4", "invitacion_id": "fam_perez", "nombre": "Ana", "apellido": "Perez", "dequien": "Alfredo Amigos", "telefono": "", "url": "http://test/i/fam_perez_222"},
+            # Group 3: amigos_rock (Amigos) - 1 guest, NO phone
+            {"id": "5", "invitacion_id": "amigos_rock", "nombre": "Diego", "apellido": "Torres", "dequien": "Amigos Banda", "telefono": "", "url": "http://test/i/amigos_rock_333"},
+        ]
+
+        # 1. /sintelefono (summary)
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono"}}, table=mock_table)
+        summary_text = mock_send.call_args[0][1]
+        self.assertIn("Tarjetas sin teléfono", summary_text)
+        self.assertIn("Celia:", summary_text)
+        self.assertIn("Amigos:", summary_text)
+
+        # 2. /sintelefono Celia -> returns fam_garcia with URL and names
+        mock_send.reset_mock()
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono Celia"}}, table=mock_table)
+        celia_text = mock_send.call_args[0][1]
+        self.assertIn("fam_garcia", celia_text)
+        self.assertIn("Juan Garcia, Maria Garcia", celia_text)
+        self.assertIn("http://test/i/fam_garcia_111", celia_text)
+        self.assertNotIn("amigos_rock", celia_text)
+        self.assertNotIn("fam_perez", celia_text)
+
+        # 3. /sintelefono todos -> includes both fam_garcia and amigos_rock, excludes fam_perez
+        mock_send.reset_mock()
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono todos"}}, table=mock_table)
+        todos_text = mock_send.call_args[0][1]
+        self.assertIn("fam_garcia", todos_text)
+        self.assertIn("amigos_rock", todos_text)
+        self.assertNotIn("fam_perez", todos_text)
+
 
 if __name__ == "__main__":
     unittest.main()
