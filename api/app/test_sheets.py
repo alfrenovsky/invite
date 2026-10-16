@@ -41,6 +41,11 @@ class TestGoogleSheetsTable(unittest.TestCase):
             ttl_read=600,
             ttl_write=120,
         )
+        try:
+            from app import table as app_table
+            app_table.cache_file_path = self.cache_path
+        except Exception:
+            pass
 
     def tearDown(self):
         self.patcher.stop()
@@ -935,20 +940,20 @@ class TestGoogleSheetsTable(unittest.TestCase):
         mock_tbl = MagicMock()
         mock_tbl.get_all.return_value = [
             # Tarjeta 1: Complete YES (2 guests)
-            {"id": "g1", "invitacion_id": "fam_si", "confirmacion": "si", "pagado": "si"},
-            {"id": "g2", "invitacion_id": "fam_si", "confirmacion": "si", "pagado": ""},
+            {"id": "g1", "invitacion_id": "fam_si", "dequien": "Celia Amigos", "confirmacion": "si", "pagado": "si"},
+            {"id": "g2", "invitacion_id": "fam_si", "dequien": "Celia Amigos", "confirmacion": "si", "pagado": ""},
             # Tarjeta 2: Complete NO (2 guests)
-            {"id": "g3", "invitacion_id": "fam_no", "confirmacion": "no", "pagado": ""},
-            {"id": "g4", "invitacion_id": "fam_no", "confirmacion": "rechazado", "pagado": ""},
+            {"id": "g3", "invitacion_id": "fam_no", "dequien": "Alfredo Familia", "confirmacion": "no", "pagado": ""},
+            {"id": "g4", "invitacion_id": "fam_no", "dequien": "Alfredo Familia", "confirmacion": "rechazado", "pagado": ""},
             # Tarjeta 3: Partial mixed yes/no (2 guests)
-            {"id": "g5", "invitacion_id": "fam_mix", "confirmacion": "si", "pagado": "si"},
-            {"id": "g6", "invitacion_id": "fam_mix", "confirmacion": "no", "pagado": ""},
+            {"id": "g5", "invitacion_id": "fam_mix", "dequien": "Celia Familia", "confirmacion": "si", "pagado": "si"},
+            {"id": "g6", "invitacion_id": "fam_mix", "dequien": "Celia Familia", "confirmacion": "no", "pagado": ""},
             # Tarjeta 4: Partial mixed yes/pending (2 guests)
-            {"id": "g7", "invitacion_id": "fam_pend_mix", "confirmacion": "si", "pagado": ""},
-            {"id": "g8", "invitacion_id": "fam_pend_mix", "confirmacion": "", "pagado": ""},
+            {"id": "g7", "invitacion_id": "fam_pend_mix", "dequien": "Alfredo Amigos", "confirmacion": "si", "pagado": ""},
+            {"id": "g8", "invitacion_id": "fam_pend_mix", "dequien": "Alfredo Amigos", "confirmacion": "", "pagado": ""},
             # Tarjeta 5: Full pending (2 guests)
-            {"id": "g9", "invitacion_id": "fam_pend", "confirmacion": "", "pagado": ""},
-            {"id": "g10", "invitacion_id": "fam_pend", "confirmacion": "", "pagado": ""},
+            {"id": "g9", "invitacion_id": "fam_pend", "dequien": "Celia Oficina", "confirmacion": "", "pagado": ""},
+            {"id": "g10", "invitacion_id": "fam_pend", "dequien": "Celia Oficina", "confirmacion": "", "pagado": ""},
             # Tarjeta 6: Single guest Complete NO (fallback to id)
             {"id": "g11", "confirmacion": "no", "pagado": ""},
         ]
@@ -960,6 +965,12 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertIn("Confirmados: <b>4</b>", stats)
         self.assertIn("No asisten: <b>4</b>", stats)
         self.assertIn("Pendientes: <b>3</b>", stats)
+
+        # Check Por origen (de quien) counts
+        self.assertIn("👥 <b>Por origen (de quién):</b>", stats)
+        self.assertIn("• <b>Celia:</b> <b>6</b> (✅ 3 · ❌ 1 · ⏳ 2 · 💳 2)", stats)
+        self.assertIn("• <b>Alfredo:</b> <b>4</b> (✅ 1 · ❌ 2 · ⏳ 1 · 💳 0)", stats)
+        self.assertIn("• <b>Sin definir:</b> <b>1</b> (✅ 0 · ❌ 1 · ⏳ 0 · 💳 0)", stats)
 
         # Check Tarjeta counts
         self.assertIn("Total tarjetas: <b>6</b>", stats)

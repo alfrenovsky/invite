@@ -91,10 +91,10 @@ class TestTelegramBot(unittest.TestCase):
 
         mock_table = MagicMock()
         sample_records = [
-            {"nombre": "Celia", "confirmacion": "si", "pagado": "si"},
-            {"nombre": "Alfredo", "confirmacion": "si", "pagado": ""},
-            {"nombre": "Ari", "confirmacion": "no", "pagado": ""},
-            {"nombre": "Invitado", "confirmacion": "", "pagado": ""},
+            {"nombre": "Celia", "dequien": "Celia Familia", "confirmacion": "si", "pagado": "si"},
+            {"nombre": "Alfredo", "dequien": "Alfredo Amigos", "confirmacion": "si", "pagado": ""},
+            {"nombre": "Ari", "dequien": "Alfredo Familia", "confirmacion": "no", "pagado": ""},
+            {"nombre": "Invitado", "dequien": "Celia Amigos", "confirmacion": "", "pagado": ""},
         ]
         mock_table.get_all.return_value = sample_records
         mock_table.get_all_records.return_value = sample_records
@@ -116,6 +116,9 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("• ✅ Confirmados: <b>2</b>", text)
         self.assertIn("• ❌ No asisten: <b>1</b>", text)
         self.assertIn("• ⏳ Pendientes: <b>1</b>", text)
+        self.assertIn("👥 <b>Por origen (de quién):</b>", text)
+        self.assertIn("• <b>Celia:</b> <b>2</b> (✅ 1 · ❌ 0 · ⏳ 1 · 💳 1)", text)
+        self.assertIn("• <b>Alfredo:</b> <b>2</b> (✅ 1 · ❌ 1 · ⏳ 0 · 💳 0)", text)
         self.assertIn("💳 <b>Pagos:</b>", text)
         self.assertIn("• ✅ Grupos completos pagados: <b>0</b>", text)
         self.assertIn("• ⚠️ Invitaciones con pago parcial: <b>1</b>", text)

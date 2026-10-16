@@ -433,6 +433,26 @@ def _get_wedding_stats(table) -> str:
                 elif paid_in_group > 0:
                     inv_pagadas_parciales += 1
 
+        # Group records by first word in dequien (origin)
+        dequien_groups = {}
+        for r in records:
+            dq = str(r.get("dequien", "") or "").strip()
+            first_word = dq.split()[0].capitalize() if dq else "Sin definir"
+            dequien_groups.setdefault(first_word, []).append(r)
+
+        dequien_lines = []
+        for fw, g_recs in sorted(dequien_groups.items(), key=lambda x: -len(x[1])):
+            g_tot = len(g_recs)
+            g_si = sum(1 for r in g_recs if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado"))
+            g_no = sum(1 for r in g_recs if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
+            g_pend = g_tot - g_si - g_no
+            g_pag = sum(1 for r in g_recs if str(r.get("pagado", "")).strip().lower() in ("si", "sí", "pagado", "1", "true"))
+            dequien_lines.append(f"• <b>{fw}:</b> <b>{g_tot}</b> (✅ {g_si} · ❌ {g_no} · ⏳ {g_pend} · 💳 {g_pag})")
+
+        dequien_section = ""
+        if dequien_lines:
+            dequien_section = "👥 <b>Por origen (de quién):</b>\n" + "\n".join(dequien_lines) + "\n\n"
+
         return (
             f"📊 <b>Estado de la boda (en vivo):</b>\n\n"
             f"👤 <b>Invitados individuales:</b>\n"
@@ -440,6 +460,7 @@ def _get_wedding_stats(table) -> str:
             f"• ✅ Confirmados: <b>{confirmados}</b>\n"
             f"• ❌ No asisten: <b>{rechazados}</b>\n"
             f"• ⏳ Pendientes: <b>{pendientes}</b>\n\n"
+            f"{dequien_section}"
             f"💌 <b>Tarjetas / Grupos:</b>\n"
             f"• Total tarjetas: <b>{total_tarjetas}</b>\n"
             f"• ✅ Completas confirmadas: <b>{tarjetas_completas_si}</b>\n"
