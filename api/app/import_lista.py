@@ -19,22 +19,67 @@ def slugify(text: str) -> str:
     return re.sub(r"[-\s]+", "_", text)
 
 
-def split_name(raw_name: str):
+KNOWN_SURNAMES = {
+    "belinsky", "belisky", "brill", "giuliani", "grinberg", "guerrini",
+    "masramon", "pesquin", "rezinovsky", "rezinovksy", "santisteban",
+    "titarelli", "catania", "mereles", "mereles quiroga"
+}
+
+COMMON_FIRST_NAMES = {
+    "abril", "adriana", "agustina", "alberto", "aldana", "alejandra", "alejandro", 
+    "alfredo", "alina", "amparo", "ana", "ana clara", "anabel", "analia", "analía", 
+    "analuz", "andrea", "andres", "andrés", "ani", "anita", "ariel", "aurora", "axel", 
+    "barbara", "bárbara", "belen", "belén", "bruno", "candela", "carina", "carlos", 
+    "carolina", "catalina", "cecilia", "ceclia", "celia", "celina", "chiquita", 
+    "claudia", "claudio", "constanza", "cristian", "daniela", "danilo", "dario", 
+    "darío", "daniel", "dante", "diego", "edgardo", "elisa", "elsa", "emi", 
+    "emiliano", "emiliana", "emilio", "ema", "emir", "enrique", "erique", "fabricio", 
+    "federico", "fernanda", "fernando", "flor", "franco", "gabriela", "grabiela", 
+    "gaby", "german", "germán", "gigi", "gino", "gladys", "gonzalo", "gonza", 
+    "graciela", "guillermo", "guille", "gustavo", "hernan", "hernán", "isabelin", 
+    "ismael", "ivana", "javier", "jorge", "jose", "josé", "josefina", "juan", 
+    "juana", "julia", "karen", "kevin", "lucas", "lucia", "lucía", "luciano", 
+    "macarena", "magdalena", "majo", "mariana", "mariano", "mariangeles", "mariela", 
+    "marina", "marisa", "marisol", "marita", "marcos", "maria", "maría", "marta", 
+    "matias", "matías", "mauro", "maxi", "melisa", "micaela", "miguel", "milagros", 
+    "natalia", "nico", "nicolas", "nicolás", "noelia", "oli", "omar", "pablo", 
+    "paola", "pedro", "pilar", "ramiro", "raul", "ricardo", "roberto", "rocio", 
+    "rocío", "rodrigo", "rolando", "romina", "rosalba", "rosina", "sandra", 
+    "sebastian", "sebastián", "sergio", "silvina", "silvio", "sivio", "sonia", 
+    "susana", "tati", "valeria", "vanesa", "vanina", "veronica", "verónica", 
+    "vero", "victor", "victoria", "virginia", "viviana", "yamila"
+}
+
+
+def split_name(raw_name: str, category: str = ""):
     name = raw_name.strip()
     words = name.split()
     if not words:
         return "", ""
     if len(words) == 1:
         return words[0], ""
-    if len(words) == 2:
-        return words[0], words[1]
 
-    # Check prefixes for compound last names like "del campo", "di maria", "d'ambrosio"
+    first_w = words[0].lower()
+    last_w = words[-1].lower()
+
+    # 1. Check compound first names at end: e.g. "Rezinovksy Ana Clara"
+    if len(words) >= 3 and f"{words[-2].lower()} {words[-1].lower()}" in COMMON_FIRST_NAMES:
+        return " ".join(words[-2:]), " ".join(words[:-2])
+
+    # 2. Check double surnames with single first name at end: e.g. "Mereles Quiroga Franco"
+    if len(words) >= 3 and last_w in COMMON_FIRST_NAMES and (first_w in KNOWN_SURNAMES or category == "Alfredo Familia"):
+        return words[-1], " ".join(words[:-1])
+
+    # 3. Inverted: Lastname Firstname
+    if first_w in KNOWN_SURNAMES or (category == "Alfredo Familia"):
+        return " ".join(words[1:]), words[0]
+
+    # 4. Check prefixes for compound last names like "del campo", "di maria", "d'ambrosio"
     for i in range(1, len(words)):
         if words[i].lower() in ["del", "de", "di", "da", "d'ambrosio"]:
             return " ".join(words[:i]), " ".join(words[i:])
 
-    # Check common Spanish compound first names
+    # 5. Check common Spanish compound first names at start
     compound_first_starters = ["ana", "juan", "maria", "maría", "m", "jose", "josé"]
     if words[0].lower() in compound_first_starters and len(words) >= 3:
         return " ".join(words[:2]), " ".join(words[2:])
@@ -67,8 +112,8 @@ def parse_csv_file(csv_path: str):
         dequien = r[1].strip() if len(r) > 1 else ""
         tipo = r[2].strip() if len(r) > 2 else ""
         nivel = r[3].strip() if len(r) > 3 else ""
-        # r[4] is 'Enviada' -> ignored per design decision
-        confirmacion = r[5].strip() if len(r) > 5 else ""
+        # Confirmacion: all empty per explicit requirement
+        confirmacion = ""
 
         # Sanitize Monto tarjeta (ignore counter annotations like '149 invitados', '167 reservas')
         monto = r[6].strip() if len(r) > 6 else ""
@@ -94,16 +139,23 @@ def parse_csv_file(csv_path: str):
         if "sin tacc" in dieta_raw or "celiaco" in dieta_raw:
             celiaco = "si"
 
-        is_plus_one = "+" in raw_name
+        is_plus_one = "+" in raw_name or raw_name in [
+            "Javier Rosenstein Andrea",
+            "Catania Carlos (Lili)",
+            "Roque D'Ambrosio Verónica",
+        ]
 
         if is_plus_one:
             # Companion: per user instruction, leave first & last names empty
             nombre = ""
             apellido = ""
 
-            # Check if name before + matches a known main guest
             base_name = re.split(r"\+|\(", raw_name)[0].strip()
-            base_slug = slugify(base_name)
+            if base_name in ["Javier Rosenstein Andrea", "Roque D'Ambrosio Verónica"]:
+                base_name = base_name.rsplit(" ", 1)[0]
+            fn_b, ln_b = split_name(base_name, dequien)
+            base_slug = slugify(f"{fn_b}_{ln_b}" if ln_b else fn_b)
+
             if base_slug in main_guests_by_slug:
                 inv_id = base_slug
             elif prev_main_slug:
@@ -111,7 +163,7 @@ def parse_csv_file(csv_path: str):
             else:
                 inv_id = base_slug
         else:
-            nombre, apellido = split_name(raw_name)
+            nombre, apellido = split_name(raw_name, dequien)
             inv_id = slugify(f"{nombre}_{apellido}" if apellido else nombre)
             main_guests_by_slug[inv_id] = raw_name
             prev_main_slug = inv_id
