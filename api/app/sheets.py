@@ -386,9 +386,9 @@ class GoogleSheetsTable:
 
             ws = self._get_worksheet()
             try:
-                remote_records = ws.get_all_records(expected_headers=FIELDNAMES)
+                remote_records = ws.get_all_records(expected_headers=FIELDNAMES, numericise_ignore=["all"])
             except Exception:
-                remote_records = ws.get_all_records()
+                remote_records = ws.get_all_records(numericise_ignore=["all"])
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             local_by_id = {}
@@ -414,7 +414,8 @@ class GoogleSheetsTable:
                     item["_sheet_row"] = idx
                     merged_records.append(item)
 
-                    if not rec.get("id") or not rec.get("url") or not rec.get("whatsapp"):
+                    needs_whatsapp = bool(rec.get("telefono") and not rec.get("whatsapp"))
+                    if not rec.get("id") or not rec.get("url") or needs_whatsapp:
                         range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                         missing_updates.append({"range": range_name, "values": [row]})
 
