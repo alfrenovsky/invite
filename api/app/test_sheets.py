@@ -974,6 +974,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         # Check Tarjeta counts
         self.assertIn("Total tarjetas: <b>6</b>", stats)
+        self.assertIn("• 📖 Abiertas: <b>0</b>", stats)
         self.assertIn("Completas confirmadas: <b>1</b>", stats)
         self.assertIn("Tarjetas completas que no asisten: <b>2</b>", stats)
         self.assertIn("Tarjetas con confirmación parcial: <b>2</b>", stats)
@@ -1026,6 +1027,54 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(updated["url"], expected_futbol_url)
         self.assertIn("amigos_futbol", updated["whatsapp"])
         self.assertIn(futbol_code, updated["whatsapp"])
+
+    def test_mark_opened_human_and_crawler(self):
+        sample_data = [
+            {"id": "op1", "invitacion_id": "familia_abierta", "nombre": "Juan", "apellido": "Perez", "abierto": ""},
+            {"id": "op2", "invitacion_id": "familia_abierta", "nombre": "Maria", "apellido": "Perez", "abierto": ""}
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+        self.table.get_all(force_remote=True)
+
+        # 1. Mark opened for the first time
+        updated = self.table.mark_opened("familia_abierta")
+        self.assertTrue(updated)
+
+        cache = self.table._load_cache()
+        matched = [r for r in cache["records"] if r.get("invitacion_id") == "familia_abierta"]
+        self.assertEqual(len(matched), 2)
+        for r in matched:
+            self.assertEqual(r.get("abierto"), "si")
+            self.assertEqual(r.get("_sync_state"), "LOCAL")
+
+        # 2. Subsequent call does not mark again (returns False)
+        updated_again = self.table.mark_opened("familia_abierta")
+        self.assertFalse(updated_again)
+
+    def test_index_page_marks_opened_for_human_not_crawler(self):
+        from app import app
+        with patch("app.table.get_by_invitacion") as mock_get_by_inv, \
+             patch("app.table.mark_opened") as mock_mark_opened:
+            mock_get_by_inv.return_value = [
+                {"id": "abc1", "nombre": "Juan", "apellido": "Perez", "confirmacion": "si", "url": "http://nos.vamos.acas.ar/i/familia_perez_123456"}
+            ]
+            code = compute_check_code("familia_perez")
+
+            with app.test_client() as client:
+                # Crawler request (WhatsApp) -> must NOT mark opened
+                res_crawler = client.get(f"/i/familia_perez_{code}", headers={"User-Agent": "WhatsApp/2.21.12.21 A"})
+                self.assertEqual(res_crawler.status_code, 200)
+                mock_mark_opened.assert_not_called()
+
+                # Crawler request (Googlebot) -> must NOT mark opened
+                res_bot = client.get(f"/i/familia_perez_{code}", headers={"User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"})
+                self.assertEqual(res_bot.status_code, 200)
+                mock_mark_opened.assert_not_called()
+
+                # Human browser request -> MUST mark opened
+                res_human = client.get(f"/i/familia_perez_{code}", headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"})
+                self.assertEqual(res_human.status_code, 200)
+                mock_mark_opened.assert_called_once_with("familia_perez")
 
 
 if __name__ == "__main__":

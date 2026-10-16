@@ -28,6 +28,7 @@ FIELDNAMES = [
     "whatsapp",
     "comprobante",
     "pagado",
+    "abierto",
 ]
 
 
@@ -325,6 +326,8 @@ class GoogleSheetsTable:
 
         item["comprobante"] = str(rec.get("comprobante", "") or "")
         item["pagado"] = str(rec.get("pagado", "") or "").strip()
+        abierto_val = str(rec.get("abierto", "") or "").strip().lower()
+        item["abierto"] = "si" if abierto_val in ("si", "sí", "true", "1") else ""
 
 
         # Build row according to FIELDNAMES
@@ -657,3 +660,46 @@ class GoogleSheetsTable:
                 self._save_cache(cache)
             self._log_event("WRITE", "REMOTE", f"Deleted guest '{record_id}' (row {row_idx}) from Google Sheets and local cache")
             return True
+
+    def mark_opened(self, invitacion_id: str) -> bool:
+        """
+        Marks all guests in an invitation group as abierto='si' when visited by a human.
+        Updates cache locally and schedules an asynchronous flush to Google Sheets.
+        """
+        if not invitacion_id:
+            return False
+
+        with self.lock:
+            cache = self._load_cache()
+            if not cache or not cache.get("records"):
+                return False
+
+            target = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
+            needs_update = False
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            for rec in cache["records"]:
+                inv_slug = str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+                if inv_slug == target:
+                    if str(rec.get("abierto", "")).strip().lower() != "si":
+                        rec["abierto"] = "si"
+                        rec["updated_at"] = now_str
+                        rec["_cached_at"] = time.time()
+                        rec["_sync_state"] = "LOCAL"
+                        needs_update = True
+
+            if needs_update:
+                self._save_cache(cache)
+                self._log_event("WRITE", "CACHED", f"Marked invitation '{invitacion_id}' as abierto=si")
+
+                def _bg_flush():
+                    try:
+                        self.flush_local_to_remote()
+                    except Exception as e:
+                        self._log_event("WRITE", "ERROR", f"Error flushing abierto status to Google Sheets: {e}")
+
+                threading.Thread(target=_bg_flush, daemon=True).start()
+                return True
+
+            return False
+

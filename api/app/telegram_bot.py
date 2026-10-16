@@ -398,6 +398,7 @@ def _get_wedding_stats(table) -> str:
         tarjetas_completas_no = 0
         tarjetas_pendientes = 0
         tarjetas_parciales = 0
+        tarjetas_abiertas = 0
 
         inv_pagadas_completas = 0
         inv_pagadas_parciales = 0
@@ -407,6 +408,9 @@ def _get_wedding_stats(table) -> str:
             g_si = sum(1 for r in g if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado"))
             g_no = sum(1 for r in g if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
             g_pend = g_total - g_si - g_no
+
+            if any(str(r.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1") for r in g):
+                tarjetas_abiertas += 1
 
             if g_si == g_total:
                 tarjetas_completas_si += 1
@@ -463,6 +467,7 @@ def _get_wedding_stats(table) -> str:
             f"{dequien_section}"
             f"💌 <b>Tarjetas / Grupos:</b>\n"
             f"• Total tarjetas: <b>{total_tarjetas}</b>\n"
+            f"• 📖 Abiertas: <b>{tarjetas_abiertas}</b>\n"
             f"• ✅ Completas confirmadas: <b>{tarjetas_completas_si}</b>\n"
             f"• ❌ Tarjetas completas que no asisten: <b>{tarjetas_completas_no}</b>\n"
             f"• ⚠️ Tarjetas con confirmación parcial: <b>{tarjetas_parciales}</b>\n"

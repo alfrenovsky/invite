@@ -191,6 +191,7 @@ def parse_csv_file(csv_path: str):
             "whatsapp": whatsapp,
             "comprobante": "",
             "pagado": "",
+            "abierto": "",
             "_raw_name": raw_name,
             "_is_plus_one": is_plus_one,
             "_csv_row": row_idx,

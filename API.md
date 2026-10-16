@@ -59,6 +59,9 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 | M | `celiaco` | `string` | Celiac / Gluten-Free flag (`"si"`, `""`) | `"si"` |
 | N | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/i/familia_perez_a1b2c3"` |
 | O | `whatsapp` | `string` | Direct WhatsApp invitation link (`wa.me`) | `"https://wa.me/5491112345678?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ffamilia_perez_a1b2c3"` |
+| P | `comprobante` | `string` | Uploaded transfer receipt filename/URL | `"comprobante_a1b2c3d4.jpg"` |
+| Q | `pagado` | `string` | Payment received verification (`"si"`, `""`) | `"si"` |
+| R | `abierto` | `string` | Invitation opened by a human (`"si"`, `""`) | `"si"` |
 
 
 

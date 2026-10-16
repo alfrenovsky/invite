@@ -119,6 +119,7 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("👥 <b>Por origen (de quién):</b>", text)
         self.assertIn("• <b>Celia:</b> <b>2</b> (✅ 1 · ❌ 0 · ⏳ 1 · 💳 1)", text)
         self.assertIn("• <b>Alfredo:</b> <b>2</b> (✅ 1 · ❌ 1 · ⏳ 0 · 💳 0)", text)
+        self.assertIn("• 📖 Abiertas: <b>0</b>", text)
         self.assertIn("💳 <b>Pagos:</b>", text)
         self.assertIn("• ✅ Grupos completos pagados: <b>0</b>", text)
         self.assertIn("• ⚠️ Invitaciones con pago parcial: <b>1</b>", text)

@@ -638,7 +638,11 @@ def index_page(token=None):
         return render_template("blank.html")
 
     user_agent = request.headers.get("User-Agent", "").lower()
-    is_crawler = any(bot in user_agent for bot in ("whatsapp", "facebookexternalhit", "facebot", "twitterbot", "telegrambot"))
+    is_crawler = any(bot in user_agent for bot in (
+        "whatsapp", "facebookexternalhit", "facebot", "twitterbot", "telegrambot",
+        "slackbot", "discordbot", "googlebot", "bingbot", "applebot", "linkedinbot",
+        "bot", "crawler", "spider"
+    ))
     if is_crawler:
         base_url = os.environ.get("BASE_URL", "https://nos.vamos.acas.ar")
         full_invite_url = f"{base_url}/i/{token}"
@@ -666,6 +670,11 @@ def index_page(token=None):
     context = get_guest_context(validated_slug)
     if not context:
         return render_template("blank.html")
+
+    try:
+        table.mark_opened(validated_slug)
+    except Exception as e:
+        app.logger.warning(f"Error marking invitation as opened: {e}")
 
     try:
         telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []))
