@@ -262,6 +262,7 @@ class TestTelegramBot(unittest.TestCase):
         call_text = mock_send.call_args[0][1]
         self.assertIn("Camila Perez", call_text)
         self.assertIn("wa.me/1111", call_text)
+        self.assertIn('<a href="https://wa.me/1111', call_text)
         self.assertNotIn("Sofia Gomez", call_text)
         self.assertNotIn("Lucia Lopez", call_text)
 

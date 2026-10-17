@@ -1,5 +1,6 @@
 import json
 import logging
+import html
 import os
 import re
 import threading
@@ -572,7 +573,7 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         wa_url = str(r.get("whatsapp", "") or "").strip()
         if not wa_url and r.get("telefono") and r.get("url"):
             wa_url = generate_whatsapp_url(r["telefono"], r["url"])
-        items.append(f"👤 <b>{nombre}</b>\n🔗 {wa_url}")
+        items.append(f'👉 <a href="{wa_url}"><b>{html.escape(nombre)}</b></a>')
 
     _send_chunked_messages(chat_id, header, items)
 
