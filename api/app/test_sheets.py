@@ -6,6 +6,7 @@ from sheets import (
     GoogleSheetsTable,
     FIELDNAMES,
     BASE_URL,
+    slugify,
     compute_check_code,
     generate_invitation_url,
     parse_and_validate_token,
@@ -241,6 +242,45 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(len(records[0]["id"]), 8)
         self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/i/familia_perez_"))
         self.assertTrue(records[0]["whatsapp"].startswith("https://wa.me/5491198765432?text="))
+
+    def test_slugify(self):
+        self.assertEqual(slugify("Juan Pérez"), "juan_perez")
+        self.assertEqual(slugify("  María José  "), "maria_jose")
+        self.assertEqual(slugify("Ángel O'Connor!"), "angel_oconnor")
+        self.assertEqual(slugify(""), "")
+
+    def test_empty_invitacion_id_autofills_firstname_lastname(self):
+        sample_data = [
+            {"id": "abc12345", "invitacion_id": "", "url": "", "whatsapp": "", "apellido": "Pérez", "nombre": "Juan", "telefono": "+54 9 11 9876-5432"},
+            {"id": "def67890", "invitacion_id": "ya_tiene_id", "url": "", "whatsapp": "", "apellido": "Gómez", "nombre": "María"},
+            {"id": "ghi11111", "invitacion_id": "", "url": "", "whatsapp": "", "apellido": "", "nombre": "SingleName"},
+            {"id": "jkl22222", "invitacion_id": "", "url": "", "whatsapp": "", "apellido": "", "nombre": ""}
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+
+        records = self.table.get_all()
+        # Row 1: autofilled with "juan_perez"
+        self.assertEqual(records[0]["invitacion_id"], "juan_perez")
+        self.assertEqual(records[0]["invitacion"], "juan_perez")
+        self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/i/juan_perez_"))
+        self.assertTrue(records[0]["whatsapp"].startswith("https://wa.me/5491198765432?text="))
+
+        # Row 2: already had invitacion_id, preserved
+        self.assertEqual(records[1]["invitacion_id"], "ya_tiene_id")
+
+        # Row 3: name only, autofilled with "singlename"
+        self.assertEqual(records[2]["invitacion_id"], "singlename")
+        self.assertTrue(records[2]["url"].startswith(f"{BASE_URL}/i/singlename_"))
+
+        # Row 4: empty name and surname, remains empty
+        self.assertEqual(records[3]["invitacion_id"], "")
+
+        # Verify Google Sheets remote repair update triggered for modified rows
+        self.assertEqual(self.mock_ws.batch_update.call_count, 1)
+        update_calls = self.mock_ws.batch_update.call_args[0][0]
+        ranges = [c["range"] for c in update_calls]
+        self.assertTrue(any(r.startswith("A2:") for r in ranges))
+        self.assertTrue(any(r.startswith("A4:") for r in ranges))
 
     def test_deterministic_row_time_id(self):
         self.mock_ws.get_all_records.return_value = []

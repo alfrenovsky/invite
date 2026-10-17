@@ -3,6 +3,7 @@ import time
 import json
 import uuid
 import hashlib
+import unicodedata
 import re
 import threading
 import urllib.parse
@@ -39,6 +40,14 @@ LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/data/api.log")
 TTL_READ = int(os.environ.get("TTL_READ", 60))  # 10 minutes default
 TTL_WRITE = int(os.environ.get("TTL_WRITE", 60))  # 2 minutes default
 CACHE_MISS_MIN_AGE = int(os.environ.get("CACHE_MISS_MIN_AGE", 10))  # Minimum cache age (seconds) to force remote sync on cache miss
+
+
+def slugify(text: str) -> str:
+    if not text:
+        return ""
+    text = unicodedata.normalize("NFKD", str(text)).encode("ascii", "ignore").decode("utf-8")
+    text = re.sub(r"[^\w\s-]", "", text.lower()).strip()
+    return re.sub(r"[-\s]+", "_", text)
 
 
 def compute_check_code(invitacion_id: str, salt: str = None) -> str:
@@ -258,14 +267,22 @@ class GoogleSheetsTable:
         else:
             item["id"] = str(item["id"])
 
+        nombre_val = str(rec.get("nombre", "") or "").strip()
+        apellido_val = str(rec.get("apellido", "") or "").strip()
         inv_val = str(rec.get("invitacion_id") or rec.get("invitacion") or "").strip().replace(" ", "_")
+
+        if not inv_val:
+            full_name = f"{nombre_val}_{apellido_val}".strip("_")
+            if full_name:
+                inv_val = slugify(full_name)
+
         phone_val = str(rec.get("telefono", "")).strip()
 
         item["updated_at"] = updated_at
         item["invitacion_id"] = inv_val
         item["invitacion"] = inv_val
-        item["nombre"] = str(rec.get("nombre", ""))
-        item["apellido"] = str(rec.get("apellido", ""))
+        item["nombre"] = nombre_val
+        item["apellido"] = apellido_val
         item["dequien"] = str(rec.get("dequien", ""))
         item["tipo"] = str(rec.get("tipo", ""))
         item["nivel"] = str(rec.get("nivel", ""))
@@ -445,9 +462,10 @@ class GoogleSheetsTable:
                     merged_records.append(item)
 
                     id_missing = not rec.get("id")
+                    inv_changed = (item.get("invitacion_id", "") != str(rec.get("invitacion_id", "") or "").strip())
                     url_changed = (item.get("url", "") != str(rec.get("url", "") or "").strip())
                     wa_changed = (item.get("whatsapp", "") != str(rec.get("whatsapp", "") or "").strip())
-                    if id_missing or url_changed or wa_changed:
+                    if id_missing or inv_changed or url_changed or wa_changed:
                         range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                         missing_updates.append({"range": range_name, "values": [row]})
 
