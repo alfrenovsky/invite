@@ -1972,7 +1972,7 @@
         /* Top Bar: Progress & Meta Header */
         .story-preview-viewport .top-bar {
             position: absolute;
-            top: 0;
+            top: calc(-1 * var(--top-bar-offset, 0px));
             left: 0;
             right: 0;
             z-index: 1000;
@@ -6707,15 +6707,47 @@
             const viewport = document.getElementById('storyPreviewViewport');
             const container = document.getElementById('storyContainer');
             if (!viewport || !container) return;
-            const baseHeight = getPreviewDeviceBaseHeight();
             const h = viewport.clientHeight;
-            if (h > 0) {
-                const scale = h / baseHeight;
-                container.style.setProperty('--story-preview-scale', scale.toFixed(5));
-                container.style.height = `${baseHeight}px`;
-                const elementsScale = Math.min(1, baseHeight / 845);
-                container.style.setProperty('--elements-scale', elementsScale.toFixed(4));
+            if (h <= 0) return;
+
+            if (currentPreviewDevice === 'android') {
+                // Tall phone: 20:9 (390 x 888) -> anchor to bottom, black bar on top, top-bar at top
+                const scale = h / 888;
+                const extraH = (888 - 845) * scale;
+                const topBarOffset = 888 - 845;
                 viewport.style.width = `${Math.round(390 * scale)}px`;
+                container.style.width = '390px';
+                container.style.height = '845px';
+                container.style.top = `${Math.round(extraH)}px`;
+                container.style.left = '0px';
+                container.style.setProperty('--story-preview-scale', scale.toFixed(5));
+                container.style.setProperty('--elements-scale', '1');
+                container.style.setProperty('--top-bar-offset', `${topBarOffset}px`);
+            } else if (currentPreviewDevice === 'compact') {
+                // Short/wide phone: 16:9 -> fit height, center horizontally, pillarbox black bars on sides
+                const scale = h / 845;
+                const phoneW = Math.round(h * (9 / 16));
+                viewport.style.width = `${phoneW}px`;
+                const renderedW = 390 * scale;
+                const extraW = Math.max(0, phoneW - renderedW);
+                container.style.width = '390px';
+                container.style.height = '845px';
+                container.style.top = '0px';
+                container.style.left = `${Math.round(extraW / 2)}px`;
+                container.style.setProperty('--story-preview-scale', scale.toFixed(5));
+                container.style.setProperty('--elements-scale', '1');
+                container.style.setProperty('--top-bar-offset', '0px');
+            } else {
+                // Standard iPhone: 19.5:9 (390 x 845) -> exact fit
+                const scale = h / 845;
+                viewport.style.width = `${Math.round(390 * scale)}px`;
+                container.style.width = '390px';
+                container.style.height = '845px';
+                container.style.top = '0px';
+                container.style.left = '0px';
+                container.style.setProperty('--story-preview-scale', scale.toFixed(5));
+                container.style.setProperty('--elements-scale', '1');
+                container.style.setProperty('--top-bar-offset', '0px');
             }
         }
 

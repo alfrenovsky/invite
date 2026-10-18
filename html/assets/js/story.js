@@ -270,18 +270,41 @@
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.setProperty('--base-height', '845px');
             container.style.setProperty('--elements-scale', '1');
+            container.style.setProperty('--top-bar-offset', '0px');
             container.style.transformOrigin = 'center center';
         } else {
-            // On Phone: Scale horizontally to fill 100% screen width
-            const scale = window.innerWidth / 390;
-            // Base height adapts to the exact usable browser viewport height (compensating for browser URL bars)
-            const baseHeight = window.innerHeight / scale;
-            // Elements canvas remains 845px; if viewport is shorter (e.g. 16:9), scale down proportionally to avoid overflow
-            const elementsScale = Math.min(1, baseHeight / 845);
-            container.style.setProperty('--scale', scale.toFixed(4));
-            container.style.setProperty('--base-height', `${baseHeight.toFixed(1)}px`);
-            container.style.setProperty('--elements-scale', elementsScale.toFixed(4));
-            container.style.transformOrigin = 'top center';
+            // Mobile: strictly maintain 390x845 (19.5:9) proportion
+            const targetRatio = 390 / 845;
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+            const screenRatio = screenW / screenH;
+            const wrapper = container.closest('.stories-wrapper') || document.querySelector('.stories-wrapper');
+
+            if (screenRatio < targetRatio) {
+                // Phone is taller than 19.5:9 (e.g. 20:9, 21:9):
+                // Scale to full width, anchor story to bottom, fill top with black bar, keep navigation bar at top
+                const scale = screenW / 390;
+                const renderedH = 845 * scale;
+                const extraH = Math.max(0, screenH - renderedH);
+                const topBarOffset = extraH / scale;
+
+                container.style.setProperty('--scale', scale.toFixed(4));
+                container.style.setProperty('--base-height', '845px');
+                container.style.setProperty('--elements-scale', '1');
+                container.style.setProperty('--top-bar-offset', `${topBarOffset.toFixed(1)}px`);
+                container.style.transformOrigin = 'bottom center';
+                if (wrapper) wrapper.style.alignItems = 'flex-end';
+            } else {
+                // Phone is shorter/wider than 19.5:9 (e.g. 16:9, iPhone SE):
+                // Scale to full height, center horizontally, fill sides with black bars
+                const scale = screenH / 845;
+                container.style.setProperty('--scale', scale.toFixed(4));
+                container.style.setProperty('--base-height', '845px');
+                container.style.setProperty('--elements-scale', '1');
+                container.style.setProperty('--top-bar-offset', '0px');
+                container.style.transformOrigin = 'center center';
+                if (wrapper) wrapper.style.alignItems = 'center';
+            }
         }
     }
 

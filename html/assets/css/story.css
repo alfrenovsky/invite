@@ -110,13 +110,15 @@
 
 
         body.is-mobile-mode .stories-wrapper {
-            align-items: flex-start;
+            align-items: flex-end;
             justify-content: center;
-            background-color: var(--bg-dark);
+            background-color: #000;
         }
 
         body.is-mobile-mode .story-container {
-            transform-origin: top center;
+            width: 390px;
+            height: 845px;
+            transform-origin: bottom center;
             touch-action: pan-y;
         }
 
@@ -996,10 +998,10 @@
             touch-action: pan-y;
         }
 
-        /* Header on mobile: anchored at top, fills upper notch/status area on 20:9+ phones */
+        /* Header on mobile: anchored at top of screen, fills upper notch/status area on 20:9+ phones */
         body.is-mobile-mode .top-bar {
             position: absolute;
-            top: 0;
+            top: calc(-1 * var(--top-bar-offset, 0px));
             left: 0;
             right: 0;
             z-index: 1000;
