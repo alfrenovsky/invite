@@ -51,9 +51,9 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 | E | `apellido` | `string` | Last name | `"Pérez"` |
 | F | `dequien` | `string` | Host affiliation | `"novia"` / `"novio"` |
 | G | `tipo` | `string` | Guest type / category | `"amigo"` |
-| H | `nivel` | `string` | Guest priority level | `"1"` |
+| H | `nivel` | `string` | Guest category (`"Reserva"`, `"Invitado"`) | `"Reserva"` |
 | I | `confirmacion` | `string` | Attendance confirmation (`"si"`, `"no"`, `""`) | `"si"` |
-| J | `montotarjeta` | `string` | Ticket/card amount | `""` |
+| J | `montotarjeta` | `string` | Ticket/card amount (defaults to `100000` for `"Reserva"` if empty) | `"100000"` |
 | K | `telefono` | `string` | Phone number | `"+5491112345678"` |
 | L | `pa` | `string` | Main dietary preference (`"general"`, `"vegetariano"`, `"vegano"`) | `"general"` |
 | M | `celiaco` | `string` | Celiac / Gluten-Free flag (`"si"`, `""`) | `"si"` |

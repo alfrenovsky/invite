@@ -10,7 +10,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from sheets import generate_whatsapp_url, generate_invitation_url
+from sheets import generate_whatsapp_url, generate_invitation_url, get_group_target_type
 
 logger = logging.getLogger("telegram_bot")
 

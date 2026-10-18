@@ -7,7 +7,7 @@ import urllib.parse
 import uuid
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory
 from werkzeug.utils import secure_filename
-from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL
+from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type
 import telegram_bot
 try:
     from PIL import Image, ImageOps
@@ -156,6 +156,8 @@ def load_slides():
             s["title"] = s.get("id", "")
         if "hidden" not in s:
             s["hidden"] = (s.get("id") == "triste")
+        if "target" not in s:
+            s["target"] = s.get("target_audience", "all")
 
     return slides
 
@@ -581,9 +583,23 @@ def get_guest_context(validated_slug):
             break
 
     card_value = format_currency_ar(guests[0].get("montotarjeta", "")) if guests else ""
-    active_slides = [resolve_invitation_slide(s) for s in load_slides() if s.get("enabled", True)]
+    group_type = get_group_target_type(guests)
 
+    raw_slides = load_slides()
+    filtered_slides = []
+    for s in raw_slides:
+        if not s.get("enabled", True):
+            continue
+        target = s.get("target") or s.get("target_audience") or "all"
+        if isinstance(target, list):
+            if group_type not in target and "all" not in target:
+                continue
+        elif isinstance(target, str):
+            if target != "all" and target != group_type:
+                continue
+        filtered_slides.append(s)
 
+    active_slides = [resolve_invitation_slide(s) for s in filtered_slides]
 
     existing_comprobante = next((g.get("comprobante") for g in guests if g.get("comprobante")), "")
 
@@ -606,6 +622,7 @@ def get_guest_context(validated_slug):
         "group_names": group_names,
         "names_count": names_count,
         "card_value": card_value,
+        "group_type": group_type,
         "confirmed_count": confirmed_count,
         "rejected_count": rejected_count,
         "pending_count": pending_count,
@@ -1182,6 +1199,7 @@ def panel_create_slide():
         "duration": duration,
         "enabled": True,
         "hidden": bool(data.get("hidden", False)),
+        "target": data.get("target", "all"),
         "background": data.get("background", ""),
         "bg_zoom": _safe_float(data.get("bg_zoom"), 100.0),
         "bg_x": _safe_float(data.get("bg_x"), 0.0),

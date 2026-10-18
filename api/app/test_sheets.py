@@ -13,6 +13,8 @@ from sheets import (
     clean_phone_number,
     generate_whatsapp_url,
     parse_currency_amount,
+    get_group_target_type,
+    DEFAULT_RESERVA_MONTO,
 )
 
 
@@ -1115,6 +1117,72 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_human = client.get(f"/i/familia_perez_{code}", headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"})
                 self.assertEqual(res_human.status_code, 200)
                 mock_mark_opened.assert_called_once_with("familia_perez")
+
+    def test_default_reserva_monto_assignment(self):
+        # 1. Reserva without monto -> defaults to DEFAULT_RESERVA_MONTO ("100000")
+        item1, _ = self.table._map_record_to_row({"nombre": "Lucas", "nivel": "Reserva", "montotarjeta": ""}, "2026-10-18")
+        self.assertEqual(item1["montotarjeta"], "100000")
+
+        # 2. Reserva with monto "0" -> defaults to DEFAULT_RESERVA_MONTO ("100000")
+        item2, _ = self.table._map_record_to_row({"nombre": "Martin", "nivel": "reserva", "montotarjeta": "0"}, "2026-10-18")
+        self.assertEqual(item2["montotarjeta"], "100000")
+
+        # 3. Reserva with existing custom monto -> keeps existing custom monto
+        item3, _ = self.table._map_record_to_row({"nombre": "Sofia", "nivel": "Reserva", "montotarjeta": "50000"}, "2026-10-18")
+        self.assertEqual(item3["montotarjeta"], "50000")
+
+        # 4. Invitado without monto -> keeps empty monto
+        item4, _ = self.table._map_record_to_row({"nombre": "Clara", "nivel": "Invitado", "montotarjeta": ""}, "2026-10-18")
+        self.assertEqual(item4["montotarjeta"], "")
+
+    def test_get_group_target_type(self):
+        # 1. At least one guest has nivel="Reserva" -> "reserva"
+        g_res = [
+            {"id": "1", "nivel": "Invitado", "montotarjeta": ""},
+            {"id": "2", "nivel": "Reserva", "montotarjeta": "100000"},
+        ]
+        self.assertEqual(get_group_target_type(g_res), "reserva")
+
+        # 2. At least one guest has montotarjeta > 0 even if nivel is empty -> "reserva"
+        g_monto = [
+            {"id": "1", "nivel": "", "montotarjeta": "50000"},
+            {"id": "2", "nivel": "", "montotarjeta": ""},
+        ]
+        self.assertEqual(get_group_target_type(g_monto), "reserva")
+
+        # 3. All guests are Invitado with 0 or empty monto -> "invitacion"
+        g_inv = [
+            {"id": "1", "nivel": "Invitado", "montotarjeta": ""},
+            {"id": "2", "nivel": "Invitado", "montotarjeta": "0"},
+        ]
+        self.assertEqual(get_group_target_type(g_inv), "invitacion")
+
+    def test_active_slides_audience_filtering(self):
+        from app import get_guest_context
+        test_slides = [
+            {"id": "intro", "target": "all", "enabled": True},
+            {"id": "reservas", "target": "reserva", "enabled": True},
+            {"id": "invitacion", "target": "invitacion", "enabled": True},
+        ]
+
+        with patch("app.load_slides", return_value=test_slides):
+            # Test group with Reserva: must have intro and reservas, NOT invitacion
+            with patch("app.table.get_by_invitacion", return_value=[{"id": "1", "nivel": "Reserva", "montotarjeta": "100000"}]):
+                ctx_reserva = get_guest_context("slug_reserva")
+                self.assertEqual(ctx_reserva["group_type"], "reserva")
+                slide_ids = [s["id"] for s in ctx_reserva["active_slides"]]
+                self.assertIn("intro", slide_ids)
+                self.assertIn("reservas", slide_ids)
+                self.assertNotIn("invitacion", slide_ids)
+
+            # Test group with Invitacion: must have intro and invitacion, NOT reservas
+            with patch("app.table.get_by_invitacion", return_value=[{"id": "2", "nivel": "Invitado", "montotarjeta": ""}]):
+                ctx_invitacion = get_guest_context("slug_invitacion")
+                self.assertEqual(ctx_invitacion["group_type"], "invitacion")
+                slide_ids = [s["id"] for s in ctx_invitacion["active_slides"]]
+                self.assertIn("intro", slide_ids)
+                self.assertIn("invitacion", slide_ids)
+                self.assertNotIn("reservas", slide_ids)
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ FIELDNAMES = [
 
 INVITATION_SALT = os.environ.get("INVITATION_SALT", "boda_celia_y_alfredo_2027_secret_salt")
 BASE_URL = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
+DEFAULT_RESERVA_MONTO = os.environ.get("DEFAULT_RESERVA_MONTO", "100000")
 CACHE_FILE_PATH = os.environ.get("CACHE_FILE_PATH", "/data/sheet_cache.json")
 LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/data/api.log")
 TTL_READ = int(os.environ.get("TTL_READ", 60))  # 10 minutes default
@@ -82,6 +83,21 @@ def generate_whatsapp_url(phone: str, url: str) -> str:
         return ""
     encoded_text = urllib.parse.quote_plus(url)
     return f"https://wa.me/{clean_phone}?text={encoded_text}"
+
+
+def get_group_target_type(guests: list[dict]) -> str:
+    """
+    Determines whether a group of guests is 'reserva' or 'invitacion'.
+    If at least one guest in the invitation has nivel=='reserva' or montotarjeta > 0, returns 'reserva'.
+    If all guests have no monto or 0 (and not reserva), returns 'invitacion'.
+    """
+    for g in (guests or []):
+        is_res = (str(g.get("nivel", "") or "").strip().lower() == "reserva")
+        raw_monto = re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))
+        has_monto = bool(raw_monto and int(raw_monto) > 0)
+        if is_res or has_monto:
+            return "reserva"
+    return "invitacion"
 
 
 def parse_and_validate_token(token: str, salt: str = None):
@@ -285,9 +301,20 @@ class GoogleSheetsTable:
         item["apellido"] = apellido_val
         item["dequien"] = str(rec.get("dequien", ""))
         item["tipo"] = str(rec.get("tipo", ""))
-        item["nivel"] = str(rec.get("nivel", ""))
+        nivel_val = str(rec.get("nivel", "") or "").strip()
+        monto_raw = str(rec.get("montotarjeta", "") or "").strip()
+        if nivel_val.lower() == "reserva":
+            clean_digits = re.sub(r"[^\d]", "", monto_raw)
+            if not clean_digits or int(clean_digits) == 0:
+                monto_val = DEFAULT_RESERVA_MONTO
+            else:
+                monto_val = monto_raw
+        else:
+            monto_val = monto_raw
+
+        item["nivel"] = nivel_val
         item["confirmacion"] = str(rec.get("confirmacion") or rec.get("asistencia", ""))
-        item["montotarjeta"] = str(rec.get("montotarjeta", ""))
+        item["montotarjeta"] = monto_val
         item["telefono"] = phone_val
 
         # Dietary preference mapping: general, vegetariano, vegano (single column pa/ap)
@@ -465,13 +492,14 @@ class GoogleSheetsTable:
                     inv_changed = (item.get("invitacion_id", "") != str(rec.get("invitacion_id", "") or "").strip())
                     url_changed = (item.get("url", "") != str(rec.get("url", "") or "").strip())
                     wa_changed = (item.get("whatsapp", "") != str(rec.get("whatsapp", "") or "").strip())
-                    if id_missing or inv_changed or url_changed or wa_changed:
+                    monto_changed = (item.get("montotarjeta", "") != str(rec.get("montotarjeta", "") or "").strip())
+                    if id_missing or inv_changed or url_changed or wa_changed or monto_changed:
                         range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                         missing_updates.append({"range": range_name, "values": [row]})
 
             if missing_updates:
                 ws.batch_update(missing_updates)
-                self._log_event("SYNC", "REMOTE", f"Repaired {len(missing_updates)} records missing IDs/URLs on Google Sheets")
+                self._log_event("SYNC", "REMOTE", f"Repaired {len(missing_updates)} records missing IDs/URLs/Montos on Google Sheets")
 
             new_cache = {
                 "last_remote_read": time.time(),

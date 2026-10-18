@@ -2971,13 +2971,25 @@
                                         <input type="number" class="form-input" id="slideDurationInput" min="0"
                                             step="500" value="7000">
                                     </div>
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="custom-checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                                        <input type="checkbox" id="slideHiddenCheck" style="width: 17px; height: 17px; cursor: pointer;">
-                                        <span style="font-size: 0.88rem; color: #e2e8f0; font-weight: 600;">Slide oculto</span>
-                                        <span class="sub-label-hint" style="color: #94a3b8; font-size: 0.78rem;">(Se habilita automáticamente cuando ningún invitado asiste)</span>
-                                    </label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 0;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="slideTargetSelect">
+                                            <span>Mostrar para</span>
+                                            <span class="sub-label-hint">Público / Audiencia</span>
+                                        </label>
+                                        <select id="slideTargetSelect" class="form-input" style="cursor: pointer;">
+                                            <option value="all">🌐 Todos (Reserva e Invitación)</option>
+                                            <option value="reserva">💳 Solo Reserva</option>
+                                            <option value="invitacion">💌 Solo Invitación</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <label class="custom-checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; margin-bottom: 6px;">
+                                            <input type="checkbox" id="slideHiddenCheck" style="width: 17px; height: 17px; cursor: pointer;">
+                                            <span style="font-size: 0.88rem; color: #e2e8f0; font-weight: 600;">Slide oculto</span>
+                                        </label>
+                                        <span class="sub-label-hint" style="color: #94a3b8; font-size: 0.78rem;">(Solo si nadie asiste)</span>
+                                    </div>
                                 </div>
                             </section>
 
@@ -4690,6 +4702,20 @@
                     chip.appendChild(hiddenIcon);
                 }
 
+                if (slide.target === 'reserva') {
+                    const resBadge = document.createElement('span');
+                    resBadge.style.cssText = 'font-size: 0.65rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px; font-weight: 600;';
+                    resBadge.textContent = '💳 Reserva';
+                    resBadge.title = 'Visible solo para tarjetas con Reserva';
+                    chip.appendChild(resBadge);
+                } else if (slide.target === 'invitacion') {
+                    const invBadge = document.createElement('span');
+                    invBadge.style.cssText = 'font-size: 0.65rem; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px; font-weight: 600;';
+                    invBadge.textContent = '💌 Invitación';
+                    invBadge.title = 'Visible solo para tarjetas de Invitación';
+                    chip.appendChild(invBadge);
+                }
+
                 if (isDirty) {
                     const dirtyDot = document.createElement('span');
                     dirtyDot.className = 'slide-chip-dirty-dot';
@@ -4773,6 +4799,18 @@
                 hiddenCheck.onchange = () => {
                     slide.hidden = hiddenCheck.checked;
                     renderSlideChips();
+                    updateDirtySlideChipsUI();
+                    updateLivePreview();
+                };
+            }
+
+            const targetSelect = document.getElementById('slideTargetSelect');
+            if (targetSelect) {
+                targetSelect.value = slide.target || 'all';
+                targetSelect.onchange = () => {
+                    slide.target = targetSelect.value;
+                    renderSlideChips();
+                    updateDirtySlideChipsUI();
                     updateLivePreview();
                 };
             }
