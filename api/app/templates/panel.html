@@ -1565,9 +1565,12 @@
 
         .preview-gizmo-container {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            width: 390px;
+            height: 845px;
+            transform: translate(-50%, -50%) scale(var(--elements-scale, 1));
+            transform-origin: center center;
             pointer-events: none;
             z-index: 50;
             overflow: visible;
@@ -1843,9 +1846,101 @@
             z-index: 50;
         }
 
+        .preview-ratio-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+            margin-bottom: 8px;
+            z-index: 55;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .preview-ratio-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .preview-ratio-btn:hover {
+            color: #f8fafc;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .preview-ratio-btn.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.6);
+            color: #ffd700;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+        }
+
+        .preview-ratio-btn.safe-zone-active {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: rgba(46, 204, 113, 0.6);
+            color: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.25);
+        }
+
+        .preview-safe-zone-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 390px;
+            height: 845px;
+            transform: translate(-50%, -50%) scale(var(--elements-scale, 1));
+            transform-origin: center center;
+            pointer-events: none;
+            z-index: 15;
+            display: none;
+        }
+
+        .preview-safe-zone-box {
+            position: absolute;
+            top: 86px;
+            bottom: 48px;
+            left: 16px;
+            right: 16px;
+            border: 1.5px dashed rgba(46, 204, 113, 0.75);
+            border-radius: 14px;
+            background: rgba(46, 204, 113, 0.05);
+            pointer-events: none;
+        }
+
+        .preview-safe-zone-badge {
+            position: absolute;
+            top: 92px;
+            left: 22px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #2ecc71;
+            background: rgba(10, 20, 15, 0.85);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
         .story-preview-viewport {
-            height: 98vh;
-            width: calc(98vh * 0.461538);
+            height: calc(98vh - 44px);
+            width: calc((98vh - 44px) * 0.461538);
             max-width: 100%;
             position: relative;
             border-radius: 28px;
@@ -1856,6 +1951,7 @@
             display: flex;
             justify-content: flex-start;
             align-items: flex-start;
+            transition: width 0.25s ease;
         }
 
         .story-preview-viewport .story-container {
@@ -2066,11 +2162,14 @@
         .story-preview-viewport .slide-elements-layer,
         .phone-elements-overlay {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            width: 390px;
+            height: 845px;
+            transform: translate(-50%, -50%) scale(var(--elements-scale, 1));
+            transform-origin: center center;
             pointer-events: none;
-            overflow: hidden;
+            overflow: visible;
             z-index: 10;
         }
 
@@ -3737,6 +3836,12 @@
 
             <!-- Right Column: Live Sticky 98vh Preview Mockup -->
             <div class="preview-sticky-wrap">
+                <div class="preview-ratio-bar">
+                    <button type="button" class="preview-ratio-btn active" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción iPhone (19.5:9 standard)">📱 iPhone</button>
+                    <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android alto (20:9)">📱 Android alto</button>
+                    <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9)">📱 Compacto</button>
+                    <button type="button" class="preview-ratio-btn" id="btnToggleSafeZone" onclick="toggleSafeZone()" title="Mostrar/ocultar guías de zona segura para textos">🛡️ Guías</button>
+                </div>
                 <div class="story-preview-viewport" id="storyPreviewViewport">
                     <div class="story-container" id="storyContainer">
                         <!-- Top Bar: Progress & Meta Header -->
@@ -3775,6 +3880,12 @@
                                 <!-- Alignment Crosshairs (Y=0, X=0) -->
                                 <div class="preview-center-guide-x" title="Línea central vertical (Y = 0)"></div>
                                 <div class="preview-center-guide-y" title="Línea central horizontal (X = 0)"></div>
+
+                                <!-- Safe Zone Guidelines Overlay (Toggleable) -->
+                                <div class="preview-safe-zone-overlay" id="previewSafeZoneOverlay">
+                                    <div class="preview-safe-zone-box"></div>
+                                    <span class="preview-safe-zone-badge">Zona Segura Móvil</span>
+                                </div>
 
                                 <!-- Dynamic Elements Layer -->
                                 <div class="slide-elements-layer" id="previewElementsLayer"></div>
@@ -6552,14 +6663,59 @@
             updateDirtySlideChipsUI();
         }
 
+        let currentPreviewDevice = 'iphone';
+        let isSafeZoneVisible = false;
+
+        function getPreviewDeviceBaseHeight() {
+            if (currentPreviewDevice === 'android') return 888;
+            if (currentPreviewDevice === 'compact') return 693;
+            return 845;
+        }
+
+        function setPreviewDevice(device) {
+            currentPreviewDevice = device;
+            ['btnRatioIphone', 'btnRatioAndroid', 'btnRatioCompact'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.classList.remove('active');
+            });
+            if (device === 'iphone') {
+                const b = document.getElementById('btnRatioIphone');
+                if (b) b.classList.add('active');
+            } else if (device === 'android') {
+                const b = document.getElementById('btnRatioAndroid');
+                if (b) b.classList.add('active');
+            } else if (device === 'compact') {
+                const b = document.getElementById('btnRatioCompact');
+                if (b) b.classList.add('active');
+            }
+            updateStoryPreviewScale();
+        }
+
+        function toggleSafeZone() {
+            isSafeZoneVisible = !isSafeZoneVisible;
+            const overlay = document.getElementById('previewSafeZoneOverlay');
+            const btn = document.getElementById('btnToggleSafeZone');
+            if (overlay) {
+                overlay.style.display = isSafeZoneVisible ? 'block' : 'none';
+            }
+            if (btn) {
+                btn.classList.toggle('safe-zone-active', isSafeZoneVisible);
+            }
+        }
+
         function updateStoryPreviewScale() {
             const viewport = document.getElementById('storyPreviewViewport');
             const container = document.getElementById('storyContainer');
             if (!viewport || !container) return;
+            const baseHeight = getPreviewDeviceBaseHeight();
             const h = viewport.clientHeight;
             if (h > 0) {
-                const scale = h / 845;
+                const scale = h / baseHeight;
                 container.style.setProperty('--story-preview-scale', scale.toFixed(5));
+                container.style.height = `${baseHeight}px`;
+                const elementsScale = Math.min(1, baseHeight / 845);
+                container.style.setProperty('--elements-scale', elementsScale.toFixed(4));
+                viewport.style.width = `${Math.round(390 * scale)}px`;
             }
         }
 
@@ -6851,10 +7007,10 @@
                     el.rotate = newRotZ;
                     updateTargetTransform();
                 } else if (dragMode === 'translate') {
-                    const viewport = document.getElementById('previewStorySlide');
-                    const vRect = viewport ? viewport.getBoundingClientRect() : { width: 360, height: 640 };
-                    const deltaXPercent = (dx / (vRect.width || 360)) * 100;
-                    const deltaYPercent = (dy / (vRect.height || 640)) * 100;
+                    const canvas = document.getElementById('previewElementsLayer') || document.getElementById('previewStorySlide');
+                    const cRect = canvas ? canvas.getBoundingClientRect() : { width: 390, height: 845 };
+                    const deltaXPercent = (dx / (cRect.width || 390)) * 100;
+                    const deltaYPercent = (dy / (cRect.height || 845)) * 100;
                     el.x = Math.max(-60, Math.min(60, Math.round(initX + deltaXPercent)));
                     el.y = Math.max(-60, Math.min(60, Math.round(initY + deltaYPercent)));
                     updateOverlayPosition();

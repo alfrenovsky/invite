@@ -269,14 +269,18 @@
             }
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.setProperty('--base-height', '845px');
+            container.style.setProperty('--elements-scale', '1');
             container.style.transformOrigin = 'center center';
         } else {
             // On Phone: Scale horizontally to fill 100% screen width
             const scale = window.innerWidth / 390;
             // Base height adapts to the exact usable browser viewport height (compensating for browser URL bars)
             const baseHeight = window.innerHeight / scale;
+            // Elements canvas remains 845px; if viewport is shorter (e.g. 16:9), scale down proportionally to avoid overflow
+            const elementsScale = Math.min(1, baseHeight / 845);
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.setProperty('--base-height', `${baseHeight.toFixed(1)}px`);
+            container.style.setProperty('--elements-scale', elementsScale.toFixed(4));
             container.style.transformOrigin = 'top center';
         }
     }

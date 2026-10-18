@@ -331,14 +331,17 @@
             z-index: 1;
             pointer-events: none;
         }
-        /* Dynamic Elements Layer */
+        /* Dynamic Elements Layer: Fixed 390x845 reference canvas locked to screen center */
         .slide-elements-layer {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            width: 390px;
+            height: 845px;
+            transform: translate(-50%, -50%) scale(var(--elements-scale, 1));
+            transform-origin: center center;
             pointer-events: none;
-            overflow: hidden;
+            overflow: visible;
             z-index: 10;
         }
 
