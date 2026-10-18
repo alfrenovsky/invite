@@ -293,6 +293,30 @@
             background: #000 !important;
         }
 
+        /* Ambient Blurred Background (fills 100% of slide area to replace black letterbox/pillarbox) */
+        .story-slide-blur-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            filter: blur(35px) brightness(0.60) saturate(1.2);
+            transform: scale(1.15);
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .story-slide-blur-bg[src=""],
+        .story-slide-blur-bg:not([src]) {
+            opacity: 0;
+        }
+
         .story-bg-layer-wrap {
             position: absolute;
             top: 0;
