@@ -110,15 +110,15 @@
 
 
         body.is-mobile-mode .stories-wrapper {
-            align-items: flex-end;
+            align-items: flex-start;
             justify-content: center;
-            background-color: #000;
+            background-color: var(--bg-dark);
         }
 
         body.is-mobile-mode .story-container {
             width: 390px;
-            height: 845px;
-            transform-origin: bottom center;
+            height: var(--base-height, 845px);
+            transform-origin: top center;
             touch-action: pan-y;
         }
 
@@ -295,9 +295,13 @@
 
         .story-bg-layer-wrap {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
+            bottom: 0;
+            top: auto;
+            left: 50%;
+            width: 390px;
+            height: 845px;
+            transform: translateX(-50%) scale(var(--canvas-scale, 1));
+            transform-origin: bottom center;
             overflow: hidden;
             z-index: 1;
             pointer-events: none;
@@ -333,15 +337,16 @@
             z-index: 1;
             pointer-events: none;
         }
-        /* Dynamic Elements Layer: Fixed 390x845 reference canvas locked to screen center */
+        /* Dynamic Elements Layer: Fixed 390x845 reference canvas locked to bottom center of slide */
         .slide-elements-layer {
             position: absolute;
-            top: 50%;
+            bottom: 0;
+            top: auto;
             left: 50%;
             width: 390px;
             height: 845px;
-            transform: translate(-50%, -50%) scale(var(--elements-scale, 1));
-            transform-origin: center center;
+            transform: translateX(-50%) scale(var(--canvas-scale, 1));
+            transform-origin: bottom center;
             pointer-events: none;
             overflow: visible;
             z-index: 10;
@@ -993,15 +998,16 @@
         }
 
         body.is-mobile-mode .story-slide {
+            background-color: #000;
             border-radius: 0;
             box-shadow: none;
             touch-action: pan-y;
         }
 
-        /* Header on mobile: anchored at top of screen, fills upper notch/status area on 20:9+ phones */
+        /* Header on mobile: anchored at top, fills upper notch/status area on all phones */
         body.is-mobile-mode .top-bar {
             position: absolute;
-            top: calc(-1 * var(--top-bar-offset, 0px));
+            top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
@@ -1013,13 +1019,13 @@
         }
 
 
-        /* Tap Zones: Navegación por toques en bordes laterales estrechos */
+        /* Tap Zones: Navegación por toques en bordes laterales estrictos de 52px */
         .tap-zone {
             display: block !important;
             position: absolute;
             top: 72px; /* Debajo de top-bar */
             bottom: 24px;
-            width: 14%; /* Solo bien al borde */
+            width: 52px; /* Strictly 52px */
             max-width: 52px;
             z-index: 350; /* Por encima del cuerpo del slide (300) pero detrás de botones, stickers y formularios (500+) */
             pointer-events: auto !important;

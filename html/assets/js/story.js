@@ -269,42 +269,22 @@
             }
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.setProperty('--base-height', '845px');
+            container.style.setProperty('--canvas-scale', '1');
             container.style.setProperty('--elements-scale', '1');
-            container.style.setProperty('--top-bar-offset', '0px');
             container.style.transformOrigin = 'center center';
         } else {
-            // Mobile: strictly maintain 390x845 (19.5:9) proportion
-            const targetRatio = 390 / 845;
-            const screenW = window.innerWidth;
-            const screenH = window.innerHeight;
-            const screenRatio = screenW / screenH;
+            // Mobile: Scale horizontally to 100% screen width, height adapts naturally
+            const scale = window.innerWidth / 390;
+            const baseHeight = window.innerHeight / scale;
+            const canvasScale = Math.min(1, baseHeight / 845);
+
+            container.style.setProperty('--scale', scale.toFixed(4));
+            container.style.setProperty('--base-height', `${baseHeight.toFixed(1)}px`);
+            container.style.setProperty('--canvas-scale', canvasScale.toFixed(4));
+            container.style.setProperty('--elements-scale', canvasScale.toFixed(4));
+            container.style.transformOrigin = 'top center';
             const wrapper = container.closest('.stories-wrapper') || document.querySelector('.stories-wrapper');
-
-            if (screenRatio < targetRatio) {
-                // Phone is taller than 19.5:9 (e.g. 20:9, 21:9):
-                // Scale to full width, anchor story to bottom, fill top with black bar, keep navigation bar at top
-                const scale = screenW / 390;
-                const renderedH = 845 * scale;
-                const extraH = Math.max(0, screenH - renderedH);
-                const topBarOffset = extraH / scale;
-
-                container.style.setProperty('--scale', scale.toFixed(4));
-                container.style.setProperty('--base-height', '845px');
-                container.style.setProperty('--elements-scale', '1');
-                container.style.setProperty('--top-bar-offset', `${topBarOffset.toFixed(1)}px`);
-                container.style.transformOrigin = 'bottom center';
-                if (wrapper) wrapper.style.alignItems = 'flex-end';
-            } else {
-                // Phone is shorter/wider than 19.5:9 (e.g. 16:9, iPhone SE):
-                // Scale to full height, center horizontally, fill sides with black bars
-                const scale = screenH / 845;
-                container.style.setProperty('--scale', scale.toFixed(4));
-                container.style.setProperty('--base-height', '845px');
-                container.style.setProperty('--elements-scale', '1');
-                container.style.setProperty('--top-bar-offset', '0px');
-                container.style.transformOrigin = 'center center';
-                if (wrapper) wrapper.style.alignItems = 'center';
-            }
+            if (wrapper) wrapper.style.alignItems = 'flex-start';
         }
     }
 
@@ -464,20 +444,7 @@
     if (btnDesktopPrev) btnDesktopPrev.addEventListener('click', () => prevSlide());
     if (btnDesktopNext) btnDesktopNext.addEventListener('click', () => nextSlide(true));
 
-    if (container) {
-        container.addEventListener('click', (e) => {
-            if (isSwiping || isPullingToRefresh || (Date.now() - lastSwipeTime < 300)) return;
-            if (isInteractiveElement(e.target)) return;
-
-            const rect = container.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            if (clickX < rect.width / 2) {
-                handleTap('prev');
-            } else {
-                handleTap('next');
-            }
-        });
-    }
+    // Tap navigation is strictly restricted to the 52px edge zones (tapLeft and tapRight)
 
     // ==============================================================
     // 🔄 Mobile Pull to Refresh & Horizontal Swipe Engine
