@@ -295,13 +295,13 @@
 
         .story-bg-layer-wrap {
             position: absolute;
-            bottom: 0;
-            top: auto;
+            top: 0;
+            bottom: auto;
             left: 50%;
             width: 390px;
             height: 845px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
-            transform-origin: bottom center;
+            transform-origin: top center;
             overflow: hidden;
             z-index: 1;
             pointer-events: none;
@@ -337,16 +337,16 @@
             z-index: 1;
             pointer-events: none;
         }
-        /* Dynamic Elements Layer: Fixed 390x845 reference canvas locked to bottom center of slide */
+        /* Dynamic Elements Layer: Fixed 390x845 reference canvas locked to top center of slide */
         .slide-elements-layer {
             position: absolute;
-            bottom: 0;
-            top: auto;
+            top: 0;
+            bottom: auto;
             left: 50%;
             width: 390px;
             height: 845px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
-            transform-origin: bottom center;
+            transform-origin: top center;
             pointer-events: none;
             overflow: visible;
             z-index: 10;
