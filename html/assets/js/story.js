@@ -424,8 +424,8 @@
     function isInteractiveElement(target) {
         if (!target) return false;
         if (target.closest('input, textarea, select, button, a, label, [role="button"], [contenteditable="true"]')) return true;
-        if (target.closest('.top-bar, .top-bar-btn, .progress-bar-slot, [data-copy-val]')) return true;
-        if (target.closest('.rsvp-guest-card, .rsvp-payment-card, .autosave-status, .upload-dropzone')) return true;
+        if (target.closest('.top-bar, .top-bar-btn, .progress-bar-slot, [data-copy-val], .toast')) return true;
+        if (target.closest('.rsvp-guest-card, .rsvp-payment-card, .upload-dropzone')) return true;
         return false;
     }
 
@@ -444,7 +444,27 @@
     if (btnDesktopPrev) btnDesktopPrev.addEventListener('click', () => prevSlide());
     if (btnDesktopNext) btnDesktopNext.addEventListener('click', () => nextSlide(true));
 
-    // Tap navigation is strictly restricted to the 52px edge zones (tapLeft and tapRight)
+    // Tap navigation on 52px edge zones (tapLeft, tapRight, and delegated container clicks on non-interactive areas)
+    if (container) {
+        container.addEventListener('click', (e) => {
+            if (isInteractiveElement(e.target)) return;
+
+            const rect = container.getBoundingClientRect();
+            if (!rect || rect.width <= 0) return;
+            const scale = rect.width / 390;
+            const normalizedX = (e.clientX - rect.left) / scale;
+            const normalizedY = (e.clientY - rect.top) / scale;
+
+            // Ignore taps in the top bar zone (< 72px)
+            if (normalizedY < 72) return;
+
+            if (normalizedX <= 52) {
+                handleTap('prev');
+            } else if (normalizedX >= (390 - 52)) {
+                handleTap('next');
+            }
+        });
+    }
 
     // ==============================================================
     // 🔄 Mobile Pull to Refresh & Horizontal Swipe Engine
