@@ -162,6 +162,8 @@ class GoogleSheetsTable:
                     cache = self._load_cache()
                     if self._has_expired_local(cache):
                         self.flush_local_to_remote()
+                    elif cache and cache.get("last_remote_read") and self._is_read_expired(cache):
+                        self.get_all()
             except Exception:
                 pass
             self._stop_watcher.wait(2.0)
