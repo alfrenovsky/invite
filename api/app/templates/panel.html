@@ -3964,13 +3964,17 @@
 
         function getComparableSlide(slide) {
             if (!slide) return null;
-            const copy = { ...slide };
+            const copy = JSON.parse(JSON.stringify(slide));
             delete copy._origId;
             const sorted = {};
             Object.keys(copy).sort().forEach(k => {
                 sorted[k] = copy[k];
             });
             return sorted;
+        }
+
+        function markSlideDirty(slideId) {
+            updateDirtySlideChipsUI();
         }
 
         function isSlideDirty(slideId) {
@@ -6486,9 +6490,56 @@
                             textDiv.style.transformStyle = 'preserve-3d';
                             textDiv.textContent = replacePreviewVariables(el.content || '');
 
-                            textDiv.onclick = (e) => {
+                            let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
+                            textDiv.onpointerdown = (e) => {
                                 e.stopPropagation();
-                                selectElementForEditing(el.id);
+                                startDragX = e.clientX;
+                                startDragY = e.clientY;
+                                initElX = el.x !== undefined ? el.x : 0;
+                                initElY = el.y !== undefined ? el.y : 0;
+                                hasDragged = false;
+
+                                const onMove = (me) => {
+                                    const dx = me.clientX - startDragX;
+                                    const dy = me.clientY - startDragY;
+                                    if (!hasDragged && Math.hypot(dx, dy) > 4) {
+                                        hasDragged = true;
+                                        if (selectedElementId !== el.id) {
+                                            selectElementForEditing(el.id);
+                                        }
+                                    }
+                                    if (hasDragged) {
+                                        me.preventDefault();
+                                        const canvas = document.getElementById('previewElementsLayer') || document.getElementById('previewStorySlide');
+                                        const cRect = canvas ? canvas.getBoundingClientRect() : { width: 390, height: 711 };
+                                        const deltaXPercent = (dx / (cRect.width || 390)) * 100;
+                                        const deltaYPercent = (dy / (cRect.height || 711)) * 100;
+                                        el.x = Math.max(-60, Math.min(60, Math.round(initElX + deltaXPercent)));
+                                        el.y = Math.max(-60, Math.min(60, Math.round(initElY + deltaYPercent)));
+                                        textDiv.style.left = `calc(50% + ${el.x}%)`;
+                                        textDiv.style.top = `calc(50% + ${el.y}%)`;
+                                        const gizmo = document.getElementById('activeGizmoOverlay');
+                                        if (gizmo) {
+                                            gizmo.style.left = `calc(50% + ${el.x}%)`;
+                                            gizmo.style.top = `calc(50% + ${el.y}%)`;
+                                        }
+                                        syncPanel3DControls(el);
+                                    }
+                                };
+
+                                const onUp = () => {
+                                    window.removeEventListener('pointermove', onMove);
+                                    window.removeEventListener('pointerup', onUp);
+                                    if (hasDragged) {
+                                        updateLivePreview();
+                                        updateDirtySlideChipsUI();
+                                    } else {
+                                        selectElementForEditing(el.id);
+                                    }
+                                };
+
+                                window.addEventListener('pointermove', onMove);
+                                window.addEventListener('pointerup', onUp);
                             };
 
                             overlay.appendChild(textDiv);
@@ -7058,7 +7109,8 @@
                     dragMode = null;
                     window.removeEventListener('pointermove', onPointerMove);
                     window.removeEventListener('pointerup', onPointerUp);
-                    if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                    updateLivePreview();
+                    updateDirtySlideChipsUI();
                 }
             }
 

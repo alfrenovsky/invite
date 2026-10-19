@@ -1119,13 +1119,13 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 mock_mark_opened.assert_called_once_with("familia_perez")
 
     def test_default_reserva_monto_assignment(self):
-        # 1. Reserva without monto -> defaults to DEFAULT_RESERVA_MONTO ("100000")
+        # 1. Reserva without monto -> defaults to DEFAULT_RESERVA_MONTO
         item1, _ = self.table._map_record_to_row({"nombre": "Lucas", "nivel": "Reserva", "montotarjeta": ""}, "2026-10-18")
-        self.assertEqual(item1["montotarjeta"], "100000")
+        self.assertEqual(item1["montotarjeta"], DEFAULT_RESERVA_MONTO)
 
-        # 2. Reserva with monto "0" -> defaults to DEFAULT_RESERVA_MONTO ("100000")
+        # 2. Reserva with monto "0" -> defaults to DEFAULT_RESERVA_MONTO
         item2, _ = self.table._map_record_to_row({"nombre": "Martin", "nivel": "reserva", "montotarjeta": "0"}, "2026-10-18")
-        self.assertEqual(item2["montotarjeta"], "100000")
+        self.assertEqual(item2["montotarjeta"], DEFAULT_RESERVA_MONTO)
 
         # 3. Reserva with existing custom monto -> keeps existing custom monto
         item3, _ = self.table._map_record_to_row({"nombre": "Sofia", "nivel": "Reserva", "montotarjeta": "50000"}, "2026-10-18")
