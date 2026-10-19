@@ -2063,35 +2063,6 @@
     }
 
     // ==============================================================
-    // 🎨 Ambient Video Blur Poster Extraction
-    // ==============================================================
-    function initAmbientVideoBlur() {
-        document.querySelectorAll('.story-slide').forEach(slide => {
-            const video = slide.querySelector('video.story-video-bg');
-            const blurImg = slide.querySelector('.story-slide-blur-bg');
-            if (video && blurImg && (!blurImg.src || blurImg.getAttribute('src') === '')) {
-                const capture = () => {
-                    try {
-                        if (video.videoWidth > 0 && video.videoHeight > 0) {
-                            const canvas = document.createElement('canvas');
-                            canvas.width = 64;
-                            canvas.height = 64;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(video, 0, 0, 64, 64);
-                            blurImg.src = canvas.toDataURL('image/jpeg', 0.6);
-                        }
-                    } catch (e) {}
-                };
-                if (video.readyState >= 2) {
-                    capture();
-                } else {
-                    video.addEventListener('loadeddata', capture, { once: true });
-                }
-            }
-        });
-    }
-
-    // ==============================================================
     // 🚀 Instant Initialization (SSR) + Background Real-Time Sync
     // ==============================================================
     function initStory() {
@@ -2106,7 +2077,6 @@
 
             buildProgressBars();
             bindInteractiveEvents();
-            initAmbientVideoBlur();
 
             const targetIdx = getTargetIndexFromHash();
             currentIndex = targetIdx;

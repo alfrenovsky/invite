@@ -18,7 +18,6 @@
      style="{% if is_hidden_slide and not all_rejected %}display: none;{% endif %}">
 
     {% if bg_url %}
-        <img class="story-slide-blur-bg" src="{{ '' if is_vid else bg_url }}" alt="" aria-hidden="true">
         <div class="story-bg-layer-wrap">
             {% if is_vid %}
                 <video class="story-video-bg story-bg-media" src="{{ bg_url }}" preload="auto" muted loop playsinline autoplay
