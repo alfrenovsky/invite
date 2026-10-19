@@ -261,14 +261,14 @@
         if (!container) return;
         if (isDesktop) {
             const targetHeight = Math.min(window.innerHeight * 0.98, 1664);
-            let scale = targetHeight / 845;
+            let scale = targetHeight / 711;
             // On PC when the window is narrow, scale proportionally down to fit horizontally
             const maxAllowedWidth = window.innerWidth * 0.96;
             if ((390 * scale) > maxAllowedWidth) {
                 scale = maxAllowedWidth / 390;
             }
             container.style.setProperty('--scale', scale.toFixed(4));
-            container.style.setProperty('--base-height', '845px');
+            container.style.setProperty('--base-height', '711px');
             container.style.setProperty('--canvas-scale', '1');
             container.style.setProperty('--elements-scale', '1');
             container.style.transformOrigin = 'center center';
@@ -276,7 +276,7 @@
             // Mobile: Scale horizontally to 100% screen width, height adapts naturally
             const scale = window.innerWidth / 390;
             const baseHeight = window.innerHeight / scale;
-            const canvasScale = Math.min(1, baseHeight / 845);
+            const canvasScale = Math.min(1, baseHeight / 711);
 
             container.style.setProperty('--scale', scale.toFixed(4));
             container.style.setProperty('--base-height', `${baseHeight.toFixed(1)}px`);

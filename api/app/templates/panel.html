@@ -1569,7 +1569,7 @@
             bottom: auto;
             left: 50%;
             width: 390px;
-            height: 845px;
+            height: 711px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
             transform-origin: top center;
             pointer-events: none;
@@ -1903,7 +1903,7 @@
             bottom: auto;
             left: 50%;
             width: 390px;
-            height: 845px;
+            height: 711px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
             transform-origin: top center;
             pointer-events: none;
@@ -1942,7 +1942,7 @@
 
         .story-preview-viewport {
             height: calc(98vh - 44px);
-            width: calc((98vh - 44px) * 0.461538);
+            width: calc((98vh - 44px) * 0.548523);
             max-width: 100%;
             position: relative;
             border-radius: 28px;
@@ -1958,7 +1958,7 @@
 
         .story-preview-viewport .story-container {
             width: 390px;
-            height: 845px;
+            height: 711px;
             position: absolute;
             top: 0;
             left: 0;
@@ -2100,7 +2100,7 @@
             bottom: auto;
             left: 50%;
             width: 390px;
-            height: 845px;
+            height: 711px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
             transform-origin: top center;
             overflow: hidden;
@@ -2172,7 +2172,7 @@
             bottom: auto;
             left: 50%;
             width: 390px;
-            height: 845px;
+            height: 711px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
             transform-origin: top center;
             pointer-events: none;
@@ -3844,9 +3844,9 @@
             <!-- Right Column: Live Sticky 98vh Preview Mockup -->
             <div class="preview-sticky-wrap">
                 <div class="preview-ratio-bar">
-                    <button type="button" class="preview-ratio-btn active" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción iPhone (19.5:9 standard)">📱 iPhone</button>
-                    <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android alto (20:9)">📱 Android alto</button>
-                    <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9)">📱 Compacto</button>
+                    <button type="button" class="preview-ratio-btn active" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción iPhone útil (1.824 - 390x711)">📱 iPhone</button>
+                    <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android útil (1.860 - 390x725)">📱 Android</button>
+                    <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9 - 390x693)">📱 Compacto</button>
                     <button type="button" class="preview-ratio-btn" id="btnToggleSafeZone" onclick="toggleSafeZone()" title="Mostrar/ocultar guías de zona segura para textos">🛡️ Guías</button>
                 </div>
                 <div class="story-preview-viewport" id="storyPreviewViewport">
@@ -6674,9 +6674,9 @@
         let isSafeZoneVisible = false;
 
         function getPreviewDeviceBaseHeight() {
-            if (currentPreviewDevice === 'android') return 888;
+            if (currentPreviewDevice === 'android') return 725;
             if (currentPreviewDevice === 'compact') return 693;
-            return 845;
+            return 711;
         }
 
         function setPreviewDevice(device) {
@@ -6718,34 +6718,34 @@
             if (h <= 0) return;
 
             if (currentPreviewDevice === 'android') {
-                // Tall phone: 20:9 (390 x 888) -> container is 888px high, top-bar at top 0, slide canvas at bottom 845px
-                const scale = h / 888;
+                // Real Android usable: ratio 1.860 (390 x 725) -> container is 725px, canvas 711px, solid black strip at bottom (~14px)
+                const scale = h / 725;
                 viewport.style.width = `${Math.round(390 * scale)}px`;
                 container.style.width = '390px';
-                container.style.height = '888px';
+                container.style.height = '725px';
                 container.style.top = '0px';
                 container.style.left = '0px';
                 container.style.setProperty('--story-preview-scale', scale.toFixed(5));
                 container.style.setProperty('--canvas-scale', '1');
                 container.style.setProperty('--elements-scale', '1');
             } else if (currentPreviewDevice === 'compact') {
-                // Short/wide phone: 16:9 (390 x 693) -> container is 693px high, canvas scales down, black bars on sides
+                // Short/wide phone: 16:9 (390 x 693) -> container is 693px high, canvas scales down slightly
                 const scale = h / 693;
                 viewport.style.width = `${Math.round(390 * scale)}px`;
                 container.style.width = '390px';
                 container.style.height = '693px';
                 container.style.top = '0px';
                 container.style.left = '0px';
-                const canvasScale = 693 / 845;
+                const canvasScale = 693 / 711;
                 container.style.setProperty('--story-preview-scale', scale.toFixed(5));
                 container.style.setProperty('--canvas-scale', canvasScale.toFixed(4));
                 container.style.setProperty('--elements-scale', canvasScale.toFixed(4));
             } else {
-                // Standard iPhone: 19.5:9 (390 x 845) -> exact fit
-                const scale = h / 845;
+                // Real iPhone usable: ratio 1.824 (390 x 711) -> exact fit, 0 bars
+                const scale = h / 711;
                 viewport.style.width = `${Math.round(390 * scale)}px`;
                 container.style.width = '390px';
-                container.style.height = '845px';
+                container.style.height = '711px';
                 container.style.top = '0px';
                 container.style.left = '0px';
                 container.style.setProperty('--story-preview-scale', scale.toFixed(5));
@@ -7043,9 +7043,9 @@
                     updateTargetTransform();
                 } else if (dragMode === 'translate') {
                     const canvas = document.getElementById('previewElementsLayer') || document.getElementById('previewStorySlide');
-                    const cRect = canvas ? canvas.getBoundingClientRect() : { width: 390, height: 845 };
+                    const cRect = canvas ? canvas.getBoundingClientRect() : { width: 390, height: 711 };
                     const deltaXPercent = (dx / (cRect.width || 390)) * 100;
-                    const deltaYPercent = (dy / (cRect.height || 845)) * 100;
+                    const deltaYPercent = (dy / (cRect.height || 711)) * 100;
                     el.x = Math.max(-60, Math.min(60, Math.round(initX + deltaXPercent)));
                     el.y = Math.max(-60, Math.min(60, Math.round(initY + deltaYPercent)));
                     updateOverlayPosition();

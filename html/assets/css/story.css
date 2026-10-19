@@ -31,7 +31,7 @@
             --danger: #e74c3c;
             --warning: #f39c12;
             --story-width: 390px;
-            --story-height: 845px;
+            --story-height: 711px;
             --font-titles: 'Syncopate', sans-serif;
             --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-main: var(--font-body);
@@ -97,7 +97,7 @@
 
         .story-container {
             width: 390px;
-            height: var(--base-height, 845px);
+            height: var(--base-height, 711px);
             position: relative;
             display: flex;
             flex-direction: column;
@@ -117,7 +117,7 @@
 
         body.is-mobile-mode .story-container {
             width: 390px;
-            height: var(--base-height, 845px);
+            height: var(--base-height, 711px);
             transform-origin: top center;
             touch-action: pan-y;
         }
@@ -299,7 +299,7 @@
             bottom: auto;
             left: 50%;
             width: 390px;
-            height: 845px;
+            height: 711px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
             transform-origin: top center;
             overflow: hidden;
@@ -337,14 +337,14 @@
             z-index: 1;
             pointer-events: none;
         }
-        /* Dynamic Elements Layer: Fixed 390x845 reference canvas locked to top center of slide */
+        /* Dynamic Elements Layer: Fixed 390x711 reference canvas locked to top center of slide */
         .slide-elements-layer {
             position: absolute;
             top: 0;
             bottom: auto;
             left: 50%;
             width: 390px;
-            height: 845px;
+            height: 711px;
             transform: translateX(-50%) scale(var(--canvas-scale, 1));
             transform-origin: top center;
             pointer-events: none;
