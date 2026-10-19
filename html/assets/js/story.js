@@ -1022,7 +1022,7 @@
     function getInvitationToken() {
         const container = document.getElementById('storyContainer');
         if (container && container.dataset.token) return container.dataset.token;
-        const match = window.location.pathname.match(/\/(?:i|invitacion)\/([^/]+)/);
+        const match = window.location.pathname.match(/(?:^\/(?:i|invitacion)\/|^\/)([^/]+)/);
         return match ? match[1] : '';
     }
 
@@ -1030,7 +1030,7 @@
         const token = getInvitationToken();
         if (!token) return;
         try {
-            fetch(`/i/${encodeURIComponent(token)}/flush`, {
+            fetch(`/${encodeURIComponent(token)}/flush`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 keepalive: true
@@ -1269,7 +1269,7 @@
             formData.append('file', file);
 
             try {
-                const res = await fetch(`/i/${encodeURIComponent(token)}/comprobante`, {
+                const res = await fetch(`/${encodeURIComponent(token)}/comprobante`, {
                     method: 'POST',
                     body: formData
                 });

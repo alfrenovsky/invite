@@ -98,7 +98,7 @@ All API routes are proxied through Nginx:
 | Method | Endpoint | Description | Auth / Parameters |
 |---|---|---|---|
 | `GET` | `/health` | API Healthcheck | Public |
-| `GET` | `/i/<token>` | Tamper-proof invitation story deck (SSR) or crawler OG preview | Public (`<invitacion_id>_<check_code>`) |
+| `GET` | `/<token>` (alias `/i/<token>`) | Tamper-proof invitation story deck (SSR) or crawler OG preview | Public (`<invitacion_id>_<check_code>`) |
 | `GET` | `/invitados` | Fetch all guest records | **API Key Required** (`X-API-Key` or `?api_key=`) |
 | `GET` | `/invitados/<id>` | Fetch guest by ID | Public (`record_id` path param) |
 | `POST` | `/invitados` | Create guest record(s) | **API Key Required** (Single JSON object or array) |

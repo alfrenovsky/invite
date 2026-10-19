@@ -66,7 +66,7 @@ def generate_invitation_url(invitacion_id: str, base_url: str = None, salt: str 
     base_url = (base_url or BASE_URL).rstrip("/")
     code = compute_check_code(invitacion_id, salt)
     normalized_id = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
-    return f"{base_url}/i/{normalized_id}_{code}"
+    return f"{base_url}/{normalized_id}_{code}"
 
 
 def clean_phone_number(phone: str) -> str:
@@ -349,7 +349,7 @@ class GoogleSheetsTable:
         url_is_valid = False
         if url_val and normalized_slug:
             token = url_val.rstrip("/").split("/")[-1]
-            if parse_and_validate_token(token) == normalized_slug:
+            if parse_and_validate_token(token) == normalized_slug and "/i/" not in url_val:
                 url_is_valid = True
 
         if inv_val and not url_is_valid:

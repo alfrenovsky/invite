@@ -5,7 +5,7 @@ import re
 import threading
 import urllib.parse
 import uuid
-from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory
+from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type
 import telegram_bot
@@ -618,6 +618,7 @@ def get_guest_context(validated_slug):
     return {
         "invitacion_id": validated_slug,
         "invitation_url": invitation_url,
+        "base_url": os.environ.get("BASE_URL", "https://nos.vamos.acas.ar").rstrip("/"),
         "guests": guests,
         "group_names": group_names,
         "names_count": names_count,
@@ -640,10 +641,20 @@ def get_guest_context(validated_slug):
 
 
 
+RESERVED_ROOT_PATHS = {
+    "panel", "invitados", "invitados-view", "health", "form",
+    "comprobantes", "telegram", "static", "assets", "favicon.ico", "favicon.svg"
+}
+
+
 @app.get("/")
+@app.get("/<token>")
 @app.get("/i/<token>")
 @app.get("/invitacion/<token>")
 def index_page(token=None):
+    if token and token.lower() in RESERVED_ROOT_PATHS:
+        abort(404)
+
     if not token:
         token = request.args.get("invitacion_id") or request.args.get("invitacion") or request.args.get("id") or request.args.get("token")
 
@@ -662,7 +673,7 @@ def index_page(token=None):
     ))
     if is_crawler:
         base_url = os.environ.get("BASE_URL", "https://nos.vamos.acas.ar")
-        full_invite_url = f"{base_url}/i/{token}"
+        full_invite_url = f"{base_url}/{token}"
 
         # Read strictly from local JSON cache (0 Google Sheets calls for crawlers)
         try:
@@ -705,6 +716,7 @@ def index_page(token=None):
     )
 
 
+@app.get("/<token>/slides")
 @app.get("/i/<token>/slides")
 @app.get("/invitacion/<token>/slides")
 def get_slides_manifest(token):
@@ -725,7 +737,7 @@ def get_slides_manifest(token):
                 "title": s.get("title", s["id"]),
                 "order": order,
                 "duration": s.get("duration", 7000),
-                "url": f"/i/{token}/slide/{s['id']}"
+                "url": f"/{token}/slide/{s['id']}"
             })
             order += 1
 
@@ -737,6 +749,7 @@ def get_slides_manifest(token):
     })
 
 
+@app.get("/<token>/slide/<slide_id>")
 @app.get("/i/<token>/slide/<slide_id>")
 @app.get("/invitacion/<token>/slide/<slide_id>")
 def get_single_slide(token, slide_id):
@@ -760,6 +773,7 @@ os.makedirs(COMPROBANTES_DIR, exist_ok=True)
 ALLOWED_COMPROBANTE_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
 
 
+@app.post("/<token>/comprobante")
 @app.post("/i/<token>/comprobante")
 @app.post("/invitacion/<token>/comprobante")
 def upload_comprobante(token):
@@ -806,6 +820,7 @@ def upload_comprobante(token):
     })
 
 
+@app.delete("/<token>/comprobante")
 @app.delete("/i/<token>/comprobante")
 @app.delete("/invitacion/<token>/comprobante")
 def delete_comprobante(token):
@@ -825,6 +840,7 @@ def serve_comprobante(filename):
     return send_from_directory(COMPROBANTES_DIR, filename)
 
 
+@app.post("/<token>/flush")
 @app.post("/i/<token>/flush")
 @app.post("/invitacion/<token>/flush")
 def flush_invitacion_cache(token):

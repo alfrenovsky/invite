@@ -166,7 +166,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(res[0]["apellido"], "Lopez")
         self.assertEqual(res[0]["pa_celiaco"], "si")
         self.assertEqual(len(res[0]["id"]), 8)
-        self.assertTrue(res[0]["url"].startswith(f"{BASE_URL}/i/amigos_"))
+        self.assertTrue(res[0]["url"].startswith(f"{BASE_URL}/amigos_"))
         self.assertTrue(res[0]["whatsapp"].startswith("https://wa.me/5491112345678?text="))
 
     def test_update_record_and_batch_flush(self):
@@ -242,7 +242,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         records, _ = self.table.ensure_ids()
         self.assertEqual(len(records[0]["id"]), 8)
-        self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/i/familia_perez_"))
+        self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/familia_perez_"))
         self.assertTrue(records[0]["whatsapp"].startswith("https://wa.me/5491198765432?text="))
 
     def test_slugify(self):
@@ -264,7 +264,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
         # Row 1: autofilled with "juan_perez"
         self.assertEqual(records[0]["invitacion_id"], "juan_perez")
         self.assertEqual(records[0]["invitacion"], "juan_perez")
-        self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/i/juan_perez_"))
+        self.assertTrue(records[0]["url"].startswith(f"{BASE_URL}/juan_perez_"))
         self.assertTrue(records[0]["whatsapp"].startswith("https://wa.me/5491198765432?text="))
 
         # Row 2: already had invitacion_id, preserved
@@ -272,7 +272,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         # Row 3: name only, autofilled with "singlename"
         self.assertEqual(records[2]["invitacion_id"], "singlename")
-        self.assertTrue(records[2]["url"].startswith(f"{BASE_URL}/i/singlename_"))
+        self.assertTrue(records[2]["url"].startswith(f"{BASE_URL}/singlename_"))
 
         # Row 4: empty name and surname, remains empty
         self.assertEqual(records[3]["invitacion_id"], "")
@@ -315,7 +315,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         base_url = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
         url = generate_invitation_url(inv_id)
-        self.assertEqual(url, f"{base_url}/i/familia_rodriguez_{code}")
+        self.assertEqual(url, f"{base_url}/familia_rodriguez_{code}")
 
         valid_slug = parse_and_validate_token(f"familia_rodriguez_{code}")
         self.assertEqual(valid_slug, "familia_rodriguez")
@@ -1051,7 +1051,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         records = self.table.get_all(force_remote=True)
         new_code = compute_check_code("familia_nueva")
-        expected_url = f"{BASE_URL}/i/familia_nueva_{new_code}"
+        expected_url = f"{BASE_URL}/familia_nueva_{new_code}"
 
         # URL and WhatsApp must be automatically updated to match familia_nueva
         self.assertEqual(records[0]["url"], expected_url)
@@ -1064,7 +1064,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
         # 2. Local update_record changing invitacion_id also regenerates url and whatsapp
         updated = self.table.update_record("rec001", {"invitacion_id": "amigos_futbol"})
         futbol_code = compute_check_code("amigos_futbol")
-        expected_futbol_url = f"{BASE_URL}/i/amigos_futbol_{futbol_code}"
+        expected_futbol_url = f"{BASE_URL}/amigos_futbol_{futbol_code}"
 
         self.assertEqual(updated["url"], expected_futbol_url)
         self.assertIn("amigos_futbol", updated["whatsapp"])
@@ -1183,6 +1183,34 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertIn("intro", slide_ids)
                 self.assertIn("invitacion", slide_ids)
                 self.assertNotIn("reservas", slide_ids)
+
+
+    def test_clean_token_route_without_i(self):
+        code = compute_check_code("familia_clean")
+        token = f"familia_clean_{code}"
+        sample_data = [
+            {"id": "c1", "nombre": "Ana", "apellido": "Lopez", "confirmacion": "si", "invitacion_id": "familia_clean"}
+        ]
+        from app import app
+        with patch.object(self.table, "get_all", return_value=sample_data):
+            with patch("app.table", self.table):
+                with app.test_client() as client:
+                    # 1. Clean route /<token> (200 OK)
+                    res_clean = client.get(f"/{token}")
+                    self.assertEqual(res_clean.status_code, 200)
+
+                    # 2. Legacy route /i/<token> (200 OK backward compatibility)
+                    res_legacy = client.get(f"/i/{token}")
+                    self.assertEqual(res_legacy.status_code, 200)
+
+                    # 3. Clean subroute /<token>/slides (200 OK)
+                    res_slides = client.get(f"/{token}/slides")
+                    self.assertEqual(res_slides.status_code, 200)
+                    self.assertTrue(res_slides.json["ok"])
+
+                    # 4. Reserved root path /panel is not captured as token
+                    res_panel = client.get("/panel")
+                    self.assertNotEqual(res_panel.status_code, 403)
 
 
 if __name__ == "__main__":
