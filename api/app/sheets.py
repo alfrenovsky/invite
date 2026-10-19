@@ -35,7 +35,7 @@ FIELDNAMES = [
 
 INVITATION_SALT = os.environ.get("INVITATION_SALT", "boda_celia_y_alfredo_2027_secret_salt")
 BASE_URL = os.environ.get("BASE_URL", "http://nos.vamos.acas.ar")
-DEFAULT_RESERVA_MONTO = os.environ.get("DEFAULT_RESERVA_MONTO", "100000")
+DEFAULT_RESERVA_MONTO = os.environ.get("DEFAULT_RESERVA_MONTO", "105000")
 CACHE_FILE_PATH = os.environ.get("CACHE_FILE_PATH", "/data/sheet_cache.json")
 LOG_FILE_PATH = os.environ.get("LOG_FILE_PATH", "/data/api.log")
 TTL_READ = int(os.environ.get("TTL_READ", 60))  # 10 minutes default
