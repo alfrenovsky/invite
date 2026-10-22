@@ -3256,86 +3256,58 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="element-body" id="bgElementBody" style="padding-top: 14px;">
-                                        <div class="form-group">
-                                            <label for="customBgTrigger">Fondo / Video</label>
-                                            <select id="slideBgSelect" class="form-select" style="display: none;">
-                                                <option value="">(Sin fondo / Default)</option>
-                                                {% for bg in backgrounds %}
-                                                <option value="{{ bg }}">{{ bg }}</option>
-                                                {% endfor %}
-                                            </select>
-                                            <div class="custom-bg-dropdown" id="customBgDropdown">
-                                                <button type="button" class="custom-bg-trigger" id="customBgTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleCustomBgDropdown()">
-                                                    <span class="custom-bg-trigger-thumb" id="customBgTriggerThumb">
-                                                        <span>🚫</span>
-                                                    </span>
-                                                    <span class="custom-bg-trigger-label" id="customBgTriggerLabel">(Sin fondo / Default)</span>
-                                                    <span class="custom-bg-chevron">▼</span>
-                                                </button>
-                                                <div class="custom-bg-menu" id="customBgMenu" role="listbox">
-                                                    <div class="custom-bg-item selected" data-value="" role="option" onclick="selectCustomBg(this.dataset.value)">
-                                                        <div class="custom-bg-item-thumb">
-                                                            <span>🚫</span>
-                                                        </div>
-                                                        <div class="custom-bg-item-text">
-                                                            <span class="custom-bg-item-name">(Sin fondo / Default)</span>
-                                                            <span class="custom-bg-item-type">Predeterminado</span>
-                                                        </div>
-                                                        <span class="custom-bg-check">✓</span>
-                                                    </div>
+                                    <div class="element-body" id="bgElementBody" style="padding-top: 12px;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                                <label for="customBgTrigger" style="font-size: 0.78rem; font-weight: 700; color: #e2e8f0; white-space: nowrap; margin-bottom: 0;">FONDO / VIDEO:</label>
+                                                <select id="slideBgSelect" class="form-select" style="display: none;">
+                                                    <option value="">(Sin fondo / Default)</option>
                                                     {% for bg in backgrounds %}
-                                                    {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-                                                    <div class="custom-bg-item" data-value="{{ bg }}" role="option" data-is-video="{{ 'true' if is_vid else 'false' }}" onclick="selectCustomBg(this.dataset.value)">
-                                                        <div class="custom-bg-item-thumb">
-                                                            {% if is_vid %}
-                                                            <video src="/assets/backgrounds/{{ bg }}" muted loop playsinline></video>
-                                                            <span class="custom-bg-vid-badge">🎬</span>
-                                                            {% else %}
-                                                            <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" loading="lazy">
-                                                            {% endif %}
-                                                        </div>
-                                                        <div class="custom-bg-item-text">
-                                                            <span class="custom-bg-item-name" title="{{ bg }}">{{ bg }}</span>
-                                                            <span class="custom-bg-item-type">{% if is_vid %}Video{% else %}Imagen{% endif %}</span>
-                                                        </div>
-                                                        <span class="custom-bg-check">✓</span>
-                                                    </div>
+                                                    <option value="{{ bg }}">{{ bg }}</option>
                                                     {% endfor %}
+                                                </select>
+                                                <div class="custom-bg-dropdown" id="customBgDropdown" style="flex: 1; min-width: 180px;">
+                                                    <button type="button" class="custom-bg-trigger" id="customBgTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleCustomBgDropdown()" style="padding: 6px 10px; font-size: 0.84rem; height: 36px;">
+                                                        <span class="custom-bg-trigger-thumb" id="customBgTriggerThumb">
+                                                            <span>🚫</span>
+                                                        </span>
+                                                        <span class="custom-bg-trigger-label" id="customBgTriggerLabel">(Sin fondo / Default)</span>
+                                                        <span class="custom-bg-chevron">▼</span>
+                                                    </button>
+                                                    <div class="custom-bg-menu" id="customBgMenu" role="listbox">
+                                                        <div class="custom-bg-item selected" data-value="" role="option" onclick="selectCustomBg(this.dataset.value)">
+                                                            <div class="custom-bg-item-thumb">
+                                                                <span>🚫</span>
+                                                            </div>
+                                                            <div class="custom-bg-item-text">
+                                                                <span class="custom-bg-item-name">(Sin fondo / Default)</span>
+                                                                <span class="custom-bg-item-type">Predeterminado</span>
+                                                            </div>
+                                                            <span class="custom-bg-check">✓</span>
+                                                        </div>
+                                                        {% for bg in backgrounds %}
+                                                        {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                                        <div class="custom-bg-item" data-value="{{ bg }}" role="option" data-is-video="{{ 'true' if is_vid else 'false' }}" onclick="selectCustomBg(this.dataset.value)">
+                                                            <div class="custom-bg-item-thumb">
+                                                                {% if is_vid %}
+                                                                <video src="/assets/backgrounds/{{ bg }}" muted loop playsinline></video>
+                                                                <span class="custom-bg-vid-badge">🎬</span>
+                                                                {% else %}
+                                                                <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" loading="lazy">
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="custom-bg-item-text">
+                                                                <span class="custom-bg-item-name" title="{{ bg }}">{{ bg }}</span>
+                                                                <span class="custom-bg-item-type">{% if is_vid %}Video{% else %}Imagen{% endif %}</span>
+                                                            </div>
+                                                            <span class="custom-bg-check">✓</span>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Background Position & Zoom Controls -->
-                                        <div class="form-group" id="slideBgSettingsGroup"
-                                            style="display: none; margin-top: 10px;">
-                                            <div
-                                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                                <label
-                                                    style="margin-bottom: 0; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">Ajustes
-                                                    de Fondo</label>
-                                                <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()"
-                                                    style="padding: 3px 8px; font-size: 0.72rem;"
-                                                    title="Restablecer zoom a 100% y centrar">↺ Centrar</button>
-                                            </div>
-                                            <div
-                                                style="display: grid; grid-template-columns: 1fr; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px;">
-                                                <!-- Zoom Slider -->
-                                                <div
-                                                    style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                                                    <span
-                                                        style="font-size: 0.78rem; color: var(--text-muted); min-width: 65px;">🔍
-                                                        Zoom</span>
-                                                    <input type="range" class="pos-range-slider" id="slideBgZoomSlider"
-                                                        min="100" max="300" step="5" value="100"
-                                                        oninput="onSlideBgZoomChange(this.value)">
-                                                    <span class="style-prop-badge" id="slideBgZoomBadge"
-                                                        style="min-width: 48px; text-align: center;">100%</span>
-                                                </div>
-                                                <div
-                                                    style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 2px;">
-                                                    💡 <em>Arrastrá el fondo en el teléfono para moverlo libremente.</em>
-                                                </div>
+                                                <button type="button" class="btn-ctrl" id="btnResetBgTransforms" onclick="resetSlideBgTransforms()" style="padding: 6px 12px; font-size: 0.78rem; height: 36px; white-space: nowrap; gap: 5px;" title="Restablecer zoom a 100% y centrar fondo (Arrastrá con mouse para mover, usá la rueda para zoom)">
+                                                    <span>↺ Reset</span>
+                                                </button>
                                             </div>
                                         </div>
 
