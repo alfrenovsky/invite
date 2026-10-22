@@ -1116,6 +1116,7 @@
             background: rgba(14, 20, 30, 0.95);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
+            padding: 10px 14px;
         }
 
         .slides-card-header {
@@ -1123,22 +1124,22 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .slides-chips-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 14px;
+            gap: 10px;
         }
 
         .slides-chips-container {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 5px;
             flex: 1;
             min-width: 0;
             padding: 2px 0;
@@ -1182,16 +1183,16 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--card-border);
             color: var(--text-muted);
-            padding: 7px 13px;
-            border-radius: 8px;
-            font-size: 0.82rem;
+            padding: 3px 7px;
+            border-radius: 6px;
+            font-size: 0.76rem;
             font-weight: 600;
             font-family: inherit;
             cursor: pointer;
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             transition: all 0.2s;
         }
 
@@ -1271,11 +1272,11 @@
         }
 
         .slide-chip-num {
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             color: var(--text-muted);
             background: rgba(0, 0, 0, 0.35);
-            padding: 1px 6px;
-            border-radius: 999px;
+            padding: 0 4px;
+            border-radius: 4px;
         }
 
         .slide-chip.active .slide-chip-num {
@@ -1285,8 +1286,15 @@
         .slide-manager-actions {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
+        }
+
+        .slide-manager-actions .btn-ctrl {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            gap: 4px;
+            border-radius: 6px;
         }
 
         .btn-ctrl {
@@ -3029,11 +3037,11 @@
                                 <div class="slide-manager-actions">
                                     <a href="/panel/slides/download" class="btn-ctrl" style="text-decoration: none;"
                                         title="Descargar archivo slides.json" download="slides.json">
-                                        <span>📥 Descargar JSON</span>
+                                        <span>📥 Descargar</span>
                                     </a>
                                     <button type="button" class="btn-ctrl" onclick="triggerUploadSlides()"
                                         title="Subir / importar archivo slides.json">
-                                        <span>📤 Subir JSON</span>
+                                        <span>📤 Subir</span>
                                     </button>
                                     <input type="file" id="uploadSlidesInput" accept=".json,application/json"
                                         style="display:none;" onchange="handleSlidesFileSelected(event)">
@@ -4867,14 +4875,14 @@
 
                 if (slide.target === 'reserva') {
                     const resBadge = document.createElement('span');
-                    resBadge.style.cssText = 'font-size: 0.65rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px; font-weight: 600;';
-                    resBadge.textContent = '💳 Reserva';
+                    resBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
+                    resBadge.textContent = '💳';
                     resBadge.title = 'Visible solo para tarjetas con Reserva';
                     chip.appendChild(resBadge);
                 } else if (slide.target === 'invitacion') {
                     const invBadge = document.createElement('span');
-                    invBadge.style.cssText = 'font-size: 0.65rem; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px; font-weight: 600;';
-                    invBadge.textContent = '💌 Invitación';
+                    invBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
+                    invBadge.textContent = '💌';
                     invBadge.title = 'Visible solo para tarjetas de Invitación';
                     chip.appendChild(invBadge);
                 }
