@@ -14,13 +14,15 @@
 {% set bg_zoom = ((slide.bg_zoom if (slide and slide.bg_zoom is defined and slide.bg_zoom is not none) else 100) / 100) %}
 
 {% set is_hidden_slide = slide and (slide.hidden or slide.oculto or slide.id == 'triste') %}
+{% set is_video_loop = slide and slide.video_loop %}
 <div class="story-slide" data-slide-id="{{ slide.id if slide else 'slide' }}" {% if is_hidden_slide %}data-hidden="true" id="tristeSlide"{% endif %} data-duration="{{ slide.duration if (slide and slide.duration is not none) else 7000 }}"
+     data-video-loop="{{ 'true' if is_video_loop else 'false' }}"
      style="{% if is_hidden_slide and not all_rejected %}display: none;{% endif %}">
 
     {% if bg_url %}
         <div class="story-bg-layer-wrap">
             {% if is_vid %}
-                <video class="story-video-bg story-bg-media" src="{{ bg_url }}" preload="auto" muted loop playsinline autoplay
+                <video class="story-video-bg story-bg-media" src="{{ bg_url }}" preload="auto" muted {% if is_video_loop %}loop{% endif %} playsinline autoplay
                        style="transform: translate(-50%, -50%) translate({{ bg_x }}%, {{ bg_y }}%) scale({{ bg_zoom }});"></video>
             {% else %}
                 <img class="story-bg-image story-bg-media" src="{{ bg_url }}" alt=""

@@ -84,7 +84,6 @@
     window.addEventListener('hashchange', () => {
         const targetIdx = getTargetIndexFromHash();
         if (targetIdx !== currentIndex) {
-            stopAutoplay();
             goToSlide(targetIdx);
         }
     });
@@ -101,7 +100,6 @@
             slot.innerHTML = '<div class="progress-bar-fill"></div>';
             slot.addEventListener('click', (e) => {
                 e.stopPropagation();
-                stopAutoplay();
                 goToSlide(idx);
             });
             progressContainer.appendChild(slot);
@@ -169,18 +167,19 @@
                 s.style.zIndex = '300';
                 s.style.cursor = 'default';
                 if (video) {
-                    const vType = getVideoType(video);
-                    if (vType === 'background') {
-                        video.loop = true;
+                    const hasLoopAttr = s.hasAttribute('data-video-loop');
+                    const isLoop = hasLoopAttr
+                        ? (s.getAttribute('data-video-loop') === 'true' || s.dataset.videoLoop === 'true')
+                        : (getVideoType(video) === 'background');
+
+                    video.loop = isLoop;
+                    if (isLoop) {
                         video.setAttribute('loop', 'loop');
                         video.onended = null;
-                    } else if (vType === 'single') {
-                        video.loop = false;
+                    } else {
                         video.removeAttribute('loop');
                         video.onended = () => {
-                            if (currentIndex === idx) {
-                                nextSlide();
-                            }
+                            video.pause();
                         };
                     }
                     if (!video.dataset.syncBound) {
@@ -300,33 +299,14 @@
         if (!slide) return;
 
         const video = slide.querySelector('video');
-        const vType = video ? getVideoType(video) : 'none';
 
-        // For videoSomething (single play): sync progress bar directly with video playback and auto-advance
-        if (vType === 'single' && video) {
-            function tickVideo() {
-                if (video.duration && !isNaN(video.duration) && video.duration > 0) {
-                    const percent = Math.min(100, (video.currentTime / video.duration) * 100);
-                    updateProgressDisplay(percent);
-                    if (video.currentTime >= video.duration - 0.08 || video.ended) {
-                        updateProgressDisplay(100);
-                        if (currentIndex === slides.indexOf(slide)) {
-                            nextSlide();
-                            return;
-                        }
-                    }
-                }
-                if (!video.ended && currentIndex === slides.indexOf(slide)) {
-                    animationFrameId = requestAnimationFrame(tickVideo);
-                }
-            }
-            animationFrameId = requestAnimationFrame(tickVideo);
-            return;
+        let duration = parseInt(slide.getAttribute('data-duration'), 10);
+        if (isNaN(duration)) {
+            duration = (video && video.duration && !isNaN(video.duration)) ? Math.round(video.duration * 1000) : 7000;
         }
 
-
-        const duration = parseInt(slide.getAttribute('data-duration'), 10) || 0;
-        if (!isAutoplay || duration <= 0) {
+        // Regla: solo debe detenerse el autoplay si el tiempo de la diapositiva es cero (o menor)
+        if (duration <= 0) {
             updateProgressDisplay(100);
             return;
         }
@@ -334,12 +314,15 @@
         slideStartTime = performance.now() - elapsedTimeOnSlide;
 
         function tick(now) {
-            if (!isAutoplay) {
-                updateProgressDisplay(100);
-                return;
-            }
+            // Si el video se detiene, no carga o está en buffering, se pausa el tiempo
+            const isVideoStalled = video && (
+                isBuffering ||
+                video.seeking ||
+                video.readyState < 2 ||
+                (video.paused && !video.ended)
+            );
 
-            if (!isPaused && !isBuffering) {
+            if (!isPaused && !isBuffering && !isVideoStalled) {
                 elapsedTimeOnSlide = now - slideStartTime;
             } else {
                 slideStartTime = now - elapsedTimeOnSlide;
@@ -385,14 +368,11 @@
     }
 
     function stopAutoplay() {
-        if (!isAutoplay) return;
-        isAutoplay = false;
         clearTimers();
         updateProgressDisplay(100);
     }
 
     function nextSlide(fromUser = false) {
-        if (fromUser) stopAutoplay();
         if (currentIndex < slides.length - 1) {
             goToSlide(currentIndex + 1);
         } else {
@@ -401,7 +381,6 @@
     }
 
     function prevSlide() {
-        stopAutoplay();
         if (currentIndex > 0) {
             goToSlide(currentIndex - 1);
         } else {
@@ -481,12 +460,26 @@
     let touchStartTime = 0;
 
     function onHoldStart() {
-        holdTimeout = setTimeout(() => { isPaused = true; }, 200);
+        holdTimeout = setTimeout(() => {
+            isPaused = true;
+            const curSlide = slides[currentIndex];
+            const curVid = curSlide ? curSlide.querySelector('video') : null;
+            if (curVid && !curVid.paused) {
+                curVid.pause();
+                curVid.dataset.pausedByHold = 'true';
+            }
+        }, 200);
     }
 
     function onHoldEnd() {
         if (holdTimeout) clearTimeout(holdTimeout);
         isPaused = false;
+        const curSlide = slides[currentIndex];
+        const curVid = curSlide ? curSlide.querySelector('video') : null;
+        if (curVid && curVid.dataset.pausedByHold === 'true') {
+            delete curVid.dataset.pausedByHold;
+            curVid.play().catch(() => {});
+        }
     }
 
     if (container) {
@@ -1306,7 +1299,6 @@
                     rsvpIdx = slides.findIndex(s => s.querySelector('.rsvp-form-container'));
                 }
                 if (rsvpIdx !== -1) {
-                    stopAutoplay();
                     goToSlide(rsvpIdx);
                 }
             };
@@ -1317,7 +1309,6 @@
             s.onclick = (e) => {
                 if (idx !== currentIndex) {
                     e.stopPropagation();
-                    stopAutoplay();
                     goToSlide(idx);
                 }
             };
@@ -1724,7 +1715,6 @@
                         // Automatically jump to the enabled hidden slide (e.g. Gato Triste)
                         const targetIdx = slides.findIndex(s => s.getAttribute('data-hidden') === 'true' || s.getAttribute('data-slide-id') === 'triste');
                         if (targetIdx !== -1) {
-                            stopAutoplay();
                             goToSlide(targetIdx);
                         }
                     } else {
@@ -1879,7 +1869,6 @@
 
                         const targetIdx = slides.findIndex(s => s.getAttribute('data-hidden') === 'true' || s.getAttribute('data-slide-id') === 'triste');
                         if (targetIdx !== -1) {
-                            stopAutoplay();
                             goToSlide(targetIdx);
                         }
                     } else {
