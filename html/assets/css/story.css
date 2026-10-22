@@ -364,6 +364,10 @@
             transform-origin: center center;
         }
 
+        .slide-el.align-left { text-align: left; }
+        .slide-el.align-center { text-align: center; }
+        .slide-el.align-right { text-align: right; }
+
         .slide-el-title {
             font-family: var(--el-title-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-title-weight, 800);
