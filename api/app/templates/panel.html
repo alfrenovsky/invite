@@ -375,6 +375,15 @@
             box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.25);
         }
 
+        textarea.form-input.el-text-content {
+            field-sizing: content;
+            min-height: 52px;
+            overflow-y: hidden;
+            resize: none;
+            line-height: 1.45;
+            box-sizing: border-box;
+        }
+
         .form-input[type="date"],
         .form-input[type="time"] {
             color-scheme: dark;
@@ -5054,6 +5063,13 @@
             }
         }
 
+        function autoResizeTextarea(ta) {
+            if (!ta) return;
+            ta.style.height = 'auto';
+            const h = Math.max(52, ta.scrollHeight);
+            ta.style.height = (h + 4) + 'px';
+        }
+
         function updateAllCardsCollapseUI() {
             const slide = getCurrentSlide();
             // Background card
@@ -5074,6 +5090,10 @@
                         card.classList.toggle('collapsed', isCollapsed);
                         const icon = card.querySelector('.element-collapse-icon');
                         if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
+                        if (!isCollapsed) {
+                            const ta = card.querySelector('textarea.el-text-content');
+                            if (ta) requestAnimationFrame(() => autoResizeTextarea(ta));
+                        }
                     }
                 });
             }
@@ -5693,8 +5713,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: baseline;">
                         <label>Contenido del Texto</label>
                         <div style="display: flex; gap: 8px;">
-                            <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input'));">Insertar {name}</span>
-                            <span style="font-size: 0.72rem; color: #34d399; cursor: pointer;" title="Hacé clic para insertar {value}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {value}'; ta.dispatchEvent(new Event('input'));">Insertar {value}</span>
+                            <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input')); autoResizeTextarea(ta);">Insertar {name}</span>
+                            <span style="font-size: 0.72rem; color: #34d399; cursor: pointer;" title="Hacé clic para insertar {value}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {value}'; ta.dispatchEvent(new Event('input')); autoResizeTextarea(ta);">Insertar {value}</span>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
@@ -5716,9 +5736,11 @@
                     const textarea = textGroup.querySelector('textarea');
                     textarea.oninput = (e) => {
                         el.content = e.target.value;
+                        autoResizeTextarea(textarea);
                         updateLivePreview();
                         updateElementCardHeader(el, idx);
                     };
+                    requestAnimationFrame(() => autoResizeTextarea(textarea));
                     body.appendChild(textGroup);
 
                     // Style selector: Title, Tag, Body
