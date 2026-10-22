@@ -1297,6 +1297,57 @@
             border-radius: 6px;
         }
 
+        /* Slide Target Segmented Buttons */
+        .slide-target-group {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .btn-target-opt {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .btn-target-opt:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-target-opt.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.5);
+            color: #ffd978;
+        }
+
+        .btn-target-opt[data-target="invitacion"].active {
+            background: rgba(59, 130, 246, 0.22);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+        }
+
+        .btn-target-opt[data-target="reserva"].active {
+            background: rgba(16, 185, 129, 0.22);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+        }
+
         .btn-ctrl {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--card-border);
@@ -3081,48 +3132,61 @@
                         <div class="slides-scroll-container">
                             <!-- Slide Basic Settings -->
                             <section class="panel-card">
-                                <h3 class="section-title" style="margin-bottom: 14px;">
+                                <h3 class="section-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                     <span>Configuración del Slide</span>
-                                    <span class="count" id="activeSlideBadgeId"></span>
+                                    <span id="activeSlideBadgeId" style="font-size: inherit; font-weight: 600; color: #d4af37; font-family: monospace;"></span>
                                 </h3>
 
-                                <div
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-                                    <div class="form-group">
-                                        <label for="slideIdInput">ID / Slug del Slide</label>
+                                <!-- Line 1: ID, Duración, and Video Duración / Sync in one row -->
+                                <div style="display: flex; align-items: flex-end; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                                    <div class="form-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                        <label for="slideIdInput" style="font-size: 0.78rem;">ID / Slug</label>
                                         <input type="text" class="form-input" id="slideIdInput"
-                                            placeholder="ej. portada, fecha, lugar" spellcheck="false" autocomplete="off">
+                                            placeholder="ej. portada, fecha, lugar" spellcheck="false" autocomplete="off"
+                                            style="padding: 6px 10px; font-size: 0.82rem; height: 34px;">
                                     </div>
-                                    <div class="form-group">
-                                        <label for="slideDurationInput">
+                                    <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
+                                        <label for="slideDurationInput" style="font-size: 0.78rem;">
                                             <span>Duración (ms)</span>
                                             <span class="sub-label-hint">0 = sin auto-avance</span>
                                         </label>
                                         <input type="number" class="form-input" id="slideDurationInput" min="0"
-                                            step="500" value="7000">
-                                        <div id="slideVideoDurationBadge" style="display: none; margin-top: 6px; font-size: 0.76rem; color: #38bdf8; align-items: center; justify-content: space-between; background: rgba(56, 189, 248, 0.08); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2);">
-                                            <span>🎬 Video: <strong id="slideVideoDurationText">--</strong></span>
+                                            step="500" value="7000" style="padding: 6px 10px; font-size: 0.82rem; height: 34px;">
+                                    </div>
+                                    <div class="form-group" id="slideVideoDurationCol" style="flex: 1.2; min-width: 170px; margin-bottom: 0;">
+                                        <label style="font-size: 0.78rem;">Video</label>
+                                        <div id="slideVideoDurationBadge" style="display: none; height: 34px; align-items: center; justify-content: space-between; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; color: #38bdf8;">
+                                            <span>🎬 <strong id="slideVideoDurationText">--</strong></span>
                                             <button type="button" class="btn-ctrl" id="btnSyncVideoDuration" onclick="syncVideoDurationToSlide()" style="padding: 2px 7px; font-size: 0.70rem; background: #0284c7; color: #fff; border: none; border-radius: 4px; cursor: pointer;" title="Ajustar duración del slide a la del video">⚡ Sincronizar</button>
                                         </div>
+                                        <div id="slideVideoDurationEmpty" style="display: flex; height: 34px; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; color: var(--text-muted);">
+                                            <span>(Sin video)</span>
+                                        </div>
                                     </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 0;">
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label for="slideTargetSelect">
-                                            <span>Mostrar para</span>
-                                            <span class="sub-label-hint">Público / Audiencia</span>
-                                        </label>
-                                        <select id="slideTargetSelect" class="form-input" style="cursor: pointer;">
-                                            <option value="all">🌐 Todos (Reserva e Invitación)</option>
-                                            <option value="reserva">💳 Solo Reserva</option>
-                                            <option value="invitacion">💌 Solo Invitación</option>
-                                        </select>
+                                </div>
+
+                                <!-- Line 2: 3 target buttons on left, hidden checkbox on right -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">Mostrar para:</span>
+                                        <div class="slide-target-group">
+                                            <button type="button" class="btn-target-opt active" data-target="all" onclick="setSlideTarget('all')" title="Visible para todos">
+                                                <span>🌐 Para todos</span>
+                                            </button>
+                                            <button type="button" class="btn-target-opt" data-target="invitacion" onclick="setSlideTarget('invitacion')" title="Visible solo para tarjetas de Invitación">
+                                                <span>💌 Solo invitados</span>
+                                            </button>
+                                            <button type="button" class="btn-target-opt" data-target="reserva" onclick="setSlideTarget('reserva')" title="Visible solo para tarjetas con Reserva">
+                                                <span>💳 Reserva</span>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" id="slideTargetSelect" value="all">
                                     </div>
-                                    <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end;">
-                                        <label class="custom-checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; margin-bottom: 6px;">
-                                            <input type="checkbox" id="slideHiddenCheck" style="width: 17px; height: 17px; cursor: pointer;">
-                                            <span style="font-size: 0.88rem; color: #e2e8f0; font-weight: 600;">Slide oculto</span>
+                                    <div>
+                                        <label class="custom-checkbox-label" style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; user-select: none;">
+                                            <input type="checkbox" id="slideHiddenCheck" style="width: 16px; height: 16px; cursor: pointer;">
+                                            <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 500;">Oculto salvo que nadie asista</span>
                                         </label>
-                                        <span class="sub-label-hint" style="color: #94a3b8; font-size: 0.78rem;">(Solo si nadie asiste)</span>
                                     </div>
                                 </div>
                             </section>
@@ -4917,6 +4981,25 @@
             updateDirtySlideChipsUI();
         }
 
+        function setSlideTarget(target) {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+            slide.target = target;
+            updateSlideTargetUI(target);
+            renderSlideChips();
+            updateDirtySlideChipsUI();
+            updateLivePreview();
+        }
+
+        function updateSlideTargetUI(target) {
+            const val = target || 'all';
+            document.querySelectorAll('.btn-target-opt').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-target') === val);
+            });
+            const targetSelect = document.getElementById('slideTargetSelect');
+            if (targetSelect) targetSelect.value = val;
+        }
+
         function selectSlide(slideId) {
             deselectElement();
             currentSlideId = slideId;
@@ -4975,16 +5058,7 @@
                 };
             }
 
-            const targetSelect = document.getElementById('slideTargetSelect');
-            if (targetSelect) {
-                targetSelect.value = slide.target || 'all';
-                targetSelect.onchange = () => {
-                    slide.target = targetSelect.value;
-                    renderSlideChips();
-                    updateDirtySlideChipsUI();
-                    updateLivePreview();
-                };
-            }
+            updateSlideTargetUI(slide.target || 'all');
 
             const durationInput = document.getElementById('slideDurationInput');
             if (durationInput) {
@@ -8075,11 +8149,13 @@
             const isVid = slide && slide.background && isVideoFile(slide.background);
             const videoControls = document.getElementById('slideVideoControlsGroup');
             const videoDurationBadge = document.getElementById('slideVideoDurationBadge');
+            const videoDurationEmpty = document.getElementById('slideVideoDurationEmpty');
             const loopCheck = document.getElementById('slideVideoLoopCheck');
 
             if (!isVid) {
                 if (videoControls) videoControls.style.display = 'none';
                 if (videoDurationBadge) videoDurationBadge.style.display = 'none';
+                if (videoDurationEmpty) videoDurationEmpty.style.display = 'flex';
                 return;
             }
 
@@ -8097,8 +8173,10 @@
                     if (textEl) textEl.textContent = text;
                     if (tagEl) tagEl.textContent = `⏱️ ${secFormatted}`;
                     if (videoDurationBadge) videoDurationBadge.style.display = 'flex';
+                    if (videoDurationEmpty) videoDurationEmpty.style.display = 'none';
                 } else {
                     if (videoDurationBadge) videoDurationBadge.style.display = 'none';
+                    if (videoDurationEmpty) videoDurationEmpty.style.display = 'flex';
                 }
             });
         }
