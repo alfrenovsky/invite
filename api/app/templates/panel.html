@@ -3305,30 +3305,13 @@
                                                         {% endfor %}
                                                     </div>
                                                 </div>
+                                                <label id="slideVideoLoopWrap" class="custom-checkbox-label" style="display: none; align-items: center; gap: 6px; cursor: pointer; user-select: none; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 0 10px; height: 36px; white-space: nowrap;" title="Reproducir video en bucle continuo">
+                                                    <input type="checkbox" id="slideVideoLoopCheck" onchange="onSlideVideoLoopChange(this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+                                                    <span style="font-size: 0.78rem; color: #38bdf8; font-weight: 600;">Loop</span>
+                                                </label>
                                                 <button type="button" class="btn-ctrl" id="btnResetBgTransforms" onclick="resetSlideBgTransforms()" style="padding: 6px 12px; font-size: 0.78rem; height: 36px; white-space: nowrap; gap: 5px;" title="Restablecer zoom a 100% y centrar fondo (Arrastrá con mouse para mover, usá la rueda para zoom)">
                                                     <span>↺ Reset</span>
                                                 </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Video Loop & Controls Group -->
-                                        <div class="form-group" id="slideVideoControlsGroup"
-                                            style="display: none; margin-top: 10px; background: rgba(56, 189, 248, 0.04); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 8px; padding: 10px;">
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                                <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
-                                                    🎬 Ajustes de Video
-                                                </span>
-                                                <span id="slideVideoDurationTag" style="font-size: 0.72rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 7px; border-radius: 4px; font-weight: 600;">--</span>
-                                            </div>
-                                            <div style="margin-top: 6px;">
-                                                <label class="custom-checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                                                    <input type="checkbox" id="slideVideoLoopCheck" onchange="onSlideVideoLoopChange(this.checked)" style="width: 17px; height: 17px; cursor: pointer;">
-                                                    <span style="font-size: 0.85rem; color: #e2e8f0; font-weight: 600;">🔄 Reproducir en bucle (Loop)</span>
-                                                </label>
-                                                <div style="font-size: 0.72rem; color: #94a3b8; margin-left: 25px; margin-top: 3px; line-height: 1.3;">
-                                                    <strong style="color: #cbd5e1;">Con loop:</strong> el video se repite continuamente.<br>
-                                                    <strong style="color: #cbd5e1;">Sin loop:</strong> se reproduce una vez y queda quieto en el último fotograma.
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -8119,19 +8102,19 @@
         function updateVideoSettingsUI(slide) {
             if (!slide) slide = getCurrentSlide();
             const isVid = slide && slide.background && isVideoFile(slide.background);
-            const videoControls = document.getElementById('slideVideoControlsGroup');
             const videoDurationBadge = document.getElementById('slideVideoDurationBadge');
             const videoDurationEmpty = document.getElementById('slideVideoDurationEmpty');
+            const loopWrap = document.getElementById('slideVideoLoopWrap');
             const loopCheck = document.getElementById('slideVideoLoopCheck');
 
             if (!isVid) {
-                if (videoControls) videoControls.style.display = 'none';
+                if (loopWrap) loopWrap.style.display = 'none';
                 if (videoDurationBadge) videoDurationBadge.style.display = 'none';
                 if (videoDurationEmpty) videoDurationEmpty.style.display = 'flex';
                 return;
             }
 
-            if (videoControls) videoControls.style.display = 'block';
+            if (loopWrap) loopWrap.style.display = 'inline-flex';
             if (loopCheck) {
                 loopCheck.checked = !!slide.video_loop;
             }
