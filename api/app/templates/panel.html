@@ -3485,8 +3485,8 @@
                                         <span>📥 Descargar</span>
                                     </a>
                                     <button type="button" class="btn-ctrl" onclick="triggerUploadSlides()"
-                                        title="Subir / importar archivo slides.json">
-                                        <span>📤 Subir</span>
+                                        title="Cargar / importar archivo slides.json">
+                                        <span>📤 Cargar</span>
                                     </button>
                                     <input type="file" id="uploadSlidesInput" accept=".json,application/json"
                                         style="display:none;" onchange="handleSlidesFileSelected(event)">
@@ -3838,8 +3838,8 @@
                                             <span>📥 Descargar JSON</span>
                                         </a>
                                         <button type="button" class="btn-ctrl" onclick="triggerUploadStyles()"
-                                            title="Subir / importar archivo styles.json">
-                                            <span>📤 Subir JSON</span>
+                                            title="Cargar / importar archivo styles.json">
+                                            <span>📤 Cargar JSON</span>
                                         </button>
                                         <input type="file" id="uploadStylesInput" accept=".json,application/json"
                                             style="display:none;" onchange="handleStylesFileSelected(event)">
@@ -5328,7 +5328,7 @@
                     alert('Error al importar slides: ' + (data.error || 'Error desconocido'));
                 }
             } catch (err) {
-                alert('Error al leer o subir el archivo: ' + err.message);
+                alert('Error al leer o cargar el archivo: ' + err.message);
             }
         }
 
@@ -5381,7 +5381,7 @@
                     alert('Error al importar estilos: ' + (data.error || 'Error desconocido'));
                 }
             } catch (err) {
-                alert('Error al leer o subir el archivo: ' + err.message);
+                alert('Error al leer o cargar el archivo: ' + err.message);
             }
         }
 
