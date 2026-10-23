@@ -1148,8 +1148,16 @@
         .slides-save-wrap {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
+        }
+
+        .btn-history {
+            font-size: 1.05rem;
+            padding: 6px 10px;
+            line-height: 1;
+            min-width: 34px;
+            justify-content: center;
         }
 
         .slides-scroll-container {
@@ -3447,6 +3455,14 @@
                                 </div>
                                 <div class="slides-save-wrap">
                                     <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
+                                    <button type="button" class="btn-ctrl btn-history" id="btnUndo"
+                                        onclick="undoAction()" title="Deshacer (Ctrl+Z)" disabled>
+                                        <span>↩</span>
+                                    </button>
+                                    <button type="button" class="btn-ctrl btn-history" id="btnRedo"
+                                        onclick="redoAction()" title="Rehacer (Ctrl+Y)" disabled>
+                                        <span>↪</span>
+                                    </button>
                                     <button type="button" class="btn-save-slide" id="btnSaveActiveSlide"
                                         onclick="saveActiveSlide()" title="Guardar cambios del slide activo">
                                         <span>💾 Guardar</span>
@@ -4412,6 +4428,176 @@
                 toast.style.display = 'none';
             }, 3000);
         }
+
+        // -------------------------------------------------------------
+        // UNDO / REDO HISTORY ENGINE (Ctrl+Z / Ctrl+Y)
+        // -------------------------------------------------------------
+        const undoStack = [];
+        const redoStack = [];
+        const MAX_HISTORY = 50;
+        let isHistoryAction = false;
+
+        function getHistorySnapshot() {
+            return {
+                slidesData: JSON.parse(JSON.stringify(slidesData)),
+                currentSlideId: currentSlideId,
+                selectedElementId: selectedElementId
+            };
+        }
+
+        function updateUndoRedoUI() {
+            const btnUndo = document.getElementById('btnUndo');
+            const btnRedo = document.getElementById('btnRedo');
+            if (btnUndo) {
+                btnUndo.disabled = undoStack.length === 0;
+                btnUndo.title = undoStack.length > 0 ? `Deshacer (${undoStack.length}) [Ctrl+Z]` : 'Deshacer (Ctrl+Z)';
+            }
+            if (btnRedo) {
+                btnRedo.disabled = redoStack.length === 0;
+                btnRedo.title = redoStack.length > 0 ? `Rehacer (${redoStack.length}) [Ctrl+Y]` : 'Rehacer (Ctrl+Y)';
+            }
+        }
+
+        function recordHistorySnapshot(customSnapshot = null) {
+            if (isHistoryAction) return;
+            const snap = customSnapshot || getHistorySnapshot();
+            undoStack.push(snap);
+            if (undoStack.length > MAX_HISTORY) {
+                undoStack.shift();
+            }
+            redoStack.length = 0;
+            updateUndoRedoUI();
+        }
+
+        function undoAction() {
+            if (undoStack.length === 0) return;
+            isHistoryAction = true;
+            try {
+                const currentSnap = getHistorySnapshot();
+                redoStack.push(currentSnap);
+                const prevSnap = undoStack.pop();
+
+                slidesData = JSON.parse(JSON.stringify(prevSnap.slidesData));
+                const targetSlideId = slidesData.some(s => s.id === prevSnap.currentSlideId)
+                    ? prevSnap.currentSlideId
+                    : (slidesData[0] ? slidesData[0].id : null);
+                currentSlideId = targetSlideId;
+
+                renderSlideChips();
+                loadSlideIntoForm();
+
+                const currSlide = getCurrentSlide();
+                if (prevSnap.selectedElementId === 'background') {
+                    selectElementForEditing('background');
+                } else if (prevSnap.selectedElementId && currSlide && Array.isArray(currSlide.elements) && currSlide.elements.some(e => e.id === prevSnap.selectedElementId)) {
+                    selectElementForEditing(prevSnap.selectedElementId);
+                } else {
+                    deselectElement();
+                }
+
+                updateDirtySlideChipsUI();
+                updateLivePreview();
+                showToast('↩ Acción deshecha');
+            } finally {
+                isHistoryAction = false;
+                updateUndoRedoUI();
+            }
+        }
+
+        function redoAction() {
+            if (redoStack.length === 0) return;
+            isHistoryAction = true;
+            try {
+                const currentSnap = getHistorySnapshot();
+                undoStack.push(currentSnap);
+                const nextSnap = redoStack.pop();
+
+                slidesData = JSON.parse(JSON.stringify(nextSnap.slidesData));
+                const targetSlideId = slidesData.some(s => s.id === nextSnap.currentSlideId)
+                    ? nextSnap.currentSlideId
+                    : (slidesData[0] ? slidesData[0].id : null);
+                currentSlideId = targetSlideId;
+
+                renderSlideChips();
+                loadSlideIntoForm();
+
+                const currSlide = getCurrentSlide();
+                if (nextSnap.selectedElementId === 'background') {
+                    selectElementForEditing('background');
+                } else if (nextSnap.selectedElementId && currSlide && Array.isArray(currSlide.elements) && currSlide.elements.some(e => e.id === nextSnap.selectedElementId)) {
+                    selectElementForEditing(nextSnap.selectedElementId);
+                } else {
+                    deselectElement();
+                }
+
+                updateDirtySlideChipsUI();
+                updateLivePreview();
+                showToast('↪ Acción rehecha');
+            } finally {
+                isHistoryAction = false;
+                updateUndoRedoUI();
+            }
+        }
+
+        // Automatic form change tracking for undo
+        let preInputSnapshot = null;
+        document.addEventListener('focusin', (e) => {
+            if (isHistoryAction) return;
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                preInputSnapshot = getHistorySnapshot();
+            }
+        });
+        document.addEventListener('focusout', (e) => {
+            if (isHistoryAction || !preInputSnapshot) return;
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                const currentSnap = getHistorySnapshot();
+                if (JSON.stringify(preInputSnapshot.slidesData) !== JSON.stringify(currentSnap.slidesData)) {
+                    recordHistorySnapshot(preInputSnapshot);
+                }
+                preInputSnapshot = null;
+            }
+        });
+
+        // Sliders (range inputs)
+        let preRangeSnapshot = null;
+        document.addEventListener('pointerdown', (e) => {
+            if (isHistoryAction) return;
+            if (e.target.tagName === 'INPUT' && e.target.type === 'range') {
+                preRangeSnapshot = getHistorySnapshot();
+            }
+        });
+        document.addEventListener('change', (e) => {
+            if (isHistoryAction) return;
+            if (e.target.tagName === 'INPUT' && e.target.type === 'range' && preRangeSnapshot) {
+                const currentSnap = getHistorySnapshot();
+                if (JSON.stringify(preRangeSnapshot.slidesData) !== JSON.stringify(currentSnap.slidesData)) {
+                    recordHistorySnapshot(preRangeSnapshot);
+                }
+                preRangeSnapshot = null;
+            }
+        });
+
+        // Global Keyboard Shortcuts (Undo / Redo)
+        document.addEventListener('keydown', (e) => {
+            const activeEl = document.activeElement;
+            const isTextInput = activeEl && (
+                (activeEl.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button', 'submit'].includes(activeEl.type)) ||
+                activeEl.tagName === 'TEXTAREA' ||
+                activeEl.isContentEditable
+            );
+            if (isTextInput) return;
+
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+            if (isCtrlOrCmd) {
+                if ((e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+                    e.preventDefault();
+                    undoAction();
+                } else if ((e.key === 'y' || e.key === 'Y') || (e.shiftKey && (e.key === 'z' || e.key === 'Z'))) {
+                    e.preventDefault();
+                    redoAction();
+                }
+            }
+        });
 
         // -------------------------------------------------------------
         // TAB SWITCHING (Slides vs Backgrounds vs Styles)
@@ -5729,6 +5915,7 @@
 
                     const btnCenterX = toolbar.querySelector('.tb-center-x-btn');
                     btnCenterX.onclick = () => {
+                        recordHistorySnapshot();
                         el.x = 0;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
@@ -5737,6 +5924,7 @@
 
                     const btnCenterY = toolbar.querySelector('.tb-center-y-btn');
                     btnCenterY.onclick = () => {
+                        recordHistorySnapshot();
                         el.y = 0;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
@@ -5745,6 +5933,7 @@
 
                     const btnHorizontalize = toolbar.querySelector('.tb-horizontalize-btn');
                     btnHorizontalize.onclick = () => {
+                        recordHistorySnapshot();
                         el.rotate = 0;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
@@ -5755,6 +5944,8 @@
                     toolbar.querySelectorAll('.tb-prec-btn').forEach(btn => {
                         btn.onclick = () => {
                             const prec = btn.dataset.prec;
+                            if (el.precision === prec) return;
+                            recordHistorySnapshot();
                             el.precision = prec;
                             toolbar.querySelectorAll('.tb-prec-btn').forEach(b => {
                                 b.classList.toggle('active', b.dataset.prec === prec);
@@ -5848,6 +6039,7 @@
 
                     const btnReset = toolbar.querySelector('.tb-reset-btn');
                     btnReset.onclick = () => {
+                        recordHistorySnapshot();
                         el.x = 0;
                         el.y = 15;
                         el.rotate = 0;
@@ -6007,6 +6199,7 @@
                     syncStyleUI();
 
                     btnPill.onclick = () => {
+                        recordHistorySnapshot();
                         el.style = 'classic';
                         syncStyleUI();
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
@@ -6014,6 +6207,7 @@
                     };
 
                     btnSolid.onclick = () => {
+                        recordHistorySnapshot();
                         el.style = 'solid';
                         syncStyleUI();
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
@@ -6029,9 +6223,11 @@
 
                     toolbar.querySelectorAll('.tb-icon-btn').forEach(btn => {
                         btn.onclick = () => {
+                            const chosenIcon = btn.dataset.icon;
+                            if (el.icon === chosenIcon) return;
+                            recordHistorySnapshot();
                             toolbar.querySelectorAll('.tb-icon-btn').forEach(b => b.classList.remove('active'));
                             btn.classList.add('active');
-                            const chosenIcon = btn.dataset.icon;
                             el.icon = chosenIcon;
                             if (chosenIcon === 'spotify' && (!el.color || el.color === '#0488db' || el.color === '#2196f3')) {
                                 el.color = '#1db954';
@@ -6067,6 +6263,8 @@
                     colorDots.forEach(btn => {
                         btn.onclick = () => {
                             const val = btn.dataset.color;
+                            if (el.color === val) return;
+                            recordHistorySnapshot();
                             el.color = val;
                             colorPicker.value = val;
                             updatePaletteSelection(val);
@@ -6078,6 +6276,7 @@
                     // Quick Centering
                     const btnCenterX = toolbar.querySelector('.tb-center-x-btn');
                     btnCenterX.onclick = () => {
+                        recordHistorySnapshot();
                         el.x = 0;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
@@ -6086,6 +6285,7 @@
 
                     const btnCenterY = toolbar.querySelector('.tb-center-y-btn');
                     btnCenterY.onclick = () => {
+                        recordHistorySnapshot();
                         el.y = 0;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
@@ -6095,6 +6295,7 @@
                     // Horizontalize (Level to 0°)
                     const btnHoriz = toolbar.querySelector('.tb-horizontalize-btn');
                     btnHoriz.onclick = () => {
+                        recordHistorySnapshot();
                         el.rotate = 0;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
@@ -6104,6 +6305,7 @@
                     // Quick Reset
                     const btnReset = toolbar.querySelector('.tb-reset-btn');
                     btnReset.onclick = () => {
+                        recordHistorySnapshot();
                         el.rotate = 0;
                         el.zoom = 100;
                         delete el.w;
@@ -6268,6 +6470,8 @@
                     alignBtns.forEach(btn => {
                         btn.onclick = () => {
                             const chosenAlign = btn.getAttribute('data-align');
+                            if (el.align === chosenAlign) return;
+                            recordHistorySnapshot();
                             el.align = chosenAlign;
                             alignBtns.forEach(b => b.classList.toggle('active', b === btn));
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
@@ -6296,6 +6500,8 @@
                     textColorDots.forEach(btn => {
                         btn.onclick = () => {
                             const val = btn.dataset.color;
+                            if (el.color === val) return;
+                            recordHistorySnapshot();
                             el.color = val;
                             textColorPicker.value = val;
                             updateTextPaletteSelection(val);
@@ -6307,6 +6513,7 @@
                     // Quick Center Buttons
                     const btnCenterX = textGroup.querySelector('.tb-center-x-btn');
                     btnCenterX.onclick = () => {
+                        recordHistorySnapshot();
                         el.x = 0;
                         const sliderX = document.getElementById(`sliderX_${idx}`);
                         const numX = document.getElementById(`numX_${idx}`);
@@ -6321,6 +6528,7 @@
 
                     const btnCenterY = textGroup.querySelector('.tb-center-y-btn');
                     btnCenterY.onclick = () => {
+                        recordHistorySnapshot();
                         el.y = 0;
                         const sliderY = document.getElementById(`sliderY_${idx}`);
                         const numY = document.getElementById(`numY_${idx}`);
@@ -6336,6 +6544,7 @@
                     // 3D Toggle Button
                     const btnToggle3D = textGroup.querySelector('.tb-toggle-3d');
                     btnToggle3D.onclick = () => {
+                        recordHistorySnapshot();
                         const currentlyActive = btnToggle3D.classList.contains('active');
                         const nextState = !currentlyActive;
                         el.enable_3d = nextState;
@@ -6788,6 +6997,7 @@
         function addTextElement() {
             const slide = getCurrentSlide();
             if (!slide) return;
+            recordHistorySnapshot();
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
             const newEl = {
@@ -6808,11 +7018,13 @@
             renderElementsList();
             updateLivePreview();
             selectElementForEditing(newEl.id);
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function addLinkElement(icon = 'link', content = 'ENLACE', color = '#2196f3') {
             const slide = getCurrentSlide();
             if (!slide) return;
+            recordHistorySnapshot();
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
             const newEl = {
@@ -6837,6 +7049,7 @@
             renderElementsList();
             updateLivePreview();
             selectElementForEditing(newEl.id);
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function addCopyElement(icon = 'copy', content = 'BODA.CELIA.ALFREDO', color = '#10b981') {
@@ -6850,6 +7063,7 @@
         function addCountdownElement() {
             const slide = getCurrentSlide();
             if (!slide) return;
+            recordHistorySnapshot();
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
             const newEl = {
@@ -6872,11 +7086,13 @@
             renderElementsList();
             updateLivePreview();
             selectElementForEditing(newEl.id);
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function addFormElement() {
             const slide = getCurrentSlide();
             if (!slide) return;
+            recordHistorySnapshot();
             if (!Array.isArray(slide.elements)) slide.elements = [];
 
             const newEl = {
@@ -6895,12 +7111,14 @@
             renderElementsList();
             updateLivePreview();
             selectElementForEditing(newEl.id);
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function removeElement(index) {
             const slide = getCurrentSlide();
             if (!slide || !Array.isArray(slide.elements)) return;
 
+            recordHistorySnapshot();
             const removed = slide.elements.splice(index, 1);
             if (removed && removed[0] && removed[0].id) {
                 collapsedElementIds.delete(removed[0].id);
@@ -6910,6 +7128,7 @@
             }
             renderElementsList();
             updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function removeTextElement(index) {
@@ -7180,8 +7399,10 @@
                             textDiv.textContent = replacePreviewVariables(el.content || '');
 
                             let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
+                            let preDragSnapshot = null;
                             textDiv.onpointerdown = (e) => {
                                 e.stopPropagation();
+                                preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
                                 initElX = el.x !== undefined ? el.x : 0;
@@ -7220,6 +7441,7 @@
                                     window.removeEventListener('pointermove', onMove);
                                     window.removeEventListener('pointerup', onUp);
                                     if (hasDragged) {
+                                        recordHistorySnapshot(preDragSnapshot);
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
@@ -7268,9 +7490,11 @@
 
                             // Dragging (Move X, Y)
                             let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
+                            let preDragSnapshot = null;
                             locDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
+                                preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
                                 initElX = el.x !== undefined ? el.x : 0;
@@ -7304,6 +7528,7 @@
                                     window.removeEventListener('pointermove', onMove);
                                     window.removeEventListener('pointerup', onUp);
                                     if (hasDragged) {
+                                        recordHistorySnapshot(preDragSnapshot);
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
@@ -7343,12 +7568,15 @@
                                 rotHandle.onpointerdown = (re) => {
                                     re.stopPropagation();
                                     re.preventDefault();
+                                    const preRotSnapshot = getHistorySnapshot();
+                                    let hasRotated = false;
                                     const rect = locDiv.getBoundingClientRect();
                                     const centerX = rect.left + rect.width / 2;
                                     const centerY = rect.top + rect.height / 2;
 
                                     const onRotMove = (me) => {
                                         me.preventDefault();
+                                        hasRotated = true;
                                         const rad = Math.atan2(me.clientY - centerY, me.clientX - centerX);
                                         let deg = Math.round((rad + Math.PI / 2) * (180 / Math.PI));
                                         if (deg > 180) deg -= 360;
@@ -7363,6 +7591,9 @@
                                     const onRotUp = () => {
                                         window.removeEventListener('pointermove', onRotMove);
                                         window.removeEventListener('pointerup', onRotUp);
+                                        if (hasRotated) {
+                                            recordHistorySnapshot(preRotSnapshot);
+                                        }
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     };
@@ -7424,9 +7655,11 @@
 
                             // Dragging (Move X, Y)
                             let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
+                            let preDragSnapshot = null;
                             cdDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
+                                preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
                                 initElX = el.x !== undefined ? el.x : 0;
@@ -7460,6 +7693,7 @@
                                     window.removeEventListener('pointermove', onMove);
                                     window.removeEventListener('pointerup', onUp);
                                     if (hasDragged) {
+                                        recordHistorySnapshot(preDragSnapshot);
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
@@ -7499,12 +7733,15 @@
                                 rotHandle.onpointerdown = (re) => {
                                     re.stopPropagation();
                                     re.preventDefault();
+                                    const preRotSnapshot = getHistorySnapshot();
+                                    let hasRotated = false;
                                     const rect = cdDiv.getBoundingClientRect();
                                     const centerX = rect.left + rect.width / 2;
                                     const centerY = rect.top + rect.height / 2;
 
                                     const onRotMove = (me) => {
                                         me.preventDefault();
+                                        hasRotated = true;
                                         const rad = Math.atan2(me.clientY - centerY, me.clientX - centerX);
                                         let deg = Math.round((rad + Math.PI / 2) * (180 / Math.PI));
                                         if (deg > 180) deg -= 360;
@@ -7519,6 +7756,9 @@
                                     const onRotUp = () => {
                                         window.removeEventListener('pointermove', onRotMove);
                                         window.removeEventListener('pointerup', onRotUp);
+                                        if (hasRotated) {
+                                            recordHistorySnapshot(preRotSnapshot);
+                                        }
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     };
@@ -7984,6 +8224,8 @@
 
             let isDragging = false;
             let dragMode = null;
+            let preGizmoSnapshot = null;
+            let hasGizmoMoved = false;
             let startClientX = 0;
             let startClientY = 0;
             let initRotX = 0;
@@ -7998,6 +8240,8 @@
             function onPointerDown(e, mode) {
                 e.stopPropagation();
                 e.preventDefault();
+                preGizmoSnapshot = getHistorySnapshot();
+                hasGizmoMoved = false;
                 isDragging = true;
                 dragMode = mode;
                 startClientX = e.clientX;
@@ -8021,6 +8265,7 @@
                 if (!isDragging) return;
                 e.preventDefault();
                 e.stopPropagation();
+                hasGizmoMoved = true;
 
                 const dx = e.clientX - startClientX;
                 const dy = e.clientY - startClientY;
@@ -8064,6 +8309,9 @@
                     dragMode = null;
                     window.removeEventListener('pointermove', onPointerMove);
                     window.removeEventListener('pointerup', onPointerUp);
+                    if (hasGizmoMoved) {
+                        recordHistorySnapshot(preGizmoSnapshot);
+                    }
                     updateLivePreview();
                     updateDirtySlideChipsUI();
                 }
@@ -8178,6 +8426,7 @@
             const targetIdx = currIdx + direction;
             if (targetIdx < 0 || targetIdx >= slidesData.length) return;
 
+            recordHistorySnapshot();
             const temp = slidesData[currIdx];
             slidesData[currIdx] = slidesData[targetIdx];
             slidesData[targetIdx] = temp;
@@ -9057,6 +9306,8 @@
         const previewSlideViewport = document.getElementById('previewStorySlide');
         if (previewSlideViewport) {
             let isDraggingBg = false;
+            let preBgSnapshot = null;
+            let hasMovedBg = false;
             let startClientX = 0;
             let startClientY = 0;
             let initialBgX = 0;
@@ -9077,6 +9328,8 @@
                 const slide = getCurrentSlide();
                 if (!slide || !slide.background) return;
 
+                preBgSnapshot = getHistorySnapshot();
+                hasMovedBg = false;
                 isDraggingBg = true;
                 startClientX = e.clientX;
                 startClientY = e.clientY;
@@ -9090,6 +9343,7 @@
                 if (!isDraggingBg) return;
                 const slide = getCurrentSlide();
                 if (!slide) return;
+                hasMovedBg = true;
 
                 const rect = previewSlideViewport.getBoundingClientRect();
                 const width = rect.width || 360;
@@ -9111,6 +9365,10 @@
                 if (isDraggingBg) {
                     isDraggingBg = false;
                     if (previewSlideViewport) previewSlideViewport.style.cursor = '';
+                    if (hasMovedBg) {
+                        recordHistorySnapshot(preBgSnapshot);
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                    }
                 }
             });
 
@@ -9147,6 +9405,7 @@
             applyStylesToDOM(stylesData);
             updateFontsInUseUI();
             updateBackgroundsInUseUI();
+            updateUndoRedoUI();
 
             // Asynchronously discover any newly added fonts in /assets/fonts/
             fetch('/assets/fonts/').then(r => r.json()).then(files => {
