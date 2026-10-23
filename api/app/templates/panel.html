@@ -3513,7 +3513,6 @@
                                     <!-- Populated dynamically by JS -->
                                 </div>
                                 <div class="slides-save-wrap">
-                                    <div class="save-indicator" id="splitSaveIndicator">✓ Guardado</div>
                                     <button type="button" class="btn-ctrl btn-history" id="btnUndo"
                                         onclick="undoAction()" title="Deshacer (Ctrl+Z)" disabled>
                                         <span>↩</span>
@@ -3971,7 +3970,6 @@
                                 <!-- Save Actions -->
                                 <div
                                     style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--card-border);">
-                                    <div class="save-indicator" id="stylesSaveIndicator">✓ Guardado</div>
                                     <button type="button" class="btn-save-slide" id="btnSaveStyles"
                                         onclick="saveStyles()">
                                         <span>💾 Guardar Estilos</span>
@@ -4152,8 +4150,6 @@
                                 <!-- Actions bar -->
                                 <div class="editor-actions-bar"
                                     style="margin-top: 24px; display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
-                                    <span class="styles-save-indicator" id="headerSaveIndicator">✓ Cambios
-                                        guardados</span>
                                     <button type="button" class="btn-save-slide" id="btnSaveHeader"
                                         onclick="saveHeaderStyles()">
                                         <span>💾 Guardar Encabezado</span>
@@ -5006,7 +5002,6 @@
 
         async function saveStyles() {
             const btn = document.getElementById('btnSaveStyles');
-            const indicator = document.getElementById('stylesSaveIndicator');
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
@@ -5019,13 +5014,7 @@
                     body: JSON.stringify(stylesData)
                 });
                 const data = await res.json();
-                if (data.ok) {
-                    showToast('✓ Estilos de tipografía guardados correctamente');
-                    if (indicator) {
-                        indicator.classList.add('visible');
-                        setTimeout(() => indicator.classList.remove('visible'), 2500);
-                    }
-                } else {
+                if (!data.ok) {
                     showToast(data.error || 'Error al guardar estilos', true);
                 }
             } catch (err) {
@@ -5250,7 +5239,6 @@
 
         async function saveHeaderStyles() {
             const btn = document.getElementById('btnSaveHeader');
-            const indicator = document.getElementById('headerSaveIndicator');
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
@@ -5263,13 +5251,7 @@
                     body: JSON.stringify(stylesData)
                 });
                 const data = await res.json();
-                if (data.ok) {
-                    showToast('✓ Encabezado guardado correctamente');
-                    if (indicator) {
-                        indicator.classList.add('visible');
-                        setTimeout(() => indicator.classList.remove('visible'), 2500);
-                    }
-                } else {
+                if (!data.ok) {
                     showToast(data.error || 'Error al guardar encabezado', true);
                 }
             } catch (err) {
@@ -8514,7 +8496,6 @@
             if (!slide) return;
 
             const btn = document.getElementById('btnSaveActiveSlide');
-            const indicator = document.getElementById('splitSaveIndicator');
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
@@ -8540,12 +8521,6 @@
                         savedSlidesSnapshot.push(cleanSnap);
                     }
                     updateDirtySlideChipsUI();
-
-                    showToast(`Slide "${slide.id}" guardado con éxito`);
-                    if (indicator) {
-                        indicator.style.display = 'block';
-                        setTimeout(() => { indicator.style.display = 'none'; }, 2500);
-                    }
                 } else {
                     showToast(data.error || 'Error al guardar el slide', true);
                 }
