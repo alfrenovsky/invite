@@ -1482,12 +1482,14 @@
             margin-bottom: 8px;
         }
 
-        .sticker-editor-toolbar .color-dot-btn {
+        .sticker-editor-toolbar .color-dot-btn,
+        .text-editor-toolbar .color-dot-btn {
             width: 20px;
             height: 20px;
         }
 
-        .sticker-editor-toolbar .custom-color-input {
+        .sticker-editor-toolbar .custom-color-input,
+        .text-editor-toolbar .custom-color-input {
             width: 24px;
             height: 24px;
             border-radius: 4px;
@@ -1732,10 +1734,28 @@
             gap: 14px;
             position: relative;
             transition: all 0.2s ease;
+            scroll-margin-top: 14px;
         }
 
         .element-card:hover {
             border-color: var(--card-hover-border);
+        }
+
+        .element-card.is-selected {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 4px 18px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .slide-el.slide-el-countdown.is-selected {
+            outline: 2px dashed #f6ad55;
+            outline-offset: 4px;
+            border-radius: 12px;
+        }
+
+        .slide-el.slide-el-form.is-selected {
+            outline: 2px dashed #48bb78;
+            outline-offset: 4px;
+            border-radius: 14px;
         }
 
         .element-card.collapsed {
@@ -2586,7 +2606,6 @@
             letter-spacing: var(--el-title-spacing, -0.08em);
             color: var(--el-title-color, #ffffff);
             line-height: var(--el-title-line-height, 0.9);
-            text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.8);
         }
 
         .story-preview-viewport .slide-el-tag,
@@ -2598,7 +2617,6 @@
             letter-spacing: var(--el-tag-spacing, 0.15em);
             color: var(--el-tag-color, #ffffff);
             line-height: var(--el-tag-line-height, 1.2);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .story-preview-viewport .slide-el-body,
@@ -2610,7 +2628,6 @@
             letter-spacing: var(--el-body-spacing, 0em);
             color: var(--el-body-color, #f0f4f8);
             line-height: var(--el-body-line-height, 1.4);
-            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .story-preview-viewport .slide-el-location,
@@ -3077,8 +3094,7 @@
             letter-spacing: var(--el-tag-spacing, 0.15em);
             line-height: var(--el-tag-line-height, 1.2);
             text-transform: var(--el-tag-transform, uppercase);
-            color: var(--el-tag-color, #d4af37);
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+            color: var(--el-tag-color, #ffffff);
         }
 
         .preview-composite-title {
@@ -3089,7 +3105,6 @@
             line-height: var(--el-title-line-height, 0.9);
             text-transform: var(--el-title-transform, uppercase);
             color: var(--el-title-color, #ffffff);
-            text-shadow: 0 3px 18px rgba(0, 0, 0, 0.9);
         }
 
         .preview-composite-body {
@@ -3099,8 +3114,7 @@
             letter-spacing: var(--el-body-spacing, 0em);
             line-height: var(--el-body-line-height, 1.4);
             text-transform: var(--el-body-transform, none);
-            color: var(--el-body-color, #f0f4f8);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+            color: var(--el-body-color, #ffffff);
             max-width: 90%;
         }
 
@@ -3542,7 +3556,7 @@
                                 </div>
 
                                 <!-- Background Element Card (Accordion Item #0) -->
-                                <div class="element-card collapsed" id="elCard_background" style="margin-bottom: 12px;">
+                                <div class="element-card collapsed" id="elCard_background" style="margin-bottom: 12px;" onclick="if (!event.target.closest('.element-header') && !event.target.closest('.btn-ctrl') && !event.target.closest('.custom-bg-dropdown') && selectedElementId !== 'background') selectElementForEditing('background');">
                                     <div class="element-header" onclick="chooseElement('background', event)">
                                         <div class="element-header-left">
                                             <span class="element-collapse-icon" id="bgCollapseIcon">▶</span>
@@ -3780,20 +3794,6 @@
                                         <select id="styleFontFamilySelect" class="form-select"
                                             onchange="onFontFamilyChange(this.value)">
                                         </select>
-                                    </div>
-
-                                    <!-- Color picker row -->
-                                    <div class="style-prop-row">
-                                        <div class="style-prop-header">
-                                            <label for="styleColorPicker">Color del Texto</label>
-                                            <span class="style-prop-badge" id="styleColorValBadge">#FFFFFF</span>
-                                        </div>
-                                        <div class="color-picker-combo">
-                                            <input type="color" id="styleColorPicker" class="color-swatch-input"
-                                                oninput="onColorPickerChange(this.value)">
-                                            <input type="text" id="styleColorHex" class="form-input color-hex-input"
-                                                placeholder="#FFFFFF" oninput="onColorHexChange(this.value)">
-                                        </div>
                                     </div>
 
                                     <!-- Font Size row -->
@@ -5418,6 +5418,7 @@
             if (bgCard) {
                 const isCollapsed = collapsedElementIds.has('background');
                 bgCard.classList.toggle('collapsed', isCollapsed);
+                bgCard.classList.toggle('is-selected', !isCollapsed && selectedElementId === 'background');
                 const icon = document.getElementById('bgCollapseIcon');
                 if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
             }
@@ -5429,6 +5430,7 @@
                     if (card) {
                         const isCollapsed = collapsedElementIds.has(el.id);
                         card.classList.toggle('collapsed', isCollapsed);
+                        card.classList.toggle('is-selected', !isCollapsed && selectedElementId === el.id);
                         const icon = card.querySelector('.element-collapse-icon');
                         if (icon) icon.textContent = isCollapsed ? '▶' : '▼';
                         if (!isCollapsed) {
@@ -5442,7 +5444,6 @@
 
         function chooseElement(elId, event) {
             if (event && event.target && (event.target.closest('.btn-del-el') || event.target.closest('.btn-ctrl'))) return;
-            const slide = getCurrentSlide();
             const isCurrentlyOpen = !collapsedElementIds.has(elId);
 
             if (isCurrentlyOpen) {
@@ -5455,35 +5456,7 @@
                 return;
             }
 
-            // Accordion: collapse background and all elements
-            collapsedElementIds.add('background');
-            if (slide && Array.isArray(slide.elements)) {
-                slide.elements.forEach(el => {
-                    collapsedElementIds.add(el.id);
-                });
-            }
-
-            // Expand only the chosen one
-            collapsedElementIds.delete(elId);
-            updateAllCardsCollapseUI();
-
-            // Scroll into view
-            const targetCard = document.getElementById(elId === 'background' ? 'elCard_background' : 'elCard_' + elId);
-            if (targetCard) {
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-
-            // Sync with live preview
-            if (elId === 'background') {
-                deselectElement();
-            } else if (slide && Array.isArray(slide.elements)) {
-                const el = slide.elements.find(e => e.id === elId);
-                if (el && el.type === 'text') {
-                    selectElementForEditing(elId);
-                } else {
-                    deselectElement();
-                }
-            }
+            selectElementForEditing(elId);
         }
 
         function toggleElementCollapse(elId, event) {
@@ -5624,7 +5597,7 @@
                 card.id = 'elCard_' + el.id;
                 card.addEventListener('click', (e) => {
                     if (e.target.closest('.btn-del-el') || e.target.closest('.element-header')) return;
-                    if (el.type === 'text' && selectedElementId !== el.id) {
+                    if (selectedElementId !== el.id) {
                         selectElementForEditing(el.id);
                     }
                 });
@@ -6056,6 +6029,7 @@
                     // Text Content input with TinyMCE-style Toolbar
                     const currentStyle = el.style || 'body';
                     const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
+                    const currentColor = el.color || '#ffffff';
 
                     const textGroup = document.createElement('div');
                     textGroup.className = 'form-group';
@@ -6081,6 +6055,19 @@
                         <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'right' ? 'active' : ''}" data-align="right" title="Alinear a la derecha">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
                         </button>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- Color Swatches & Native Picker for Text -->
+                        <div class="tb-color-swatches" style="display: flex; align-items: center; gap: 4px;">
+                            <button type="button" class="color-dot-btn ${currentColor === '#ffffff' ? 'selected' : ''}" data-color="#ffffff" style="background:#ffffff; border: 1px solid rgba(0,0,0,0.35);" title="Blanco (Por defecto)"></button>
+                            <button type="button" class="color-dot-btn ${currentColor === '#d4af37' ? 'selected' : ''}" data-color="#d4af37" style="background:#d4af37;" title="Dorado"></button>
+                            <button type="button" class="color-dot-btn ${currentColor === '#38bdf8' ? 'selected' : ''}" data-color="#38bdf8" style="background:#38bdf8;" title="Celeste"></button>
+                            <button type="button" class="color-dot-btn ${currentColor === '#34d399' ? 'selected' : ''}" data-color="#34d399" style="background:#34d399;" title="Verde"></button>
+                            <button type="button" class="color-dot-btn ${currentColor === '#e1306c' ? 'selected' : ''}" data-color="#e1306c" style="background:#e1306c;" title="Magenta"></button>
+                            <button type="button" class="color-dot-btn ${currentColor === '#1a202c' ? 'selected' : ''}" data-color="#1a202c" style="background:#1a202c;" title="Oscuro"></button>
+                            <input type="color" class="custom-color-input text-color-picker" value="${currentColor.startsWith('#') ? currentColor : '#ffffff'}" title="Color personalizado">
+                        </div>
 
                         <div class="tb-divider"></div>
 
@@ -6144,6 +6131,35 @@
                             const chosenAlign = btn.getAttribute('data-align');
                             el.align = chosenAlign;
                             alignBtns.forEach(b => b.classList.toggle('active', b === btn));
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    });
+
+                    // Text Color Swatches & Picker
+                    const textColorPicker = textGroup.querySelector('.text-color-picker');
+                    const textColorDots = textGroup.querySelectorAll('.color-dot-btn');
+
+                    function updateTextPaletteSelection(c) {
+                        textColorDots.forEach(btn => {
+                            btn.classList.toggle('selected', btn.dataset.color.toLowerCase() === c.toLowerCase());
+                        });
+                    }
+
+                    textColorPicker.oninput = (e) => {
+                        const val = e.target.value;
+                        el.color = val;
+                        updateTextPaletteSelection(val);
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    };
+
+                    textColorDots.forEach(btn => {
+                        btn.onclick = () => {
+                            const val = btn.dataset.color;
+                            el.color = val;
+                            textColorPicker.value = val;
+                            updateTextPaletteSelection(val);
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
                         };
@@ -7003,6 +7019,7 @@
                             textDiv.style.textAlign = textAlign;
                             textDiv.style.transform = `translate(-50%, -50%) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg)`;
                             textDiv.style.transformStyle = 'preserve-3d';
+                            textDiv.style.color = el.color || '#ffffff';
                             textDiv.textContent = replacePreviewVariables(el.content || '');
 
                             let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
@@ -7109,9 +7126,7 @@
                                     if (!hasDragged && Math.hypot(dx, dy) > 4) {
                                         hasDragged = true;
                                         if (selectedElementId !== el.id) {
-                                            selectedElementId = el.id;
-                                            document.querySelectorAll('.slide-el.is-selected').forEach(s => s.classList.remove('is-selected'));
-                                            locDiv.classList.add('is-selected');
+                                            selectElementForEditing(el.id);
                                         }
                                     }
                                     if (hasDragged) {
@@ -7135,8 +7150,7 @@
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
-                                        selectedElementId = (selectedElementId === el.id) ? null : el.id;
-                                        updateLivePreview();
+                                        selectElementForEditing(el.id);
                                     }
                                 };
 
@@ -7204,7 +7218,13 @@
                             overlay.appendChild(locDiv);
                         } else if (el.type === 'countdown') {
                             const cdDiv = document.createElement('div');
-                            cdDiv.className = 'slide-el slide-el-countdown preview-countdown-el';
+                            const isSelected = selectedElementId === el.id;
+                            cdDiv.className = `slide-el slide-el-countdown preview-countdown-el${isSelected ? ' is-selected' : ''}`;
+                            cdDiv.onpointerdown = (e) => e.stopPropagation();
+                            cdDiv.onclick = (e) => {
+                                e.stopPropagation();
+                                selectElementForEditing(el.id);
+                            };
                             const posX = el.x !== undefined ? el.x : 0;
                             const posY = el.y !== undefined ? el.y : 0;
                             const rotVal = el.rotate !== undefined ? el.rotate : 0;
@@ -7251,7 +7271,13 @@
                             overlay.appendChild(cdDiv);
                         } else if (el.type === 'form') {
                             const formDiv = document.createElement('div');
-                            formDiv.className = 'slide-el slide-el-form preview-form-el';
+                            const isSelected = selectedElementId === el.id;
+                            formDiv.className = `slide-el slide-el-form preview-form-el${isSelected ? ' is-selected' : ''}`;
+                            formDiv.onpointerdown = (e) => e.stopPropagation();
+                            formDiv.onclick = (e) => {
+                                e.stopPropagation();
+                                selectElementForEditing(el.id);
+                            };
                             const posX = el.x !== undefined ? el.x : 0;
                             const posY = el.y !== undefined ? el.y : 0;
                             const widthVal = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 92;
@@ -7332,11 +7358,17 @@
             }
 
             // Update Gizmo if an element is selected
-            if (selectedElementId) {
+            if (selectedElementId === 'background') {
+                const gizmoContainer = document.getElementById('previewGizmoContainer');
+                if (gizmoContainer) {
+                    gizmoContainer.style.display = 'none';
+                    gizmoContainer.innerHTML = '';
+                }
+            } else if (selectedElementId) {
                 const selectedEl = Array.isArray(slide.elements) ? slide.elements.find(e => e.id === selectedElementId) : null;
                 if (selectedEl && selectedEl.type === 'text') {
                     renderGizmo(selectedEl);
-                } else if (selectedEl && (selectedEl.type === 'location' || selectedEl.type === 'link' || selectedEl.type === 'copy')) {
+                } else if (selectedEl) {
                     const gizmoContainer = document.getElementById('previewGizmoContainer');
                     if (gizmoContainer) {
                         gizmoContainer.style.display = 'none';
@@ -7456,9 +7488,11 @@
             }
             collapsedElementIds.delete(elId);
             updateAllCardsCollapseUI();
-            const card = document.getElementById('elCard_' + elId);
+            const card = document.getElementById(elId === 'background' ? 'elCard_background' : 'elCard_' + elId);
             if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                document.querySelectorAll('.element-card.is-selected').forEach(c => c.classList.remove('is-selected'));
+                card.classList.add('is-selected');
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             updateLivePreview();
         }
@@ -7470,7 +7504,8 @@
                 gizmoContainer.style.display = 'none';
                 gizmoContainer.innerHTML = '';
             }
-            document.querySelectorAll('.preview-text-el.is-selected, .slide-el-link.is-selected').forEach(el => el.classList.remove('is-selected'));
+            document.querySelectorAll('.element-card.is-selected').forEach(c => c.classList.remove('is-selected'));
+            document.querySelectorAll('.preview-text-el.is-selected, .slide-el-link.is-selected, .preview-countdown-el.is-selected, .preview-form-el.is-selected').forEach(el => el.classList.remove('is-selected'));
         }
 
         function syncPanel3DControls(el) {
@@ -8724,12 +8759,11 @@
                     e.target.closest('a') ||
                     e.target.closest('input') ||
                     e.target.closest('.preview-gizmo-container') ||
-                    e.target.closest('.preview-text-el') ||
-                    e.target.closest('.slide-el-link')) {
+                    e.target.closest('.slide-el')) {
                     return;
                 }
-                if (selectedElementId) {
-                    deselectElement();
+                if (selectedElementId !== 'background') {
+                    selectElementForEditing('background');
                 }
                 const slide = getCurrentSlide();
                 if (!slide || !slide.background) return;

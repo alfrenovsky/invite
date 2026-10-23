@@ -376,7 +376,6 @@
             letter-spacing: var(--el-title-spacing, -0.06em);
             color: var(--el-title-color, #ffffff);
             line-height: var(--el-title-line-height, 0.9);
-            text-shadow: 0 3px 18px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.8);
         }
 
         .slide-el-tag {
@@ -385,9 +384,8 @@
             font-size: var(--el-tag-size, clamp(0.75rem, 2.8vw, 0.95rem));
             text-transform: var(--el-tag-transform, uppercase);
             letter-spacing: var(--el-tag-spacing, 0.15em);
-            color: var(--el-tag-color, #d4af37);
+            color: var(--el-tag-color, #ffffff);
             line-height: var(--el-tag-line-height, 1.2);
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .slide-el-body {
@@ -396,9 +394,8 @@
             font-size: var(--el-body-size, clamp(0.95rem, 3.2vw, 1.15rem));
             text-transform: var(--el-body-transform, none);
             letter-spacing: var(--el-body-spacing, 0em);
-            color: var(--el-body-color, #f0f4f8);
+            color: var(--el-body-color, #ffffff);
             line-height: var(--el-body-line-height, 1.4);
-            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .slide-el-location,
