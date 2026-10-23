@@ -780,6 +780,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
         # Inferred from group_names when count is None
         self.assertEqual(replace_guest_names("(Te|Los) queremos", "Pedro"), "Te queremos")
         self.assertEqual(replace_guest_names("(Te|Los) queremos", "Pedro y Ana"), "Los queremos")
+        # Also supports {singular|plural} format
+        self.assertEqual(replace_guest_names("{Te|Los} esperamos", "Pedro", count=1), "Te esperamos")
+        self.assertEqual(replace_guest_names("{Te|Los} esperamos", "Pedro y Ana", count=2), "Los esperamos")
 
         # 4. SSR Slide rendering replacing {name} and (a|b)
         with app.test_client() as client:

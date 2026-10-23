@@ -1348,6 +1348,127 @@
             color: #6ee7b7;
         }
 
+        /* TinyMCE-style Text Editor Toolbar */
+        .text-editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--card-border);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px 8px 0 0;
+            padding: 5px 8px;
+            flex-wrap: wrap;
+        }
+
+        .tb-select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
+            font-size: 0.76rem;
+            font-weight: 600;
+            border-radius: 5px;
+            padding: 2px 6px;
+            cursor: pointer;
+            outline: none;
+            height: 28px;
+            font-family: inherit;
+        }
+
+        .tb-select option {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        .tb-btn-square {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 5px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+            user-select: none;
+        }
+
+        .tb-btn-square:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .tb-btn-square.active {
+            background: rgba(59, 130, 246, 0.25);
+            border-color: rgba(59, 130, 246, 0.6);
+            color: #60a5fa;
+        }
+
+        .tb-btn-toggle {
+            height: 28px;
+            padding: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 5px;
+            color: var(--text-muted);
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .tb-btn-toggle:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .tb-btn-toggle.active {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.55);
+            color: #38bdf8;
+        }
+
+        .tb-divider {
+            width: 1px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.14);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        .tb-chip-var {
+            font-size: 0.70rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            white-space: nowrap;
+        }
+
+        .tb-chip-var:hover {
+            filter: brightness(1.2);
+            transform: translateY(-1px);
+        }
+
+        .text-editor-toolbar + textarea.el-text-content {
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-top: none !important;
+        }
+
         .btn-ctrl {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--card-border);
@@ -5743,19 +5864,64 @@
                     };
                     body.appendChild(aliasGroup);
                 } else {
-                    // Text Content input
+                    // Text Content input with TinyMCE-style Toolbar
+                    const currentStyle = el.style || 'body';
+                    const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
+                    const is3dActive = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y || (el.rotate && el.type === 'text')));
+
                     const textGroup = document.createElement('div');
                     textGroup.className = 'form-group';
                     textGroup.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <label>Contenido del Texto</label>
-                        <div style="display: flex; gap: 8px;">
-                            <span style="font-size: 0.72rem; color: #38bdf8; cursor: pointer;" title="Hacé clic para insertar {name}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {name}'; ta.dispatchEvent(new Event('input')); autoResizeTextarea(ta);">Insertar {name}</span>
-                            <span style="font-size: 0.72rem; color: #34d399; cursor: pointer;" title="Hacé clic para insertar {value}" onclick="const ta = this.closest('.form-group').querySelector('textarea'); ta.value += ' {value}'; ta.dispatchEvent(new Event('input')); autoResizeTextarea(ta);">Insertar {value}</span>
+                    <label style="margin-bottom: 6px;">Contenido del Texto</label>
+                    <div class="text-editor-toolbar" id="tb_${el.id}">
+                        <!-- Style Selector -->
+                        <select class="tb-select tb-style-select" title="Estilo del texto">
+                            <option value="title" ${currentStyle === 'title' ? 'selected' : ''}>🔤 Título</option>
+                            <option value="tag" ${currentStyle === 'tag' ? 'selected' : ''}>🏷️ Tag</option>
+                            <option value="body" ${currentStyle === 'body' ? 'selected' : ''}>📄 Cuerpo</option>
+                        </select>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- Alignment Square Buttons -->
+                        <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'left' ? 'active' : ''}" data-align="left" title="Alinear a la izquierda">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'center' ? 'active' : ''}" data-align="center" title="Centrado">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'right' ? 'active' : ''}" data-align="right" title="Alinear a la derecha">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+                        </button>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- Horizontal & Vertical Centering -->
+                        <button type="button" class="tb-btn-square tb-center-x-btn" title="Centrar horizontalmente (X = 0)">
+                            <span style="font-size: 0.72rem; font-weight: 700;">⇥⇤</span>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-center-y-btn" title="Centrar verticalmente (Y = 0)">
+                            <span style="font-size: 0.72rem; font-weight: 700;">↥↧</span>
+                        </button>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- 3D Toggle -->
+                        <button type="button" class="tb-btn-toggle tb-toggle-3d ${is3dActive ? 'active' : ''}" title="Activar/desactivar controles 3D (cuando está desactivado podés moverlo libremente con el mouse)">
+                            <span>🧊 3D</span>
+                        </button>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- Variable Shortcuts -->
+                        <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-wrap: wrap;">
+                            <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert=" {name}">+{name}</span>
+                            <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert=" {value}">+{value}</span>
+                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional" data-insert=" {singular|plural}">+{singular|plural}</span>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
-                    <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
+                    <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 5px; display: flex; flex-direction: column; gap: 3px;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">{name}</span>
                             <span>Nombres de los invitados (ej: <em>Juan y María</em>)</span>
@@ -5765,11 +5931,12 @@
                             <span>Precio de la tarjeta del 1er invitado (ej: <em>$ 45.000</em>)</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">(a|b)</span>
-                            <span>Singular o plural según cantidad (ej: <em>(Te|Los) esperamos</em>)</span>
+                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #f59e0b;">{a|b} o (a|b)</span>
+                            <span>Singular o plural según cantidad (ej: <em>{Te|Los} esperamos</em> o <em>¡Bienvenido{|s}!</em>)</span>
                         </div>
                     </div>
                 `;
+
                     const textarea = textGroup.querySelector('textarea');
                     textarea.oninput = (e) => {
                         el.content = e.target.value;
@@ -5778,57 +5945,18 @@
                         updateElementCardHeader(el, idx);
                     };
                     requestAnimationFrame(() => autoResizeTextarea(textarea));
-                    body.appendChild(textGroup);
 
-                    // Style selector: Title, Tag, Body
-                    const currentStyle = el.style || 'body';
-                    const styleGroup = document.createElement('div');
-                    styleGroup.className = 'form-group';
-                    styleGroup.innerHTML = `
-                    <label>Estilo</label>
-                    <div class="style-picker-group">
-                        <button type="button" class="style-opt-btn ${currentStyle === 'title' ? 'active' : ''}" data-style="title">
-                            🔤 Título
-                        </button>
-                        <button type="button" class="style-opt-btn ${currentStyle === 'tag' ? 'active' : ''}" data-style="tag">
-                            🏷️ Tag
-                        </button>
-                        <button type="button" class="style-opt-btn ${currentStyle === 'body' ? 'active' : ''}" data-style="body">
-                            📄 Cuerpo
-                        </button>
-                    </div>
-                `;
-                    const optBtns = styleGroup.querySelectorAll('.style-opt-btn');
-                    optBtns.forEach(btn => {
-                        btn.onclick = () => {
-                            const chosenStyle = btn.getAttribute('data-style');
-                            el.style = chosenStyle;
-                            optBtns.forEach(b => b.classList.toggle('active', b === btn));
-                            updateLivePreview();
-                            updateElementCardHeader(el, idx);
-                        };
-                    });
-                    body.appendChild(styleGroup);
+                    // Style Select
+                    const styleSelect = textGroup.querySelector('.tb-style-select');
+                    styleSelect.onchange = () => {
+                        el.style = styleSelect.value;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        updateElementCardHeader(el, idx);
+                    };
 
-                    // Text Alignment selector: Left, Center, Right
-                    const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
-                    const alignGroup = document.createElement('div');
-                    alignGroup.className = 'form-group';
-                    alignGroup.innerHTML = `
-                    <label>Alineación del Texto</label>
-                    <div class="style-picker-group">
-                        <button type="button" class="style-opt-btn ${currentAlign === 'left' ? 'active' : ''}" data-align="left" title="Alinear a la izquierda">
-                            ⬅️ Izquierda
-                        </button>
-                        <button type="button" class="style-opt-btn ${currentAlign === 'center' ? 'active' : ''}" data-align="center" title="Centrado">
-                            ↔️ Centro
-                        </button>
-                        <button type="button" class="style-opt-btn ${currentAlign === 'right' ? 'active' : ''}" data-align="right" title="Alinear a la derecha">
-                            ➡️ Derecha
-                        </button>
-                    </div>
-                `;
-                    const alignBtns = alignGroup.querySelectorAll('.style-opt-btn');
+                    // Alignment Buttons
+                    const alignBtns = textGroup.querySelectorAll('.tb-align-btn');
                     alignBtns.forEach(btn => {
                         btn.onclick = () => {
                             const chosenAlign = btn.getAttribute('data-align');
@@ -5838,7 +5966,84 @@
                             updateLivePreview();
                         };
                     });
-                    body.appendChild(alignGroup);
+
+                    // Quick Center Buttons
+                    const btnCenterX = textGroup.querySelector('.tb-center-x-btn');
+                    btnCenterX.onclick = () => {
+                        el.x = 0;
+                        const sliderX = document.getElementById(`sliderX_${idx}`);
+                        const numX = document.getElementById(`numX_${idx}`);
+                        const badgeX = document.getElementById(`badgeX_${idx}`);
+                        if (sliderX) sliderX.value = 0;
+                        if (numX) numX.value = 0;
+                        if (badgeX) badgeX.textContent = '0%';
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        showToast('↔ Elemento centrado horizontalmente');
+                    };
+
+                    const btnCenterY = textGroup.querySelector('.tb-center-y-btn');
+                    btnCenterY.onclick = () => {
+                        el.y = 0;
+                        const sliderY = document.getElementById(`sliderY_${idx}`);
+                        const numY = document.getElementById(`numY_${idx}`);
+                        const badgeY = document.getElementById(`badgeY_${idx}`);
+                        if (sliderY) sliderY.value = 0;
+                        if (numY) numY.value = 0;
+                        if (badgeY) badgeY.textContent = '0%';
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        showToast('↕ Elemento centrado verticalmente');
+                    };
+
+                    // 3D Toggle Button
+                    const btnToggle3D = textGroup.querySelector('.tb-toggle-3d');
+                    btnToggle3D.onclick = () => {
+                        const currentlyActive = btnToggle3D.classList.contains('active');
+                        const nextState = !currentlyActive;
+                        el.enable_3d = nextState;
+                        btnToggle3D.classList.toggle('active', nextState);
+
+                        const box3D = document.getElementById(`box3dControls_${idx}`);
+                        if (box3D) {
+                            box3D.style.display = nextState ? 'block' : 'none';
+                        }
+
+                        if (!nextState) {
+                            el.rot_x = 0;
+                            el.rot_y = 0;
+                            el.rotate = 0;
+                            el.perspective = 800;
+                            syncPanel3DControls(el);
+                            const gizmo = document.getElementById('previewGizmoContainer');
+                            if (gizmo) gizmo.style.display = 'none';
+                            showToast('🎯 Modo 2D activado (rotaciones restablecidas, arrastrá con el mouse)');
+                        } else {
+                            if (selectedElementId === el.id) {
+                                renderGizmo(el);
+                            }
+                            showToast('🧊 Modo 3D activado');
+                        }
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    };
+
+                    // Variable Shortcuts Inserters
+                    textGroup.querySelectorAll('.tb-chip-var').forEach(chip => {
+                        chip.onclick = () => {
+                            const textToInsert = chip.getAttribute('data-insert');
+                            const start = textarea.selectionStart || textarea.value.length;
+                            const end = textarea.selectionEnd || textarea.value.length;
+                            const val = textarea.value;
+                            textarea.value = val.substring(0, start) + textToInsert + val.substring(end);
+                            textarea.selectionStart = textarea.selectionEnd = start + textToInsert.length;
+                            textarea.focus();
+                            textarea.dispatchEvent(new Event('input'));
+                            autoResizeTextarea(textarea);
+                        };
+                    });
+
+                    body.appendChild(textGroup);
                 }
 
                 // Position controls: Horizontal X, Vertical Y, Width W & Height H
@@ -5935,7 +6140,7 @@
 
                 ${el.type === 'text' ? `
                 <!-- 3D Transform Controls for Text -->
-                <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.14);">
+                <div class="pos-slider-wrap" id="box3dControls_${idx}" style="grid-column: 1 / -1; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.14); display: ${is3dActive ? 'block' : 'none'};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 5px;">
                             <span>🧊</span> Transformación 3D & Giro
@@ -6607,7 +6812,8 @@
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, 'Juan y María')
                     .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, '$ 45.000')
-                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, '$2');
+                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, '$2')
+                    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, '$2');
             }
 
             // Render live overlay elements
@@ -7085,6 +7291,13 @@
         function renderGizmo(el) {
             const gizmoContainer = document.getElementById('previewGizmoContainer');
             if (!gizmoContainer || !el) return;
+
+            const is3d = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y || (el.rotate && el.type === 'text')));
+            if (!is3d && el.type === 'text') {
+                gizmoContainer.style.display = 'none';
+                gizmoContainer.innerHTML = '';
+                return;
+            }
 
             gizmoContainer.style.display = 'block';
             gizmoContainer.innerHTML = '';

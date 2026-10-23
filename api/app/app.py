@@ -466,6 +466,7 @@ def replace_guest_names(text, group_names="", count=None, card_value=""):
         return singular if count == 1 else plural
 
     res = re.sub(r'\(([^|()]*)\|([^|()]*)\)', _replace_plural, res)
+    res = re.sub(r'\{([^|{}]*)\|([^|{}]*)\}', _replace_plural, res)
     return res
 
 
