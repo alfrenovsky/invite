@@ -86,7 +86,6 @@ Endpoints administrativos para consultar, crear y modificar registros.
 | `POST` | `/invitados/ensure-ids` | **API Key** | Examina todas las filas en Google Sheets y genera automáticamente IDs, URLs seguras y enlaces directos de WhatsApp para aquellas filas que no los tengan. |
 | `POST` | `/invitados/flush` | **API Key** | Fuerza la sincronización inmediata de todas las filas pendientes marcadas como `LOCAL` dirty hacia Google Sheets mediante un único `batch_update`. |
 | `DELETE` | `/invitados/<record_id>` | **API Key** | Elimina permanentemente un registro de la hoja de cálculo de Google Sheets y del archivo de caché local. |
-| `GET` | `/invitados-view` | **API Key** | Vista HTML interactiva con tabla de invitados, buscador, filtros de confirmación y estadísticas (`invitados.html`). |
 
 ---
 

@@ -1514,17 +1514,6 @@ def require_api_key(f):
     return decorated_function
 
 
-@app.get("/invitados-view")
-@require_api_key
-def invitados_view_page():
-    try:
-        invitados = table.get_all()
-        return render_template("invitados.html", invitados=invitados, count=len(invitados))
-    except Exception as e:
-        return render_template("invitados.html", invitados=[], count=0)
-
-
-
 @app.get("/invitados")
 @require_api_key
 def list_invitados():

@@ -52,8 +52,7 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   │       ├── slides/        # Modular slide template (custom.html)
 │   │       ├── partials/      # UI partial components (top_bar, rsvp_form, pull_to_refresh, tap_zones, toast)
 │   │       ├── og_preview.html# Lightweight Open Graph preview for WhatsApp/social crawlers (0 Sheet calls)
-│   │       ├── blank.html     # Blank template for invalid tokens/forgery protection
-│   │       └── invitados.html # Admin guest overview table
+│   │       └── blank.html     # Blank template for invalid tokens/forgery protection
 │   ├── Dockerfile             # Python 3.12 slim container build definition
 │   └── requirements.txt       # Flask, gspread, google-auth dependencies
 ├── data/                      # Decoupled content & runtime data (excluded from git, migrated via rsync)

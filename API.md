@@ -27,7 +27,7 @@ The **Boda API** is a Flask-based RESTful service that provides CRUD management 
 - **Base URL (Local/Docker)**: `http://localhost/` (via Nginx proxy) or `http://localhost:5000/` (Direct Flask container)
 - **Content Type**: `application/json`
 - **Data Persistence**: Google Sheets (Worksheet: `Confirmaciones` or configured via `WORKSHEET_NAME`)
-- **API Key Security**: Admin endpoints (`GET /invitados`, `POST /invitados`, `DELETE`, `/invitados-view`) require the `API_KEY` configured in `project.env`.
+- **API Key Security**: Admin endpoints (`GET /invitados`, `POST /invitados`, `DELETE`) require the `API_KEY` configured in `project.env`.
   - Pass via Header: `X-API-Key: <key>`
   - Pass via Bearer: `Authorization: Bearer <key>`
   - Pass via Query Param: `?api_key=<key>`
