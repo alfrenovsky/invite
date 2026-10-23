@@ -1499,8 +1499,13 @@
         });
 
         // Dynamic Guest Names Variable Engine ({name})
-        let lastValidGroupNames = '';
-        let lastValidCount = 2;
+        const storyContainerEl = document.getElementById('storyContainer');
+        const initialCountAttr = storyContainerEl ? storyContainerEl.getAttribute('data-names-count') : null;
+        const initialGroupNames = storyContainerEl ? (storyContainerEl.getAttribute('data-group-names') || '') : '';
+        const initialCountParsed = initialCountAttr ? parseInt(initialCountAttr, 10) : 0;
+
+        let lastValidGroupNames = initialGroupNames;
+        let lastValidCount = (initialCountParsed && !isNaN(initialCountParsed) && initialCountParsed > 0) ? initialCountParsed : 1;
 
         function formatGuestNames(namesList) {
             if (!namesList || namesList.length === 0) return '';
@@ -1521,15 +1526,22 @@
 
         function updateStoryGuestNames() {
             const currentNames = getActiveGuestFirstNames();
+            const totalGuestCards = document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]').length;
             let formattedNames = '';
-            let count = currentNames.length;
-            if (count > 0) {
+            let count = lastValidCount;
+
+            if (currentNames.length > 0) {
                 formattedNames = formatGuestNames(currentNames);
                 lastValidGroupNames = formattedNames;
+                count = Math.max(currentNames.length, totalGuestCards || 1);
                 lastValidCount = count;
+            } else if (totalGuestCards > 0) {
+                count = totalGuestCards;
+                lastValidCount = count;
+                formattedNames = lastValidGroupNames || '';
             } else {
                 formattedNames = lastValidGroupNames || '';
-                count = lastValidCount || 2;
+                count = lastValidCount || 1;
             }
 
             // Retrieve price for the first guest in the invitation
@@ -1554,7 +1566,7 @@
                 if (!raw) return;
                 const hasNamesVar = /\{(?:name|names|nombre|nombres)\}/i.test(raw);
                 const hasValueVar = /\{(?:value|valor|precio|monto)\}/i.test(raw);
-                const hasSingPlur = /\(([^|()]*)\|([^|()]*)\)/.test(raw);
+                const hasSingPlur = /\(([^|()]*)\|([^|()]*)\)/.test(raw) || /\{([^|{}]*)\|([^|{}]*)\}/.test(raw);
                 if (hasNamesVar || hasValueVar || hasSingPlur) {
                     let text = raw;
                     if (hasNamesVar && formattedNames) {
@@ -1564,9 +1576,9 @@
                         text = text.replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => (cardValue || ''));
                     }
                     if (hasSingPlur) {
-                        text = text.replace(/\(([^|()]*)\|([^|()]*)\)/g, (match, sing, plur) => {
-                            return count === 1 ? sing : plur;
-                        });
+                        text = text
+                            .replace(/\(([^|()]*)\|([^|()]*)\)/g, (match, sing, plur) => (count === 1 ? sing : plur))
+                            .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (match, sing, plur) => (count === 1 ? sing : plur));
                     }
                     el.textContent = text;
                 }

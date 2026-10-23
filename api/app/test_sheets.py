@@ -823,6 +823,30 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Te esperamos Juan!", res.data)
 
+            # Curly braces format {te|los} check and data-names-count attribute on index.html
+            curly_slides = [{
+                "id": "slide_curly",
+                "title": "Curly",
+                "template": "slides/custom.html",
+                "enabled": True,
+                "elements": [
+                    {"type": "text", "style": "title", "content": "{Te|Los} invitamos {name}"}
+                ]
+            }]
+            with patch("app.table.get_by_invitacion", return_value=single_guest), \
+                 patch("app.load_slides", return_value=curly_slides):
+                res_main = client.get(f"/i/familia_gomez_{code}")
+                self.assertEqual(res_main.status_code, 200)
+                self.assertIn(b"data-names-count=\"1\"", res_main.data)
+                self.assertIn(b"Te invitamos Juan", res_main.data)
+
+            with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
+                 patch("app.load_slides", return_value=curly_slides):
+                res_plural = client.get(f"/i/familia_gomez_{code}")
+                self.assertEqual(res_plural.status_code, 200)
+                self.assertIn(b"data-names-count=\"2\"", res_plural.data)
+                self.assertIn(b"Los invitamos Juan y Mar\xc3\xada", res_plural.data)
+
         # 4. Backend safeguard: do not allow clearing the sole remaining name
         with app.test_client() as client:
             sole_guest = {"id": "g_sole", "invitacion_id": "inv_sole", "nombre": "Carlos"}

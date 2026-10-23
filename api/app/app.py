@@ -569,7 +569,12 @@ def get_guest_context(validated_slug):
     names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
     fallback_title = validated_slug.replace("_", " ").replace("-", " ").title() if validated_slug else "Familia / Pareja"
     group_names = format_group_names(names, fallback=fallback_title or "Familia / Pareja")
-    names_count = len(names) if len(names) > 0 else 2
+    if len(guests) > 0:
+        names_count = len(guests)
+    elif len(names) > 0:
+        names_count = len(names)
+    else:
+        names_count = 1 if (validated_slug and " y " not in validated_slug and "-y-" not in validated_slug and "_y_" not in validated_slug and "familia" not in validated_slug.lower() and "pareja" not in validated_slug.lower()) else 2
 
     confirmed_count = sum(1 for g in guests if g.get("confirmacion") == "si")
     rejected_count = sum(1 for g in guests if g.get("confirmacion") == "no")
