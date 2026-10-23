@@ -39,9 +39,12 @@
                 {% set rot_z = el.rotate if (el.rotate is defined and el.rotate is not none) else 0 %}
                 {% set pers = el.perspective if (el.perspective is defined and el.perspective is not none) else 800 %}
                 {% set text_align = el.align if (el.align in ('left', 'center', 'right')) else 'center' %}
+                {% set v_align = el.valign if (el.valign in ('top', 'center', 'bottom')) else 'center' %}
+                {% set trans_y = '0%' if v_align == 'top' else ('-100%' if v_align == 'bottom' else '-50%') %}
+                {% set origin_y = 'top' if v_align == 'top' else ('bottom' if v_align == 'bottom' else 'center') %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }} align-{{ text_align }}"
                      data-raw-content="{{ el.content }}"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, -50%) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg); transform-style: preserve-3d; transform-origin: center center;">{{ el.content | replace_guest_names(group_names, names_count, card_value) | trim }}</div>
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg); transform-style: preserve-3d; transform-origin: center {{ origin_y }};">{{ el.content | replace_guest_names(group_names, names_count, card_value) | trim }}</div>
             {% elif el.type in ('location', 'link', 'copy') %}
                 {% set sticker_icon = el.icon or ('location' if el.type == 'location' else ('copy' if el.type == 'copy' else 'link')) %}
                 {% set sticker_color = el.color or ('#10b981' if el.type == 'copy' else '#0488db') %}

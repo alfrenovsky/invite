@@ -1951,6 +1951,49 @@
             box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
         }
 
+        .preview-text-el.is-selected.valign-top {
+            box-shadow: 0 -4px 14px rgba(56, 189, 248, 0.7);
+        }
+
+        .preview-text-el.is-selected.valign-bottom {
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.7);
+        }
+
+        .preview-text-anchor-badge {
+            position: absolute;
+            right: -6px;
+            background: #0284c7;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            line-height: 1;
+            letter-spacing: 0.03em;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            z-index: 25;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .preview-text-el.valign-top .preview-text-anchor-badge {
+            top: -12px;
+        }
+
+        .preview-text-el.valign-center .preview-text-anchor-badge {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .preview-text-el.valign-bottom .preview-text-anchor-badge {
+            bottom: -12px;
+        }
+
         .preview-gizmo-container {
             position: absolute;
             top: 0;
@@ -6331,6 +6374,7 @@
                     // Text Content input with TinyMCE-style Toolbar
                     const currentStyle = el.style || 'body';
                     const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
+                    const currentVAlign = (el.valign && ['top', 'center', 'bottom'].includes(el.valign)) ? el.valign : 'center';
                     const currentColor = el.color || '#ffffff';
 
                     const textGroup = document.createElement('div');
@@ -6347,11 +6391,11 @@
 
                         <div class="tb-divider"></div>
 
-                        <!-- Alignment Square Buttons -->
+                        <!-- Horizontal Alignment Square Buttons -->
                         <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'left' ? 'active' : ''}" data-align="left" title="Alinear a la izquierda">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
                         </button>
-                        <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'center' ? 'active' : ''}" data-align="center" title="Centrado">
+                        <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'center' ? 'active' : ''}" data-align="center" title="Centrado horizontal">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
                         </button>
                         <button type="button" class="tb-btn-square tb-align-btn ${currentAlign === 'right' ? 'active' : ''}" data-align="right" title="Alinear a la derecha">
@@ -6360,14 +6404,35 @@
 
                         <div class="tb-divider"></div>
 
-                        <!-- Color Swatches & Native Picker for Text -->
+                        <!-- Vertical Alignment Square Buttons -->
+                        <button type="button" class="tb-btn-square tb-valign-btn ${currentVAlign === 'top' ? 'active' : ''}" data-valign="top" title="Alinear desde arriba">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                <line x1="3" y1="4" x2="21" y2="4"/>
+                                <line x1="6" y1="10" x2="18" y2="10"/>
+                                <line x1="8" y1="16" x2="16" y2="16"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-valign-btn ${currentVAlign === 'center' ? 'active' : ''}" data-valign="center" title="Alinear desde el centro">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                <line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="2 2"/>
+                                <line x1="6" y1="6" x2="18" y2="6"/>
+                                <line x1="6" y1="18" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-valign-btn ${currentVAlign === 'bottom' ? 'active' : ''}" data-valign="bottom" title="Alinear desde abajo">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                <line x1="3" y1="20" x2="21" y2="20"/>
+                                <line x1="8" y1="8" x2="16" y2="8"/>
+                                <line x1="6" y1="14" x2="18" y2="14"/>
+                            </svg>
+                        </button>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- Color Swatches & Native Picker for Text (White, Black & Custom Square Picker) -->
                         <div class="tb-color-swatches" style="display: flex; align-items: center; gap: 4px;">
-                            <button type="button" class="color-dot-btn ${currentColor === '#ffffff' ? 'selected' : ''}" data-color="#ffffff" style="background:#ffffff; border: 1px solid rgba(0,0,0,0.35);" title="Blanco (Por defecto)"></button>
-                            <button type="button" class="color-dot-btn ${currentColor === '#d4af37' ? 'selected' : ''}" data-color="#d4af37" style="background:#d4af37;" title="Dorado"></button>
-                            <button type="button" class="color-dot-btn ${currentColor === '#38bdf8' ? 'selected' : ''}" data-color="#38bdf8" style="background:#38bdf8;" title="Celeste"></button>
-                            <button type="button" class="color-dot-btn ${currentColor === '#34d399' ? 'selected' : ''}" data-color="#34d399" style="background:#34d399;" title="Verde"></button>
-                            <button type="button" class="color-dot-btn ${currentColor === '#e1306c' ? 'selected' : ''}" data-color="#e1306c" style="background:#e1306c;" title="Magenta"></button>
-                            <button type="button" class="color-dot-btn ${currentColor === '#1a202c' ? 'selected' : ''}" data-color="#1a202c" style="background:#1a202c;" title="Oscuro"></button>
+                            <button type="button" class="color-dot-btn ${currentColor.toLowerCase() === '#ffffff' ? 'selected' : ''}" data-color="#ffffff" style="background:#ffffff; border: 1px solid rgba(0,0,0,0.35);" title="Blanco"></button>
+                            <button type="button" class="color-dot-btn ${currentColor.toLowerCase() === '#000000' || currentColor.toLowerCase() === '#1a202c' ? 'selected' : ''}" data-color="#000000" style="background:#000000; border: 1px solid rgba(255,255,255,0.25);" title="Negro"></button>
                             <input type="color" class="custom-color-input text-color-picker" value="${currentColor.startsWith('#') ? currentColor : '#ffffff'}" title="Color personalizado">
                         </div>
 
@@ -6451,7 +6516,7 @@
                         updateElementCardHeader(el, idx);
                     };
 
-                    // Alignment Buttons
+                    // Horizontal Alignment Buttons
                     const alignBtns = textGroup.querySelectorAll('.tb-align-btn');
                     alignBtns.forEach(btn => {
                         btn.onclick = () => {
@@ -6465,13 +6530,30 @@
                         };
                     });
 
+                    // Vertical Alignment Buttons
+                    const vAlignBtns = textGroup.querySelectorAll('.tb-valign-btn');
+                    vAlignBtns.forEach(btn => {
+                        btn.onclick = () => {
+                            const chosenVAlign = btn.getAttribute('data-valign');
+                            if ((el.valign || 'center') === chosenVAlign) return;
+                            recordHistorySnapshot();
+                            el.valign = chosenVAlign;
+                            vAlignBtns.forEach(b => b.classList.toggle('active', b === btn));
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    });
+
                     // Text Color Swatches & Picker
                     const textColorPicker = textGroup.querySelector('.text-color-picker');
                     const textColorDots = textGroup.querySelectorAll('.color-dot-btn');
 
                     function updateTextPaletteSelection(c) {
+                        const targetColor = (c || '').toLowerCase();
                         textColorDots.forEach(btn => {
-                            btn.classList.toggle('selected', btn.dataset.color.toLowerCase() === c.toLowerCase());
+                            const btnColor = (btn.dataset.color || '').toLowerCase();
+                            const isMatch = (btnColor === targetColor) || (btnColor === '#000000' && (targetColor === '#1a202c' || targetColor === 'black'));
+                            btn.classList.toggle('selected', isMatch);
                         });
                     }
 
@@ -7358,9 +7440,14 @@
                         if (el.type === 'text') {
                             const isSelected = selectedElementId === el.id;
                             const textAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
+                            const vAlign = (el.valign && ['top', 'center', 'bottom'].includes(el.valign)) ? el.valign : 'center';
+                            const transY = vAlign === 'top' ? '0%' : (vAlign === 'bottom' ? '-100%' : '-50%');
+                            const originY = vAlign === 'top' ? 'top' : (vAlign === 'bottom' ? 'bottom' : 'center');
+
                             const textDiv = document.createElement('div');
-                            textDiv.className = `slide-el slide-el-${el.style || 'body'} align-${textAlign} preview-text-el style-${el.style || 'body'}${isSelected ? ' is-selected' : ''}`;
+                            textDiv.className = `slide-el slide-el-${el.style || 'body'} align-${textAlign} preview-text-el style-${el.style || 'body'} valign-${vAlign}${isSelected ? ' is-selected' : ''}`;
                             textDiv.dataset.elId = el.id;
+                            textDiv.dataset.valign = vAlign;
                             const posX = el.x !== undefined ? el.x : 0;
                             const posY = el.y !== undefined ? el.y : 0;
                             const widthVal = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 88;
@@ -7374,10 +7461,20 @@
                             textDiv.style.width = `${widthVal}%`;
                             textDiv.style.maxWidth = `${widthVal}%`;
                             textDiv.style.textAlign = textAlign;
-                            textDiv.style.transform = `translate(-50%, -50%) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg)`;
+                            textDiv.style.transform = `translate(-50%, ${transY}) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg)`;
+                            textDiv.style.transformOrigin = `center ${originY}`;
                             textDiv.style.transformStyle = 'preserve-3d';
                             textDiv.style.color = el.color || '#ffffff';
                             textDiv.textContent = replacePreviewVariables(el.content || '');
+
+                            if (isSelected) {
+                                const anchorBadge = document.createElement('span');
+                                anchorBadge.className = 'preview-text-anchor-badge';
+                                const vIcon = vAlign === 'top' ? '⤒' : (vAlign === 'bottom' ? '⤓' : '↕');
+                                const vLabel = vAlign === 'top' ? 'Arriba' : (vAlign === 'bottom' ? 'Abajo' : 'Centro');
+                                anchorBadge.innerHTML = `<span style="font-size: 11px;">${vIcon}</span><span>${vLabel}</span>`;
+                                textDiv.appendChild(anchorBadge);
+                            }
 
                             let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
                             let preDragSnapshot = null;
