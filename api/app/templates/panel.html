@@ -1530,6 +1530,63 @@
             }
         }
 
+        .slide-el.slide-el-link {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .slide-el.slide-el-link:active {
+            cursor: grabbing;
+        }
+
+        .slide-el.slide-el-link.is-selected {
+            outline: 2px dashed #38bdf8;
+            outline-offset: 4px;
+            border-radius: 20px;
+        }
+
+        .sticker-rot-handle {
+            position: absolute;
+            top: -26px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #0f172a;
+            border: 1.5px solid #38bdf8;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            cursor: grab;
+            z-index: 50;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .sticker-rot-handle:hover {
+            background: #1e293b;
+            transform: translateX(-50%) scale(1.15);
+        }
+
+        .sticker-rot-handle:active {
+            cursor: grabbing;
+        }
+
+        .sticker-rot-handle::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 5px;
+            background: #38bdf8;
+        }
+
         .btn-ctrl {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--card-border);
@@ -5809,12 +5866,6 @@
                     const btnCenterX = toolbar.querySelector('.tb-center-x-btn');
                     btnCenterX.onclick = () => {
                         el.x = 0;
-                        const sliderX = document.getElementById(`sliderX_${idx}`);
-                        const numX = document.getElementById(`numX_${idx}`);
-                        const badgeX = document.getElementById(`badgeX_${idx}`);
-                        if (sliderX) sliderX.value = 0;
-                        if (numX) numX.value = 0;
-                        if (badgeX) badgeX.textContent = '0%';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                         showToast('↔ Sticker centrado horizontalmente');
@@ -5823,12 +5874,6 @@
                     const btnCenterY = toolbar.querySelector('.tb-center-y-btn');
                     btnCenterY.onclick = () => {
                         el.y = 0;
-                        const sliderY = document.getElementById(`sliderY_${idx}`);
-                        const numY = document.getElementById(`numY_${idx}`);
-                        const badgeY = document.getElementById(`badgeY_${idx}`);
-                        if (sliderY) sliderY.value = 0;
-                        if (numY) numY.value = 0;
-                        if (badgeY) badgeY.textContent = '0%';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                         showToast('↕ Sticker centrado verticalmente');
@@ -5840,28 +5885,6 @@
                         el.rotate = 0;
                         el.zoom = 100;
                         delete el.w;
-
-                        const sliderRot = document.getElementById(`sliderRot_${idx}`);
-                        const numRot = document.getElementById(`numRot_${idx}`);
-                        const badgeRot = document.getElementById(`badgeRot_${idx}`);
-                        if (sliderRot) sliderRot.value = 0;
-                        if (numRot) numRot.value = 0;
-                        if (badgeRot) badgeRot.textContent = '0°';
-
-                        const sliderZoom = document.getElementById(`sliderZoom_${idx}`);
-                        const numZoom = document.getElementById(`numZoom_${idx}`);
-                        const badgeZoom = document.getElementById(`badgeZoom_${idx}`);
-                        if (sliderZoom) sliderZoom.value = 100;
-                        if (numZoom) numZoom.value = 100;
-                        if (badgeZoom) badgeZoom.textContent = '100%';
-
-                        const sliderW = document.getElementById(`sliderW_${idx}`);
-                        const numW = document.getElementById(`numW_${idx}`);
-                        const badgeW = document.getElementById(`badgeW_${idx}`);
-                        if (sliderW) sliderW.value = 88;
-                        if (badgeW) badgeW.textContent = 'Auto';
-                        if (numW) numW.value = '';
-
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                         showToast('↺ Rotación y zoom del sticker restablecidos');
@@ -6190,7 +6213,8 @@
                     body.appendChild(textGroup);
                 }
 
-                // Position controls: Horizontal X, Vertical Y, Width W & Height H
+                // Position controls: Horizontal X, Vertical Y, Width W & Height H (Omit for link stickers managed via mouse)
+                if (!isLocation) {
                 const posRow = document.createElement('div');
                 posRow.className = 'pos-control-row';
 
@@ -6564,6 +6588,7 @@
                 }
 
                 body.appendChild(posRow);
+                }
                 card.appendChild(body);
                 container.appendChild(card);
             });
@@ -7046,7 +7071,9 @@
                         } else if (el.type === 'location' || el.type === 'link' || el.type === 'copy') {
                             const locDiv = document.createElement('div');
                             const isCopyEl = el.type === 'copy';
-                            locDiv.className = `slide-el slide-el-location slide-el-link ${isCopyEl ? 'slide-el-copy preview-copy-el' : 'preview-link-el'}`;
+                            const isSelected = selectedElementId === el.id;
+                            locDiv.className = `slide-el slide-el-location slide-el-link ${isCopyEl ? 'slide-el-copy preview-copy-el' : 'preview-link-el'}${isSelected ? ' is-selected' : ''}`;
+                            locDiv.dataset.elId = el.id;
                             const posX = el.x !== undefined ? el.x : 0;
                             const posY = el.y !== undefined ? el.y : 0;
                             const rotVal = el.rotate !== undefined ? el.rotate : 0;
@@ -7066,11 +7093,122 @@
                             const iconSvg = getStickerIconSvg(stickerIcon, stickerColor, stickerStyle);
 
                             locDiv.innerHTML = `
-                            <div class="instagram-location-sticker instagram-link-sticker ${isCopyEl ? 'instagram-copy-sticker' : ''} sticker-style-${stickerStyle}" style="--sticker-color: ${stickerColor}; cursor: ${isCopyEl ? 'pointer' : 'default'};">
+                            ${isSelected ? `<div class="sticker-rot-handle" title="Arrastrá para rotar">⟳</div>` : ''}
+                            <div class="instagram-location-sticker instagram-link-sticker ${isCopyEl ? 'instagram-copy-sticker' : ''} sticker-style-${stickerStyle}" style="--sticker-color: ${stickerColor}; cursor: grab;">
                                 ${iconSvg}
                                 <span class="location-sticker-text">${escapeHtml(replacePreviewVariables(el.content || (isCopyEl ? 'COPIAR ALIAS' : 'ENLACE')))}</span>
                             </div>
                         `;
+
+                            // Dragging (Move X, Y)
+                            let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
+                            locDiv.onpointerdown = (e) => {
+                                if (e.target.closest('.sticker-rot-handle')) return;
+                                e.stopPropagation();
+                                startDragX = e.clientX;
+                                startDragY = e.clientY;
+                                initElX = el.x !== undefined ? el.x : 0;
+                                initElY = el.y !== undefined ? el.y : 0;
+                                hasDragged = false;
+
+                                const onMove = (me) => {
+                                    const dx = me.clientX - startDragX;
+                                    const dy = me.clientY - startDragY;
+                                    if (!hasDragged && Math.hypot(dx, dy) > 4) {
+                                        hasDragged = true;
+                                        if (selectedElementId !== el.id) {
+                                            selectedElementId = el.id;
+                                            document.querySelectorAll('.slide-el.is-selected').forEach(s => s.classList.remove('is-selected'));
+                                            locDiv.classList.add('is-selected');
+                                        }
+                                    }
+                                    if (hasDragged) {
+                                        me.preventDefault();
+                                        const canvas = document.getElementById('previewElementsLayer') || document.getElementById('previewStorySlide');
+                                        const cRect = canvas ? canvas.getBoundingClientRect() : { width: 390, height: 711 };
+                                        const deltaXPercent = (dx / (cRect.width || 390)) * 100;
+                                        const deltaYPercent = (dy / (cRect.height || 711)) * 100;
+                                        el.x = Math.max(-60, Math.min(60, Math.round(initElX + deltaXPercent)));
+                                        el.y = Math.max(-60, Math.min(60, Math.round(initElY + deltaYPercent)));
+                                        locDiv.style.left = `calc(50% + ${el.x}%)`;
+                                        locDiv.style.top = `calc(50% + ${el.y}%)`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    }
+                                };
+
+                                const onUp = () => {
+                                    window.removeEventListener('pointermove', onMove);
+                                    window.removeEventListener('pointerup', onUp);
+                                    if (hasDragged) {
+                                        updateLivePreview();
+                                        updateDirtySlideChipsUI();
+                                    } else {
+                                        selectedElementId = (selectedElementId === el.id) ? null : el.id;
+                                        updateLivePreview();
+                                    }
+                                };
+
+                                window.addEventListener('pointermove', onMove);
+                                window.addEventListener('pointerup', onUp);
+                            };
+
+                            // Mouse Wheel: Zoom (Scale 50%-200%) & Shift+Wheel (Rotate)
+                            locDiv.onwheel = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.shiftKey || e.altKey) {
+                                    const step = e.deltaY < 0 ? -5 : 5;
+                                    let newRot = (el.rotate || 0) + step;
+                                    if (newRot > 180) newRot -= 360;
+                                    if (newRot < -180) newRot += 360;
+                                    el.rotate = newRot;
+                                } else {
+                                    const curZoom = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                    const step = e.deltaY < 0 ? 5 : -5;
+                                    el.zoom = Math.max(50, Math.min(200, curZoom + step));
+                                }
+                                const curZ = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                const curR = el.rotate || 0;
+                                locDiv.style.transform = `translate(-50%, -50%) rotate(${curR}deg) scale(${curZ / 100})`;
+                                if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                updateDirtySlideChipsUI();
+                            };
+
+                            // Rotation Handle Drag
+                            const rotHandle = locDiv.querySelector('.sticker-rot-handle');
+                            if (rotHandle) {
+                                rotHandle.onpointerdown = (re) => {
+                                    re.stopPropagation();
+                                    re.preventDefault();
+                                    const rect = locDiv.getBoundingClientRect();
+                                    const centerX = rect.left + rect.width / 2;
+                                    const centerY = rect.top + rect.height / 2;
+
+                                    const onRotMove = (me) => {
+                                        me.preventDefault();
+                                        const rad = Math.atan2(me.clientY - centerY, me.clientX - centerX);
+                                        let deg = Math.round((rad + Math.PI / 2) * (180 / Math.PI));
+                                        if (deg > 180) deg -= 360;
+                                        if (deg < -180) deg += 360;
+                                        if (Math.abs(deg) <= 3) deg = 0;
+                                        el.rotate = deg;
+                                        const curZ = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                        locDiv.style.transform = `translate(-50%, -50%) rotate(${deg}deg) scale(${curZ / 100})`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    };
+
+                                    const onRotUp = () => {
+                                        window.removeEventListener('pointermove', onRotMove);
+                                        window.removeEventListener('pointerup', onRotUp);
+                                        updateLivePreview();
+                                        updateDirtySlideChipsUI();
+                                    };
+
+                                    window.addEventListener('pointermove', onRotMove);
+                                    window.addEventListener('pointerup', onRotUp);
+                                };
+                            }
+
                             overlay.appendChild(locDiv);
                         } else if (el.type === 'countdown') {
                             const cdDiv = document.createElement('div');
@@ -7206,6 +7344,12 @@
                 const selectedEl = Array.isArray(slide.elements) ? slide.elements.find(e => e.id === selectedElementId) : null;
                 if (selectedEl && selectedEl.type === 'text') {
                     renderGizmo(selectedEl);
+                } else if (selectedEl && (selectedEl.type === 'location' || selectedEl.type === 'link' || selectedEl.type === 'copy')) {
+                    const gizmoContainer = document.getElementById('previewGizmoContainer');
+                    if (gizmoContainer) {
+                        gizmoContainer.style.display = 'none';
+                        gizmoContainer.innerHTML = '';
+                    }
                 } else {
                     deselectElement();
                 }
@@ -7334,7 +7478,7 @@
                 gizmoContainer.style.display = 'none';
                 gizmoContainer.innerHTML = '';
             }
-            document.querySelectorAll('.preview-text-el.is-selected').forEach(el => el.classList.remove('is-selected'));
+            document.querySelectorAll('.preview-text-el.is-selected, .slide-el-link.is-selected').forEach(el => el.classList.remove('is-selected'));
         }
 
         function syncPanel3DControls(el) {
@@ -8588,7 +8732,8 @@
                     e.target.closest('a') ||
                     e.target.closest('input') ||
                     e.target.closest('.preview-gizmo-container') ||
-                    e.target.closest('.preview-text-el')) {
+                    e.target.closest('.preview-text-el') ||
+                    e.target.closest('.slide-el-link')) {
                     return;
                 }
                 if (selectedElementId) {
