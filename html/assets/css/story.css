@@ -989,6 +989,10 @@
             pointer-events: auto !important;
             cursor: pointer !important;
         }
+        body.is-slide-transitioning .story-slide.side-slide {
+            pointer-events: none !important;
+            cursor: default !important;
+        }
         .is-desktop-mode .story-slide.side-slide *,
         body:not(.is-mobile-mode) .story-slide.side-slide * {
             pointer-events: none !important;
