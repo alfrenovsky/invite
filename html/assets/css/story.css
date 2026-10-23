@@ -400,13 +400,23 @@
 
         .slide-el-location,
         .slide-el-link,
-        .slide-el-copy,
-        .slide-el-countdown {
+        .slide-el-copy {
             display: inline-flex;
             justify-content: center;
             align-items: center;
             width: auto;
             max-width: 95%;
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        .slide-el-countdown {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 90%;
+            box-sizing: border-box;
             pointer-events: auto;
             z-index: 20;
         }
@@ -2358,8 +2368,9 @@
             border-radius: 16px;
             padding: 0px 12px 0px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-            width: max-content;
-            max-width: 95%;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
             margin: 0 auto;
             color: #1a1a1a;
             user-select: none;

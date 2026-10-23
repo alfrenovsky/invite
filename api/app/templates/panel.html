@@ -1159,6 +1159,7 @@
             overflow-y: auto;
             max-height: calc(98vh - 175px);
             padding-right: 6px;
+            padding-bottom: 320px;
         }
 
         .slides-scroll-container::-webkit-scrollbar {
@@ -2775,7 +2776,9 @@
             align-items: center;
             pointer-events: auto;
             user-select: none;
-            width: auto;
+            width: 90%;
+            max-width: 90%;
+            box-sizing: border-box;
         }
 
         .story-preview-viewport .countdown-sticker {
@@ -2784,8 +2787,9 @@
             border-radius: 16px;
             padding: 0px 12px 0px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-            width: max-content;
-            max-width: 95%;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
             margin: 0 auto;
             color: #1a1a1a;
             user-select: none;
@@ -5379,6 +5383,7 @@
 
         const collapsedElementIds = new Set();
         let selectedElementId = null;
+        let previewGuestMode = 'plural';
 
         function updateBgCardHeader() {
             const slide = getCurrentSlide();
@@ -5637,6 +5642,80 @@
                 body.className = 'element-body';
 
                 if (isCountdown) {
+                    // Toolbar: Centering & Zero Angle
+                    const toolbar = document.createElement('div');
+                    toolbar.className = 'sticker-editor-toolbar countdown-editor-toolbar';
+                    toolbar.innerHTML = `
+                        <!-- Centering Buttons (SVG) -->
+                        <button type="button" class="tb-btn-square tb-center-x-btn" title="Centrar horizontalmente (X = 0)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="2" x2="12" y2="22"/>
+                                <path d="M2 12h6m-3-4 3 4-3 4"/>
+                                <path d="M22 12h-6m3-4-3 4 3 4"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-center-y-btn" title="Centrar verticalmente (Y = 0)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2v6m-4-3 4 3 4-3"/>
+                                <path d="M12 22v-6m-4 3 4-3 4 3"/>
+                            </svg>
+                        </button>
+
+                        <div class="tb-divider"></div>
+
+                        <!-- Horizontalize / Zero Angle Button -->
+                        <button type="button" class="tb-btn-square tb-horizontalize-btn" title="Cero ángulo / Nivelar horizontalmente (Rotación = 0°)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                                <line x1="2" y1="8" x2="2" y2="16"/>
+                                <line x1="22" y1="8" x2="22" y2="16"/>
+                            </svg>
+                        </button>
+
+                        <!-- Reset Button -->
+                        <button type="button" class="tb-btn-toggle tb-reset-btn" style="margin-left: auto;" title="Restablecer posición, rotación a 0° y zoom a 100%">
+                            <span>↺ Reset</span>
+                        </button>
+                    `;
+                    body.appendChild(toolbar);
+
+                    const btnCenterX = toolbar.querySelector('.tb-center-x-btn');
+                    btnCenterX.onclick = () => {
+                        el.x = 0;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        showToast('↔ Countdown centrado horizontalmente');
+                    };
+
+                    const btnCenterY = toolbar.querySelector('.tb-center-y-btn');
+                    btnCenterY.onclick = () => {
+                        el.y = 0;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        showToast('↕ Countdown centrado verticalmente');
+                    };
+
+                    const btnHorizontalize = toolbar.querySelector('.tb-horizontalize-btn');
+                    btnHorizontalize.onclick = () => {
+                        el.rotate = 0;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        showToast('📐 Ángulo en 0° (horizontal)');
+                    };
+
+                    const btnReset = toolbar.querySelector('.tb-reset-btn');
+                    btnReset.onclick = () => {
+                        el.x = 0;
+                        el.y = 15;
+                        el.rotate = 0;
+                        el.zoom = 100;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        showToast('↺ Countdown restablecido');
+                    };
+
                     // Title input
                     const titleGroup = document.createElement('div');
                     titleGroup.className = 'form-group';
@@ -6096,6 +6175,16 @@
 
                         <div class="tb-divider"></div>
 
+                        <!-- 1 Person vs Group Mode Toggle -->
+                        <button type="button" class="tb-btn-square tb-guest-mode-btn ${previewGuestMode === 'single' ? 'active' : ''}" data-mode="single" title="Simular 1 persona (singular)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-guest-mode-btn ${previewGuestMode === 'plural' ? 'active' : ''}" data-mode="plural" title="Simular grupo / varios invitados (plural)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </button>
+
+                        <div class="tb-divider"></div>
+
                         <!-- Variable Shortcuts -->
                         <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-wrap: wrap;">
                             <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert=" {name}">+{name}</span>
@@ -6241,11 +6330,24 @@
                         };
                     });
 
+                    // Guest Mode Preview Toggles (1 Persona vs Grupo)
+                    textGroup.querySelectorAll('.tb-guest-mode-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const mode = btn.dataset.mode;
+                            previewGuestMode = mode;
+                            document.querySelectorAll('.tb-guest-mode-btn').forEach(b => {
+                                b.classList.toggle('active', b.dataset.mode === mode);
+                            });
+                            updateLivePreview();
+                            showToast(mode === 'single' ? '👤 Vista simulada: 1 persona (singular)' : '👥 Vista simulada: grupo (plural)');
+                        };
+                    });
+
                     body.appendChild(textGroup);
                 }
 
-                // Position controls: Horizontal X, Vertical Y, Width W & Height H (Omit for link stickers managed via mouse)
-                if (!isLocation) {
+                // Position controls: Horizontal X, Vertical Y, Width W & Height H (Omit for link stickers and countdown managed via mouse)
+                if (!isLocation && !isCountdown) {
                 const posRow = document.createElement('div');
                 posRow.className = 'pos-control-row';
 
@@ -6648,8 +6750,6 @@
             renderElementsList();
             updateLivePreview();
             selectElementForEditing(newEl.id);
-            const newCard = document.getElementById('elCard_' + newEl.id);
-            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addLinkElement(icon = 'link', content = 'ENLACE', color = '#2196f3') {
@@ -6679,8 +6779,6 @@
             renderElementsList();
             updateLivePreview();
             selectElementForEditing(newEl.id);
-            const newCard = document.getElementById('elCard_' + newEl.id);
-            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addCopyElement(icon = 'copy', content = 'BODA.CELIA.ALFREDO', color = '#10b981') {
@@ -6704,7 +6802,7 @@
                 precision: 'seconds',
                 x: 0,
                 y: 15,
-                w: null,
+                w: 90,
                 rotate: 0,
                 zoom: 100
             };
@@ -6715,8 +6813,7 @@
 
             renderElementsList();
             updateLivePreview();
-            const newCard = document.getElementById('elCard_' + newEl.id);
-            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            selectElementForEditing(newEl.id);
         }
 
         function addFormElement() {
@@ -6739,8 +6836,7 @@
 
             renderElementsList();
             updateLivePreview();
-            const newCard = document.getElementById('elCard_' + newEl.id);
-            if (newCard) newCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            selectElementForEditing(newEl.id);
         }
 
         function removeElement(index) {
@@ -6986,11 +7082,14 @@
 
             function replacePreviewVariables(str) {
                 if (!str) return '';
+                const isSingle = previewGuestMode === 'single';
+                const nameVal = isSingle ? 'Juan' : 'Juan y María';
+                const priceVal = isSingle ? '$ 45.000' : '$ 90.000';
                 return str
-                    .replace(/\{(?:name|names|nombre|nombres)\}/gi, 'Juan y María')
-                    .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, '$ 45.000')
-                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, '$2')
-                    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, '$2');
+                    .replace(/\{(?:name|names|nombre|nombres)\}/gi, nameVal)
+                    .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, priceVal)
+                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, isSingle ? '$1' : '$2')
+                    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, isSingle ? '$1' : '$2');
             }
 
             // Render live overlay elements
@@ -7220,21 +7319,15 @@
                             const cdDiv = document.createElement('div');
                             const isSelected = selectedElementId === el.id;
                             cdDiv.className = `slide-el slide-el-countdown preview-countdown-el${isSelected ? ' is-selected' : ''}`;
-                            cdDiv.onpointerdown = (e) => e.stopPropagation();
-                            cdDiv.onclick = (e) => {
-                                e.stopPropagation();
-                                selectElementForEditing(el.id);
-                            };
+                            cdDiv.dataset.elId = el.id;
                             const posX = el.x !== undefined ? el.x : 0;
-                            const posY = el.y !== undefined ? el.y : 0;
+                            const posY = el.y !== undefined ? el.y : 15;
                             const rotVal = el.rotate !== undefined ? el.rotate : 0;
                             const zoomVal = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : (el.scale !== undefined ? el.scale * 100 : 100);
                             cdDiv.style.left = `calc(50% + ${posX}%)`;
                             cdDiv.style.top = `calc(50% + ${posY}%)`;
-                            if (el.w) {
-                                cdDiv.style.width = `${el.w}%`;
-                                cdDiv.style.maxWidth = `${el.w}%`;
-                            }
+                            cdDiv.style.width = '90%';
+                            cdDiv.style.maxWidth = '90%';
                             cdDiv.style.transform = `translate(-50%, -50%) rotate(${rotVal}deg) scale(${zoomVal / 100})`;
                             cdDiv.style.transformOrigin = 'center center';
 
@@ -7256,7 +7349,8 @@
                             });
 
                             cdDiv.innerHTML = `
-                            <div class="countdown-sticker">
+                            ${isSelected ? `<div class="sticker-rot-handle" title="Arrastrá para rotar">⟳</div>` : ''}
+                            <div class="countdown-sticker" style="cursor: grab; width: 100%; box-sizing: border-box;">
                                 <div class="countdown-sticker-header">
                                     <span class="countdown-sticker-title">${escapeHtml(el.title || 'FALTA POCO')}</span>
                                     <div class="countdown-sticker-arrow" aria-hidden="true">
@@ -7268,6 +7362,113 @@
                                 </div>
                             </div>
                         `;
+
+                            // Dragging (Move X, Y)
+                            let startDragX = 0, startDragY = 0, initElX = 0, initElY = 0, hasDragged = false;
+                            cdDiv.onpointerdown = (e) => {
+                                if (e.target.closest('.sticker-rot-handle')) return;
+                                e.stopPropagation();
+                                startDragX = e.clientX;
+                                startDragY = e.clientY;
+                                initElX = el.x !== undefined ? el.x : 0;
+                                initElY = el.y !== undefined ? el.y : 15;
+                                hasDragged = false;
+
+                                const onMove = (me) => {
+                                    const dx = me.clientX - startDragX;
+                                    const dy = me.clientY - startDragY;
+                                    if (!hasDragged && Math.hypot(dx, dy) > 4) {
+                                        hasDragged = true;
+                                        if (selectedElementId !== el.id) {
+                                            selectElementForEditing(el.id);
+                                        }
+                                    }
+                                    if (hasDragged) {
+                                        me.preventDefault();
+                                        const canvas = document.getElementById('previewElementsLayer') || document.getElementById('previewStorySlide');
+                                        const cRect = canvas ? canvas.getBoundingClientRect() : { width: 390, height: 711 };
+                                        const deltaXPercent = (dx / (cRect.width || 390)) * 100;
+                                        const deltaYPercent = (dy / (cRect.height || 711)) * 100;
+                                        el.x = Math.max(-60, Math.min(60, Math.round(initElX + deltaXPercent)));
+                                        el.y = Math.max(-60, Math.min(60, Math.round(initElY + deltaYPercent)));
+                                        cdDiv.style.left = `calc(50% + ${el.x}%)`;
+                                        cdDiv.style.top = `calc(50% + ${el.y}%)`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    }
+                                };
+
+                                const onUp = () => {
+                                    window.removeEventListener('pointermove', onMove);
+                                    window.removeEventListener('pointerup', onUp);
+                                    if (hasDragged) {
+                                        updateLivePreview();
+                                        updateDirtySlideChipsUI();
+                                    } else {
+                                        selectElementForEditing(el.id);
+                                    }
+                                };
+
+                                window.addEventListener('pointermove', onMove);
+                                window.addEventListener('pointerup', onUp);
+                            };
+
+                            // Mouse Wheel: Zoom (Scale 50%-200%) & Shift+Wheel (Rotate)
+                            cdDiv.onwheel = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.shiftKey || e.altKey) {
+                                    const step = e.deltaY < 0 ? -5 : 5;
+                                    let newRot = (el.rotate || 0) + step;
+                                    if (newRot > 180) newRot -= 360;
+                                    if (newRot < -180) newRot += 360;
+                                    el.rotate = newRot;
+                                } else {
+                                    const curZoom = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                    const step = e.deltaY < 0 ? 5 : -5;
+                                    el.zoom = Math.max(50, Math.min(200, curZoom + step));
+                                }
+                                const curZ = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                const curR = el.rotate || 0;
+                                cdDiv.style.transform = `translate(-50%, -50%) rotate(${curR}deg) scale(${curZ / 100})`;
+                                if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                updateDirtySlideChipsUI();
+                            };
+
+                            // Rotation Handle Drag
+                            const rotHandle = cdDiv.querySelector('.sticker-rot-handle');
+                            if (rotHandle) {
+                                rotHandle.onpointerdown = (re) => {
+                                    re.stopPropagation();
+                                    re.preventDefault();
+                                    const rect = cdDiv.getBoundingClientRect();
+                                    const centerX = rect.left + rect.width / 2;
+                                    const centerY = rect.top + rect.height / 2;
+
+                                    const onRotMove = (me) => {
+                                        me.preventDefault();
+                                        const rad = Math.atan2(me.clientY - centerY, me.clientX - centerX);
+                                        let deg = Math.round((rad + Math.PI / 2) * (180 / Math.PI));
+                                        if (deg > 180) deg -= 360;
+                                        if (deg < -180) deg += 360;
+                                        if (Math.abs(deg) <= 3) deg = 0;
+                                        el.rotate = deg;
+                                        const curZ = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                        cdDiv.style.transform = `translate(-50%, -50%) rotate(${deg}deg) scale(${curZ / 100})`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    };
+
+                                    const onRotUp = () => {
+                                        window.removeEventListener('pointermove', onRotMove);
+                                        window.removeEventListener('pointerup', onRotUp);
+                                        updateLivePreview();
+                                        updateDirtySlideChipsUI();
+                                    };
+
+                                    window.addEventListener('pointermove', onRotMove);
+                                    window.addEventListener('pointerup', onRotUp);
+                                };
+                            }
+
                             overlay.appendChild(cdDiv);
                         } else if (el.type === 'form') {
                             const formDiv = document.createElement('div');
@@ -7479,6 +7680,23 @@
         // -------------------------------------------------------------
         // 3D TEXT TRANSFORM & GIZMO ENGINE
         // -------------------------------------------------------------
+        function scrollCardIntoView(card) {
+            if (!card) return;
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const container = document.querySelector('.slides-scroll-container');
+                    if (!container) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        return;
+                    }
+                    const cRect = container.getBoundingClientRect();
+                    const kRect = card.getBoundingClientRect();
+                    const targetScroll = container.scrollTop + (kRect.top - cRect.top) - 16;
+                    container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+                });
+            });
+        }
+
         function selectElementForEditing(elId) {
             selectedElementId = elId;
             const slide = getCurrentSlide();
@@ -7492,7 +7710,7 @@
             if (card) {
                 document.querySelectorAll('.element-card.is-selected').forEach(c => c.classList.remove('is-selected'));
                 card.classList.add('is-selected');
-                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                scrollCardIntoView(card);
             }
             updateLivePreview();
         }
