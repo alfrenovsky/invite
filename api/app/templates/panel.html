@@ -1971,6 +1971,24 @@
             }
         }
 
+        .pos-sliders-trio {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            grid-column: 1 / -1;
+        }
+
+        .pos-sliders-trio .pos-num-input {
+            width: 52px;
+            padding: 4px 4px;
+        }
+
+        @media (max-width: 680px) {
+            .pos-sliders-trio {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .pos-slider-wrap {
             display: flex;
             flex-direction: column;
@@ -5921,20 +5939,6 @@
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
-                    <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 5px; display: flex; flex-direction: column; gap: 3px;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #38bdf8;">{name}</span>
-                            <span>Nombres de los invitados (ej: <em>Juan y María</em>)</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #34d399;">{value}</span>
-                            <span>Precio de la tarjeta del 1er invitado (ej: <em>$ 45.000</em>)</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-family: monospace; color: #f59e0b;">{a|b} o (a|b)</span>
-                            <span>Singular o plural según cantidad (ej: <em>{Te|Los} esperamos</em> o <em>¡Bienvenido{|s}!</em>)</span>
-                        </div>
-                    </div>
                 `;
 
                     const textarea = textGroup.querySelector('textarea');
@@ -6062,39 +6066,41 @@
                 const currPers = el.perspective !== undefined ? el.perspective : 800;
 
                 posRow.innerHTML = `
-                <!-- Horizontal X -->
-                <div class="pos-slider-wrap">
-                    <div class="pos-slider-header">
-                        <span>Posición Horizontal (X)</span>
-                        <span class="pos-val-badge" id="badgeX_${idx}">${currX}%</span>
+                <div class="pos-sliders-trio">
+                    <!-- Horizontal X -->
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Posición Horizontal (X)</span>
+                            <span class="pos-val-badge" id="badgeX_${idx}">${currX}%</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderX_${idx}" min="-60" max="60" step="1" value="${currX}">
+                            <input type="number" class="pos-num-input" id="numX_${idx}" min="-60" max="60" step="1" value="${currX}">
+                        </div>
                     </div>
-                    <div class="pos-input-group">
-                        <input type="range" class="pos-range-slider" id="sliderX_${idx}" min="-60" max="60" step="1" value="${currX}">
-                        <input type="number" class="pos-num-input" id="numX_${idx}" min="-60" max="60" step="1" value="${currX}">
-                    </div>
-                </div>
 
-                <!-- Vertical Y -->
-                <div class="pos-slider-wrap">
-                    <div class="pos-slider-header">
-                        <span>Posición Vertical (Y)</span>
-                        <span class="pos-val-badge" id="badgeY_${idx}">${currY}%</span>
+                    <!-- Vertical Y -->
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Posición Vertical (Y)</span>
+                            <span class="pos-val-badge" id="badgeY_${idx}">${currY}%</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderY_${idx}" min="-60" max="60" step="1" value="${currY}">
+                            <input type="number" class="pos-num-input" id="numY_${idx}" min="-60" max="60" step="1" value="${currY}">
+                        </div>
                     </div>
-                    <div class="pos-input-group">
-                        <input type="range" class="pos-range-slider" id="sliderY_${idx}" min="-60" max="60" step="1" value="${currY}">
-                        <input type="number" class="pos-num-input" id="numY_${idx}" min="-60" max="60" step="1" value="${currY}">
-                    </div>
-                </div>
 
-                <!-- Ancho del Cuadro (W) -->
-                <div class="pos-slider-wrap" style="grid-column: 1 / -1; margin-top: 4px;">
-                    <div class="pos-slider-header">
-                        <span>Ancho Máximo (% del slide${isTransformable ? ', opcional' : ''})</span>
-                        <span class="pos-val-badge" id="badgeW_${idx}">${currW !== '' ? currW + '%' : 'Auto'}</span>
-                    </div>
-                    <div class="pos-input-group">
-                        <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW || (isForm ? 92 : 88)}">
-                        <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
+                    <!-- Ancho del Cuadro (W) -->
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Ancho Máximo (% W${isTransformable ? ', opcional' : ''})</span>
+                            <span class="pos-val-badge" id="badgeW_${idx}">${currW !== '' ? currW + '%' : 'Auto'}</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW || (isForm ? 92 : 88)}">
+                            <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
+                        </div>
                     </div>
                 </div>
 
