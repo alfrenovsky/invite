@@ -1425,8 +1425,11 @@
         }
 
         document.addEventListener('click', (e) => {
-            const copyBtn = e.target.closest('.instagram-copy-sticker, .slide-el-copy, [data-copy-val], .payment-alias-badge');
-            if (!copyBtn) return;
+            // Anchor links are for navigation (internal slide jumps or external URLs), never copy to clipboard
+            if (e.target.closest('a[href]')) return;
+
+            const copyBtn = e.target.closest('.instagram-copy-sticker, button.slide-el-copy, [data-copy-val], .payment-alias-badge');
+            if (!copyBtn || copyBtn.tagName === 'A' || copyBtn.closest('a')) return;
             e.stopPropagation();
             e.preventDefault();
             const val = copyBtn.getAttribute('data-copy-val') || copyBtn.querySelector('.location-sticker-text, .payment-alias-text')?.textContent?.trim() || copyBtn.textContent.trim();
