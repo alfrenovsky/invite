@@ -7142,7 +7142,7 @@
                 if (!str) return '';
                 const isSingle = previewGuestMode === 'single';
                 const nameVal = isSingle ? 'Juan' : 'Juan y María';
-                const priceVal = isSingle ? DEFAULT_CARD_VALUE : formatCurrency(DEFAULT_CARD_NUM * 2);
+                const priceVal = DEFAULT_CARD_VALUE;
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, nameVal)
                     .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, priceVal)
