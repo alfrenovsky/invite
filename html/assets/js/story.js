@@ -1582,6 +1582,40 @@
                 }
             }
 
+            function escapeHtml(text) {
+                if (!text) return '';
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function renderSlideTextHtml(text) {
+                if (!text) return '';
+                const lines = text.split(/\r?\n/);
+                const hasPipe = lines.some(l => l.includes('|'));
+                if (!hasPipe) return null;
+
+                let html = '<div class="slide-itinerary-grid">';
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (!trimmed) {
+                        html += '<div class="itinerary-spacer"></div>';
+                    } else if (line.includes('|')) {
+                        const parts = line.split('|');
+                        const left = escapeHtml(parts[0].trim());
+                        const right = escapeHtml(parts.slice(1).join('|').trim());
+                        html += `<div class="itinerary-row"><span class="itinerary-col-time">${left}</span><span class="itinerary-col-event">${right}</span></div>`;
+                    } else {
+                        html += `<div class="itinerary-full-row">${escapeHtml(trimmed)}</div>`;
+                    }
+                });
+                html += '</div>';
+                return html;
+            }
+
             document.querySelectorAll('[data-raw-content]').forEach(el => {
                 const raw = el.getAttribute('data-raw-content');
                 if (!raw) return;
@@ -1601,7 +1635,12 @@
                             .replace(/\(([^|()]*)\|([^|()]*)\)/g, (match, sing, plur) => (count === 1 ? sing : plur))
                             .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, (match, sing, plur) => (count === 1 ? sing : plur));
                     }
-                    el.textContent = text;
+                    const itineraryHtml = renderSlideTextHtml(text);
+                    if (itineraryHtml !== null) {
+                        el.innerHTML = itineraryHtml;
+                    } else {
+                        el.textContent = text;
+                    }
                 }
             });
         }

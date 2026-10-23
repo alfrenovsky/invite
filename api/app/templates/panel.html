@@ -2665,6 +2665,76 @@
         .story-preview-viewport .slide-el.align-right,
         .preview-text-el.align-right { text-align: right; }
 
+        /* 2-Column Itinerary / Schedule Grid in Preview */
+        .story-preview-viewport .slide-itinerary-grid,
+        .preview-text-el .slide-itinerary-grid {
+            display: inline-grid;
+            grid-template-columns: max-content 1fr;
+            column-gap: 1.25rem;
+            row-gap: 0.55rem;
+            align-items: baseline;
+            text-align: left;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto;
+            white-space: normal;
+        }
+
+        .story-preview-viewport .slide-el.align-left .slide-itinerary-grid,
+        .preview-text-el.align-left .slide-itinerary-grid {
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .story-preview-viewport .slide-el.align-right .slide-itinerary-grid,
+        .preview-text-el.align-right .slide-itinerary-grid {
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .story-preview-viewport .slide-el.align-center .slide-itinerary-grid,
+        .preview-text-el.align-center .slide-itinerary-grid {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .story-preview-viewport .itinerary-row,
+        .preview-text-el .itinerary-row {
+            display: contents;
+        }
+
+        .story-preview-viewport .itinerary-col-time,
+        .preview-text-el .itinerary-col-time {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: right;
+            letter-spacing: 0.03em;
+            opacity: 0.95;
+            padding-right: 0.25rem;
+        }
+
+        .story-preview-viewport .itinerary-col-event,
+        .preview-text-el .itinerary-col-event {
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .story-preview-viewport .itinerary-full-row,
+        .preview-text-el .itinerary-full-row {
+            grid-column: 1 / -1;
+            text-align: inherit;
+            font-weight: 600;
+            padding-top: 0.25rem;
+            padding-bottom: 0.15rem;
+        }
+
+        .story-preview-viewport .itinerary-spacer,
+        .preview-text-el .itinerary-spacer {
+            grid-column: 1 / -1;
+            height: 0.6em;
+        }
+
         .story-preview-viewport .slide-el-title,
         .preview-text-el.style-title {
             font-family: var(--el-title-font, 'Montserrat'), sans-serif;
@@ -6479,6 +6549,7 @@
                             <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert="{name}">+{name}</span>
                             <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert="{value}">+{value}</span>
                             <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional ({sin|plu})" data-insert="{sin|plu}">+{sin|plu}</span>
+                            <span class="tb-chip-var" style="color: #c084fc;" title="Insertar plantilla de itinerario en 2 columnas" data-insert="18:00 | Recepción&#10;18:30 | Ceremonia civil&#10;19:30 | Cena&#10;21:00 | Baile&#10;02:00 | Fin">+ Itinerario</span>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
@@ -7450,6 +7521,30 @@
                     .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, isSingle ? '$1' : '$2');
             }
 
+            function renderSlideTextHtml(text) {
+                if (!text) return '';
+                const lines = text.split(/\r?\n/);
+                const hasPipe = lines.some(l => l.includes('|'));
+                if (!hasPipe) return null;
+
+                let html = '<div class="slide-itinerary-grid">';
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (!trimmed) {
+                        html += '<div class="itinerary-spacer"></div>';
+                    } else if (line.includes('|')) {
+                        const parts = line.split('|');
+                        const left = escapeHtml(parts[0].trim());
+                        const right = escapeHtml(parts.slice(1).join('|').trim());
+                        html += `<div class="itinerary-row"><span class="itinerary-col-time">${left}</span><span class="itinerary-col-event">${right}</span></div>`;
+                    } else {
+                        html += `<div class="itinerary-full-row">${escapeHtml(trimmed)}</div>`;
+                    }
+                });
+                html += '</div>';
+                return html;
+            }
+
             // Render live overlay elements
             if (overlay) {
                 overlay.innerHTML = '';
@@ -7484,7 +7579,13 @@
                             textDiv.style.transformOrigin = `center ${originY}`;
                             textDiv.style.transformStyle = 'preserve-3d';
                             textDiv.style.color = el.color || '#ffffff';
-                            textDiv.textContent = replacePreviewVariables(el.content || '');
+                            const processedText = replacePreviewVariables(el.content || '');
+                            const itineraryHtml = renderSlideTextHtml(processedText);
+                            if (itineraryHtml !== null) {
+                                textDiv.innerHTML = itineraryHtml;
+                            } else {
+                                textDiv.textContent = processedText;
+                            }
 
                             if (isSelected) {
                                 const anchorBadge = document.createElement('span');

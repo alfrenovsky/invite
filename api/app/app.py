@@ -6,6 +6,7 @@ import threading
 import urllib.parse
 import uuid
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect
+from markupsafe import Markup, escape
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type, DEFAULT_RESERVA_MONTO
 import telegram_bot
@@ -475,9 +476,39 @@ def replace_guest_names_filter(text, group_names="", count=None, card_value=""):
     return replace_guest_names(text, group_names, count, card_value)
 
 
+def format_slide_text(text):
+    if not text:
+        return ""
+    lines = str(text).splitlines()
+    has_pipe = any('|' in line for line in lines)
+    if not has_pipe:
+        return escape(text)
+
+    out = ['<div class="slide-itinerary-grid">']
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            out.append('<div class="itinerary-spacer"></div>')
+        elif '|' in line:
+            parts = line.split('|', 1)
+            col_time = escape(parts[0].strip())
+            col_event = escape(parts[1].strip())
+            out.append(f'<div class="itinerary-row"><span class="itinerary-col-time">{col_time}</span><span class="itinerary-col-event">{col_event}</span></div>')
+        else:
+            col_full = escape(stripped)
+            out.append(f'<div class="itinerary-full-row">{col_full}</div>')
+    out.append('</div>')
+    return Markup("".join(out))
+
+
+@app.template_filter("format_slide_text")
+def format_slide_text_filter(text):
+    return format_slide_text(text)
+
+
 @app.context_processor
 def utility_processor():
-    return dict(replace_guest_names=replace_guest_names)
+    return dict(replace_guest_names=replace_guest_names, format_slide_text=format_slide_text)
 
 
 TARGET_CANVAS_W = 1080

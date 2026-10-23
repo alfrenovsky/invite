@@ -368,6 +368,67 @@
         .slide-el.align-center { text-align: center; }
         .slide-el.align-right { text-align: right; }
 
+        /* 2-Column Itinerary / Schedule Grid */
+        .slide-itinerary-grid {
+            display: inline-grid;
+            grid-template-columns: max-content 1fr;
+            column-gap: 1.25rem;
+            row-gap: 0.55rem;
+            align-items: baseline;
+            text-align: left;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto;
+            white-space: normal;
+        }
+
+        .slide-el.align-left .slide-itinerary-grid {
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .slide-el.align-right .slide-itinerary-grid {
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .slide-el.align-center .slide-itinerary-grid {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .itinerary-row {
+            display: contents;
+        }
+
+        .itinerary-col-time {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: right;
+            letter-spacing: 0.03em;
+            opacity: 0.95;
+            padding-right: 0.25rem;
+        }
+
+        .itinerary-col-event {
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .itinerary-full-row {
+            grid-column: 1 / -1;
+            text-align: inherit;
+            font-weight: 600;
+            padding-top: 0.25rem;
+            padding-bottom: 0.15rem;
+        }
+
+        .itinerary-spacer {
+            grid-column: 1 / -1;
+            height: 0.6em;
+        }
+
         .slide-el-title {
             font-family: var(--el-title-font, 'Montserrat'), sans-serif;
             font-weight: var(--el-title-weight, 800);

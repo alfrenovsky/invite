@@ -45,7 +45,7 @@
                 {% set text_zoom = ((el.zoom if (el.zoom is defined and el.zoom is not none) else 100) / 100) %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }} align-{{ text_align }}"
                      data-raw-content="{{ el.content }}"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg) scale({{ text_zoom }}); transform-style: preserve-3d; transform-origin: center {{ origin_y }};">{{ el.content | replace_guest_names(group_names, names_count, card_value) | trim }}</div>
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg) scale({{ text_zoom }}); transform-style: preserve-3d; transform-origin: center {{ origin_y }};">{{ el.content | replace_guest_names(group_names, names_count, card_value) | trim | format_slide_text }}</div>
             {% elif el.type in ('location', 'link', 'copy') %}
                 {% set sticker_icon = el.icon or ('location' if el.type == 'location' else ('copy' if el.type == 'copy' else 'link')) %}
                 {% set sticker_color = el.color or ('#10b981' if el.type == 'copy' else '#0488db') %}

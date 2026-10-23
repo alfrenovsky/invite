@@ -859,6 +859,79 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 called_data = mock_update.call_args[0][1]
                 self.assertEqual(called_data["nombre"], "Carlos")
 
+    def test_itinerary_two_column_formatting(self):
+        from app import app, format_slide_text, replace_guest_names
+
+        # 1. Base edge cases
+        self.assertEqual(format_slide_text(""), "")
+        self.assertEqual(format_slide_text(None), "")
+
+        # 2. Plain text without pipes is preserved and HTML-escaped
+        self.assertEqual(format_slide_text("Nos casamos"), "Nos casamos")
+        self.assertEqual(format_slide_text("Línea 1\nLínea 2"), "Línea 1\nLínea 2")
+        self.assertEqual(format_slide_text("Texto con <script>alert(1)</script>"), "Texto con &lt;script&gt;alert(1)&lt;/script&gt;")
+
+        # 3. Simple 2-column itinerary with pipes
+        itinerary_raw = "18:00 | Recepción\n18:30 | Ceremonia civil\n19:30 | Cena"
+        res = format_slide_text(itinerary_raw)
+        self.assertIn('<div class="slide-itinerary-grid">', res)
+        self.assertIn('<span class="itinerary-col-time">18:00</span>', res)
+        self.assertIn('<span class="itinerary-col-event">Recepción</span>', res)
+        self.assertIn('<span class="itinerary-col-time">18:30</span>', res)
+        self.assertIn('<span class="itinerary-col-event">Ceremonia civil</span>', res)
+        self.assertIn('<span class="itinerary-col-time">19:30</span>', res)
+        self.assertIn('<span class="itinerary-col-event">Cena</span>', res)
+
+        # 4. Mixed headers and empty line spacers
+        mixed_raw = "CRONOGRAMA\n18:00 | Recepción\n\n02:00 | Fin de fiesta"
+        mixed_res = format_slide_text(mixed_raw)
+        self.assertIn('<div class="itinerary-full-row">CRONOGRAMA</div>', mixed_res)
+        self.assertIn('<div class="itinerary-spacer"></div>', mixed_res)
+        self.assertIn('<span class="itinerary-col-time">02:00</span>', mixed_res)
+        self.assertIn('<span class="itinerary-col-event">Fin de fiesta</span>', mixed_res)
+
+        # 5. HTML escaping in both time and event columns (anti-XSS)
+        xss_raw = "<b>18:00</b> | <img src=x onerror=alert(1)>"
+        xss_res = format_slide_text(xss_raw)
+        self.assertIn("&lt;b&gt;18:00&lt;/b&gt;", xss_res)
+        self.assertIn("&lt;img src=x onerror=alert(1)&gt;", xss_res)
+        self.assertNotIn("<script>", xss_res)
+
+        # 6. Combined with replace_guest_names and SSR slide view
+        slide_text = "18:00 | Recepción de {name}\n18:30 | {Te|Los} esperamos"
+        replaced = replace_guest_names(slide_text, "Juan y María", count=2)
+        formatted = format_slide_text(replaced)
+        self.assertIn("Recepción de Juan y María", formatted)
+        self.assertIn("Los esperamos", formatted)
+        self.assertIn('<div class="slide-itinerary-grid">', formatted)
+
+        # 7. SSR rendering in /slide/<slide_id> endpoint
+        code = compute_check_code("familia_gomez")
+        dummy_guests = [{"id": "g1", "invitacion_id": "familia_gomez", "nombre": "Juan", "apellido": "Gómez"}]
+        itinerary_slides = [{
+            "id": "slide_itinerario",
+            "title": "Itinerario",
+            "template": "slides/custom.html",
+            "enabled": True,
+            "elements": [
+                {
+                    "type": "text",
+                    "style": "body",
+                    "content": "18:00 | Recepción\n18:30 | Ceremonia civil\n19:30 | Cena\n21:00 | Baile\n02:00 | Fin"
+                }
+            ]
+        }]
+        with app.test_client() as client:
+            with patch("app.table.get_by_invitacion", return_value=dummy_guests), \
+                 patch("app.load_slides", return_value=itinerary_slides):
+                res_slide = client.get(f"/i/familia_gomez_{code}/slide/slide_itinerario")
+                self.assertEqual(res_slide.status_code, 200)
+                self.assertIn(b"slide-itinerary-grid", res_slide.data)
+                self.assertIn(b"itinerary-col-time", res_slide.data)
+                self.assertIn(b"18:00", res_slide.data)
+                self.assertIn(b"Recepci\xc3\xb3n", res_slide.data)
+                self.assertIn(b"Ceremonia civil", res_slide.data)
+
     def test_slide_id_editing_and_hidden_parameter(self):
         from app import app
         with app.test_client() as client:
