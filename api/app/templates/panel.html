@@ -8079,13 +8079,45 @@
             if (centerDot) centerDot.onpointerdown = (e) => onPointerDown(e, 'translate');
         }
 
-        // Ticking loop for countdown elements in live preview
+        // Lightweight ticking loop for countdown elements in live preview (Every 10 seconds)
+        function updatePreviewCountdownDigits() {
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            const cdEl = slide.elements.find(e => e.type === 'countdown');
+            if (!cdEl) return;
+
+            const grid = document.querySelector('.preview-countdown-el .countdown-sticker-grid');
+            if (!grid) {
+                updateLivePreview();
+                return;
+            }
+
+            const targetIso = cdEl.target_date || '2027-03-19T18:00';
+            const precision = cdEl.precision || 'seconds';
+            const units = calculateCountdownUnits(targetIso, precision);
+
+            let gridHtml = '';
+            units.forEach((u, uIdx) => {
+                if (uIdx > 0) {
+                    gridHtml += `<div class="countdown-sticker-sep">:</div>`;
+                }
+                const digitsHtml = String(u.value).split('').map(d => `<span class="countdown-digit">${d}</span>`).join('');
+                gridHtml += `
+                    <div class="countdown-sticker-unit" data-unit="${u.key}">
+                        <div class="countdown-sticker-box">${digitsHtml}</div>
+                        <span class="countdown-sticker-label">${u.label}</span>
+                    </div>
+                `;
+            });
+            grid.innerHTML = gridHtml;
+        }
+
         setInterval(() => {
             const slide = getCurrentSlide();
             if (slide && Array.isArray(slide.elements) && slide.elements.some(e => e.type === 'countdown')) {
-                updateLivePreview();
+                updatePreviewCountdownDigits();
             }
-        }, 1000);
+        }, 10000);
 
         // -------------------------------------------------------------
         // SLIDE CRUD OPERATIONS
