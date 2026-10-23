@@ -49,8 +49,8 @@ The application is containerized using **Docker Compose** and consists of two ma
 │   │   ├── test_sheets.py     # Unit tests for Google Sheets table, crawler bypass & anti-forgery logic
 │   │   └── templates/
 │   │       ├── index.html     # Main wedding invitation story shell (Modular Jinja2 SSR)
-│   │       ├── slides/        # Modular slide templates (01_intro, 02_fecha, 03_lugar, 04_itinerario, 05_regalos, 06_rsvp)
-│   │       ├── partials/      # UI partial components (top_bar, pull_to_refresh, tap_zones, toast)
+│   │       ├── slides/        # Modular slide template (custom.html)
+│   │       ├── partials/      # UI partial components (top_bar, rsvp_form, pull_to_refresh, tap_zones, toast)
 │   │       ├── og_preview.html# Lightweight Open Graph preview for WhatsApp/social crawlers (0 Sheet calls)
 │   │       ├── blank.html     # Blank template for invalid tokens/forgery protection
 │   │       └── invitados.html # Admin guest overview table

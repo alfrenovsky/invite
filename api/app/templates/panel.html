@@ -4292,28 +4292,6 @@
                                 <!-- Interactive 3D Gizmo Layer -->
                                 <div id="previewGizmoContainer" class="preview-gizmo-container" style="display: none;"></div>
 
-                                <!-- Special RSVP Slide Content Preview -->
-                                <div class="slide-body slide-rsvp-preview" id="previewRsvpBody" style="display: none;">
-                                    <span class="slide-tag">RSVP</span>
-                                    <h2 class="slide-title" style="font-size: 1.45em; margin-bottom: 4px; color: #fff;">
-                                        Confirmación de Grupo</h2>
-                                    <p class="slide-desc"
-                                        style="font-size: 0.84em; margin-bottom: 8px; color: #b8deff;">Confirmá la
-                                        asistencia y menú de todos los invitados de este grupo:</p>
-                                    <div class="interactive-content rsvp-form-container"
-                                        style="background: rgba(15,20,26,0.85); border-radius: 16px; padding: 14px; border: 1px solid rgba(255,255,255,0.15); font-family: 'Montserrat', sans-serif;">
-                                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);">
-                                                <span style="width: 14px; height: 14px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.7); display: inline-block;"></span>
-                                                <span style="color: #fff; font-weight: 600; font-size: 0.95rem;">Juan Pérez</span>
-                                            </div>
-                                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);">
-                                                <span style="width: 14px; height: 14px; border-radius: 50%; background: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.7); display: inline-block;"></span>
-                                                <span style="color: #fff; font-weight: 600; font-size: 0.95rem;">María Gómez</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -7290,7 +7268,6 @@
             const bgLayer = document.getElementById('previewBgLayer') || document.getElementById('phoneBgLayer');
             const bgVideo = document.getElementById('previewBgVideo') || document.getElementById('phoneBgVideo');
             const overlay = document.getElementById('previewElementsLayer') || document.getElementById('phoneElementsOverlay');
-            const rsvpBody = document.getElementById('previewRsvpBody');
             const progressBars = document.getElementById('previewProgressBars');
             if (!slide) return;
 
@@ -7359,10 +7336,6 @@
                     bgVid.style.display = 'none';
                 }
                 if (bgImg) bgImg.style.display = 'none';
-            }
-
-            if (rsvpBody) {
-                rsvpBody.style.display = 'none';
             }
 
             function replacePreviewVariables(str) {
