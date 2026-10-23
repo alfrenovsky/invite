@@ -5439,6 +5439,7 @@
                 const isCountdown = el.type === 'countdown';
                 const isForm = el.type === 'form';
                 const isTransformable = isLocation || isCopy || isCountdown;
+                const is3dActive = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y || (el.rotate && el.type === 'text')));
 
                 // Header
                 const headerData = getElementHeaderData(el, idx);
@@ -5867,7 +5868,6 @@
                     // Text Content input with TinyMCE-style Toolbar
                     const currentStyle = el.style || 'body';
                     const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
-                    const is3dActive = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y || (el.rotate && el.type === 'text')));
 
                     const textGroup = document.createElement('div');
                     textGroup.className = 'form-group';
