@@ -7,7 +7,7 @@ import urllib.parse
 import uuid
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect
 from werkzeug.utils import secure_filename
-from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type
+from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type, DEFAULT_RESERVA_MONTO
 import telegram_bot
 try:
     from PIL import Image, ImageOps
@@ -443,7 +443,7 @@ def format_currency_ar(val):
     try:
         n = round(float(clean))
         formatted_number = f"{n:,}".replace(",", ".")
-        return f"$ {formatted_number}"
+        return f"${formatted_number}"
     except (ValueError, TypeError):
         return str(val)
 
@@ -913,13 +913,29 @@ def panel_view():
     all_fonts = google_fonts + local_fonts
     used_backgrounds = {s.get("background") for s in slides if s.get("background")}
 
+    default_monto_raw = DEFAULT_RESERVA_MONTO
+    try:
+        recs = table.get_all()
+        for r in recs:
+            if r.get("montotarjeta"):
+                default_monto_raw = r["montotarjeta"]
+                break
+    except Exception:
+        pass
+
+    clean_digits = re.sub(r"[^\d]", "", str(default_monto_raw))
+    default_card_num = int(clean_digits) if clean_digits else 105000
+    default_card_value = format_currency_ar(default_card_num) or "$105.000"
+
     return render_template(
         "panel.html",
         slides=slides,
         backgrounds=backgrounds,
         styles=styles,
         fonts=all_fonts,
-        used_backgrounds=used_backgrounds
+        used_backgrounds=used_backgrounds,
+        default_card_value=default_card_value,
+        default_card_num=default_card_num,
     )
 
 

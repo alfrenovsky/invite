@@ -5384,6 +5384,13 @@
         const collapsedElementIds = new Set();
         let selectedElementId = null;
         let previewGuestMode = 'plural';
+        const DEFAULT_CARD_VALUE = "{{ default_card_value or '$105.000' }}";
+        const DEFAULT_CARD_NUM = {{ default_card_num or 105000 }};
+        function formatCurrency(val) {
+            if (val === null || val === undefined || isNaN(val)) return '';
+            const num = Math.round(val);
+            return '$' + num.toLocaleString('es-AR');
+        }
 
         function updateBgCardHeader() {
             const slide = getCurrentSlide();
@@ -5642,7 +5649,10 @@
                 body.className = 'element-body';
 
                 if (isCountdown) {
-                    // Toolbar: Centering & Zero Angle
+                    const currentPrec = el.precision || 'seconds';
+                    const currW = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 90;
+
+                    // Toolbar: Centering, Zero Angle, Detail Selector, Reset
                     const toolbar = document.createElement('div');
                     toolbar.className = 'sticker-editor-toolbar countdown-editor-toolbar';
                     toolbar.innerHTML = `
@@ -5674,8 +5684,44 @@
                             </svg>
                         </button>
 
+                        <div class="tb-divider"></div>
+
+                        <!-- Detail / Precision Selection Strip -->
+                        <div class="tb-icon-strip" title="Nivel de detalle del contador">
+                            <button type="button" class="tb-btn-square tb-prec-btn ${currentPrec === 'days' ? 'active' : ''}" data-prec="days" title="Hasta Días">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                                    <line x1="16" x2="16" y1="2" y2="6"/>
+                                    <line x1="8" x2="8" y1="2" y2="6"/>
+                                    <line x1="3" x2="21" y1="10" y2="10"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="tb-btn-square tb-prec-btn ${currentPrec === 'hours' ? 'active' : ''}" data-prec="hours" title="Hasta Horas">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 22h14"/>
+                                    <path d="M5 2h14"/>
+                                    <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+                                    <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="tb-btn-square tb-prec-btn ${currentPrec === 'minutes' ? 'active' : ''}" data-prec="minutes" title="Hasta Minutos">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="tb-btn-square tb-prec-btn ${currentPrec === 'seconds' ? 'active' : ''}" data-prec="seconds" title="Hasta Segundos">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="14" r="8"/>
+                                    <line x1="12" x2="12" y1="2" y2="6"/>
+                                    <line x1="12" x2="12" y1="10" y2="14"/>
+                                    <line x1="19" x2="21" y1="5" y2="7"/>
+                                </svg>
+                            </button>
+                        </div>
+
                         <!-- Reset Button -->
-                        <button type="button" class="tb-btn-toggle tb-reset-btn" style="margin-left: auto;" title="Restablecer posición, rotación a 0° y zoom a 100%">
+                        <button type="button" class="tb-btn-toggle tb-reset-btn" style="margin-left: auto;" title="Restablecer posición (X=0, Y=15), rotación a 0°, zoom a 100% y ancho a 90%">
                             <span>↺ Reset</span>
                         </button>
                     `;
@@ -5705,123 +5751,112 @@
                         showToast('📐 Ángulo en 0° (horizontal)');
                     };
 
+                    // Precision detail buttons handler
+                    toolbar.querySelectorAll('.tb-prec-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const prec = btn.dataset.prec;
+                            el.precision = prec;
+                            toolbar.querySelectorAll('.tb-prec-btn').forEach(b => {
+                                b.classList.toggle('active', b.dataset.prec === prec);
+                            });
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                            showToast(`Detalle: ${prec.toUpperCase()}`);
+                        };
+                    });
+
+                    // Inputs Row: Title, Date, and Time in the same line
+                    const fullTarget = el.target_date || '2027-03-19T18:00';
+                    const parts = fullTarget.split('T');
+                    const initialDate = parts[0] || '2027-03-19';
+                    const initialTime = (parts[1] || '18:00').substring(0, 5);
+
+                    const inputsRow = document.createElement('div');
+                    inputsRow.className = 'countdown-inputs-row';
+                    inputsRow.style.cssText = 'display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;';
+                    inputsRow.innerHTML = `
+                        <div style="flex: 2; min-width: 120px;">
+                            <input type="text" class="form-input el-title-content" placeholder="Título (ej: FALTA POCO)" value="${escapeHtml(el.title || 'FALTA POCO')}" style="padding: 7px 9px; font-size: 0.82rem; height: 34px;" title="Título del sticker">
+                        </div>
+                        <div style="flex: 1.4; min-width: 115px;">
+                            <input type="date" class="form-input el-date-picker" value="${escapeHtml(initialDate)}" style="padding: 7px 8px; font-size: 0.82rem; height: 34px;" onclick="try{this.showPicker()}catch(e){}" title="Fecha objetivo">
+                        </div>
+                        <div style="flex: 1.1; min-width: 85px;">
+                            <input type="time" class="form-input el-time-picker" value="${escapeHtml(initialTime)}" style="padding: 7px 8px; font-size: 0.82rem; height: 34px;" onclick="try{this.showPicker()}catch(e){}" title="Hora objetivo (24 hs)">
+                        </div>
+                    `;
+                    body.appendChild(inputsRow);
+
+                    const titleInput = inputsRow.querySelector('.el-title-content');
+                    const datePicker = inputsRow.querySelector('.el-date-picker');
+                    const timePicker = inputsRow.querySelector('.el-time-picker');
+
+                    titleInput.oninput = (e) => {
+                        el.title = e.target.value;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        updateElementCardHeader(el, idx);
+                    };
+
+                    const syncTargetDate = () => {
+                        const d = datePicker.value || '2027-03-19';
+                        const t = timePicker.value || '18:00';
+                        el.target_date = `${d}T${t}`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                        updateElementCardHeader(el, idx);
+                    };
+                    datePicker.oninput = syncTargetDate;
+                    datePicker.onchange = syncTargetDate;
+                    timePicker.oninput = syncTargetDate;
+                    timePicker.onchange = syncTargetDate;
+
+                    // Width Slider Row
+                    const widthRow = document.createElement('div');
+                    widthRow.className = 'pos-slider-wrap countdown-width-wrap';
+                    widthRow.style.marginTop = '4px';
+                    widthRow.innerHTML = `
+                        <div class="pos-slider-header">
+                            <span>Ancho del Contador</span>
+                            <span class="pos-val-badge" id="badgeW_${idx}">${currW}%</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="40" max="100" step="1" value="${currW}">
+                            <input type="number" class="pos-num-input" id="numW_${idx}" min="40" max="100" step="1" value="${currW}">
+                        </div>
+                    `;
+                    body.appendChild(widthRow);
+
+                    const sliderW = widthRow.querySelector(`#sliderW_${idx}`);
+                    const numW = widthRow.querySelector(`#numW_${idx}`);
+                    const badgeW = widthRow.querySelector(`#badgeW_${idx}`);
+
+                    const updateWidth = (newW) => {
+                        el.w = newW;
+                        sliderW.value = newW;
+                        numW.value = newW;
+                        badgeW.textContent = `${newW}%`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    };
+
+                    sliderW.oninput = () => updateWidth(parseInt(sliderW.value, 10));
+                    numW.oninput = () => {
+                        const val = parseInt(numW.value, 10);
+                        if (!isNaN(val)) updateWidth(Math.max(40, Math.min(100, val)));
+                    };
+
                     const btnReset = toolbar.querySelector('.tb-reset-btn');
                     btnReset.onclick = () => {
                         el.x = 0;
                         el.y = 15;
                         el.rotate = 0;
                         el.zoom = 100;
+                        updateWidth(90);
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                         showToast('↺ Countdown restablecido');
                     };
-
-                    // Title input
-                    const titleGroup = document.createElement('div');
-                    titleGroup.className = 'form-group';
-                    titleGroup.innerHTML = `
-                    <label>Título del Sticker (Aveny-T Mayúsculas)</label>
-                    <input type="text" class="form-input el-title-content" placeholder="Ej: FALTA POCO" value="${escapeHtml(el.title || 'FALTA POCO')}">
-                `;
-                    const titleInput = titleGroup.querySelector('input');
-                    titleInput.oninput = (e) => {
-                        el.title = e.target.value;
-                        updateLivePreview();
-                        updateElementCardHeader(el, idx);
-                    };
-                    body.appendChild(titleGroup);
-
-                    // Date & Time pickers
-                    const fullTarget = el.target_date || '2027-03-19T18:00';
-                    const parts = fullTarget.split('T');
-                    const initialDate = parts[0] || '2027-03-19';
-                    const initialTime = (parts[1] || '18:00').substring(0, 5);
-                    const timeParts = initialTime.split(':');
-                    const initialHour = (timeParts[0] || '18').padStart(2, '0');
-                    const initialMinute = (timeParts[1] || '00').padStart(2, '0');
-
-                    let hourOptions = '';
-                    for (let h = 0; h < 24; h++) {
-                        const hs = String(h).padStart(2, '0');
-                        hourOptions += `<option value="${hs}" ${hs === initialHour ? 'selected' : ''}>${hs} hs</option>`;
-                    }
-                    let minOptions = '';
-                    for (let m = 0; m < 60; m++) {
-                        const ms = String(m).padStart(2, '0');
-                        minOptions += `<option value="${ms}" ${ms === initialMinute ? 'selected' : ''}>${ms} min</option>`;
-                    }
-
-                    const dtRow = document.createElement('div');
-                    dtRow.className = 'pos-control-row';
-                    dtRow.style.marginBottom = '12px';
-                    dtRow.innerHTML = `
-                    <div class="pos-slider-wrap">
-                        <div class="pos-slider-header">
-                            <span>📅 Selector de Fecha</span>
-                        </div>
-                        <div style="display: flex; gap: 6px; align-items: center;">
-                            <input type="date" class="form-input el-date-picker" value="${escapeHtml(initialDate)}" style="padding: 8px 10px; flex: 1;" onclick="try{this.showPicker()}catch(e){}">
-                            <button type="button" class="btn-ctrl btn-ctrl-secondary btn-open-date" style="padding: 8px 11px; font-size: 1.05rem; line-height: 1; border-color: rgba(255,255,255,0.2);" title="Abrir Calendario">📅</button>
-                        </div>
-                    </div>
-                    <div class="pos-slider-wrap">
-                        <div class="pos-slider-header">
-                            <span>🕒 Hora (24 hs)</span>
-                        </div>
-                        <div style="display: flex; gap: 6px; align-items: center;">
-                            <select class="form-select el-hour-select" style="padding: 8px 6px; flex: 1; text-align: center; font-weight: 500;">
-                                ${hourOptions}
-                            </select>
-                            <span style="font-weight: bold; color: var(--text-muted); font-size: 1.1rem;">:</span>
-                            <select class="form-select el-min-select" style="padding: 8px 6px; flex: 1; text-align: center; font-weight: 500;">
-                                ${minOptions}
-                            </select>
-                        </div>
-                    </div>
-                `;
-                    const datePicker = dtRow.querySelector('.el-date-picker');
-                    const btnOpenDate = dtRow.querySelector('.btn-open-date');
-                    const hourSelect = dtRow.querySelector('.el-hour-select');
-                    const minSelect = dtRow.querySelector('.el-min-select');
-
-                    if (btnOpenDate) {
-                        btnOpenDate.onclick = () => {
-                            try { datePicker.showPicker(); } catch (err) { datePicker.focus(); }
-                        };
-                    }
-
-                    const syncTargetDate = () => {
-                        const d = datePicker.value || '2027-03-19';
-                        const h = hourSelect.value || '18';
-                        const m = minSelect.value || '00';
-                        el.target_date = `${d}T${h}:${m}`;
-                        updateLivePreview();
-                        updateElementCardHeader(el, idx);
-                    };
-                    datePicker.oninput = syncTargetDate;
-                    datePicker.onchange = syncTargetDate;
-                    hourSelect.onchange = syncTargetDate;
-                    minSelect.onchange = syncTargetDate;
-                    body.appendChild(dtRow);
-
-                    // Precision selector
-                    const precGroup = document.createElement('div');
-                    precGroup.className = 'form-group';
-                    precGroup.innerHTML = `
-                    <label>Nivel Máximo de Detalle</label>
-                    <select class="form-select el-precision-select" style="padding: 8px 10px; width: 100%;">
-                        <option value="seconds" ${(!el.precision || el.precision === 'seconds') ? 'selected' : ''}>⏱️ Hasta Segundos</option>
-                        <option value="minutes" ${el.precision === 'minutes' ? 'selected' : ''}>🕒 Hasta Minutos</option>
-                        <option value="hours" ${el.precision === 'hours' ? 'selected' : ''}>⏳ Hasta Horas</option>
-                        <option value="days" ${el.precision === 'days' ? 'selected' : ''}>📅 Hasta Días</option>
-                    </select>
-                `;
-                    const precSelect = precGroup.querySelector('.el-precision-select');
-                    precSelect.onchange = (e) => {
-                        el.precision = e.target.value;
-                        updateLivePreview();
-                    };
-                    body.appendChild(precGroup);
                 } else if (isLocation) {
                     const currentIcon = el.icon || (el.type === 'location' ? 'location' : (el.type === 'copy' ? 'copy' : 'link'));
                     const currentColor = el.color || (el.type === 'copy' ? '#10b981' : '#0488db');
@@ -6187,17 +6222,32 @@
 
                         <!-- Variable Shortcuts -->
                         <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-wrap: wrap;">
-                            <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert=" {name}">+{name}</span>
-                            <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert=" {value}">+{value}</span>
-                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional" data-insert=" {singular|plural}">+{singular|plural}</span>
+                            <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert="{name}">+{name}</span>
+                            <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert="{value}">+{value}</span>
+                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional" data-insert="{singular|plural}">+{singular|plural}</span>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
                 `;
 
                     const textarea = textGroup.querySelector('textarea');
+                    let lastSelectionStart = textarea.value.length;
+                    let lastSelectionEnd = textarea.value.length;
+                    const updateSelection = () => {
+                        if (typeof textarea.selectionStart === 'number') {
+                            lastSelectionStart = textarea.selectionStart;
+                            lastSelectionEnd = textarea.selectionEnd;
+                        }
+                    };
+                    textarea.addEventListener('keyup', updateSelection);
+                    textarea.addEventListener('mouseup', updateSelection);
+                    textarea.addEventListener('select', updateSelection);
+                    textarea.addEventListener('input', updateSelection);
+                    textarea.addEventListener('blur', updateSelection);
+
                     textarea.oninput = (e) => {
                         el.content = e.target.value;
+                        updateSelection();
                         autoResizeTextarea(textarea);
                         updateLivePreview();
                         updateElementCardHeader(el, idx);
@@ -6317,14 +6367,22 @@
 
                     // Variable Shortcuts Inserters
                     textGroup.querySelectorAll('.tb-chip-var').forEach(chip => {
+                        chip.onmousedown = (e) => e.preventDefault();
                         chip.onclick = () => {
-                            const textToInsert = chip.getAttribute('data-insert');
-                            const start = textarea.selectionStart || textarea.value.length;
-                            const end = textarea.selectionEnd || textarea.value.length;
+                            const textToInsert = chip.getAttribute('data-insert') || '';
+                            const start = (typeof textarea.selectionStart === 'number' && document.activeElement === textarea)
+                                ? textarea.selectionStart
+                                : (typeof lastSelectionStart === 'number' ? lastSelectionStart : textarea.value.length);
+                            const end = (typeof textarea.selectionEnd === 'number' && document.activeElement === textarea)
+                                ? textarea.selectionEnd
+                                : (typeof lastSelectionEnd === 'number' ? lastSelectionEnd : textarea.value.length);
                             const val = textarea.value;
                             textarea.value = val.substring(0, start) + textToInsert + val.substring(end);
-                            textarea.selectionStart = textarea.selectionEnd = start + textToInsert.length;
+                            const newPos = start + textToInsert.length;
+                            lastSelectionStart = newPos;
+                            lastSelectionEnd = newPos;
                             textarea.focus();
+                            textarea.setSelectionRange(newPos, newPos);
                             textarea.dispatchEvent(new Event('input'));
                             autoResizeTextarea(textarea);
                         };
@@ -7084,7 +7142,7 @@
                 if (!str) return '';
                 const isSingle = previewGuestMode === 'single';
                 const nameVal = isSingle ? 'Juan' : 'Juan y María';
-                const priceVal = isSingle ? '$ 45.000' : '$ 90.000';
+                const priceVal = isSingle ? DEFAULT_CARD_VALUE : formatCurrency(DEFAULT_CARD_NUM * 2);
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, nameVal)
                     .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, priceVal)
@@ -7326,8 +7384,9 @@
                             const zoomVal = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : (el.scale !== undefined ? el.scale * 100 : 100);
                             cdDiv.style.left = `calc(50% + ${posX}%)`;
                             cdDiv.style.top = `calc(50% + ${posY}%)`;
-                            cdDiv.style.width = '90%';
-                            cdDiv.style.maxWidth = '90%';
+                            const widthVal = (el.w !== undefined && el.w !== null && el.w !== '') ? el.w : 90;
+                            cdDiv.style.width = `${widthVal}%`;
+                            cdDiv.style.maxWidth = `${widthVal}%`;
                             cdDiv.style.transform = `translate(-50%, -50%) rotate(${rotVal}deg) scale(${zoomVal / 100})`;
                             cdDiv.style.transformOrigin = 'center center';
 
@@ -7544,7 +7603,7 @@
                                     </div>
                                     <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #34d399; font-weight: 700;">
                                         <span>Total a transferir</span>
-                                        <span>$ 50.000</span>
+                                        <span>$50.000</span>
                                     </div>
                                 </div>
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.72em; color: #68d391; margin-top: 8px; font-family: 'Montserrat', sans-serif;">

@@ -1060,15 +1060,9 @@
     }
 
     function formatCurrency(val) {
-        try {
-            return new Intl.NumberFormat('es-AR', {
-                style: 'currency',
-                currency: 'ARS',
-                maximumFractionDigits: 0
-            }).format(val);
-        } catch (e) {
-            return '$ ' + Math.round(val).toLocaleString('es-AR');
-        }
+        if (val === null || val === undefined || isNaN(val)) return '';
+        const num = Math.round(val);
+        return '$' + num.toLocaleString('es-AR');
     }
 
     function updatePaymentSection() {

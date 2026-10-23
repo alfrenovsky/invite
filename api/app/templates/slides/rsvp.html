@@ -104,7 +104,7 @@
                                     {% set target_iso = el.target_date or '2027-03-19T18:00' %}
                                     {% set precision_val = el.precision or 'seconds' %}
                                     <div class="slide-el slide-el-countdown"
-                                         style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); width: 90%; max-width: 90%; transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
+                                         style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); width: {{ el.w or 90 }}%; max-width: {{ el.w or 90 }}%; transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
                                         <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{ (el.title or 'Boda Celia y Alfredo')|urlencode }}&dates=20270319T210000Z/20270320T070000Z&location=Luna+India%3A+Castro+Barros%2C+M5513%2C+Mendoza&details={{ (invitation_url or '')|urlencode }}"
                                            target="_blank" rel="noopener noreferrer"
                                            class="countdown-sticker dynamic-countdown-sticker"
