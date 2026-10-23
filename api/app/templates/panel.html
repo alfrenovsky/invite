@@ -3474,7 +3474,7 @@
                         <!-- Scrollable Settings & Elements Area below static slides list -->
                         <div class="slides-scroll-container">
                             <!-- Slide Basic Settings -->
-                            <section class="panel-card">
+                            <section class="panel-card" id="slideConfigCard">
                                 <h3 class="section-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                     <span>Configuración del Slide</span>
                                     <span id="activeSlideBadgeId" style="font-size: inherit; font-weight: 600; color: #d4af37; font-family: monospace;"></span>
@@ -5455,6 +5455,14 @@
             renderSlideChips();
             loadSlideIntoForm();
             updateLivePreview();
+
+            // Scroll slide configuration card to the top
+            requestAnimationFrame(() => {
+                const container = document.querySelector('.slides-scroll-container');
+                if (container) {
+                    container.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
         }
 
         function loadSlideIntoForm() {
