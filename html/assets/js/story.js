@@ -1441,6 +1441,27 @@
             }
         }, true);
 
+        // Internal slide navigation for links starting with '#' (e.g. #3 or #lugar)
+        document.addEventListener('click', (e) => {
+            const linkEl = e.target.closest('a[href^="#"].slide-el-link, a[href^="#"].instagram-link-sticker');
+            if (!linkEl) return;
+            const targetHash = linkEl.getAttribute('href');
+            if (targetHash && targetHash.length > 1) {
+                e.preventDefault();
+                e.stopPropagation();
+                const rawHash = targetHash.replace(/^#/, '').trim().toLowerCase();
+                const foundIdx = slides.findIndex(s => (s.getAttribute('data-slide-id') || '').toLowerCase() === rawHash);
+                if (foundIdx !== -1) {
+                    goToSlide(foundIdx);
+                } else {
+                    const num = parseInt(rawHash, 10);
+                    if (!isNaN(num) && num >= 1 && num <= slides.length) {
+                        goToSlide(num - 1);
+                    }
+                }
+            }
+        }, true);
+
         // Google Calendar Buttons & Stickers
         const containerEl = document.getElementById("storyContainer");
         const inviteUrl = (containerEl && containerEl.dataset.inviteUrl) || window.location.href;

@@ -46,16 +46,22 @@
                 {% set sticker_icon = el.icon or ('location' if el.type == 'location' else ('copy' if el.type == 'copy' else 'link')) %}
                 {% set sticker_color = el.color or ('#10b981' if el.type == 'copy' else '#0488db') %}
                 {% set sticker_style = el.style or 'classic' %}
-                {% set default_target = ('https://www.google.com/maps/search/?api=1&query=' ~ (el.content | urlencode)) if sticker_icon == 'location' else '#' %}
-                {% set link_target = el.url if el.url else default_target %}
+                {% set target_raw = (el.url or el.copy_val or '') | trim %}
+                {% set is_link = target_raw.startswith('http://') or target_raw.startswith('https://') or target_raw.startswith('#') %}
+                {% if not target_raw and sticker_icon == 'location' %}
+                    {% set is_link = true %}
+                    {% set link_target = 'https://www.google.com/maps/search/?api=1&query=' ~ (el.content | urlencode) %}
+                {% else %}
+                    {% set link_target = target_raw %}
+                {% endif %}
                 {% set loc_rot = el.rotate if (el.rotate is defined and el.rotate is not none) else 0 %}
                 {% set loc_zoom = (el.zoom if (el.zoom is defined and el.zoom is not none) else 100) / 100 %}
                 <div class="slide-el slide-el-location slide-el-link slide-el-copy"
                      style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
-                    {% if el.type == 'copy' %}
-                        <button type="button" class="instagram-location-sticker instagram-link-sticker instagram-copy-sticker sticker-style-{{ sticker_style }}" style="--sticker-color: {{ sticker_color }};" data-copy-val="{{ el.copy_val or el.content }}" aria-label="Copiar {{ el.content }}">
+                    {% if not is_link %}
+                        <button type="button" class="instagram-location-sticker instagram-link-sticker instagram-copy-sticker sticker-style-{{ sticker_style }}" style="--sticker-color: {{ sticker_color }};" data-copy-val="{{ target_raw or el.content }}" aria-label="Copiar {{ el.content }}">
                     {% else %}
-                        <a href="{{ link_target }}" target="_blank" rel="noopener noreferrer" class="instagram-location-sticker instagram-link-sticker sticker-style-{{ sticker_style }}" style="--sticker-color: {{ sticker_color }};" aria-label="{{ el.content }}">
+                        <a href="{{ link_target }}" {% if not link_target.startswith('#') %}target="_blank" rel="noopener noreferrer"{% endif %} class="instagram-location-sticker instagram-link-sticker sticker-style-{{ sticker_style }}" style="--sticker-color: {{ sticker_color }};" aria-label="{{ el.content }}">
                     {% endif %}
                         {% if sticker_icon == 'copy' %}
                             <svg class="sticker-icon copy-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -102,7 +108,7 @@
                             </svg>
                         {% endif %}
                         <span class="location-sticker-text" data-raw-content="{{ el.content }}">{{ el.content | replace_guest_names(group_names, names_count, card_value) | trim }}</span>
-                    {% if el.type == 'copy' %}
+                    {% if not is_link %}
                         </button>
                     {% else %}
                         </a>
