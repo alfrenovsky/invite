@@ -65,7 +65,7 @@ Endpoints consumidos por el cliente JavaScript de la historia (`story.js`) para 
 
 | Método | Endpoint | Autenticación | Descripción |
 |---|---|---|---|
-| `GET` | `/form` | Pública | Formulario web independiente (`form.html`) para registro manual de invitados o búsqueda de invitaciones. |
+| `GET` | `/form` | Pública | Redirección 302 a `/` (ruta de formulario legacy deprecada). |
 
 ---
 

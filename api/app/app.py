@@ -904,13 +904,7 @@ def flush_all_cache():
 
 @app.get("/form")
 def form_page():
-    guest_id = request.args.get("id")
-    guest = None
-    if guest_id:
-        res = table.get_by_id(guest_id)
-        if res:
-            guest = res["data"]
-    return render_template("form.html", guest=guest)
+    return redirect("/", code=302)
 
 
 # ---------------------------------------------------------
