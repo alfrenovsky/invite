@@ -2213,20 +2213,36 @@
             }
         }
 
-        .pos-sliders-trio {
+        .pos-sliders-trio,
+        .pos-sliders-quad {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
+            gap: 10px;
             grid-column: 1 / -1;
         }
 
-        .pos-sliders-trio .pos-num-input {
-            width: 52px;
+        .pos-sliders-trio {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .pos-sliders-quad {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .pos-sliders-trio .pos-num-input,
+        .pos-sliders-quad .pos-num-input {
+            width: 48px;
             padding: 4px 4px;
         }
 
+        @media (max-width: 900px) {
+            .pos-sliders-quad {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 680px) {
-            .pos-sliders-trio {
+            .pos-sliders-trio,
+            .pos-sliders-quad {
                 grid-template-columns: 1fr;
             }
         }
@@ -6430,9 +6446,9 @@
                         <div class="tb-divider"></div>
 
                         <!-- Color Swatches & Native Picker for Text (White, Black & Custom Square Picker) -->
-                        <div class="tb-color-swatches" style="display: flex; align-items: center; gap: 4px;">
-                            <button type="button" class="color-dot-btn ${currentColor.toLowerCase() === '#ffffff' ? 'selected' : ''}" data-color="#ffffff" style="background:#ffffff; border: 1px solid rgba(0,0,0,0.35);" title="Blanco"></button>
-                            <button type="button" class="color-dot-btn ${currentColor.toLowerCase() === '#000000' || currentColor.toLowerCase() === '#1a202c' ? 'selected' : ''}" data-color="#000000" style="background:#000000; border: 1px solid rgba(255,255,255,0.25);" title="Negro"></button>
+                        <div class="tb-color-swatches" style="display: flex; align-items: center; gap: 5px;">
+                            <button type="button" class="color-dot-btn ${currentColor.toLowerCase() === '#ffffff' ? 'selected' : ''}" data-color="#ffffff" style="background:#ffffff; border: 1.5px solid rgba(0,0,0,0.35);" title="Blanco"></button>
+                            <button type="button" class="color-dot-btn ${currentColor.toLowerCase() === '#000000' || currentColor.toLowerCase() === '#1a202c' ? 'selected' : ''}" data-color="#000000" style="background:#000000; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 0 2px rgba(0,0,0,0.6);" title="Negro"></button>
                             <input type="color" class="custom-color-input text-color-picker" value="${currentColor.startsWith('#') ? currentColor : '#ffffff'}" title="Color personalizado">
                         </div>
 
@@ -6477,7 +6493,7 @@
                         <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-wrap: wrap;">
                             <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert="{name}">+{name}</span>
                             <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert="{value}">+{value}</span>
-                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional" data-insert="{singular|plural}">+{singular|plural}</span>
+                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional ({sin|plu})" data-insert="{sin|plu}">+{sin|plu}</span>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
@@ -6698,7 +6714,7 @@
                 const currPers = el.perspective !== undefined ? el.perspective : 800;
 
                 posRow.innerHTML = `
-                <div class="pos-sliders-trio">
+                <div class="${el.type === 'text' ? 'pos-sliders-quad' : 'pos-sliders-trio'}">
                     <!-- Horizontal X -->
                     <div class="pos-slider-wrap">
                         <div class="pos-slider-header">
@@ -6734,6 +6750,20 @@
                             <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
                         </div>
                     </div>
+
+                    ${el.type === 'text' ? `
+                    <!-- Zoom / Escala del Texto -->
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Zoom / Escala</span>
+                            <span class="pos-val-badge" id="badgeZoom_${idx}">${currZoom}%</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderZoom_${idx}" min="30" max="250" step="5" value="${currZoom}">
+                            <input type="number" class="pos-num-input" id="numZoom_${idx}" min="30" max="250" step="5" value="${currZoom}">
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
 
                 ${isForm ? `
@@ -6940,20 +6970,23 @@
 
                     sliderRot.oninput = (e) => syncRot(e.target.value);
                     numRot.oninput = (e) => syncRot(e.target.value);
+                }
 
-                    // Bind Zoom
-                    const sliderZoom = posRow.querySelector(`#sliderZoom_${idx}`);
-                    const numZoom = posRow.querySelector(`#numZoom_${idx}`);
-                    const badgeZoom = posRow.querySelector(`#badgeZoom_${idx}`);
+                // Bind Zoom (for transformable stickers or text elements)
+                const sliderZoom = posRow.querySelector(`#sliderZoom_${idx}`);
+                const numZoom = posRow.querySelector(`#numZoom_${idx}`);
+                const badgeZoom = posRow.querySelector(`#badgeZoom_${idx}`);
 
+                if (sliderZoom && numZoom && badgeZoom) {
                     const syncZoom = (val) => {
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 100;
-                        parsed = Math.max(50, Math.min(200, parsed));
+                        parsed = Math.max(30, Math.min(250, parsed));
                         el.zoom = parsed;
                         sliderZoom.value = parsed;
                         numZoom.value = parsed;
                         badgeZoom.textContent = `${parsed}%`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
 
@@ -7436,7 +7469,7 @@
             if (overlay) {
                 overlay.innerHTML = '';
                 if (Array.isArray(slide.elements)) {
-                    slide.elements.forEach(el => {
+                    slide.elements.forEach((el, elIdx) => {
                         if (el.type === 'text') {
                             const isSelected = selectedElementId === el.id;
                             const textAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
@@ -7455,13 +7488,14 @@
                             const rotY = (el.rot_y !== undefined && el.rot_y !== null) ? el.rot_y : 0;
                             const rotZ = (el.rotate !== undefined && el.rotate !== null) ? el.rotate : 0;
                             const pers = (el.perspective !== undefined && el.perspective !== null) ? el.perspective : 800;
+                            const zoomVal = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
 
                             textDiv.style.left = `calc(50% + ${posX}%)`;
                             textDiv.style.top = `calc(50% + ${posY}%)`;
                             textDiv.style.width = `${widthVal}%`;
                             textDiv.style.maxWidth = `${widthVal}%`;
                             textDiv.style.textAlign = textAlign;
-                            textDiv.style.transform = `translate(-50%, ${transY}) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg)`;
+                            textDiv.style.transform = `translate(-50%, ${transY}) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(${zoomVal / 100})`;
                             textDiv.style.transformOrigin = `center ${originY}`;
                             textDiv.style.transformStyle = 'preserve-3d';
                             textDiv.style.color = el.color || '#ffffff';
@@ -7529,6 +7563,30 @@
 
                                 window.addEventListener('pointermove', onMove);
                                 window.addEventListener('pointerup', onUp);
+                            };
+
+                            // Mouse Wheel: Zoom (Scale 30%-250%)
+                            textDiv.onwheel = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const curZoom = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
+                                const step = e.deltaY < 0 ? 5 : -5;
+                                const nextZoom = Math.max(30, Math.min(250, curZoom + step));
+                                if (el.zoom === nextZoom) return;
+                                el.zoom = nextZoom;
+
+                                const zVal = nextZoom / 100;
+                                textDiv.style.transform = `translate(-50%, ${transY}) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(${zVal})`;
+
+                                const sliderZ = document.getElementById(`sliderZoom_${elIdx}`);
+                                const numZ = document.getElementById(`numZoom_${elIdx}`);
+                                const badgeZ = document.getElementById(`badgeZoom_${elIdx}`);
+                                if (sliderZ) sliderZ.value = nextZoom;
+                                if (numZ) numZ.value = nextZoom;
+                                if (badgeZ) badgeZ.textContent = `${nextZoom}%`;
+
+                                if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                updateDirtySlideChipsUI();
                             };
 
                             overlay.appendChild(textDiv);
