@@ -1558,10 +1558,10 @@
                 if (hasNamesVar || hasValueVar || hasSingPlur) {
                     let text = raw;
                     if (hasNamesVar && formattedNames) {
-                        text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, formattedNames);
+                        text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, () => formattedNames);
                     }
                     if (hasValueVar) {
-                        text = text.replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, cardValue || '');
+                        text = text.replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => (cardValue || ''));
                     }
                     if (hasSingPlur) {
                         text = text.replace(/\(([^|()]*)\|([^|()]*)\)/g, (match, sing, plur) => {

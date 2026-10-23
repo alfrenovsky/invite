@@ -7363,8 +7363,8 @@
                 const nameVal = isSingle ? 'Juan' : 'Juan y María';
                 const priceVal = DEFAULT_CARD_VALUE;
                 return str
-                    .replace(/\{(?:name|names|nombre|nombres)\}/gi, nameVal)
-                    .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, priceVal)
+                    .replace(/\{(?:name|names|nombre|nombres)\}/gi, () => nameVal)
+                    .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => priceVal)
                     .replace(/\(([^|()]*)\|([^|()]*)\)/g, isSingle ? '$1' : '$2')
                     .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, isSingle ? '$1' : '$2');
             }

@@ -452,9 +452,9 @@ def replace_guest_names(text, group_names="", count=None, card_value=""):
     if not text:
         return ""
     res = str(text)
-    res = re.sub(r'\{(?:name|names|nombre|nombres)\}', str(group_names or ""), res, flags=re.IGNORECASE)
+    res = re.sub(r'\{(?:name|names|nombre|nombres)\}', lambda _: str(group_names or ""), res, flags=re.IGNORECASE)
     if card_value:
-        res = re.sub(r'(\$\s*)?\{(?:value|valor|precio|monto)\}', str(card_value), res, flags=re.IGNORECASE)
+        res = re.sub(r'(\$\s*)?\{(?:value|valor|precio|monto)\}', lambda _: str(card_value), res, flags=re.IGNORECASE)
     else:
         res = re.sub(r'\{(?:value|valor|precio|monto)\}', "", res, flags=re.IGNORECASE)
 
