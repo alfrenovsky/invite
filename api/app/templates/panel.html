@@ -3783,6 +3783,38 @@
                                                 </button>
                                             </div>
                                         </div>
+                                        <div id="slideBgControlsRow" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 10px;">
+                                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                                                <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">ENCUADRE Y ZOOM:</span>
+                                                <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <button type="button" class="btn-ctrl" id="btnFitSlideBg" onclick="toggleFitSlideBg()" style="padding: 3px 8px; font-size: 0.74rem;" title="Alternar entre ver imagen completa (Fit) y llenar pantalla (Cover)">
+                                                        <span id="btnFitSlideBgLabel">🔍 Ver Entera</span>
+                                                    </button>
+                                                    <button type="button" class="btn-ctrl" onclick="resetSlideBgTransforms()" style="padding: 3px 8px; font-size: 0.74rem;" title="Restablecer a 100% y centrar">
+                                                        <span>↺ Centrar</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #cbd5e1;">
+                                                        <span>Zoom</span>
+                                                        <span id="slideBgZoomBadge" style="color: #38bdf8; font-weight: 700;">100%</span>
+                                                    </div>
+                                                    <input type="range" id="slideBgZoomSlider" min="20" max="300" step="1" value="100" oninput="onSlideBgZoomChange(this.value)" class="form-range" style="width: 100%; accent-color: #38bdf8; cursor: pointer;">
+                                                </div>
+                                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #cbd5e1;">
+                                                        <span>Posición Vertical (Y)</span>
+                                                        <span id="slideBgYBadge" style="color: #38bdf8; font-weight: 700;">0%</span>
+                                                    </div>
+                                                    <input type="range" id="slideBgYSlider" min="-100" max="100" step="0.5" value="0" oninput="onSlideBgYChange(this.value)" class="form-range" style="width: 100%; accent-color: #38bdf8; cursor: pointer;">
+                                                </div>
+                                            </div>
+                                            <div style="font-size: 0.70rem; color: #64748b; line-height: 1.3;">
+                                                💡 Podés arrastrar la imagen en el teléfono para encuadrarla o usar la rueda del ratón para zoom.
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -4364,7 +4396,8 @@
             <!-- Right Column: Live Sticky 98vh Preview Mockup -->
             <div class="preview-sticky-wrap">
                 <div class="preview-ratio-bar">
-                    <button type="button" class="preview-ratio-btn active" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción iPhone útil (1.824 - 390x711)">📱 iPhone</button>
+                    <button type="button" class="preview-ratio-btn active" id="btnRatioFull" onclick="setPreviewDevice('full')" title="Proporción Story Nativa 19.5:9 (390x845 - Canvas final)">📱 Historia (19.5:9)</button>
+                    <button type="button" class="preview-ratio-btn" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción iPhone útil (1.824 - 390x711)">📱 iPhone</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android útil (1.860 - 390x725)">📱 Android</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9 - 390x693)">📱 Compacto</button>
                     <button type="button" class="preview-ratio-btn" id="btnToggleSafeZone" onclick="toggleSafeZone()" title="Mostrar/ocultar guías de zona segura para textos">🛡️ Guías</button>
@@ -5649,9 +5682,17 @@
             const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
             const zoomSlider = document.getElementById('slideBgZoomSlider');
             const zoomBadge = document.getElementById('slideBgZoomBadge');
-
             if (zoomSlider) zoomSlider.value = bgZoom;
             if (zoomBadge) zoomBadge.textContent = bgZoom + '%';
+
+            const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
+            const ySlider = document.getElementById('slideBgYSlider');
+            const yBadge = document.getElementById('slideBgYBadge');
+            if (ySlider) ySlider.value = bgY;
+            if (yBadge) yBadge.textContent = bgY + '%';
+
+            const fitLabel = document.getElementById('btnFitSlideBgLabel');
+            if (fitLabel) fitLabel.textContent = (bgZoom < 98) ? '📐 Llenar (Cover)' : '🔍 Ver Entera';
 
             updateBgSettingsVisibility();
             updateVideoSettingsUI(slide);
@@ -8111,10 +8152,11 @@
             updateDirtySlideChipsUI();
         }
 
-        let currentPreviewDevice = 'iphone';
+        let currentPreviewDevice = 'full';
         let isSafeZoneVisible = false;
 
         function getPreviewDeviceBaseHeight() {
+            if (currentPreviewDevice === 'full') return 845;
             if (currentPreviewDevice === 'android') return 725;
             if (currentPreviewDevice === 'compact') return 693;
             return 711;
@@ -8122,11 +8164,14 @@
 
         function setPreviewDevice(device) {
             currentPreviewDevice = device;
-            ['btnRatioIphone', 'btnRatioAndroid', 'btnRatioCompact'].forEach(id => {
+            ['btnRatioFull', 'btnRatioIphone', 'btnRatioAndroid', 'btnRatioCompact'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) btn.classList.remove('active');
             });
-            if (device === 'iphone') {
+            if (device === 'full') {
+                const b = document.getElementById('btnRatioFull');
+                if (b) b.classList.add('active');
+            } else if (device === 'iphone') {
                 const b = document.getElementById('btnRatioIphone');
                 if (b) b.classList.add('active');
             } else if (device === 'android') {
@@ -8158,7 +8203,18 @@
             const h = viewport.clientHeight;
             if (h <= 0) return;
 
-            if (currentPreviewDevice === 'android') {
+            if (currentPreviewDevice === 'full') {
+                // Real 19.5:9 canvas ratio (390 x 845) -> matches 1284x2782 crop canvas exactly
+                const scale = h / 845;
+                viewport.style.width = `${Math.round(390 * scale)}px`;
+                container.style.width = '390px';
+                container.style.height = '845px';
+                container.style.top = '0px';
+                container.style.left = '0px';
+                container.style.setProperty('--story-preview-scale', scale.toFixed(5));
+                container.style.setProperty('--canvas-scale', '1');
+                container.style.setProperty('--elements-scale', '1');
+            } else if (currentPreviewDevice === 'android') {
                 // Real Android usable: ratio 1.860 (390 x 725) -> container is 725px, canvas 711px, solid black strip at bottom (~14px)
                 const scale = h / 725;
                 viewport.style.width = `${Math.round(390 * scale)}px`;
@@ -9493,8 +9549,13 @@
             slide.bg_zoom = parseInt(val, 10) || 100;
             const badge = document.getElementById('slideBgZoomBadge');
             if (badge) badge.textContent = slide.bg_zoom + '%';
+            const slider = document.getElementById('slideBgZoomSlider');
+            if (slider && slider.value != slide.bg_zoom) slider.value = slide.bg_zoom;
+            const fitLabel = document.getElementById('btnFitSlideBgLabel');
+            if (fitLabel) fitLabel.textContent = (slide.bg_zoom < 98) ? '📐 Llenar (Cover)' : '🔍 Ver Entera';
             updateBgCardHeader();
             updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function onSlideBgXChange(val) {
@@ -9504,6 +9565,7 @@
             const badge = document.getElementById('slideBgXBadge');
             if (badge) badge.textContent = slide.bg_x + '%';
             updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function onSlideBgYChange(val) {
@@ -9512,7 +9574,59 @@
             slide.bg_y = parseFloat(val) || 0;
             const badge = document.getElementById('slideBgYBadge');
             if (badge) badge.textContent = slide.bg_y + '%';
+            const slider = document.getElementById('slideBgYSlider');
+            if (slider && slider.value != slide.bg_y) slider.value = slide.bg_y;
             updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+        }
+
+        function toggleFitSlideBg() {
+            const slide = getCurrentSlide();
+            if (!slide || !slide.background) return;
+
+            const bgImg = document.getElementById('previewBgImg');
+            const fitLabel = document.getElementById('btnFitSlideBgLabel');
+            const curZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
+
+            if (curZoom < 98) {
+                slide.bg_zoom = 100;
+                slide.bg_x = 0;
+                slide.bg_y = 0;
+                if (fitLabel) fitLabel.textContent = '🔍 Ver Entera';
+                showToast('📐 Modo Cover (100%)');
+            } else {
+                let fitZoom = 50;
+                if (bgImg && bgImg.naturalWidth && bgImg.naturalHeight) {
+                    const baseH = getPreviewDeviceBaseHeight();
+                    const containerRatio = baseH / 390;
+                    const imgRatio = bgImg.naturalHeight / bgImg.naturalWidth;
+                    if (imgRatio > containerRatio) {
+                        fitZoom = Math.round((containerRatio / imgRatio) * 100);
+                    } else {
+                        fitZoom = Math.round((imgRatio / containerRatio) * 100);
+                    }
+                }
+                fitZoom = Math.max(20, Math.min(100, fitZoom));
+                slide.bg_zoom = fitZoom;
+                slide.bg_x = 0;
+                slide.bg_y = 0;
+                if (fitLabel) fitLabel.textContent = '📐 Llenar (Cover)';
+                showToast(`🔍 Ajustado para ver imagen completa (${fitZoom}%)`);
+            }
+
+            const zoomSlider = document.getElementById('slideBgZoomSlider');
+            const zoomBadge = document.getElementById('slideBgZoomBadge');
+            if (zoomSlider) zoomSlider.value = slide.bg_zoom;
+            if (zoomBadge) zoomBadge.textContent = slide.bg_zoom + '%';
+
+            const ySlider = document.getElementById('slideBgYSlider');
+            const yBadge = document.getElementById('slideBgYBadge');
+            if (ySlider) ySlider.value = 0;
+            if (yBadge) yBadge.textContent = '0%';
+
+            updateBgCardHeader();
+            updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
         function resetSlideBgTransforms() {
@@ -9524,12 +9638,20 @@
 
             const zoomSlider = document.getElementById('slideBgZoomSlider');
             const zoomBadge = document.getElementById('slideBgZoomBadge');
-
             if (zoomSlider) zoomSlider.value = 100;
             if (zoomBadge) zoomBadge.textContent = '100%';
 
+            const ySlider = document.getElementById('slideBgYSlider');
+            const yBadge = document.getElementById('slideBgYBadge');
+            if (ySlider) ySlider.value = 0;
+            if (yBadge) yBadge.textContent = '0%';
+
+            const fitLabel = document.getElementById('btnFitSlideBgLabel');
+            if (fitLabel) fitLabel.textContent = '🔍 Ver Entera';
+
             updateBgCardHeader();
             updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
             showToast('↺ Fondo centrado y restablecido');
         }
 
@@ -9589,6 +9711,11 @@
                 slide.bg_x = newX;
                 slide.bg_y = newY;
 
+                const ySlider = document.getElementById('slideBgYSlider');
+                const yBadge = document.getElementById('slideBgYBadge');
+                if (ySlider) ySlider.value = newY;
+                if (yBadge) yBadge.textContent = newY + '%';
+
                 updateLivePreview();
             });
 
@@ -9610,7 +9737,7 @@
 
                 const curZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
                 const step = e.deltaY < 0 ? 5 : -5;
-                const nextZoom = Math.max(100, Math.min(300, curZoom + step));
+                const nextZoom = Math.max(20, Math.min(300, curZoom + step));
 
                 slide.bg_zoom = nextZoom;
 
@@ -9619,8 +9746,12 @@
                 if (zoomSlider) zoomSlider.value = nextZoom;
                 if (zoomBadge) zoomBadge.textContent = nextZoom + '%';
 
+                const fitLabel = document.getElementById('btnFitSlideBgLabel');
+                if (fitLabel) fitLabel.textContent = (nextZoom < 98) ? '📐 Llenar (Cover)' : '🔍 Ver Entera';
+
                 updateBgCardHeader();
                 updateLivePreview();
+                if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
             }, { passive: false });
         }
 
