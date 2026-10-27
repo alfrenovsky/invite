@@ -511,11 +511,11 @@ def utility_processor():
     return dict(replace_guest_names=replace_guest_names, format_slide_text=format_slide_text)
 
 
-TARGET_CANVAS_W = 1080
-TARGET_CANVAS_H = 2340
+TARGET_CANVAS_W = 1284
+TARGET_CANVAS_H = 2782
 
 
-def crop_slide_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=85):
+def crop_slide_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=95):
     if not Image or not slide_id or not bg_filename:
         return False
 
