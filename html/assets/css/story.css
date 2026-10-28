@@ -554,9 +554,9 @@
         }
 
         .rsvp-guest-card.expanded {
-            background: rgba(18, 20, 28, 0.76);
-            border-color: rgba(255, 255, 255, 0.35);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            background: rgba(18, 22, 32, 0.88);
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 8px 28px rgba(0, 0, 0, 0.55);
         }
 
         .rsvp-guest-row {
@@ -1733,6 +1733,13 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .rsvp-payment-card.focused-highlight {
+            background: rgba(18, 22, 32, 0.88);
+            border-color: rgba(255, 255, 255, 0.45);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 8px 28px rgba(0, 0, 0, 0.55);
         }
 
         .rsvp-payment-header {

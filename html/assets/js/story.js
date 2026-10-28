@@ -1078,6 +1078,50 @@
         return '$' + num.toLocaleString('es-AR');
     }
 
+    function findScrollParent(element) {
+        if (!element) return null;
+        let parent = element.parentElement;
+        while (parent && parent !== document.body && parent !== document.documentElement) {
+            const style = window.getComputedStyle(parent);
+            const overflowY = style.overflowY;
+            if (overflowY === 'auto' || overflowY === 'scroll') {
+                return parent;
+            }
+            parent = parent.parentElement;
+        }
+        return document.querySelector('.slide-el-form') || document.scrollingElement || document.documentElement;
+    }
+
+    function centerElementInForm(target) {
+        if (!target) return;
+        const container = findScrollParent(target);
+        if (!container) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const currentScrollTop = container.scrollTop;
+        const targetTop = (targetRect.top - containerRect.top) + currentScrollTop;
+        const targetHeight = target.offsetHeight;
+        const containerHeight = container.clientHeight;
+
+        let desiredScroll;
+        if (targetHeight >= containerHeight) {
+            desiredScroll = targetTop - 10;
+        } else {
+            desiredScroll = targetTop - (containerHeight - targetHeight) / 2;
+        }
+
+        const maxScroll = Math.max(0, container.scrollHeight - containerHeight);
+        const finalScroll = Math.max(0, Math.min(desiredScroll, maxScroll));
+
+        container.scrollTo({
+            top: Math.round(finalScroll),
+            behavior: 'smooth'
+        });
+    }
+
+    let isRsvpInitialized = false;
+
     function updatePaymentSection() {
         const paymentSection = document.getElementById('rsvpPaymentSection');
         const breakdownEl = document.getElementById('paymentBreakdown');
@@ -1085,6 +1129,8 @@
 
         const aliasBadge = paymentSection.querySelector('.payment-alias-badge');
         const uploadWrapper = document.getElementById('rsvpUploadWrapper');
+
+        const wasHidden = (paymentSection.style.display === 'none' || !paymentSection.offsetParent);
 
         const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]'));
         let unpaidTotal = 0;
@@ -1115,6 +1161,8 @@
 
         if (attendingItems.length === 0) {
             paymentSection.style.display = 'none';
+            const payCard = paymentSection.querySelector('.rsvp-payment-card');
+            if (payCard) payCard.classList.remove('focused-highlight');
             return;
         }
 
@@ -1139,6 +1187,21 @@
             if (aliasBadge) aliasBadge.style.display = 'none';
             if (uploadWrapper) uploadWrapper.style.display = 'none';
             paymentSection.style.display = 'block';
+
+            if (wasHidden && isRsvpInitialized) {
+                const payCard = paymentSection.querySelector('.rsvp-payment-card');
+                if (payCard) {
+                    payCard.classList.add('focused-highlight');
+                    document.querySelectorAll('.rsvp-guest-card.expanded, .rsvp-card.expanded').forEach(c => {
+                        c.classList.remove('expanded');
+                        const h = c.querySelector('.rsvp-card-header');
+                        if (h) h.setAttribute('aria-expanded', 'false');
+                    });
+                    setTimeout(() => {
+                        centerElementInForm(payCard);
+                    }, 120);
+                }
+            }
             return;
         }
 
@@ -1165,6 +1228,21 @@
         if (aliasBadge) aliasBadge.style.display = '';
         if (uploadWrapper) uploadWrapper.style.display = '';
         paymentSection.style.display = 'block';
+
+        if (wasHidden && isRsvpInitialized) {
+            const payCard = paymentSection.querySelector('.rsvp-payment-card');
+            if (payCard) {
+                payCard.classList.add('focused-highlight');
+                document.querySelectorAll('.rsvp-guest-card.expanded, .rsvp-card.expanded').forEach(c => {
+                    c.classList.remove('expanded');
+                    const h = c.querySelector('.rsvp-card-header');
+                    if (h) h.setAttribute('aria-expanded', 'false');
+                });
+                setTimeout(() => {
+                    centerElementInForm(payCard);
+                }, 120);
+            }
+        }
     }
 
     function initComprobanteUploader() {
@@ -1504,10 +1582,16 @@
                 e.stopPropagation();
                 flushAutoSave();
                 const card = header.closest('.rsvp-card');
+                if (!card) return;
                 const isExpanded = card.classList.contains('expanded');
                 document.querySelectorAll('.rsvp-card').forEach(c => c.classList.remove('expanded'));
+                const payCard = document.querySelector('.rsvp-payment-card');
+                if (payCard) payCard.classList.remove('focused-highlight');
                 if (!isExpanded) {
                     card.classList.add('expanded');
+                    setTimeout(() => {
+                        centerElementInForm(card);
+                    }, 80);
                 }
             };
         });
@@ -1702,12 +1786,19 @@
                             if (h) h.setAttribute('aria-expanded', 'false');
                         }
                     });
+                    const payCard = document.querySelector('.rsvp-payment-card');
+                    if (payCard) {
+                        payCard.classList.remove('focused-highlight');
+                    }
                     if (isExpanded) {
                         card.classList.remove('expanded');
                         header.setAttribute('aria-expanded', 'false');
                     } else {
                         card.classList.add('expanded');
                         header.setAttribute('aria-expanded', 'true');
+                        setTimeout(() => {
+                            centerElementInForm(card);
+                        }, 80);
                     }
                 };
 
@@ -1742,8 +1833,15 @@
                                     if (h) h.setAttribute('aria-expanded', 'false');
                                 }
                             });
+                            const payCard = document.querySelector('.rsvp-payment-card');
+                            if (payCard) {
+                                payCard.classList.remove('focused-highlight');
+                            }
                             card.classList.add('expanded');
                             if (header) header.setAttribute('aria-expanded', 'true');
+                            setTimeout(() => {
+                                centerElementInForm(card);
+                            }, 80);
 
                             const emptyInput = (!n) ? inputNombre : inputApellido;
                             if (emptyInput) {
@@ -1968,6 +2066,7 @@
                             flushAutoSave();
                             cards.forEach(c => c.classList.remove('expanded'));
                             nextCard.classList.add('expanded');
+                            centerElementInForm(nextCard);
                         }, 320);
                     }
                 };
@@ -2021,7 +2120,22 @@
         });
 
         initComprobanteUploader();
+
+        const paymentCardEl = document.querySelector('.rsvp-payment-card');
+        if (paymentCardEl) {
+            paymentCardEl.addEventListener('click', () => {
+                paymentCardEl.classList.add('focused-highlight');
+                guestCards.forEach(c => {
+                    c.classList.remove('expanded');
+                    const h = c.querySelector('.rsvp-card-header');
+                    if (h) h.setAttribute('aria-expanded', 'false');
+                });
+                centerElementInForm(paymentCardEl);
+            });
+        }
+
         updatePaymentSection();
+        isRsvpInitialized = true;
     }
 
     // Immediate save on clicking or tapping outside the RSVP form
