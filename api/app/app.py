@@ -5,7 +5,9 @@ import re
 import threading
 import urllib.parse
 import uuid
-from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect
+import secrets
+from functools import wraps
+from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect, Response
 from markupsafe import Markup, escape
 from werkzeug.utils import secure_filename
 from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type, DEFAULT_RESERVA_MONTO
@@ -911,16 +913,43 @@ def form_page():
 
 
 # ---------------------------------------------------------
-# DEVELOPMENT PANEL (Unauthenticated, Dev Mode Only)
+# MANAGEMENT PANEL (HTTP Basic Auth Required)
 # ---------------------------------------------------------
+
+PANEL_USER = os.environ.get("PANEL_USER") or os.environ.get("PANEL_LOGIN", "ari")
+PANEL_PASSWORD = os.environ.get("PANEL_PASSWORD") or os.environ.get("PANEL_PASS", "gato")
+
+
+def check_panel_auth(username, password):
+    expected_user = os.environ.get("PANEL_USER") or os.environ.get("PANEL_LOGIN", "ari")
+    expected_password = os.environ.get("PANEL_PASSWORD") or os.environ.get("PANEL_PASS", "gato")
+    return (
+        secrets.compare_digest((username or "").encode("utf-8"), expected_user.encode("utf-8"))
+        and secrets.compare_digest((password or "").encode("utf-8"), expected_password.encode("utf-8"))
+    )
+
+
+def require_panel_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_panel_auth(auth.username, auth.password):
+            return Response(
+                "Acceso no autorizado al panel",
+                status=401,
+                headers={"WWW-Authenticate": 'Basic realm="Panel de Control"'}
+            )
+        return f(*args, **kwargs)
+
+    return decorated_function
+
 
 GOOGLE_FONTS_CATALOG = ["Montserrat", "Alegreya", "Archivo", "Rosario", "Saira"]
 
 
 @app.get("/panel")
+@require_panel_auth
 def panel_view():
-    if not is_dev_mode():
-        abort(404)
     slides = load_slides()
     backgrounds = get_backgrounds_list()
     styles = load_styles()
@@ -976,9 +1005,8 @@ def panel_view():
 
 
 @app.post("/panel/styles")
+@require_panel_auth
 def panel_save_styles():
-    if not is_dev_mode():
-        abort(404)
     data = request.get_json(silent=True) or request.form.to_dict()
     if not data or not isinstance(data, dict):
         return jsonify({"ok": False, "error": "Datos inválidos"}), 400
@@ -993,9 +1021,8 @@ def panel_save_styles():
 
 
 @app.get("/panel/styles/download")
+@require_panel_auth
 def panel_download_styles():
-    if not is_dev_mode():
-        abort(404)
     if not os.path.exists(STYLES_JSON_PATH):
         styles = load_styles()
         save_styles(styles)
@@ -1008,9 +1035,8 @@ def panel_download_styles():
 
 
 @app.post("/panel/styles/upload")
+@require_panel_auth
 def panel_upload_styles():
-    if not is_dev_mode():
-        abort(404)
     uploaded = None
     if "file" in request.files:
         file = request.files["file"]
@@ -1041,9 +1067,8 @@ def panel_upload_styles():
 
 
 @app.get("/panel/slides/download")
+@require_panel_auth
 def panel_download_slides():
-    if not is_dev_mode():
-        abort(404)
     if not os.path.exists(SLIDES_JSON_PATH):
         slides = load_slides()
         save_slides(slides)
@@ -1056,9 +1081,8 @@ def panel_download_slides():
 
 
 @app.post("/panel/slides/upload")
+@require_panel_auth
 def panel_upload_slides():
-    if not is_dev_mode():
-        abort(404)
     uploaded = None
     if "file" in request.files:
         file = request.files["file"]
@@ -1089,9 +1113,8 @@ def panel_upload_slides():
 
 
 @app.post("/panel/upload-background")
+@require_panel_auth
 def panel_upload_background():
-    if not is_dev_mode():
-        abort(404)
 
     files = request.files.getlist("background_files")
     if not files:
@@ -1146,9 +1169,8 @@ def panel_upload_background():
 
 
 @app.post("/panel/slide/<slide_id>")
+@require_panel_auth
 def panel_update_slide(slide_id):
-    if not is_dev_mode():
-        abort(404)
 
     slides = load_slides()
     target_slide = next((s for s in slides if s["id"] == slide_id or s.get("title") == slide_id or s.get("_origId") == slide_id), None)
@@ -1238,9 +1260,8 @@ def panel_update_slide(slide_id):
 
 
 @app.post("/panel/slides")
+@require_panel_auth
 def panel_save_all_slides():
-    if not is_dev_mode():
-        abort(404)
 
     data = request.get_json(silent=True)
     if not data or not isinstance(data, list):
@@ -1251,9 +1272,8 @@ def panel_save_all_slides():
 
 
 @app.post("/panel/slides/new")
+@require_panel_auth
 def panel_create_slide():
-    if not is_dev_mode():
-        abort(404)
 
     if request.is_json:
         data = request.get_json(silent=True) or {}
@@ -1302,9 +1322,8 @@ def panel_create_slide():
 
 
 @app.post("/panel/slide/<slide_id>/delete")
+@require_panel_auth
 def panel_delete_slide(slide_id):
-    if not is_dev_mode():
-        abort(404)
 
     slides = load_slides()
     filtered = [s for s in slides if s["id"] != slide_id]
@@ -1324,9 +1343,8 @@ def panel_delete_slide(slide_id):
 
 
 @app.post("/panel/rename-background")
+@require_panel_auth
 def panel_rename_background():
-    if not is_dev_mode():
-        abort(404)
 
     if request.is_json:
         data = request.get_json(silent=True) or {}
@@ -1386,9 +1404,8 @@ def panel_rename_background():
 
 
 @app.post("/panel/desktop-background")
+@require_panel_auth
 def panel_set_desktop_background():
-    if not is_dev_mode():
-        abort(404)
     data = request.get_json(silent=True) or request.form.to_dict()
     bg_name = (data.get("background") or "").strip()
     if not bg_name:
@@ -1403,9 +1420,8 @@ def panel_set_desktop_background():
 
 
 @app.post("/panel/delete-background")
+@require_panel_auth
 def panel_delete_background():
-    if not is_dev_mode():
-        abort(404)
 
     if request.is_json:
         data = request.get_json(silent=True) or {}
@@ -1453,9 +1469,8 @@ def panel_delete_background():
 
 
 @app.post("/panel/upload-font")
+@require_panel_auth
 def panel_upload_font():
-    if not is_dev_mode():
-        abort(404)
 
     if "font_file" not in request.files:
         return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
@@ -1498,9 +1513,8 @@ def panel_upload_font():
 
 
 @app.post("/panel/delete-font")
+@require_panel_auth
 def panel_delete_font():
-    if not is_dev_mode():
-        abort(404)
 
     if request.is_json:
         data = request.get_json(silent=True) or {}

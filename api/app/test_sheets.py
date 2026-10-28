@@ -18,6 +18,12 @@ from sheets import (
 )
 
 
+def get_panel_auth_headers(user="ari", password="gato"):
+    import base64
+    creds = f"{user}:{password}".encode("utf-8")
+    return {"Authorization": f"Basic {base64.b64encode(creds).decode('ascii')}"}
+
+
 class TestGoogleSheetsTable(unittest.TestCase):
     def setUp(self):
         self.cache_path = "/tmp/test_cache_unittest.json"
@@ -432,25 +438,39 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_invalid = client.get("/i/familia_perez_invalid/slides")
                 self.assertEqual(res_invalid.status_code, 403)
 
-    def test_panel_route_dev_mode_and_production_protection(self):
+    def test_panel_route_authentication(self):
         from app import app
         with app.test_client() as client:
             test_slides = [{"id": "portada", "title": "Portada", "background": "sample.jpeg", "enabled": True}]
-            with patch("app.is_dev_mode", return_value=True), \
-                 patch("app.save_slides"), \
+            auth_headers = get_panel_auth_headers("ari", "gato")
+
+            # 1. Unauthenticated request to /panel returns 401 with WWW-Authenticate header
+            res_unauth = client.get("/panel")
+            self.assertEqual(res_unauth.status_code, 401)
+            self.assertIn("Basic", res_unauth.headers.get("WWW-Authenticate", ""))
+
+            # 2. Invalid credentials return 401
+            res_wrong = client.get("/panel", headers=get_panel_auth_headers("ari", "wrongpass"))
+            self.assertEqual(res_wrong.status_code, 401)
+
+            res_wrong_user = client.get("/panel", headers=get_panel_auth_headers("wronguser", "gato"))
+            self.assertEqual(res_wrong_user.status_code, 401)
+
+            # 3. Valid credentials return 200
+            with patch("app.save_slides"), \
                  patch("app.load_slides", return_value=test_slides):
-                res = client.get("/panel")
+                res = client.get("/panel", headers=auth_headers)
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(b"Panel de Control", res.data)
 
-                # Slide update with duration and background transforms in dev mode
+                # Slide update with duration and background transforms
                 res_slide = client.post("/panel/slide/portada", data={
                     "background": "photo01.jpeg",
                     "duration": 8500,
                     "bg_zoom": 150,
                     "bg_x": 10.5,
                     "bg_y": -15.2
-                })
+                }, headers=auth_headers)
                 self.assertEqual(res_slide.status_code, 200)
                 self.assertTrue(res_slide.get_json()["ok"])
                 slide_data = res_slide.get_json()["slide"]
@@ -459,20 +479,20 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(slide_data["bg_x"], 10.5)
                 self.assertEqual(slide_data["bg_y"], -15.2)
 
-                # Rename background validation in dev mode
-                res_rename = client.post("/panel/rename-background", json={"old_name": "inexistente.jpeg", "new_name": "nuevo.jpeg"})
+                # Rename background validation
+                res_rename = client.post("/panel/rename-background", json={"old_name": "inexistente.jpeg", "new_name": "nuevo.jpeg"}, headers=auth_headers)
                 self.assertEqual(res_rename.status_code, 404)
 
-                # Delete background validation in dev mode
-                res_del = client.post("/panel/delete-background", json={"filename": "inexistente.jpeg"})
+                # Delete background validation
+                res_del = client.post("/panel/delete-background", json={"filename": "inexistente.jpeg"}, headers=auth_headers)
                 self.assertEqual(res_del.status_code, 404)
 
                 # Desktop background endpoint validation
-                res_desktop_404 = client.post("/panel/desktop-background", json={"background": "inexistente.jpeg"})
+                res_desktop_404 = client.post("/panel/desktop-background", json={"background": "inexistente.jpeg"}, headers=auth_headers)
                 self.assertEqual(res_desktop_404.status_code, 404)
 
                 with patch("os.path.isfile", return_value=True), patch("app.save_styles") as mock_save_styles:
-                    res_desktop_ok = client.post("/panel/desktop-background", json={"background": "sample.jpeg"})
+                    res_desktop_ok = client.post("/panel/desktop-background", json={"background": "sample.jpeg"}, headers=auth_headers)
                     self.assertEqual(res_desktop_ok.status_code, 200)
                     self.assertTrue(res_desktop_ok.get_json()["ok"])
                     mock_save_styles.assert_called_once()
@@ -480,18 +500,18 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
                 # Delete background rejection when in use by a slide
                 with patch("app.load_slides", return_value=[{"id": "intro", "title": "Intro", "background": "sample.jpeg"}]):
-                    res_in_use_bg = client.post("/panel/delete-background", json={"filename": "sample.jpeg"})
+                    res_in_use_bg = client.post("/panel/delete-background", json={"filename": "sample.jpeg"}, headers=auth_headers)
                     self.assertEqual(res_in_use_bg.status_code, 400)
                     self.assertIn("en uso", res_in_use_bg.get_json()["error"].lower())
 
                 # Delete background rejection when in use as desktop background
                 with patch("app.load_slides", return_value=[]), patch("app.load_styles", return_value={"desktop_background": "sample.jpeg"}):
-                    res_in_use_desktop = client.post("/panel/delete-background", json={"filename": "sample.jpeg"})
+                    res_in_use_desktop = client.post("/panel/delete-background", json={"filename": "sample.jpeg"}, headers=auth_headers)
                     self.assertEqual(res_in_use_desktop.status_code, 400)
                     self.assertIn("en uso", res_in_use_desktop.get_json()["error"].lower())
 
                 # Upload background (empty, single, multiple)
-                res_up_empty = client.post("/panel/upload-background")
+                res_up_empty = client.post("/panel/upload-background", headers=auth_headers)
                 self.assertEqual(res_up_empty.status_code, 400)
 
                 import io
@@ -499,61 +519,55 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as tmp_bg_dir:
                     with patch("app.get_backgrounds_dir", return_value=tmp_bg_dir):
                         f1 = (io.BytesIO(b"fake image 1"), "foto1.jpg")
-                        res_up_single = client.post("/panel/upload-background", data={"background_files": [f1]})
+                        res_up_single = client.post("/panel/upload-background", data={"background_files": [f1]}, headers=auth_headers)
                         self.assertEqual(res_up_single.status_code, 200)
                         self.assertTrue(res_up_single.get_json()["ok"])
                         self.assertEqual(res_up_single.get_json()["count"], 1)
 
                         f2 = (io.BytesIO(b"fake image 2"), "foto2.png")
                         f3 = (io.BytesIO(b"fake image 3"), "foto3.webp")
-                        res_up_multi = client.post("/panel/upload-background", data={"background_files": [f2, f3]})
+                        res_up_multi = client.post("/panel/upload-background", data={"background_files": [f2, f3]}, headers=auth_headers)
                         self.assertEqual(res_up_multi.status_code, 200)
                         self.assertTrue(res_up_multi.get_json()["ok"])
                         self.assertEqual(res_up_multi.get_json()["count"], 2)
                         self.assertIn("foto2.png", res_up_multi.get_json()["filenames"])
                         self.assertIn("foto3.webp", res_up_multi.get_json()["filenames"])
 
-            # 2. Production mode (dev mode False) -> 404 Not Found
-            with patch("app.is_dev_mode", return_value=False):
-                res = client.get("/panel")
-                self.assertEqual(res.status_code, 404)
+            # 4. Unauthenticated POST endpoints return 401
+            res_post_unauth = client.post("/panel/slide/portada", data={"background": "photo01.jpeg"})
+            self.assertEqual(res_post_unauth.status_code, 401)
 
-                res_post = client.post("/panel/slide/portada", data={"background": "photo01.jpeg"})
-                self.assertEqual(res_post.status_code, 404)
+            res_upload_unauth = client.post("/panel/upload-background")
+            self.assertEqual(res_upload_unauth.status_code, 401)
 
-                res_upload = client.post("/panel/upload-background")
-                self.assertEqual(res_upload.status_code, 404)
+            # 5. Dynamic environment variable configuration for custom credentials
+            with patch.dict(os.environ, {"PANEL_USER": "custom_admin", "PANEL_PASSWORD": "super_secret"}):
+                res_custom_ok = client.get("/panel", headers=get_panel_auth_headers("custom_admin", "super_secret"))
+                self.assertEqual(res_custom_ok.status_code, 200)
 
-                res_desktop_prod = client.post("/panel/desktop-background", json={"background": "sample.jpeg"})
-                self.assertEqual(res_desktop_prod.status_code, 404)
-
-                res_rename_prod = client.post("/panel/rename-background", json={"old_name": "test.jpeg", "new_name": "nuevo.jpeg"})
-                self.assertEqual(res_rename_prod.status_code, 404)
-
-                res_del_prod = client.post("/panel/delete-background", json={"filename": "test.jpeg"})
-                self.assertEqual(res_del_prod.status_code, 404)
+                res_old_fail = client.get("/panel", headers=get_panel_auth_headers("ari", "gato"))
+                self.assertEqual(res_old_fail.status_code, 401)
 
     def test_slides_freedom_and_modular_custom_templates(self):
         from app import app, load_slides
         with app.test_client() as client:
-            with patch("app.is_dev_mode", return_value=True):
-                # 1. Slides can be deleted normally without special rsvp restrictions
-                with patch("app.load_slides", return_value=[{"id": "rsvp", "title": "RSVP"}, {"id": "portada", "title": "Portada"}]), patch("app.save_slides") as mock_save:
-                    res_del = client.post("/panel/slide/rsvp/delete")
-                    self.assertEqual(res_del.status_code, 200)
-                    data = res_del.get_json()
-                    self.assertTrue(data["ok"])
-                    mock_save.assert_called_once()
-                    saved_slides = mock_save.call_args[0][0]
-                    self.assertEqual(len(saved_slides), 1)
-                    self.assertEqual(saved_slides[0]["id"], "portada")
+            # 1. Slides can be deleted normally without special rsvp restrictions
+            with patch("app.load_slides", return_value=[{"id": "rsvp", "title": "RSVP"}, {"id": "portada", "title": "Portada"}]), patch("app.save_slides") as mock_save:
+                res_del = client.post("/panel/slide/rsvp/delete", headers=get_panel_auth_headers())
+                self.assertEqual(res_del.status_code, 200)
+                data = res_del.get_json()
+                self.assertTrue(data["ok"])
+                mock_save.assert_called_once()
+                saved_slides = mock_save.call_args[0][0]
+                self.assertEqual(len(saved_slides), 1)
+                self.assertEqual(saved_slides[0]["id"], "portada")
 
-                # 2. load_slides assigns slides/custom.html to all slides
-                custom_list = [{"id": "s1", "title": "S1"}]
-                with patch("app.SLIDES_CONFIG_DEFAULT", custom_list), patch("os.path.exists", return_value=False):
-                    loaded = load_slides()
-                    self.assertEqual(len(loaded), 1)
-                    self.assertEqual(loaded[0]["template"], "slides/custom.html")
+            # 2. load_slides assigns slides/custom.html to all slides
+            custom_list = [{"id": "s1", "title": "S1"}]
+            with patch("app.SLIDES_CONFIG_DEFAULT", custom_list), patch("os.path.exists", return_value=False):
+                loaded = load_slides()
+                self.assertEqual(len(loaded), 1)
+                self.assertEqual(loaded[0]["template"], "slides/custom.html")
 
     def test_resolve_invitation_slide_and_temp_behavior(self):
         from app import app, resolve_invitation_slide
@@ -616,18 +630,18 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
                 # 4. Invalidation on slide update in panel removes temp/{slide_id}.webp
                 with app.test_client() as client:
-                    with patch("app.is_dev_mode", return_value=True), \
-                         patch("app.load_slides", return_value=[dict(slide_with_temp)]), \
+                    auth_headers = get_panel_auth_headers("ari", "gato")
+                    with patch("app.load_slides", return_value=[dict(slide_with_temp)]), \
                          patch("app.save_slides"):
                         self.assertTrue(os.path.isfile(temp_file))
-                        client.post("/panel/slide/fecha", json={"bg_zoom": 150.0})
+                        client.post("/panel/slide/fecha", json={"bg_zoom": 150.0}, headers=auth_headers)
                         self.assertFalse(os.path.isfile(temp_file))
 
                         # Recreate and verify deletion invalidates
                         with open(temp_file, "w") as f:
                             f.write("dummy-webp")
                         self.assertTrue(os.path.isfile(temp_file))
-                        client.post("/panel/slide/fecha/delete")
+                        client.post("/panel/slide/fecha/delete", headers=auth_headers)
                         self.assertFalse(os.path.isfile(temp_file))
 
     def test_panel_styles_and_slides_download_upload(self):
@@ -644,77 +658,76 @@ class TestGoogleSheetsTable(unittest.TestCase):
                  patch("app.SLIDES_JSON_PATH", test_slides_path):
 
                 with app.test_client() as client:
-                    # 1. Production mode protection (404)
-                    with patch("app.is_dev_mode", return_value=False):
-                        self.assertEqual(client.get("/panel/styles/download").status_code, 404)
-                        self.assertEqual(client.post("/panel/styles/upload").status_code, 404)
-                        self.assertEqual(client.get("/panel/slides/download").status_code, 404)
-                        self.assertEqual(client.post("/panel/slides/upload").status_code, 404)
+                    auth_headers = get_panel_auth_headers("ari", "gato")
+                    # 1. Unauthenticated protection (401)
+                    self.assertEqual(client.get("/panel/styles/download").status_code, 401)
+                    self.assertEqual(client.post("/panel/styles/upload").status_code, 401)
+                    self.assertEqual(client.get("/panel/slides/download").status_code, 401)
+                    self.assertEqual(client.post("/panel/slides/upload").status_code, 401)
 
-                    # 2. Dev mode active
-                    with patch("app.is_dev_mode", return_value=True):
-                        # --- STYLES DOWNLOAD ---
-                        res_dl_styles = client.get("/panel/styles/download")
-                        self.assertEqual(res_dl_styles.status_code, 200)
-                        self.assertIn("application/json", res_dl_styles.content_type)
-                        self.assertIn("styles.json", res_dl_styles.headers.get("Content-Disposition", ""))
-                        res_dl_styles.close()
+                    # 2. Authenticated access
+                    # --- STYLES DOWNLOAD ---
+                    res_dl_styles = client.get("/panel/styles/download", headers=auth_headers)
+                    self.assertEqual(res_dl_styles.status_code, 200)
+                    self.assertIn("application/json", res_dl_styles.content_type)
+                    self.assertIn("styles.json", res_dl_styles.headers.get("Content-Disposition", ""))
+                    res_dl_styles.close()
 
-                        # --- STYLES UPLOAD (JSON payload) ---
-                        res_up_styles_json = client.post("/panel/styles/upload", json={
-                            "title": {"fontFamily": "Cinzel", "fontSize": 42}
-                        })
-                        self.assertEqual(res_up_styles_json.status_code, 200)
-                        data_styles = res_up_styles_json.get_json()
-                        self.assertTrue(data_styles["ok"])
-                        self.assertEqual(data_styles["styles"]["title"]["fontFamily"], "Cinzel")
-                        self.assertEqual(data_styles["styles"]["title"]["fontSize"], 42)
+                    # --- STYLES UPLOAD (JSON payload) ---
+                    res_up_styles_json = client.post("/panel/styles/upload", json={
+                        "title": {"fontFamily": "Cinzel", "fontSize": 42}
+                    }, headers=auth_headers)
+                    self.assertEqual(res_up_styles_json.status_code, 200)
+                    data_styles = res_up_styles_json.get_json()
+                    self.assertTrue(data_styles["ok"])
+                    self.assertEqual(data_styles["styles"]["title"]["fontFamily"], "Cinzel")
+                    self.assertEqual(data_styles["styles"]["title"]["fontSize"], 42)
 
-                        # --- STYLES UPLOAD (File payload) ---
-                        file_styles_data = io.BytesIO(b'{"tag": {"fontFamily": "Pacifico", "fontSize": 18}}')
-                        res_up_styles_file = client.post("/panel/styles/upload", data={
-                            "file": (file_styles_data, "styles.json")
-                        })
-                        self.assertEqual(res_up_styles_file.status_code, 200)
-                        data_file_styles = res_up_styles_file.get_json()
-                        self.assertTrue(data_file_styles["ok"])
-                        self.assertEqual(data_file_styles["styles"]["tag"]["fontFamily"], "Pacifico")
+                    # --- STYLES UPLOAD (File payload) ---
+                    file_styles_data = io.BytesIO(b'{"tag": {"fontFamily": "Pacifico", "fontSize": 18}}')
+                    res_up_styles_file = client.post("/panel/styles/upload", data={
+                        "file": (file_styles_data, "styles.json")
+                    }, headers=auth_headers)
+                    self.assertEqual(res_up_styles_file.status_code, 200)
+                    data_file_styles = res_up_styles_file.get_json()
+                    self.assertTrue(data_file_styles["ok"])
+                    self.assertEqual(data_file_styles["styles"]["tag"]["fontFamily"], "Pacifico")
 
-                        # --- STYLES UPLOAD (Invalid data) ---
-                        bad_file = io.BytesIO(b'{"invalid_json": ')
-                        self.assertEqual(client.post("/panel/styles/upload", data={"file": (bad_file, "styles.json")}).status_code, 400)
-                        self.assertEqual(client.post("/panel/styles/upload", json=["not a dict"]).status_code, 400)
+                    # --- STYLES UPLOAD (Invalid data) ---
+                    bad_file = io.BytesIO(b'{"invalid_json": ')
+                    self.assertEqual(client.post("/panel/styles/upload", data={"file": (bad_file, "styles.json")}, headers=auth_headers).status_code, 400)
+                    self.assertEqual(client.post("/panel/styles/upload", json=["not a dict"], headers=auth_headers).status_code, 400)
 
-                        # --- SLIDES DOWNLOAD ---
-                        res_dl_slides = client.get("/panel/slides/download")
-                        self.assertEqual(res_dl_slides.status_code, 200)
-                        self.assertIn("application/json", res_dl_slides.content_type)
-                        self.assertIn("slides.json", res_dl_slides.headers.get("Content-Disposition", ""))
-                        res_dl_slides.close()
+                    # --- SLIDES DOWNLOAD ---
+                    res_dl_slides = client.get("/panel/slides/download", headers=auth_headers)
+                    self.assertEqual(res_dl_slides.status_code, 200)
+                    self.assertIn("application/json", res_dl_slides.content_type)
+                    self.assertIn("slides.json", res_dl_slides.headers.get("Content-Disposition", ""))
+                    res_dl_slides.close()
 
-                        # --- SLIDES UPLOAD (JSON payload) ---
-                        new_slides = [
-                            {"id": "intro", "title": "Intro", "duration": 5000, "elements": []}
-                        ]
-                        res_up_slides = client.post("/panel/slides/upload", json=new_slides)
-                        self.assertEqual(res_up_slides.status_code, 200)
-                        data_slides = res_up_slides.get_json()
-                        # Check that uploaded slides are saved correctly without forced injection
-                        self.assertTrue(any(s["id"] == "intro" for s in data_slides["slides"]))
-                        self.assertEqual(len(data_slides["slides"]), 1)
+                    # --- SLIDES UPLOAD (JSON payload) ---
+                    new_slides = [
+                        {"id": "intro", "title": "Intro", "duration": 5000, "elements": []}
+                    ]
+                    res_up_slides = client.post("/panel/slides/upload", json=new_slides, headers=auth_headers)
+                    self.assertEqual(res_up_slides.status_code, 200)
+                    data_slides = res_up_slides.get_json()
+                    # Check that uploaded slides are saved correctly without forced injection
+                    self.assertTrue(any(s["id"] == "intro" for s in data_slides["slides"]))
+                    self.assertEqual(len(data_slides["slides"]), 1)
 
-                        # --- SLIDES UPLOAD (File payload) ---
-                        file_slides_data = io.BytesIO(json.dumps([{"id": "portada", "title": "Portada", "elements": []}]).encode("utf-8"))
-                        res_up_slides_file = client.post("/panel/slides/upload", data={
-                            "file": (file_slides_data, "slides.json")
-                        })
-                        self.assertEqual(res_up_slides_file.status_code, 200)
-                        self.assertTrue(res_up_slides_file.get_json()["ok"])
+                    # --- SLIDES UPLOAD (File payload) ---
+                    file_slides_data = io.BytesIO(json.dumps([{"id": "portada", "title": "Portada", "elements": []}]).encode("utf-8"))
+                    res_up_slides_file = client.post("/panel/slides/upload", data={
+                        "file": (file_slides_data, "slides.json")
+                    }, headers=auth_headers)
+                    self.assertEqual(res_up_slides_file.status_code, 200)
+                    self.assertTrue(res_up_slides_file.get_json()["ok"])
 
-                        # --- SLIDES UPLOAD (Invalid data) ---
-                        self.assertEqual(client.post("/panel/slides/upload", json={"not": "a list"}).status_code, 400)
-                        bad_slides_file = io.BytesIO(b'["string instead of object"]')
-                        self.assertEqual(client.post("/panel/slides/upload", data={"file": (bad_slides_file, "slides.json")}).status_code, 400)
+                    # --- SLIDES UPLOAD (Invalid data) ---
+                    self.assertEqual(client.post("/panel/slides/upload", json={"not": "a list"}, headers=auth_headers).status_code, 400)
+                    bad_slides_file = io.BytesIO(b'["string instead of object"]')
+                    self.assertEqual(client.post("/panel/slides/upload", data={"file": (bad_slides_file, "slides.json")}, headers=auth_headers).status_code, 400)
 
     def test_panel_fonts_upload_and_delete(self):
         import io
@@ -724,66 +737,65 @@ class TestGoogleSheetsTable(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_fonts_dir:
             with patch("app.get_fonts_dir", return_value=tmp_fonts_dir):
                 with app.test_client() as client:
-                    # 1. Production mode protection (404)
-                    with patch("app.is_dev_mode", return_value=False):
-                        self.assertEqual(client.post("/panel/upload-font").status_code, 404)
-                        self.assertEqual(client.post("/panel/delete-font").status_code, 404)
+                    auth_headers = get_panel_auth_headers("ari", "gato")
+                    # 1. Unauthenticated protection (401)
+                    self.assertEqual(client.post("/panel/upload-font").status_code, 401)
+                    self.assertEqual(client.post("/panel/delete-font").status_code, 401)
 
-                    # 2. Dev mode active
-                    with patch("app.is_dev_mode", return_value=True):
-                        # Missing file
-                        res_empty = client.post("/panel/upload-font")
-                        self.assertEqual(res_empty.status_code, 400)
+                    # 2. Authenticated access
+                    # Missing file
+                    res_empty = client.post("/panel/upload-font", headers=auth_headers)
+                    self.assertEqual(res_empty.status_code, 400)
 
-                        # Bad extension
-                        bad_file = (io.BytesIO(b"fake binary"), "bad.exe")
-                        res_bad_ext = client.post("/panel/upload-font", data={"font_file": bad_file})
-                        self.assertEqual(res_bad_ext.status_code, 400)
+                    # Bad extension
+                    bad_file = (io.BytesIO(b"fake binary"), "bad.exe")
+                    res_bad_ext = client.post("/panel/upload-font", data={"font_file": bad_file}, headers=auth_headers)
+                    self.assertEqual(res_bad_ext.status_code, 400)
 
-                        # Successful TTF upload
-                        ttf_file = (io.BytesIO(b"dummy ttf content"), "SampleFont.ttf")
-                        res_up = client.post("/panel/upload-font", data={"font_file": ttf_file, "font_name": "SampleFont"})
-                        self.assertEqual(res_up.status_code, 200)
-                        data_up = res_up.get_json()
-                        self.assertTrue(data_up["ok"])
-                        self.assertEqual(data_up["filename"], "SampleFont.ttf")
-                        self.assertTrue(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
+                    # Successful TTF upload
+                    ttf_file = (io.BytesIO(b"dummy ttf content"), "SampleFont.ttf")
+                    res_up = client.post("/panel/upload-font", data={"font_file": ttf_file, "font_name": "SampleFont"}, headers=auth_headers)
+                    self.assertEqual(res_up.status_code, 200)
+                    data_up = res_up.get_json()
+                    self.assertTrue(data_up["ok"])
+                    self.assertEqual(data_up["filename"], "SampleFont.ttf")
+                    self.assertTrue(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
 
-                        # Check fonts.css auto-generation
-                        css_file = os.path.join(tmp_fonts_dir, "fonts.css")
-                        self.assertTrue(os.path.exists(css_file))
-                        with open(css_file, "r") as f:
-                            css_content = f.read()
-                        self.assertIn("font-family: 'SampleFont'", css_content)
+                    # Check fonts.css auto-generation
+                    css_file = os.path.join(tmp_fonts_dir, "fonts.css")
+                    self.assertTrue(os.path.exists(css_file))
+                    with open(css_file, "r") as f:
+                        css_content = f.read()
+                    self.assertIn("font-family: 'SampleFont'", css_content)
 
-                        # Delete: Path traversal protection
-                        res_trav = client.post("/panel/delete-font", json={"filename": "../evil.ttf"})
-                        self.assertEqual(res_trav.status_code, 400)
+                    # Delete: Path traversal protection
+                    res_trav = client.post("/panel/delete-font", json={"filename": "../evil.ttf"}, headers=auth_headers)
+                    self.assertEqual(res_trav.status_code, 400)
 
-                        # Delete: Not found
-                        res_nf = client.post("/panel/delete-font", json={"filename": "NonExistent.ttf"})
-                        self.assertEqual(res_nf.status_code, 404)
+                    # Delete: Not found
+                    res_nf = client.post("/panel/delete-font", json={"filename": "NonExistent.ttf"}, headers=auth_headers)
+                    self.assertEqual(res_nf.status_code, 404)
 
-                        # Delete: In-use protection
-                        with patch("app.is_font_in_use", return_value=True):
-                            res_in_use = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"})
-                            self.assertEqual(res_in_use.status_code, 400)
-                            self.assertIn("en uso", res_in_use.get_json()["error"].lower())
+                    # Delete: In-use protection
+                    with patch("app.is_font_in_use", return_value=True):
+                        res_in_use = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"}, headers=auth_headers)
+                        self.assertEqual(res_in_use.status_code, 400)
+                        self.assertIn("en uso", res_in_use.get_json()["error"].lower())
 
-                        # Delete: Aveny-T system required sticker font protection
-                        aveny_file = os.path.join(tmp_fonts_dir, "aveny-t-medium.ttf")
-                        with open(aveny_file, "wb") as f:
-                            f.write(b"font-data")
-                        res_aveny = client.post("/panel/delete-font", json={"filename": "aveny-t-medium.ttf"})
-                        self.assertEqual(res_aveny.status_code, 400)
-                        self.assertIn("en uso", res_aveny.get_json()["error"].lower())
-                        self.assertTrue(os.path.exists(aveny_file))
+                    # Delete: Aveny-T system required sticker font protection
+                    aveny_file = os.path.join(tmp_fonts_dir, "aveny-t-medium.ttf")
+                    with open(aveny_file, "wb") as f:
+                        f.write(b"font-data")
+                    res_aveny = client.post("/panel/delete-font", json={"filename": "aveny-t-medium.ttf"}, headers=auth_headers)
+                    self.assertEqual(res_aveny.status_code, 400)
+                    self.assertIn("en uso", res_aveny.get_json()["error"].lower())
+                    self.assertTrue(os.path.exists(aveny_file))
 
-                        # Successful delete
-                        res_del = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"})
-                        self.assertEqual(res_del.status_code, 200)
-                        self.assertTrue(res_del.get_json()["ok"])
-                        self.assertFalse(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
+                    # Successful delete
+                    res_del = client.post("/panel/delete-font", json={"filename": "SampleFont.ttf"}, headers=auth_headers)
+                    self.assertEqual(res_del.status_code, 200)
+                    self.assertTrue(res_del.get_json()["ok"])
+                    self.assertFalse(os.path.exists(os.path.join(tmp_fonts_dir, "SampleFont.ttf")))
 
     def test_guest_names_formatting_and_escape_variable(self):
         from app import app, format_group_names, replace_guest_names, format_currency_ar
@@ -986,14 +998,14 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 ]
                 with patch("app.load_slides", return_value=existing_slides), patch("app.save_slides") as mock_save:
                     # 1. Update slide ID successfully
-                    res_up = client.post("/panel/slide/portada", json={"id": "bienvenida", "hidden": True})
+                    res_up = client.post("/panel/slide/portada", json={"id": "bienvenida", "hidden": True}, headers=get_panel_auth_headers())
                     self.assertEqual(res_up.status_code, 200)
                     saved_data = mock_save.call_args[0][0]
                     target = next(s for s in saved_data if s["id"] == "bienvenida")
                     self.assertTrue(target["hidden"])
 
                     # 2. Prevent collision with another existing slide ID
-                    res_coll = client.post("/panel/slide/fecha", json={"id": "triste"})
+                    res_coll = client.post("/panel/slide/fecha", json={"id": "triste"}, headers=get_panel_auth_headers())
                     self.assertEqual(res_coll.status_code, 400)
                     self.assertIn("en uso", res_coll.get_json()["error"])
 

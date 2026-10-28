@@ -98,6 +98,8 @@ All API routes are proxied through Nginx:
 |---|---|---|---|
 | `GET` | `/health` | API Healthcheck | Public |
 | `GET` | `/<token>` (alias `/i/<token>`) | Tamper-proof invitation story deck (SSR) or crawler OG preview | Public (`<invitacion_id>_<check_code>`) |
+| `GET` | `/panel` | Administration & Design Control Panel | **HTTP Basic Auth Required** (`PANEL_USER` / `PANEL_PASSWORD`) |
+| `POST / GET` | `/panel/*` | Panel sub-routes (styles, slides, backgrounds, fonts) | **HTTP Basic Auth Required** (`PANEL_USER` / `PANEL_PASSWORD`) |
 | `GET` | `/invitados` | Fetch all guest records | **API Key Required** (`X-API-Key` or `?api_key=`) |
 | `GET` | `/invitados/<id>` | Fetch guest by ID | Public (`record_id` path param) |
 | `POST` | `/invitados` | Create guest record(s) | **API Key Required** (Single JSON object or array) |
@@ -110,6 +112,8 @@ All API routes are proxied through Nginx:
 ## ⚙️ Environment Variables (`project.env`)
 
 - `API_KEY`: Secret authentication key for admin endpoints (`/invitados` CRUD).
+- `PANEL_USER`: Admin username for `/panel` HTTP Basic Auth (default: `ari`).
+- `PANEL_PASSWORD`: Admin password for `/panel` HTTP Basic Auth (default: `gato`).
 - `BASE_URL`: Base domain URL for invitation links (e.g., `https://nos.vamos.acas.ar`).
 - `INVITATION_SALT`: Secret salt used to compute deterministic anti-forgery check codes.
 - `VIRTUAL_HOST`: Domain name for reverse proxy routing.
