@@ -155,7 +155,7 @@ All API routes are proxied through Nginx:
 6. **Navigation Features**: Mobile devices support touch swipe horizontal gestures with slide-over focus animations, pull-to-refresh downward gesture (`window.location.reload()`), and smart vertical form scrolling on the RSVP slide. Desktop mode supports direct slide jumping on preview miniatures.
 7. **Rate Limiting**: Nginx rate-limits API requests at 20 req/s with a burst of 30 to prevent API exhaustion.
 8. **Environment Security**: Never hardcode credentials. Store configuration parameters in `project.env` and sensitive access tokens in `secrets/credentials.json`.
-9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) after modifying backend logic in `api/app/`.
+9. **Code Quality & Testing**: Run unit tests (`api/app/test_sheets.py`) ONLY when modifying backend logic, Google Sheets synchronization, or API endpoints in `api/app/`. When ONLY design, CSS, UI layout, typography, animations, or visual styling are modified, DO NOT run tests for sheets.
 10. **NEVER DEPLOY**: this is my job.
 11. **DONT WASTE TOKENS**: Dont do a log of thing i didnt ask without asking me first.
 12. **Atomic Commits**: Create atomic git commits containing only one single feature, change, or fix per commit.
