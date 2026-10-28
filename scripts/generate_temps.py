@@ -60,7 +60,7 @@ def crop_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality
     canvas.save(dest_path, 'WEBP', quality=quality, method=6)
     orig_kb = os.path.getsize(src_path) / 1024
     dest_kb = os.path.getsize(dest_path) / 1024
-    print(f"✅ Generated {dest_path}: {orig_kb:.0f} KB -> {dest_kb:.0f} KB ({final_w}x{final_h} WebP)")
+    print(f"✅ Generated {dest_path}: {orig_kb:.0f} KB -> {dest_kb:.0f} KB ({TARGET_W}x{TARGET_H} WebP)")
     return True
 
 

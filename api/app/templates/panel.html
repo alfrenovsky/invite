@@ -2603,6 +2603,63 @@
             display: none;
         }
 
+        /* Mode: Show Full Original Background beyond phone frame */
+        .story-preview-viewport.show-bg-bounds {
+            overflow: visible !important;
+        }
+
+        .story-preview-viewport.show-bg-bounds .story-container {
+            overflow: visible !important;
+        }
+
+        .story-preview-viewport.show-bg-bounds .story-slides {
+            overflow: visible !important;
+        }
+
+        .story-preview-viewport.show-bg-bounds .story-slide {
+            overflow: visible !important;
+        }
+
+        .story-preview-viewport.show-bg-bounds .story-bg-layer-wrap {
+            overflow: visible !important;
+        }
+
+        .story-preview-viewport.show-bg-bounds .story-bg-media {
+            outline: 2px dashed rgba(255, 255, 255, 0.45);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.85);
+        }
+
+        .story-preview-viewport.show-bg-bounds #previewStorySlide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed #38bdf8;
+            box-shadow: 0 0 0 9999px rgba(10, 15, 28, 0.65);
+            border-radius: 28px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .story-preview-viewport.show-bg-bounds #previewStorySlide::after {
+            content: 'MARCO DEL SLIDE';
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #38bdf8;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            padding: 3px 8px;
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
         .story-preview-viewport .preview-center-guide-x,
         .phone-center-guide-x {
             position: absolute;
@@ -3784,6 +3841,9 @@
                                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                                                 <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px;">ENCUADRE Y ZOOM:</span>
                                                 <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <button type="button" class="btn-ctrl" id="btnToggleBgBoundsPanel" onclick="toggleBgBounds()" style="padding: 3px 8px; font-size: 0.74rem;" title="Ver la imagen completa original más allá del marco del teléfono">
+                                                        <span id="btnToggleBgBoundsPanelLabel">👁️ Ver Original</span>
+                                                    </button>
                                                     <button type="button" class="btn-ctrl" id="btnFitSlideBg" onclick="toggleFitSlideBg()" style="padding: 3px 8px; font-size: 0.74rem;" title="Alternar entre ver imagen completa (Fit) y llenar pantalla (Cover)">
                                                         <span id="btnFitSlideBgLabel">🔍 Ver Entera</span>
                                                     </button>
@@ -3792,7 +3852,7 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                                                 <div style="display: flex; flex-direction: column; gap: 4px;">
                                                     <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #cbd5e1;">
                                                         <span>Zoom</span>
@@ -3802,10 +3862,17 @@
                                                 </div>
                                                 <div style="display: flex; flex-direction: column; gap: 4px;">
                                                     <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #cbd5e1;">
-                                                        <span>Posición Vertical (Y)</span>
+                                                        <span>Vertical (Y)</span>
                                                         <span id="slideBgYBadge" style="color: #38bdf8; font-weight: 700;">0%</span>
                                                     </div>
                                                     <input type="range" id="slideBgYSlider" min="-100" max="100" step="0.5" value="0" oninput="onSlideBgYChange(this.value)" class="form-range" style="width: 100%; accent-color: #38bdf8; cursor: pointer;">
+                                                </div>
+                                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #cbd5e1;">
+                                                        <span>Horizontal (X)</span>
+                                                        <span id="slideBgXBadge" style="color: #38bdf8; font-weight: 700;">0%</span>
+                                                    </div>
+                                                    <input type="range" id="slideBgXSlider" min="-100" max="100" step="0.5" value="0" oninput="onSlideBgXChange(this.value)" class="form-range" style="width: 100%; accent-color: #38bdf8; cursor: pointer;">
                                                 </div>
                                             </div>
                                             <div style="font-size: 0.70rem; color: #64748b; line-height: 1.3;">
@@ -4397,6 +4464,7 @@
                     <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android útil (1.860 - 390x725)">📱 Android</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9 - 390x693)">📱 Compacto</button>
                     <button type="button" class="preview-ratio-btn" id="btnToggleSafeZone" onclick="toggleSafeZone()" title="Mostrar/ocultar guías de zona segura para textos">🛡️ Guías</button>
+                    <button type="button" class="preview-ratio-btn" id="btnToggleBgBounds" onclick="toggleBgBounds()" title="Ver la imagen completa original sin recortar por el marco">👁️ Ver Original</button>
                 </div>
                 <div class="story-preview-viewport" id="storyPreviewViewport">
                     <div class="story-container" id="storyContainer">
@@ -5686,6 +5754,12 @@
             const yBadge = document.getElementById('slideBgYBadge');
             if (ySlider) ySlider.value = bgY;
             if (yBadge) yBadge.textContent = bgY + '%';
+
+            const bgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? slide.bg_x : 0;
+            const xSlider = document.getElementById('slideBgXSlider');
+            const xBadge = document.getElementById('slideBgXBadge');
+            if (xSlider) xSlider.value = bgX;
+            if (xBadge) xBadge.textContent = bgX + '%';
 
             const fitLabel = document.getElementById('btnFitSlideBgLabel');
             if (fitLabel) fitLabel.textContent = (bgZoom < 98) ? '📐 Llenar (Cover)' : '🔍 Ver Entera';
@@ -7471,6 +7545,48 @@
         // -------------------------------------------------------------
         // LIVE PREVIEW ENGINE (story-container)
         // -------------------------------------------------------------
+        function applyBgMediaTransform(mediaEl, slide) {
+            if (!mediaEl || !slide) return;
+
+            const natW = mediaEl.naturalWidth || mediaEl.videoWidth;
+            const natH = mediaEl.naturalHeight || mediaEl.videoHeight;
+            const bgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? parseFloat(slide.bg_x) : 0;
+            const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? parseFloat(slide.bg_y) : 0;
+            const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? parseFloat(slide.bg_zoom) : 100;
+            const z = bgZoom / 100;
+
+            const canvasW = 390;
+            const canvasH = (typeof getPreviewDeviceBaseHeight === 'function') ? getPreviewDeviceBaseHeight() : 711;
+
+            if (!natW || !natH) {
+                // If media dimensions are not yet loaded, fallback to cover scaling
+                mediaEl.style.width = '100%';
+                mediaEl.style.height = '100%';
+                mediaEl.style.maxWidth = '';
+                mediaEl.style.maxHeight = '';
+                mediaEl.style.objectFit = 'cover';
+                mediaEl.style.transform = `translate(-50%, -50%) translate(${bgX}%, ${bgY}%) scale(${z})`;
+                return;
+            }
+
+            // Real physical aspect-fit cover scaling matching backend crop_slide_image():
+            // s_factor = max(TARGET_CANVAS_W / im_w, TARGET_CANVAS_H / im_h)
+            const sFactor = Math.max(canvasW / natW, canvasH / natH);
+            const finalW = Math.round(natW * sFactor * z);
+            const finalH = Math.round(natH * sFactor * z);
+
+            // dx, dy are percentages of canvas width and height
+            const dx = Math.round(((bgX / 100) * canvasW) * 10) / 10;
+            const dy = Math.round(((bgY / 100) * canvasH) * 10) / 10;
+
+            mediaEl.style.width = finalW + 'px';
+            mediaEl.style.height = finalH + 'px';
+            mediaEl.style.maxWidth = 'none';
+            mediaEl.style.maxHeight = 'none';
+            mediaEl.style.objectFit = 'fill';
+            mediaEl.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px)`;
+        }
+
         function updateLivePreview() {
             const slide = getCurrentSlide();
             const bgLayer = document.getElementById('previewBgLayer') || document.getElementById('phoneBgLayer');
@@ -7499,10 +7615,6 @@
             const cleanBg = bg.replace(/^temp\//, '');
             const bgImg = document.getElementById('previewBgImg');
             const bgVid = document.getElementById('previewBgVideo');
-            const bgZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? (slide.bg_zoom / 100) : 1;
-            const bgX = (slide.bg_x !== undefined && slide.bg_x !== null) ? slide.bg_x : 0;
-            const bgY = (slide.bg_y !== undefined && slide.bg_y !== null) ? slide.bg_y : 0;
-            const transformStr = `translate(-50%, -50%) translate(${bgX}%, ${bgY}%) scale(${bgZoom})`;
 
             if (cleanBg) {
                 const bgUrl = cleanBg.startsWith('/') ? cleanBg : ('/assets/backgrounds/' + encodeURI(cleanBg));
@@ -7522,7 +7634,7 @@
                             bgVid.onended = () => { bgVid.pause(); };
                         }
                         bgVid.style.display = 'block';
-                        bgVid.style.transform = transformStr;
+                        applyBgMediaTransform(bgVid, slide);
                         bgVid.play().catch(() => { });
                     }
                 } else {
@@ -7535,7 +7647,7 @@
                             bgImg.src = bgUrl;
                         }
                         bgImg.style.display = 'block';
-                        bgImg.style.transform = transformStr;
+                        applyBgMediaTransform(bgImg, slide);
                     }
                 }
             } else {
@@ -9545,6 +9657,8 @@
             slide.bg_x = parseFloat(val) || 0;
             const badge = document.getElementById('slideBgXBadge');
             if (badge) badge.textContent = slide.bg_x + '%';
+            const slider = document.getElementById('slideBgXSlider');
+            if (slider && slider.value != slide.bg_x) slider.value = slide.bg_x;
             updateLivePreview();
             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
@@ -9559,6 +9673,30 @@
             if (slider && slider.value != slide.bg_y) slider.value = slide.bg_y;
             updateLivePreview();
             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+        }
+
+        let isBgBoundsVisible = false;
+        function toggleBgBounds() {
+            isBgBoundsVisible = !isBgBoundsVisible;
+            const vp = document.getElementById('storyPreviewViewport');
+            const btnBar = document.getElementById('btnToggleBgBounds');
+            const btnPanelLabel = document.getElementById('btnToggleBgBoundsPanelLabel');
+
+            if (vp) {
+                vp.classList.toggle('show-bg-bounds', isBgBoundsVisible);
+            }
+            if (btnBar) {
+                btnBar.classList.toggle('active', isBgBoundsVisible);
+                btnBar.textContent = isBgBoundsVisible ? '👁️ Ocultar Exceso' : '👁️ Ver Original';
+            }
+            if (btnPanelLabel) {
+                btnPanelLabel.textContent = isBgBoundsVisible ? '👁️ Ocultar Exceso' : '👁️ Ver Original';
+            }
+            if (isBgBoundsVisible) {
+                showToast('👁️ Mostrando imagen original completa (fuera de marco)');
+            } else {
+                showToast('📱 Mostrando recorte de marco');
+            }
         }
 
         function toggleFitSlideBg() {
@@ -9605,6 +9743,11 @@
             if (ySlider) ySlider.value = 0;
             if (yBadge) yBadge.textContent = '0%';
 
+            const xSlider = document.getElementById('slideBgXSlider');
+            const xBadge = document.getElementById('slideBgXBadge');
+            if (xSlider) xSlider.value = 0;
+            if (xBadge) xBadge.textContent = '0%';
+
             updateBgCardHeader();
             updateLivePreview();
             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
@@ -9627,6 +9770,11 @@
             if (ySlider) ySlider.value = 0;
             if (yBadge) yBadge.textContent = '0%';
 
+            const xSlider = document.getElementById('slideBgXSlider');
+            const xBadge = document.getElementById('slideBgXBadge');
+            if (xSlider) xSlider.value = 0;
+            if (xBadge) xBadge.textContent = '0%';
+
             const fitLabel = document.getElementById('btnFitSlideBgLabel');
             if (fitLabel) fitLabel.textContent = '🔍 Ver Entera';
 
@@ -9634,6 +9782,22 @@
             updateLivePreview();
             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
             showToast('↺ Fondo centrado y restablecido');
+        }
+
+        // Keep media scaled correctly when it loads
+        const previewBgImgEl = document.getElementById('previewBgImg');
+        if (previewBgImgEl) {
+            previewBgImgEl.addEventListener('load', () => {
+                const slide = getCurrentSlide();
+                if (slide) applyBgMediaTransform(previewBgImgEl, slide);
+            });
+        }
+        const previewBgVidEl = document.getElementById('previewBgVideo');
+        if (previewBgVidEl) {
+            previewBgVidEl.addEventListener('loadedmetadata', () => {
+                const slide = getCurrentSlide();
+                if (slide) applyBgMediaTransform(previewBgVidEl, slide);
+            });
         }
 
         // Interactive mouse / touch drag & wheel zoom on preview background
@@ -9696,6 +9860,11 @@
                 const yBadge = document.getElementById('slideBgYBadge');
                 if (ySlider) ySlider.value = newY;
                 if (yBadge) yBadge.textContent = newY + '%';
+
+                const xSlider = document.getElementById('slideBgXSlider');
+                const xBadge = document.getElementById('slideBgXBadge');
+                if (xSlider) xSlider.value = newX;
+                if (xBadge) xBadge.textContent = newX + '%';
 
                 updateLivePreview();
             });
