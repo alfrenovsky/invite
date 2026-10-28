@@ -4393,8 +4393,7 @@
             <!-- Right Column: Live Sticky 98vh Preview Mockup -->
             <div class="preview-sticky-wrap">
                 <div class="preview-ratio-bar">
-                    <button type="button" class="preview-ratio-btn active" id="btnRatioFull" onclick="setPreviewDevice('full')" title="Proporción Story Nativa 19.5:9 (390x845 - Canvas final)">📱 Historia (19.5:9)</button>
-                    <button type="button" class="preview-ratio-btn" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción iPhone útil (1.824 - 390x711)">📱 iPhone</button>
+                    <button type="button" class="preview-ratio-btn active" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción estándar iPhone / PC (1.823 - 390x711)">📱 iPhone / PC</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android útil (1.860 - 390x725)">📱 Android</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9 - 390x693)">📱 Compacto</button>
                     <button type="button" class="preview-ratio-btn" id="btnToggleSafeZone" onclick="toggleSafeZone()" title="Mostrar/ocultar guías de zona segura para textos">🛡️ Guías</button>
@@ -8149,11 +8148,10 @@
             updateDirtySlideChipsUI();
         }
 
-        let currentPreviewDevice = 'full';
+        let currentPreviewDevice = 'iphone';
         let isSafeZoneVisible = false;
 
         function getPreviewDeviceBaseHeight() {
-            if (currentPreviewDevice === 'full') return 845;
             if (currentPreviewDevice === 'android') return 725;
             if (currentPreviewDevice === 'compact') return 693;
             return 711;
@@ -8161,14 +8159,11 @@
 
         function setPreviewDevice(device) {
             currentPreviewDevice = device;
-            ['btnRatioFull', 'btnRatioIphone', 'btnRatioAndroid', 'btnRatioCompact'].forEach(id => {
+            ['btnRatioIphone', 'btnRatioAndroid', 'btnRatioCompact'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) btn.classList.remove('active');
             });
-            if (device === 'full') {
-                const b = document.getElementById('btnRatioFull');
-                if (b) b.classList.add('active');
-            } else if (device === 'iphone') {
+            if (device === 'iphone') {
                 const b = document.getElementById('btnRatioIphone');
                 if (b) b.classList.add('active');
             } else if (device === 'android') {
@@ -8200,18 +8195,7 @@
             const h = viewport.clientHeight;
             if (h <= 0) return;
 
-            if (currentPreviewDevice === 'full') {
-                // Real 19.5:9 canvas ratio (390 x 845) -> matches 1284x2782 crop canvas exactly
-                const scale = h / 845;
-                viewport.style.width = `${Math.round(390 * scale)}px`;
-                container.style.width = '390px';
-                container.style.height = '845px';
-                container.style.top = '0px';
-                container.style.left = '0px';
-                container.style.setProperty('--story-preview-scale', scale.toFixed(5));
-                container.style.setProperty('--canvas-scale', '1');
-                container.style.setProperty('--elements-scale', '1');
-            } else if (currentPreviewDevice === 'android') {
+            if (currentPreviewDevice === 'android') {
                 // Real Android usable: ratio 1.860 (390 x 725) -> container is 725px, canvas 711px, solid black strip at bottom (~14px)
                 const scale = h / 725;
                 viewport.style.width = `${Math.round(390 * scale)}px`;

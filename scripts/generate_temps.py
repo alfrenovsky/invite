@@ -3,7 +3,7 @@
 Utility script to generate optimized, correctly cropped background images in data/backgrounds/temp/
 based on slide configuration in data/slides.json.
 
-Canvas aspect ratio: 390 : 845 (~9:19.5), rendered at high-resolution 1284 x 2782 px.
+Canvas aspect ratio: 390 : 711 (~1:1.823), rendered at high-resolution 1284 x 2340 px.
 """
 
 import os
@@ -13,7 +13,7 @@ import argparse
 import re
 from PIL import Image, ImageOps
 
-TARGET_W, TARGET_H = 1284, 2782
+TARGET_W, TARGET_H = 1284, 2340
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SLIDES_PATH = os.path.join(BASE_DIR, 'data', 'slides.json')
 BG_DIR = os.path.join(BASE_DIR, 'data', 'backgrounds')

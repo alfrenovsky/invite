@@ -512,7 +512,7 @@ def utility_processor():
 
 
 TARGET_CANVAS_W = 1284
-TARGET_CANVAS_H = 2782
+TARGET_CANVAS_H = 2340
 
 
 def crop_slide_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, quality=95):
