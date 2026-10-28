@@ -498,6 +498,14 @@ class TestGoogleSheetsTable(unittest.TestCase):
                     mock_save_styles.assert_called_once()
                     self.assertEqual(mock_save_styles.call_args[0][0]["desktop_background"], "sample.jpeg")
 
+                # Video as desktop background validation
+                with patch("os.path.isfile", return_value=True), patch("app.save_styles") as mock_save_styles_vid:
+                    res_desktop_vid_ok = client.post("/panel/desktop-background", json={"background": "clip.mp4"}, headers=auth_headers)
+                    self.assertEqual(res_desktop_vid_ok.status_code, 200)
+                    self.assertTrue(res_desktop_vid_ok.get_json()["ok"])
+                    mock_save_styles_vid.assert_called_once()
+                    self.assertEqual(mock_save_styles_vid.call_args[0][0]["desktop_background"], "clip.mp4")
+
                 # Delete background rejection when in use by a slide
                 with patch("app.load_slides", return_value=[{"id": "intro", "title": "Intro", "background": "sample.jpeg"}]):
                     res_in_use_bg = client.post("/panel/delete-background", json={"filename": "sample.jpeg"}, headers=auth_headers)
@@ -509,6 +517,12 @@ class TestGoogleSheetsTable(unittest.TestCase):
                     res_in_use_desktop = client.post("/panel/delete-background", json={"filename": "sample.jpeg"}, headers=auth_headers)
                     self.assertEqual(res_in_use_desktop.status_code, 400)
                     self.assertIn("en uso", res_in_use_desktop.get_json()["error"].lower())
+
+                # Delete background rejection when video is in use as desktop background
+                with patch("app.load_slides", return_value=[]), patch("app.load_styles", return_value={"desktop_background": "clip.mp4"}):
+                    res_in_use_desktop_vid = client.post("/panel/delete-background", json={"filename": "clip.mp4"}, headers=auth_headers)
+                    self.assertEqual(res_in_use_desktop_vid.status_code, 400)
+                    self.assertIn("en uso", res_in_use_desktop_vid.get_json()["error"].lower())
 
                 # Upload background (empty, single, multiple)
                 res_up_empty = client.post("/panel/upload-background", headers=auth_headers)
@@ -901,6 +915,19 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res_plural.status_code, 200)
                 self.assertIn(b"data-names-count=\"2\"", res_plural.data)
                 self.assertIn(b"Los invitamos Juan y Mar\xc3\xada", res_plural.data)
+
+            # 3b. Verify video desktop background rendering in index.html SSR
+            from app import DEFAULT_STYLES
+            mock_styles = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULT_STYLES.items()}
+            mock_styles["desktop_background"] = "wedding_loop.mp4"
+            with patch("app.table.get_by_invitacion", return_value=single_guest), \
+                 patch("app.load_slides", return_value=curly_slides), \
+                 patch("app.load_styles", return_value=mock_styles):
+                res_video_bg = client.get(f"/i/familia_gomez_{code}")
+                self.assertEqual(res_video_bg.status_code, 200)
+                self.assertIn(b'<video class="desktop-bg-video"', res_video_bg.data)
+                self.assertIn(b'wedding_loop.mp4', res_video_bg.data)
+                self.assertIn(b'background-image: none !important;', res_video_bg.data)
 
         # 4. Backend safeguard: do not allow clearing the sole remaining name
         with app.test_client() as client:

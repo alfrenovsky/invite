@@ -93,10 +93,18 @@
         }
 
         {% if styles and styles.desktop_background %}
+        {% set is_desktop_bg_vid = styles.desktop_background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+        {% if is_desktop_bg_vid %}
+        body.is-desktop-mode,
+        body:not(.is-mobile-mode) {
+            background-image: none !important;
+        }
+        {% else %}
         body.is-desktop-mode,
         body:not(.is-mobile-mode) {
             background-image: url('/assets/backgrounds/{{ styles.desktop_background }}') !important;
         }
+        {% endif %}
         {% endif %}
     </style>
     {% endif %}
@@ -104,6 +112,12 @@
 
 
 <body>
+    {% if styles and styles.desktop_background and styles.desktop_background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+    <video class="desktop-bg-video" id="desktopBgVideo" autoplay loop muted playsinline preload="auto">
+        <source src="/assets/backgrounds/{{ styles.desktop_background }}">
+    </video>
+    {% endif %}
+
     {% include "partials/pull_to_refresh.html" %}
 
     <div class="stories-wrapper">

@@ -80,12 +80,29 @@
             background-attachment: fixed;
         }
 
+        /* Desktop Background Video */
+        .desktop-bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+            display: none;
+        }
 
-
+        body.is-desktop-mode .desktop-bg-video,
+        body:not(.is-mobile-mode) .desktop-bg-video {
+            display: block;
+        }
 
         /* Fixed 19.5:9 Canvas & Zero-Reflow Scaling Frame */
         .stories-wrapper {
             position: relative;
+            z-index: 1;
             display: flex;
             align-items: center;
             justify-content: center;

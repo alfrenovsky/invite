@@ -14,6 +14,12 @@
         if (document.body) {
             document.body.classList.toggle('is-mobile-mode', isMobileDevice);
             document.body.classList.toggle('is-desktop-mode', isDesktop);
+            if (isDesktop) {
+                const desktopVid = document.getElementById('desktopBgVideo');
+                if (desktopVid) {
+                    desktopVid.play().catch(() => {});
+                }
+            }
         }
     }
     if (document.readyState === 'loading') {
@@ -2155,7 +2161,14 @@
     window.addEventListener('beforeunload', handleFormSlideExit);
     window.addEventListener('pagehide', handleFormSlideExit);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') handleFormSlideExit();
+        if (document.visibilityState === 'hidden') {
+            handleFormSlideExit();
+        } else if (document.visibilityState === 'visible' && isDesktop) {
+            const desktopVid = document.getElementById('desktopBgVideo');
+            if (desktopVid) {
+                desktopVid.play().catch(() => {});
+            }
+        }
     });
 
     // ==============================================================

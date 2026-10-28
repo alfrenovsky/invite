@@ -3861,14 +3861,20 @@
                                 </h2>
 
                                 <div>
-                                    <div class="desktop-bg-preview-wrap" style="position: relative; width: 100%; height: 140px; border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); background: #0b0f14;">
+                                    <div class="desktop-bg-preview-wrap" id="desktopBgPreviewWrap" style="position: relative; width: 100%; height: 140px; border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); background: #0b0f14;">
+                                        {% set current_desktop_bg = styles.desktop_background if styles and styles.desktop_background else 'background.jpeg' %}
+                                        {% set is_desktop_vid = current_desktop_bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                        {% if is_desktop_vid %}
+                                        <video id="desktopBgPreviewVideo" src="/assets/backgrounds/{{ current_desktop_bg }}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                                        {% else %}
                                         <img id="desktopBgPreviewThumb"
-                                             src="/assets/backgrounds/{{ styles.desktop_background if styles and styles.desktop_background else 'background.jpeg' }}"
+                                             src="/assets/backgrounds/{{ current_desktop_bg }}"
                                              alt="Fondo PC"
                                              style="width: 100%; height: 100%; object-fit: cover;"
                                              onerror="this.src='/assets/background.jpeg';">
+                                        {% endif %}
                                         <div style="position: absolute; bottom: 6px; left: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; color: #fff; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="desktopBgPreviewName">
-                                            {{ styles.desktop_background if styles and styles.desktop_background else 'background.jpeg' }}
+                                            {{ current_desktop_bg }}
                                         </div>
                                     </div>
                                 </div>
@@ -3940,11 +3946,9 @@
                                         <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}
                                         </div>
                                         <div class="bg-btn-group">
-                                            {% if not is_vid %}
                                             <button type="button" class="btn-rename-icon btn-desktop-icon"
                                                 onclick="setDesktopBackground('{{ bg }}')"
                                                 title="Establecer como fondo para PC (Desktop)">🖥️</button>
-                                            {% endif %}
                                             <button type="button" class="btn-rename-icon"
                                                 onclick="startRename('{{ loop.index }}', '{{ bg }}')"
                                                 title="Renombrar archivo">✏️</button>
@@ -9189,13 +9193,48 @@
         // PC DESKTOP BACKGROUND HANDLERS
         // -------------------------------------------------------------
         function updateDesktopBgPreview(bgName) {
-            const thumb = document.getElementById('desktopBgPreviewThumb');
+            const wrap = document.getElementById('desktopBgPreviewWrap');
             const nameEl = document.getElementById('desktopBgPreviewName');
-            if (thumb && bgName) {
-                thumb.src = `/assets/backgrounds/${encodeURI(bgName)}`;
-            }
             if (nameEl) {
                 nameEl.textContent = bgName || 'Ninguno';
+            }
+            if (!wrap || !bgName) return;
+
+            const isVideo = /\.(mp4|webm|mov|m4v)$/i.test(bgName);
+            let mediaEl = wrap.querySelector('#desktopBgPreviewThumb, #desktopBgPreviewVideo');
+            const currentSrc = `/assets/backgrounds/${encodeURI(bgName)}`;
+
+            if (isVideo) {
+                if (mediaEl && mediaEl.tagName === 'VIDEO') {
+                    mediaEl.src = currentSrc;
+                    mediaEl.load();
+                    mediaEl.play().catch(() => {});
+                } else {
+                    if (mediaEl) mediaEl.remove();
+                    const vid = document.createElement('video');
+                    vid.id = 'desktopBgPreviewVideo';
+                    vid.src = currentSrc;
+                    vid.autoplay = true;
+                    vid.loop = true;
+                    vid.muted = true;
+                    vid.playsInline = true;
+                    vid.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    wrap.prepend(vid);
+                    vid.play().catch(() => {});
+                }
+            } else {
+                if (mediaEl && mediaEl.tagName === 'IMG') {
+                    mediaEl.src = currentSrc;
+                } else {
+                    if (mediaEl) mediaEl.remove();
+                    const img = document.createElement('img');
+                    img.id = 'desktopBgPreviewThumb';
+                    img.src = currentSrc;
+                    img.alt = 'Fondo PC';
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    img.onerror = function() { this.src = '/assets/background.jpeg'; };
+                    wrap.prepend(img);
+                }
             }
         }
 
