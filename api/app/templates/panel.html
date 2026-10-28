@@ -777,6 +777,12 @@
             background: rgba(255, 255, 255, 0.08);
         }
 
+        .btn-desktop-icon:hover {
+            opacity: 1;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.15);
+        }
+
         .btn-delete-icon:hover {
             opacity: 1;
             color: var(--danger);
@@ -3360,6 +3366,19 @@
             gap: 4px;
         }
 
+        .badge-desktop-bg {
+            background: rgba(59, 130, 246, 0.22) !important;
+            border: 1px solid rgba(59, 130, 246, 0.5) !important;
+            color: #93c5fd !important;
+            font-size: 0.65rem !important;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .font-card-col-content {
             flex: 1 1 auto !important;
             display: flex;
@@ -3825,36 +3844,77 @@
                 <div id="tab-backgrounds" class="tab-pane">
                     <!-- Top Two Columns: Upload & Backgrounds Gallery -->
                     <div class="grid-two-col">
-                        <!-- Upload New Background Form -->
-                        <section class="panel-card">
-                            <h2 class="section-title">
-                                <span>Subir Fondo / Video</span>
-                            </h2>
-                            <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST"
-                                enctype="multipart/form-data">
-                                <div class="form-group">
-                                    <label>Archivo de Imagen o Video</label>
-                                    <div class="file-upload-box" id="fileDropBox">
-                                        <input type="file" name="background_file" id="bgFileInput"
-                                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v"
-                                            required>
-                                        <div class="upload-box-icon">📁</div>
-                                        <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
-                                        <div class="selected-file-name" id="selectedFileName"></div>
+                        <div class="bg-sidebar-col" style="display: flex; flex-direction: column; gap: 20px;">
+                            <!-- Desktop PC Background Selector -->
+                            <section class="panel-card" id="desktopBgCard">
+                                <h2 class="section-title">
+                                    <span>🖥️ Fondo Principal para PC</span>
+                                </h2>
+                                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px; line-height: 1.4;">
+                                    Imagen de pantalla completa para la vista en computadoras de escritorio y notebooks.
+                                </p>
+
+                                <div style="margin-bottom: 14px;">
+                                    <div class="desktop-bg-preview-wrap" style="position: relative; width: 100%; height: 130px; border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); background: #0b0f14;">
+                                        <img id="desktopBgPreviewThumb"
+                                             src="/assets/backgrounds/{{ styles.desktop_background if styles and styles.desktop_background else 'background.jpeg' }}"
+                                             alt="Fondo PC"
+                                             style="width: 100%; height: 100%; object-fit: cover;"
+                                             onerror="this.src='/assets/background.jpeg';">
+                                        <div style="position: absolute; bottom: 6px; left: 8px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; color: #fff; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="desktopBgPreviewName">
+                                            {{ styles.desktop_background if styles and styles.desktop_background else 'background.jpeg' }}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="bgNameInput">Nombre personalizado (opcional)</label>
-                                    <input type="text" class="form-input" id="bgNameInput" name="background_name"
-                                        placeholder="ej. video_intro o iglesia_atardecer">
+                                <div class="form-group" style="margin-bottom: 14px;">
+                                    <label for="desktopBgSelect" style="font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; display: block;">Elegir imagen de fondo:</label>
+                                    <select class="form-input" id="desktopBgSelect" onchange="onDesktopBgSelectChange(this.value)">
+                                        {% for bg in backgrounds %}
+                                        {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
+                                        {% if not is_vid %}
+                                        <option value="{{ bg }}" {% if styles and styles.desktop_background == bg %}selected{% endif %}>{{ bg }}</option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
                                 </div>
 
-                                <button type="submit" class="btn-submit" id="btnUploadSubmit">
-                                    <span>⬆ Subir Fondo / Video</span>
+                                <button type="button" class="btn-submit" id="btnSaveDesktopBg" onclick="saveSelectedDesktopBg()">
+                                    <span>💾 Guardar Fondo PC</span>
                                 </button>
-                            </form>
-                        </section>
+                            </section>
+
+                            <!-- Upload New Background Form -->
+                            <section class="panel-card">
+                                <h2 class="section-title">
+                                    <span>Subir Fondo / Video</span>
+                                </h2>
+                                <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST"
+                                    enctype="multipart/form-data">
+                                    <div class="form-group">
+                                        <label>Archivo de Imagen o Video</label>
+                                        <div class="file-upload-box" id="fileDropBox">
+                                            <input type="file" name="background_file" id="bgFileInput"
+                                                accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v"
+                                                required>
+                                            <div class="upload-box-icon">📁</div>
+                                            <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
+                                            <div class="selected-file-name" id="selectedFileName"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="bgNameInput">Nombre personalizado (opcional)</label>
+                                        <input type="text" class="form-input" id="bgNameInput" name="background_name"
+                                            placeholder="ej. video_intro o iglesia_atardecer">
+                                    </div>
+
+                                    <button type="submit" class="btn-submit" id="btnUploadSubmit">
+                                        <span>⬆ Subir Fondo / Video</span>
+                                    </button>
+                                </form>
+                            </section>
+                        </div>
 
                         <!-- Backgrounds List / Gallery -->
                         <section class="panel-card">
@@ -3868,6 +3928,7 @@
                                 {% for bg in backgrounds %}
                                 {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
                                 {% set bg_in_use = (bg in used_backgrounds) if used_backgrounds else false %}
+                                {% set is_desktop_bg = (styles and styles.desktop_background == bg) %}
                                 <div class="bg-card" id="bgCard_{{ loop.index }}" data-filename="{{ bg }}"
                                     data-is-video="{{ 'true' if is_vid else 'false' }}">
                                     <div class="bg-thumb-wrap">
@@ -3879,6 +3940,8 @@
                                         <img src="/assets/backgrounds/{{ bg }}" alt="{{ bg }}" class="bg-thumb"
                                             loading="lazy">
                                         {% endif %}
+                                        <span class="badge-desktop-bg desktop-bg-badge" id="badgeDesktop_{{ loop.index }}"
+                                            style="position: absolute; top: 6px; left: 6px; z-index: 2; {% if not is_desktop_bg %}display: none;{% endif %}">🖥️ Fondo PC</span>
                                         <span class="badge-in-use in-use-bg-badge"
                                             style="position: absolute; top: 6px; right: 6px; z-index: 2; {% if not bg_in_use %}display: none;{% endif %}">En
                                             uso</span>
@@ -3887,6 +3950,11 @@
                                         <div class="bg-name" id="bgNameText_{{ loop.index }}" title="{{ bg }}">{{ bg }}
                                         </div>
                                         <div class="bg-btn-group">
+                                            {% if not is_vid %}
+                                            <button type="button" class="btn-rename-icon btn-desktop-icon"
+                                                onclick="setDesktopBackground('{{ bg }}')"
+                                                title="Establecer como fondo para PC (Desktop)">🖥️</button>
+                                            {% endif %}
                                             <button type="button" class="btn-rename-icon"
                                                 onclick="startRename('{{ loop.index }}', '{{ bg }}')"
                                                 title="Renombrar archivo">✏️</button>
@@ -8942,6 +9010,22 @@
                     if (bgSelect && bgSelect.value === finalName) {
                         syncCustomBgDropdown(finalName);
                     }
+
+                    if (stylesData && stylesData.desktop_background === oldName) {
+                        stylesData.desktop_background = finalName;
+                        const dSelect = document.getElementById('desktopBgSelect');
+                        if (dSelect) {
+                            const opt = dSelect.querySelector(`option[value="${oldName}"]`);
+                            if (opt) {
+                                opt.value = finalName;
+                                opt.textContent = finalName;
+                            }
+                            dSelect.value = finalName;
+                        }
+                        onDesktopBgSelectChange(finalName);
+                        updateDesktopBgBadges(finalName);
+                    }
+
                     updateLivePreview();
 
                     cancelRename(index);
@@ -8961,6 +9045,9 @@
                         used.add(String(s.background).trim());
                     }
                 });
+            }
+            if (stylesData && stylesData.desktop_background) {
+                used.add(String(stylesData.desktop_background).trim());
             }
             return used;
         }
@@ -9046,6 +9133,13 @@
                         }
                     }
 
+                    // Remove from desktopBgSelect
+                    const dSelect = document.getElementById('desktopBgSelect');
+                    if (dSelect) {
+                        const opt = dSelect.querySelector(`option[value="${filename}"]`);
+                        if (opt) opt.remove();
+                    }
+
                     // Update slidesData
                     slidesData.forEach(s => {
                         if (s.background === filename) s.background = '';
@@ -9099,6 +9193,78 @@
                     btn.innerHTML = '<span>⬆ Subir Fondo / Video</span>';
                 }
             });
+        }
+
+        // -------------------------------------------------------------
+        // PC DESKTOP BACKGROUND HANDLERS
+        // -------------------------------------------------------------
+        function onDesktopBgSelectChange(bgName) {
+            const thumb = document.getElementById('desktopBgPreviewThumb');
+            const nameEl = document.getElementById('desktopBgPreviewName');
+            if (thumb && bgName) {
+                thumb.src = `/assets/backgrounds/${encodeURI(bgName)}`;
+            }
+            if (nameEl) {
+                nameEl.textContent = bgName || 'Ninguno';
+            }
+        }
+
+        function updateDesktopBgBadges(activeBg) {
+            const cards = document.querySelectorAll('.bg-gallery .bg-card');
+            cards.forEach(card => {
+                const fname = (card.getAttribute('data-filename') || '').trim();
+                const badge = card.querySelector('.desktop-bg-badge');
+                if (badge) {
+                    badge.style.display = (fname === activeBg) ? 'inline-flex' : 'none';
+                }
+            });
+        }
+
+        async function setDesktopBackground(bgName) {
+            if (!bgName) return;
+            const btn = document.getElementById('btnSaveDesktopBg');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Guardando...</span>';
+            }
+
+            try {
+                const res = await fetch('/panel/desktop-background', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ background: bgName })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(data.message || `Fondo de PC actualizado a "${bgName}"`);
+                    if (!stylesData) stylesData = {};
+                    stylesData.desktop_background = bgName;
+
+                    const select = document.getElementById('desktopBgSelect');
+                    if (select) select.value = bgName;
+                    onDesktopBgSelectChange(bgName);
+                    updateDesktopBgBadges(bgName);
+                    updateBackgroundsInUseUI();
+                } else {
+                    showToast(data.error || 'Error al guardar fondo de PC', true);
+                }
+            } catch (err) {
+                showToast('Error de red al guardar fondo de PC', true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>💾 Guardar Fondo PC</span>';
+                }
+            }
+        }
+
+        function saveSelectedDesktopBg() {
+            const select = document.getElementById('desktopBgSelect');
+            if (!select || !select.value) {
+                showToast('Por favor selecciona un fondo', true);
+                return;
+            }
+            setDesktopBackground(select.value);
         }
 
         // -------------------------------------------------------------

@@ -467,11 +467,28 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res_del = client.post("/panel/delete-background", json={"filename": "inexistente.jpeg"})
                 self.assertEqual(res_del.status_code, 404)
 
+                # Desktop background endpoint validation
+                res_desktop_404 = client.post("/panel/desktop-background", json={"background": "inexistente.jpeg"})
+                self.assertEqual(res_desktop_404.status_code, 404)
+
+                with patch("os.path.isfile", return_value=True), patch("app.save_styles") as mock_save_styles:
+                    res_desktop_ok = client.post("/panel/desktop-background", json={"background": "sample.jpeg"})
+                    self.assertEqual(res_desktop_ok.status_code, 200)
+                    self.assertTrue(res_desktop_ok.get_json()["ok"])
+                    mock_save_styles.assert_called_once()
+                    self.assertEqual(mock_save_styles.call_args[0][0]["desktop_background"], "sample.jpeg")
+
                 # Delete background rejection when in use by a slide
                 with patch("app.load_slides", return_value=[{"id": "intro", "title": "Intro", "background": "sample.jpeg"}]):
                     res_in_use_bg = client.post("/panel/delete-background", json={"filename": "sample.jpeg"})
                     self.assertEqual(res_in_use_bg.status_code, 400)
                     self.assertIn("en uso", res_in_use_bg.get_json()["error"].lower())
+
+                # Delete background rejection when in use as desktop background
+                with patch("app.load_slides", return_value=[]), patch("app.load_styles", return_value={"desktop_background": "sample.jpeg"}):
+                    res_in_use_desktop = client.post("/panel/delete-background", json={"filename": "sample.jpeg"})
+                    self.assertEqual(res_in_use_desktop.status_code, 400)
+                    self.assertIn("en uso", res_in_use_desktop.get_json()["error"].lower())
 
             # 2. Production mode (dev mode False) -> 404 Not Found
             with patch("app.is_dev_mode", return_value=False):
@@ -483,6 +500,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
                 res_upload = client.post("/panel/upload-background")
                 self.assertEqual(res_upload.status_code, 404)
+
+                res_desktop_prod = client.post("/panel/desktop-background", json={"background": "sample.jpeg"})
+                self.assertEqual(res_desktop_prod.status_code, 404)
 
                 res_rename_prod = client.post("/panel/rename-background", json={"old_name": "test.jpeg", "new_name": "nuevo.jpeg"})
                 self.assertEqual(res_rename_prod.status_code, 404)

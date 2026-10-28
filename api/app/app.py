@@ -175,6 +175,7 @@ def save_slides(slides_list):
 
 
 DEFAULT_STYLES = {
+    "desktop_background": "background.jpeg",
     "title": {
         "fontFamily": "Montserrat",
         "color": "#ffffff",
@@ -226,14 +227,16 @@ def load_styles():
         try:
             with open(STYLES_JSON_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                styles = {k: dict(v) for k, v in DEFAULT_STYLES.items()}
+                styles = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULT_STYLES.items()}
                 for k, v in data.items():
-                    if k in styles and isinstance(v, dict):
+                    if k in styles and isinstance(v, dict) and isinstance(styles[k], dict):
                         styles[k].update(v)
+                    else:
+                        styles[k] = v
                 return styles
         except Exception:
             pass
-    return {k: dict(v) for k, v in DEFAULT_STYLES.items()}
+    return {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULT_STYLES.items()}
 
 
 def save_styles(styles_dict):
@@ -942,6 +945,9 @@ def panel_view():
 
     all_fonts = google_fonts + local_fonts
     used_backgrounds = {s.get("background") for s in slides if s.get("background")}
+    desktop_bg = (styles.get("desktop_background") or "").strip()
+    if desktop_bg:
+        used_backgrounds.add(desktop_bg)
 
     default_monto_raw = DEFAULT_RESERVA_MONTO
     try:
@@ -1344,12 +1350,35 @@ def panel_rename_background():
         if modified:
             save_slides(slides)
 
+        # Update styles.json if desktop_background was using old_name
+        styles = load_styles()
+        if styles.get("desktop_background") == old_name:
+            styles["desktop_background"] = sanitized_new_name
+            save_styles(styles)
+
     return jsonify({
         "ok": True,
         "old_name": old_name,
         "new_name": sanitized_new_name,
         "message": f"Fondo renombrado a '{sanitized_new_name}'"
     })
+
+
+@app.post("/panel/desktop-background")
+def panel_set_desktop_background():
+    if not is_dev_mode():
+        abort(404)
+    data = request.get_json(silent=True) or request.form.to_dict()
+    bg_name = (data.get("background") or "").strip()
+    if not bg_name:
+        return jsonify({"ok": False, "error": "Fondo no especificado"}), 400
+    bg_dir = get_backgrounds_dir()
+    if not os.path.isfile(os.path.join(bg_dir, bg_name)):
+        return jsonify({"ok": False, "error": f"El archivo '{bg_name}' no existe en backgrounds"}), 404
+    styles = load_styles()
+    styles["desktop_background"] = bg_name
+    save_styles(styles)
+    return jsonify({"ok": True, "desktop_background": bg_name, "message": f"Fondo de PC actualizado a '{bg_name}'"})
 
 
 @app.post("/panel/delete-background")
@@ -1376,6 +1405,13 @@ def panel_delete_background():
         return jsonify({
             "ok": False,
             "error": f"No se puede eliminar '{filename}' porque está en uso en el slide '{used_slides[0]}'"
+        }), 400
+
+    styles = load_styles()
+    if styles.get("desktop_background") == filename:
+        return jsonify({
+            "ok": False,
+            "error": f"No se puede eliminar '{filename}' porque está en uso como Fondo Principal para PC"
         }), 400
 
     bg_dir = get_backgrounds_dir()

@@ -73,7 +73,7 @@
 
         body.is-desktop-mode,
         body:not(.is-mobile-mode) {
-            background-image: url('/assets/background.jpeg');
+            background-image: url('/assets/backgrounds/background.jpeg');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;

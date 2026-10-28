@@ -91,6 +91,13 @@
             --header-subtitle-spacing: {{ styles.header_subtitle.letterSpacing if styles.header_subtitle.letterSpacing is not none else 0.05 }}em;
             {% endif %}
         }
+
+        {% if styles and styles.desktop_background %}
+        body.is-desktop-mode,
+        body:not(.is-mobile-mode) {
+            background-image: url('/assets/backgrounds/{{ styles.desktop_background }}') !important;
+        }
+        {% endif %}
     </style>
     {% endif %}
 </head>
