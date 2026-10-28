@@ -1093,35 +1093,56 @@ def panel_upload_background():
     if not is_dev_mode():
         abort(404)
 
-    if "background_file" not in request.files:
+    files = request.files.getlist("background_files")
+    if not files:
+        files = request.files.getlist("background_file")
+    if not files and "background_file" in request.files:
+        files = [request.files["background_file"]]
+
+    valid_files = [f for f in files if f and f.filename and f.filename.strip()]
+    if not valid_files:
         return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
 
-    file = request.files["background_file"]
-    if not file or not file.filename:
-        return jsonify({"ok": False, "error": "Archivo no seleccionado"}), 400
-
-    _, orig_ext = os.path.splitext(file.filename)
-    orig_ext = orig_ext.lower()
-    if orig_ext not in VALID_MEDIA_EXTS:
-        return jsonify({"ok": False, "error": f"Formato no permitido: {orig_ext}. Usa formatos de imagen o video (JPG, PNG, WEBP, MP4, WEBM, MOV)."}), 400
-
     custom_name = request.form.get("background_name", "").strip()
-    if custom_name:
-        base_name, user_ext = os.path.splitext(custom_name)
-        ext = user_ext.lower() if user_ext else orig_ext
-        clean_base = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", base_name)
-        filename = f"{clean_base}{ext}"
-    else:
-        filename = secure_filename(file.filename)
-        if not filename:
-            filename = f"bg_{int(time.time())}{orig_ext}"
-
     bg_dir = get_backgrounds_dir()
     os.makedirs(bg_dir, exist_ok=True)
-    save_path = os.path.join(bg_dir, filename)
-    file.save(save_path)
 
-    return jsonify({"ok": True, "filename": filename, "message": "Fondo subido correctamente"})
+    saved_filenames = []
+    errors = []
+
+    for idx, file in enumerate(valid_files):
+        _, orig_ext = os.path.splitext(file.filename)
+        orig_ext = orig_ext.lower()
+        if orig_ext not in VALID_MEDIA_EXTS:
+            errors.append(f"{file.filename}: formato no permitido ({orig_ext})")
+            continue
+
+        if len(valid_files) == 1 and custom_name:
+            base_name, user_ext = os.path.splitext(custom_name)
+            ext = user_ext.lower() if user_ext else orig_ext
+            clean_base = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", base_name)
+            filename = f"{clean_base}{ext}"
+        else:
+            filename = secure_filename(file.filename)
+            if not filename:
+                filename = f"bg_{int(time.time())}_{idx}{orig_ext}"
+
+        save_path = os.path.join(bg_dir, filename)
+        file.save(save_path)
+        saved_filenames.append(filename)
+
+    if not saved_filenames:
+        err_msg = "; ".join(errors) if errors else "No se pudo guardar ningún archivo"
+        return jsonify({"ok": False, "error": err_msg}), 400
+
+    msg = f"{len(saved_filenames)} archivo(s) subido(s) correctamente" if len(saved_filenames) > 1 else f"Archivo '{saved_filenames[0]}' subido correctamente"
+    return jsonify({
+        "ok": True,
+        "filenames": saved_filenames,
+        "filename": saved_filenames[0],
+        "count": len(saved_filenames),
+        "message": msg
+    })
 
 
 @app.post("/panel/slide/<slide_id>")

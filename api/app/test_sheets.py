@@ -490,6 +490,29 @@ class TestGoogleSheetsTable(unittest.TestCase):
                     self.assertEqual(res_in_use_desktop.status_code, 400)
                     self.assertIn("en uso", res_in_use_desktop.get_json()["error"].lower())
 
+                # Upload background (empty, single, multiple)
+                res_up_empty = client.post("/panel/upload-background")
+                self.assertEqual(res_up_empty.status_code, 400)
+
+                import io
+                import tempfile
+                with tempfile.TemporaryDirectory() as tmp_bg_dir:
+                    with patch("app.get_backgrounds_dir", return_value=tmp_bg_dir):
+                        f1 = (io.BytesIO(b"fake image 1"), "foto1.jpg")
+                        res_up_single = client.post("/panel/upload-background", data={"background_files": [f1]})
+                        self.assertEqual(res_up_single.status_code, 200)
+                        self.assertTrue(res_up_single.get_json()["ok"])
+                        self.assertEqual(res_up_single.get_json()["count"], 1)
+
+                        f2 = (io.BytesIO(b"fake image 2"), "foto2.png")
+                        f3 = (io.BytesIO(b"fake image 3"), "foto3.webp")
+                        res_up_multi = client.post("/panel/upload-background", data={"background_files": [f2, f3]})
+                        self.assertEqual(res_up_multi.status_code, 200)
+                        self.assertTrue(res_up_multi.get_json()["ok"])
+                        self.assertEqual(res_up_multi.get_json()["count"], 2)
+                        self.assertIn("foto2.png", res_up_multi.get_json()["filenames"])
+                        self.assertIn("foto3.webp", res_up_multi.get_json()["filenames"])
+
             # 2. Production mode (dev mode False) -> 404 Not Found
             with patch("app.is_dev_mode", return_value=False):
                 res = client.get("/panel")

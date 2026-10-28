@@ -3845,17 +3845,14 @@
                     <!-- Top Two Columns: Upload & Backgrounds Gallery -->
                     <div class="grid-two-col">
                         <div class="bg-sidebar-col" style="display: flex; flex-direction: column; gap: 20px;">
-                            <!-- Desktop PC Background Selector -->
+                            <!-- Desktop PC Background -->
                             <section class="panel-card" id="desktopBgCard">
                                 <h2 class="section-title">
-                                    <span>🖥️ Fondo Principal para PC</span>
+                                    <span>Fondo para PC</span>
                                 </h2>
-                                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px; line-height: 1.4;">
-                                    Imagen de pantalla completa para la vista en computadoras de escritorio y notebooks.
-                                </p>
 
-                                <div style="margin-bottom: 14px;">
-                                    <div class="desktop-bg-preview-wrap" style="position: relative; width: 100%; height: 130px; border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); background: #0b0f14;">
+                                <div>
+                                    <div class="desktop-bg-preview-wrap" style="position: relative; width: 100%; height: 140px; border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); background: #0b0f14;">
                                         <img id="desktopBgPreviewThumb"
                                              src="/assets/backgrounds/{{ styles.desktop_background if styles and styles.desktop_background else 'background.jpeg' }}"
                                              alt="Fondo PC"
@@ -3866,22 +3863,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="form-group" style="margin-bottom: 14px;">
-                                    <label for="desktopBgSelect" style="font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; display: block;">Elegir imagen de fondo:</label>
-                                    <select class="form-input" id="desktopBgSelect" onchange="onDesktopBgSelectChange(this.value)">
-                                        {% for bg in backgrounds %}
-                                        {% set is_vid = bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
-                                        {% if not is_vid %}
-                                        <option value="{{ bg }}" {% if styles and styles.desktop_background == bg %}selected{% endif %}>{{ bg }}</option>
-                                        {% endif %}
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <button type="button" class="btn-submit" id="btnSaveDesktopBg" onclick="saveSelectedDesktopBg()">
-                                    <span>💾 Guardar Fondo PC</span>
-                                </button>
                             </section>
 
                             <!-- Upload New Background Form -->
@@ -3892,25 +3873,25 @@
                                 <form class="upload-form" id="uploadBgForm" action="/panel/upload-background" method="POST"
                                     enctype="multipart/form-data">
                                     <div class="form-group">
-                                        <label>Archivo de Imagen o Video</label>
+                                        <label>Archivo(s) de Imagen o Video</label>
                                         <div class="file-upload-box" id="fileDropBox">
-                                            <input type="file" name="background_file" id="bgFileInput"
+                                            <input type="file" name="background_files" id="bgFileInput"
                                                 accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.mp4,.webm,.mov,.m4v"
-                                                required>
+                                                multiple required>
                                             <div class="upload-box-icon">📁</div>
-                                            <div class="upload-box-text">Arrastrá imagen o video (MP4, WEBM, JPG, PNG)</div>
+                                            <div class="upload-box-text">Arrastrá una o varias imágenes / videos (MP4, WEBM, JPG, PNG)</div>
                                             <div class="selected-file-name" id="selectedFileName"></div>
                                         </div>
                                     </div>
 
-                                    <div class="form-group">
-                                        <label for="bgNameInput">Nombre personalizado (opcional)</label>
+                                    <div class="form-group" id="bgNameGroup">
+                                        <label for="bgNameInput">Nombre personalizado (opcional, solo para 1 archivo)</label>
                                         <input type="text" class="form-input" id="bgNameInput" name="background_name"
                                             placeholder="ej. video_intro o iglesia_atardecer">
                                     </div>
 
                                     <button type="submit" class="btn-submit" id="btnUploadSubmit">
-                                        <span>⬆ Subir Fondo / Video</span>
+                                        <span>⬆ Subir Fondo(s) / Video(s)</span>
                                     </button>
                                 </form>
                             </section>
@@ -8874,26 +8855,34 @@
         // -------------------------------------------------------------
         const fileInput = document.getElementById('bgFileInput');
         const selectedFileName = document.getElementById('selectedFileName');
+        const bgNameGroup = document.getElementById('bgNameGroup');
         if (fileInput) {
             fileInput.addEventListener('change', function () {
-                if (this.files && this.files[0]) {
-                    const file = this.files[0];
-                    if (/\.(mp4|webm|mov|m4v)$/i.test(file.name)) {
-                        selectedFileName.textContent = `${file.name} (calculando duración...)`;
-                        const tempVid = document.createElement('video');
-                        tempVid.preload = 'metadata';
-                        tempVid.src = URL.createObjectURL(file);
-                        tempVid.onloadedmetadata = function () {
-                            const durSec = tempVid.duration ? tempVid.duration.toFixed(1) : '0';
-                            const durMs = Math.round((tempVid.duration || 0) * 1000);
-                            selectedFileName.textContent = `${file.name} (🎬 ${durSec}s / ${durMs} ms)`;
-                            URL.revokeObjectURL(tempVid.src);
-                        };
+                if (this.files && this.files.length > 0) {
+                    if (this.files.length === 1) {
+                        const file = this.files[0];
+                        if (bgNameGroup) bgNameGroup.style.display = 'block';
+                        if (/\.(mp4|webm|mov|m4v)$/i.test(file.name)) {
+                            selectedFileName.textContent = `${file.name} (calculando duración...)`;
+                            const tempVid = document.createElement('video');
+                            tempVid.preload = 'metadata';
+                            tempVid.src = URL.createObjectURL(file);
+                            tempVid.onloadedmetadata = function () {
+                                const durSec = tempVid.duration ? tempVid.duration.toFixed(1) : '0';
+                                const durMs = Math.round((tempVid.duration || 0) * 1000);
+                                selectedFileName.textContent = `${file.name} (🎬 ${durSec}s / ${durMs} ms)`;
+                                URL.revokeObjectURL(tempVid.src);
+                            };
+                        } else {
+                            selectedFileName.textContent = file.name;
+                        }
                     } else {
-                        selectedFileName.textContent = file.name;
+                        selectedFileName.textContent = `${this.files.length} archivos seleccionados`;
+                        if (bgNameGroup) bgNameGroup.style.display = 'none';
                     }
                 } else {
                     selectedFileName.textContent = '';
+                    if (bgNameGroup) bgNameGroup.style.display = 'block';
                 }
             });
         }
@@ -9013,16 +9002,7 @@
 
                     if (stylesData && stylesData.desktop_background === oldName) {
                         stylesData.desktop_background = finalName;
-                        const dSelect = document.getElementById('desktopBgSelect');
-                        if (dSelect) {
-                            const opt = dSelect.querySelector(`option[value="${oldName}"]`);
-                            if (opt) {
-                                opt.value = finalName;
-                                opt.textContent = finalName;
-                            }
-                            dSelect.value = finalName;
-                        }
-                        onDesktopBgSelectChange(finalName);
+                        updateDesktopBgPreview(finalName);
                         updateDesktopBgBadges(finalName);
                     }
 
@@ -9180,17 +9160,18 @@
                     });
                     const data = await res.json();
                     if (data.ok) {
-                        showToast('Archivo subido: ' + data.filename);
+                        const count = data.filenames ? data.filenames.length : (data.count || 1);
+                        showToast(data.message || `${count} archivo(s) subido(s)`);
                         setTimeout(() => { window.location.reload(); }, 900);
                     } else {
                         showToast(data.error || 'Error al subir archivo', true);
                         btn.disabled = false;
-                        btn.innerHTML = '<span>⬆ Subir Fondo / Video</span>';
+                        btn.innerHTML = '<span>⬆ Subir Fondo(s) / Video(s)</span>';
                     }
                 } catch (err) {
                     showToast('Error de red al subir archivo', true);
                     btn.disabled = false;
-                    btn.innerHTML = '<span>⬆ Subir Fondo / Video</span>';
+                    btn.innerHTML = '<span>⬆ Subir Fondo(s) / Video(s)</span>';
                 }
             });
         }
@@ -9198,7 +9179,7 @@
         // -------------------------------------------------------------
         // PC DESKTOP BACKGROUND HANDLERS
         // -------------------------------------------------------------
-        function onDesktopBgSelectChange(bgName) {
+        function updateDesktopBgPreview(bgName) {
             const thumb = document.getElementById('desktopBgPreviewThumb');
             const nameEl = document.getElementById('desktopBgPreviewName');
             if (thumb && bgName) {
@@ -9222,12 +9203,6 @@
 
         async function setDesktopBackground(bgName) {
             if (!bgName) return;
-            const btn = document.getElementById('btnSaveDesktopBg');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span>Guardando...</span>';
-            }
-
             try {
                 const res = await fetch('/panel/desktop-background', {
                     method: 'POST',
@@ -9240,9 +9215,7 @@
                     if (!stylesData) stylesData = {};
                     stylesData.desktop_background = bgName;
 
-                    const select = document.getElementById('desktopBgSelect');
-                    if (select) select.value = bgName;
-                    onDesktopBgSelectChange(bgName);
+                    updateDesktopBgPreview(bgName);
                     updateDesktopBgBadges(bgName);
                     updateBackgroundsInUseUI();
                 } else {
@@ -9250,21 +9223,7 @@
                 }
             } catch (err) {
                 showToast('Error de red al guardar fondo de PC', true);
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>💾 Guardar Fondo PC</span>';
-                }
             }
-        }
-
-        function saveSelectedDesktopBg() {
-            const select = document.getElementById('desktopBgSelect');
-            if (!select || !select.value) {
-                showToast('Por favor selecciona un fondo', true);
-                return;
-            }
-            setDesktopBackground(select.value);
         }
 
         // -------------------------------------------------------------
