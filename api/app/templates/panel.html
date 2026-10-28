@@ -2355,55 +2355,6 @@
             box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
         }
 
-        .preview-ratio-btn.safe-zone-active {
-            background: rgba(46, 204, 113, 0.2);
-            border-color: rgba(46, 204, 113, 0.6);
-            color: #2ecc71;
-            box-shadow: 0 0 10px rgba(46, 204, 113, 0.25);
-        }
-
-        .preview-safe-zone-overlay {
-            position: absolute;
-            top: 0;
-            bottom: auto;
-            left: 50%;
-            width: 390px;
-            height: 711px;
-            transform: translateX(-50%) scale(var(--canvas-scale, 1));
-            transform-origin: top center;
-            pointer-events: none;
-            z-index: 15;
-            display: none;
-        }
-
-        .preview-safe-zone-box {
-            position: absolute;
-            top: 86px;
-            bottom: 48px;
-            left: 16px;
-            right: 16px;
-            border: 1.5px dashed rgba(46, 204, 113, 0.75);
-            border-radius: 14px;
-            background: rgba(46, 204, 113, 0.05);
-            pointer-events: none;
-        }
-
-        .preview-safe-zone-badge {
-            position: absolute;
-            top: 92px;
-            left: 22px;
-            font-size: 10px;
-            font-weight: 700;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #2ecc71;
-            background: rgba(10, 20, 15, 0.85);
-            border: 1px solid rgba(46, 204, 113, 0.4);
-            padding: 2px 7px;
-            border-radius: 4px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            pointer-events: none;
-        }
 
         .story-preview-viewport {
             height: calc(98vh - 44px);
@@ -2660,29 +2611,6 @@
             z-index: 10;
         }
 
-        .story-preview-viewport .preview-center-guide-x,
-        .phone-center-guide-x {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.15);
-            z-index: 6;
-            pointer-events: none;
-        }
-
-        .story-preview-viewport .preview-center-guide-y,
-        .phone-center-guide-y {
-            position: absolute;
-            left: 50%;
-            top: 0;
-            bottom: 0;
-            width: 1px;
-            border-left: 1px dashed rgba(255, 255, 255, 0.15);
-            z-index: 6;
-            pointer-events: none;
-        }
 
         .story-preview-viewport .slide-elements-layer,
         .phone-elements-overlay {
@@ -4463,7 +4391,6 @@
                     <button type="button" class="preview-ratio-btn active" id="btnRatioIphone" onclick="setPreviewDevice('iphone')" title="Proporción estándar iPhone / PC (1.823 - 390x711)">📱 iPhone / PC</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioAndroid" onclick="setPreviewDevice('android')" title="Proporción Android útil (1.860 - 390x725)">📱 Android</button>
                     <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9 - 390x693)">📱 Compacto</button>
-                    <button type="button" class="preview-ratio-btn" id="btnToggleSafeZone" onclick="toggleSafeZone()" title="Mostrar/ocultar guías de zona segura para textos">🛡️ Guías</button>
                     <button type="button" class="preview-ratio-btn" id="btnToggleBgBounds" onclick="toggleBgBounds()" title="Ver la imagen completa original sin recortar por el marco">👁️ Ver Original</button>
                 </div>
                 <div class="story-preview-viewport" id="storyPreviewViewport">
@@ -4501,15 +4428,6 @@
                                         playsinline autoplay style="display: none;"></video>
                                 </div>
 
-                                <!-- Alignment Crosshairs (Y=0, X=0) -->
-                                <div class="preview-center-guide-x" title="Línea central vertical (Y = 0)"></div>
-                                <div class="preview-center-guide-y" title="Línea central horizontal (X = 0)"></div>
-
-                                <!-- Safe Zone Guidelines Overlay (Toggleable) -->
-                                <div class="preview-safe-zone-overlay" id="previewSafeZoneOverlay">
-                                    <div class="preview-safe-zone-box"></div>
-                                    <span class="preview-safe-zone-badge">Zona Segura Móvil</span>
-                                </div>
 
                                 <!-- Dynamic Elements Layer -->
                                 <div class="slide-elements-layer" id="previewElementsLayer"></div>
@@ -8261,7 +8179,6 @@
         }
 
         let currentPreviewDevice = 'iphone';
-        let isSafeZoneVisible = false;
 
         function getPreviewDeviceBaseHeight() {
             if (currentPreviewDevice === 'android') return 725;
@@ -8286,18 +8203,6 @@
                 if (b) b.classList.add('active');
             }
             updateStoryPreviewScale();
-        }
-
-        function toggleSafeZone() {
-            isSafeZoneVisible = !isSafeZoneVisible;
-            const overlay = document.getElementById('previewSafeZoneOverlay');
-            const btn = document.getElementById('btnToggleSafeZone');
-            if (overlay) {
-                overlay.style.display = isSafeZoneVisible ? 'block' : 'none';
-            }
-            if (btn) {
-                btn.classList.toggle('safe-zone-active', isSafeZoneVisible);
-            }
         }
 
         function updateStoryPreviewScale() {
