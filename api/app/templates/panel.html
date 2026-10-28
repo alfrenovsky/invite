@@ -2395,7 +2395,7 @@
             right: 0;
             z-index: 1000;
             padding: 12px 14px 8px 14px;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+            background: transparent;
             pointer-events: none;
         }
 
@@ -2404,6 +2404,7 @@
             gap: 4px;
             width: 100%;
             margin-bottom: 10px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
         }
 
         .story-preview-viewport .progress-bar-slot {
@@ -2474,6 +2475,7 @@
             letter-spacing: var(--header-title-spacing, 0.05em);
             color: var(--header-title-color, #ffffff);
             line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .story-preview-viewport .header-subtitle {
@@ -2483,6 +2485,7 @@
             letter-spacing: var(--header-subtitle-spacing, 0.05em);
             color: var(--header-subtitle-color, #a0aec0);
             line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         /* Slide Deck Area */
