@@ -1630,6 +1630,12 @@
         const initialCountAttr = storyContainerEl ? storyContainerEl.getAttribute('data-names-count') : null;
         const initialGroupNames = storyContainerEl ? (storyContainerEl.getAttribute('data-group-names') || '') : '';
         const initialCountParsed = initialCountAttr ? parseInt(initialCountAttr, 10) : 0;
+        const initialInvNames = storyContainerEl ? (storyContainerEl.getAttribute('data-inv-names') || '') : '';
+        const initialResNames = storyContainerEl ? (storyContainerEl.getAttribute('data-res-names') || '') : '';
+        const initialInvCountAttr = storyContainerEl ? storyContainerEl.getAttribute('data-inv-count') : null;
+        const initialResCountAttr = storyContainerEl ? storyContainerEl.getAttribute('data-res-count') : null;
+        const initialInvCount = initialInvCountAttr !== null ? parseInt(initialInvCountAttr, 10) : 0;
+        const initialResCount = initialResCountAttr !== null ? parseInt(initialResCountAttr, 10) : 0;
 
         let lastValidGroupNames = initialGroupNames;
         let lastValidCount = (initialCountParsed && !isNaN(initialCountParsed) && initialCountParsed > 0) ? initialCountParsed : 1;
@@ -1726,15 +1732,39 @@
                 const raw = el.getAttribute('data-raw-content');
                 if (!raw) return;
                 const hasNamesVar = /\{(?:name|names|nombre|nombres)\}/i.test(raw);
+                const hasInvVar = /\{(?:inv|invitado|invitados)\}/i.test(raw);
+                const hasResVar = /\{(?:res|reserva|reservas)\}/i.test(raw);
                 const hasValueVar = /\{(?:value|valor|precio|monto)\}/i.test(raw);
+                const hasTargetPlur = /\{([a-zA-Z]+):([^|{}]*)\|([^|{}]*)(?:\|([^|{}]*))?\}/.test(raw);
                 const hasSingPlur = /\(([^|()]*)\|([^|()]*)\)/.test(raw) || /\{([^|{}]*)\|([^|{}]*)\}/.test(raw);
-                if (hasNamesVar || hasValueVar || hasSingPlur) {
+                if (hasNamesVar || hasInvVar || hasResVar || hasValueVar || hasTargetPlur || hasSingPlur) {
                     let text = raw;
                     if (hasNamesVar && formattedNames) {
                         text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, () => formattedNames);
                     }
+                    if (hasInvVar && initialInvNames) {
+                        text = text.replace(/\{(?:inv|invitado|invitados)\}/gi, () => initialInvNames);
+                    }
+                    if (hasResVar && initialResNames) {
+                        text = text.replace(/\{(?:res|reserva|reservas)\}/gi, () => initialResNames);
+                    }
                     if (hasValueVar) {
                         text = text.replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => (cardValue || ''));
+                    }
+                    if (hasTargetPlur) {
+                        text = text.replace(/\{([a-zA-Z]+):([^|{}]*)\|([^|{}]*)(?:\|([^|{}]*))?\}/g, (match, targetId, sing, plur, zero) => {
+                            const tid = targetId.toLowerCase();
+                            let c = count;
+                            if (tid === 'i' || tid === 'inv' || tid === 'invitado' || tid === 'invitados' || tid === 'invitacion') {
+                                c = initialInvCount;
+                            } else if (tid === 'r' || tid === 'res' || tid === 'reserva' || tid === 'reservas') {
+                                c = initialResCount;
+                            }
+                            if (c === 0) {
+                                return zero !== undefined ? zero : '';
+                            }
+                            return c === 1 ? sing : plur;
+                        });
                     }
                     if (hasSingPlur) {
                         text = text

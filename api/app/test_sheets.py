@@ -1371,6 +1371,27 @@ class TestGoogleSheetsTable(unittest.TestCase):
         replaced = replace_guest_names(tmpl, group_names="Lucas y María", card_value="$105.000", inv_names="Lucas", res_names="María")
         self.assertEqual(replaced, "Hola Lucas y María! Lucas tienen pase libre y María pagan $105.000")
 
+        # 7. Targeted {id:sin|plu} and {id:sin|plu|cero}
+        # Mixed: 1 invitado, 2 reservas -> inv is singular, res is plural, total is 3 (plural)
+        tmpl_target = "{a:Bienvenido|Bienvenidos}! {i:Tenés pase libre|Tienen pase libre}. {r:Tu tarjeta es de {value}|Sus tarjetas son de {value}}."
+        replaced_target = replace_guest_names(tmpl_target, group_names="Lucas, María y Pedro", count=3, card_value="$105.000", inv_names="Lucas", res_names="María y Pedro", inv_count=1, res_count=2)
+        self.assertEqual(replaced_target, "Bienvenidos! Tenés pase libre. Sus tarjetas son de $105.000.")
+
+        # Zero invitados, 2 reservas -> {i:...} evaluates to empty string "" (or optional cero)
+        tmpl_zero = "{i:Pase libre: tu entrada. |Pases libres: tus entradas. }{r:Tu tarjeta|Sus tarjetas} {r:es|son} de {value}."
+        replaced_zero = replace_guest_names(tmpl_zero, group_names="María y Pedro", count=2, card_value="$105.000", inv_names="", res_names="María y Pedro", inv_count=0, res_count=2)
+        self.assertEqual(replaced_zero, "Sus tarjetas son de $105.000.")
+
+        # With 3-way zero parameter: {id:sin|plu|cero}
+        tmpl_cero = "{i:Tenés pase|Tienen pase|Sin invitados}"
+        self.assertEqual(replace_guest_names(tmpl_cero, inv_count=0), "Sin invitados")
+        self.assertEqual(replace_guest_names(tmpl_cero, inv_count=1), "Tenés pase")
+        self.assertEqual(replace_guest_names(tmpl_cero, inv_count=2), "Tienen pase")
+
+        # Aliases test: inv, res, all
+        tmpl_alias = "{all:Te|Los} queremos. {inv:Pase|Pases}. {res:Reserva|Reservas}."
+        self.assertEqual(replace_guest_names(tmpl_alias, count=1, inv_count=2, res_count=1), "Te queremos. Pases. Reserva.")
+
     def test_active_slides_audience_filtering(self):
         from app import get_guest_context
         test_slides = [

@@ -6741,7 +6741,9 @@
                             <span class="tb-chip-var" style="color: #60a5fa;" title="Insertar nombre(s) de invitados sin cargo" data-insert="{inv}">+{inv}</span>
                             <span class="tb-chip-var" style="color: #a7f3d0;" title="Insertar nombre(s) de reservas" data-insert="{res}">+{res}</span>
                             <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert="{value}">+{value}</span>
-                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional ({sin|plu})" data-insert="{sin|plu}">+{sin|plu}</span>
+                            <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural para todos ({a:sin|plu})" data-insert="{a:sin|plu}">+{a:sin|plu}</span>
+                            <span class="tb-chip-var" style="color: #60a5fa;" title="Insertar singular/plural para invitados ({i:sin|plu})" data-insert="{i:sin|plu}">+{i:sin|plu}</span>
+                            <span class="tb-chip-var" style="color: #a7f3d0;" title="Insertar singular/plural para reservas ({r:sin|plu})" data-insert="{r:sin|plu}">+{r:sin|plu}</span>
                             <span class="tb-chip-var" style="color: #c084fc;" title="Insertar línea de itinerario (izq|der)" data-insert="izq|der">+ Itinerario</span>
                         </div>
                     </div>
@@ -7745,13 +7747,28 @@
                 const isSingle = previewGuestMode === 'single';
                 const nameVal = isSingle ? 'Juan' : 'Juan y María';
                 const invVal = isSingle ? 'Juan' : 'Juan';
-                const resVal = isSingle ? 'María' : 'María';
+                const resVal = isSingle ? 'María' : 'María y Pedro';
                 const priceVal = DEFAULT_CARD_VALUE;
+                const countAll = isSingle ? 1 : 2;
+                const countInv = isSingle ? 1 : 1;
+                const countRes = isSingle ? 1 : 2;
+
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, () => nameVal)
                     .replace(/\{(?:inv|invitado|invitados)\}/gi, () => invVal)
                     .replace(/\{(?:res|reserva|reservas)\}/gi, () => resVal)
                     .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => priceVal)
+                    .replace(/\{([a-zA-Z]+):([^|{}]*)\|([^|{}]*)(?:\|([^|{}]*))?\}/g, (match, targetId, sing, plur, zero) => {
+                        const tid = targetId.toLowerCase();
+                        let c = countAll;
+                        if (tid === 'i' || tid === 'inv' || tid === 'invitado' || tid === 'invitados' || tid === 'invitacion') {
+                            c = countInv;
+                        } else if (tid === 'r' || tid === 'res' || tid === 'reserva' || tid === 'reservas') {
+                            c = countRes;
+                        }
+                        if (c === 0) return zero !== undefined ? zero : '';
+                        return c === 1 ? sing : plur;
+                    })
                     .replace(/\(([^|()]*)\|([^|()]*)\)/g, isSingle ? '$1' : '$2')
                     .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, isSingle ? '$1' : '$2');
             }

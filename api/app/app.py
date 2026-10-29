@@ -476,7 +476,7 @@ def format_currency_ar(val):
         return str(val)
 
 
-def replace_guest_names(text, group_names="", count=None, card_value="", inv_names="", res_names=""):
+def replace_guest_names(text, group_names="", count=None, card_value="", inv_names="", res_names="", inv_count=None, res_count=None):
     if not text:
         return ""
     res = str(text)
@@ -491,18 +491,57 @@ def replace_guest_names(text, group_names="", count=None, card_value="", inv_nam
     if count is None:
         count = 2 if (" y " in str(group_names) or ", " in str(group_names) or "Familia" in str(group_names) or "Pareja" in str(group_names)) else 1
 
-    def _replace_plural(match):
+    if inv_count is None:
+        if not inv_names:
+            inv_count = 0
+        elif " y " in str(inv_names) or ", " in str(inv_names) or "Acompañantes" in str(inv_names):
+            inv_count = 2
+        else:
+            inv_count = 1
+
+    if res_count is None:
+        if not res_names:
+            res_count = 0
+        elif " y " in str(res_names) or ", " in str(res_names) or "Acompañantes" in str(res_names):
+            res_count = 2
+        else:
+            res_count = 1
+
+    def _evaluate_plural(target_count, singular, plural, zero=None):
+        if target_count == 0:
+            return zero if zero is not None else ""
+        return singular if target_count == 1 else plural
+
+    def _replace_target_plural(match):
+        target_id = match.group(1).lower()
+        singular = match.group(2)
+        plural = match.group(3)
+        zero = match.group(4)
+
+        if target_id in ("i", "inv", "invitado", "invitados", "invitacion"):
+            c = inv_count
+        elif target_id in ("r", "res", "reserva", "reservas"):
+            c = res_count
+        else:
+            c = count
+        return _evaluate_plural(c, singular, plural, zero)
+
+    # 1. Target-based: {id:sin|plu} or {id:sin|plu|cero}
+    res = re.sub(r'\{([a-zA-Z]+):([^|{}]*)\|([^|{}]*)(?:\|([^|{}]*))?\}', _replace_target_plural, res)
+
+    # 2. Classic all-based without prefix: (sin|plu) and {sin|plu}
+    def _replace_default_plural(match):
         singular, plural = match.group(1), match.group(2)
         return singular if count == 1 else plural
 
-    res = re.sub(r'\(([^|()]*)\|([^|()]*)\)', _replace_plural, res)
-    res = re.sub(r'\{([^|{}]*)\|([^|{}]*)\}', _replace_plural, res)
+    res = re.sub(r'\(([^|()]*)\|([^|()]*)\)', _replace_default_plural, res)
+    res = re.sub(r'\{([^|{}]*)\|([^|{}]*)\}', _replace_default_plural, res)
     return res
 
 
 @app.template_filter("replace_guest_names")
-def replace_guest_names_filter(text, group_names="", count=None, card_value="", inv_names="", res_names=""):
-    return replace_guest_names(text, group_names, count, card_value, inv_names, res_names)
+def replace_guest_names_filter(text, group_names="", count=None, card_value="", inv_names="", res_names="", inv_count=None, res_count=None):
+    return replace_guest_names(text, group_names, count, card_value, inv_names, res_names, inv_count, res_count)
 
 
 def format_slide_text(text):
@@ -651,6 +690,8 @@ def get_guest_context(validated_slug):
     res_guests = [g for g in guests if _is_reserva_guest(g)]
     inv_names = format_subgroup_names(inv_guests)
     res_names = format_subgroup_names(res_guests)
+    inv_count = len(inv_guests)
+    res_count = len(res_guests)
 
     first_res_monto = next((g.get("montotarjeta") for g in guests if re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or "")) and int(re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))) > 0), None)
     card_value = format_currency_ar(first_res_monto or (guests[0].get("montotarjeta", "") if guests else ""))
@@ -712,6 +753,8 @@ def get_guest_context(validated_slug):
         "group_type": group_type,
         "inv_names": inv_names,
         "res_names": res_names,
+        "inv_count": inv_count,
+        "res_count": res_count,
         "confirmed_count": confirmed_count,
         "rejected_count": rejected_count,
         "pending_count": pending_count,
