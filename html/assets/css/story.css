@@ -571,7 +571,7 @@
         }
 
         .rsvp-guest-card.expanded {
-            background: rgba(18, 22, 32, 0.88);
+            background: rgba(18, 22, 32, 0.60);
             border-color: rgba(255, 255, 255, 0.45);
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 8px 28px rgba(0, 0, 0, 0.55);
         }
