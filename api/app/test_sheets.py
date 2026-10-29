@@ -1320,26 +1320,56 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(item4["montotarjeta"], "")
 
     def test_get_group_target_type(self):
-        # 1. At least one guest has nivel="Reserva" -> "reserva"
-        g_res = [
+        # 1. Pure Reserva: all guests are Reserva -> "reserva"
+        g_pure_res = [
+            {"id": "1", "nivel": "Reserva", "montotarjeta": "100000"},
+            {"id": "2", "nivel": "Reserva", "montotarjeta": "100000"},
+        ]
+        self.assertEqual(get_group_target_type(g_pure_res), "reserva")
+
+        # 2. Mixed: at least one Invitado and at least one Reserva -> "mixta"
+        g_mix = [
             {"id": "1", "nivel": "Invitado", "montotarjeta": ""},
             {"id": "2", "nivel": "Reserva", "montotarjeta": "100000"},
         ]
-        self.assertEqual(get_group_target_type(g_res), "reserva")
+        self.assertEqual(get_group_target_type(g_mix), "mixta")
 
-        # 2. At least one guest has montotarjeta > 0 even if nivel is empty -> "reserva"
-        g_monto = [
+        # 3. Mixed with montotarjeta > 0 and no monto -> "mixta"
+        g_mix_monto = [
             {"id": "1", "nivel": "", "montotarjeta": "50000"},
             {"id": "2", "nivel": "", "montotarjeta": ""},
         ]
-        self.assertEqual(get_group_target_type(g_monto), "reserva")
+        self.assertEqual(get_group_target_type(g_mix_monto), "mixta")
 
-        # 3. All guests are Invitado with 0 or empty monto -> "invitacion"
+        # 4. All guests are Invitado with 0 or empty monto -> "invitacion"
         g_inv = [
             {"id": "1", "nivel": "Invitado", "montotarjeta": ""},
             {"id": "2", "nivel": "Invitado", "montotarjeta": "0"},
         ]
         self.assertEqual(get_group_target_type(g_inv), "invitacion")
+
+    def test_subgroup_names_and_text_variables(self):
+        from app import format_subgroup_names, replace_guest_names
+        # 1. Singular unnamed companion
+        self.assertEqual(format_subgroup_names([{"nombre": ""}]), "Acompañante")
+        self.assertEqual(format_subgroup_names([{"nombre": "invitado"}]), "Acompañante")
+
+        # 2. Plural unnamed companions
+        self.assertEqual(format_subgroup_names([{"nombre": ""}, {"nombre": ""}]), "Acompañantes")
+
+        # 3. Named + unnamed companion
+        self.assertEqual(format_subgroup_names([{"nombre": "Lucas"}, {"nombre": ""}]), "Lucas y Acompañante")
+
+        # 4. Named + multiple unnamed companions
+        self.assertEqual(format_subgroup_names([{"nombre": "Lucas"}, {"nombre": ""}, {"nombre": ""}]), "Lucas y Acompañantes")
+
+        # 5. Multiple named companions
+        self.assertEqual(format_subgroup_names([{"nombre": "Lucas"}, {"nombre": "Pedro"}]), "Lucas y Pedro")
+
+        # 6. {inv} and {res} variable replacements
+        tmpl = "Hola {name}! {inv} tienen pase libre y {res} pagan {value}"
+        replaced = replace_guest_names(tmpl, group_names="Lucas y María", card_value="$105.000", inv_names="Lucas", res_names="María")
+        self.assertEqual(replaced, "Hola Lucas y María! Lucas tienen pase libre y María pagan $105.000")
 
     def test_active_slides_audience_filtering(self):
         from app import get_guest_context
@@ -1347,10 +1377,11 @@ class TestGoogleSheetsTable(unittest.TestCase):
             {"id": "intro", "target": "all", "enabled": True},
             {"id": "reservas", "target": "reserva", "enabled": True},
             {"id": "invitacion", "target": "invitacion", "enabled": True},
+            {"id": "mixta", "target": "mixta", "enabled": True},
         ]
 
         with patch("app.load_slides", return_value=test_slides):
-            # Test group with Reserva: must have intro and reservas, NOT invitacion
+            # Test group with Reserva: must have intro and reservas, NOT invitacion or mixta
             with patch("app.table.get_by_invitacion", return_value=[{"id": "1", "nivel": "Reserva", "montotarjeta": "100000"}]):
                 ctx_reserva = get_guest_context("slug_reserva")
                 self.assertEqual(ctx_reserva["group_type"], "reserva")
@@ -1358,8 +1389,9 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertIn("intro", slide_ids)
                 self.assertIn("reservas", slide_ids)
                 self.assertNotIn("invitacion", slide_ids)
+                self.assertNotIn("mixta", slide_ids)
 
-            # Test group with Invitacion: must have intro and invitacion, NOT reservas
+            # Test group with Invitacion: must have intro and invitacion, NOT reservas or mixta
             with patch("app.table.get_by_invitacion", return_value=[{"id": "2", "nivel": "Invitado", "montotarjeta": ""}]):
                 ctx_invitacion = get_guest_context("slug_invitacion")
                 self.assertEqual(ctx_invitacion["group_type"], "invitacion")
@@ -1367,6 +1399,28 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertIn("intro", slide_ids)
                 self.assertIn("invitacion", slide_ids)
                 self.assertNotIn("reservas", slide_ids)
+                self.assertNotIn("mixta", slide_ids)
+
+            # Test group with Mixta: must have intro and mixta, NOT reservas or invitacion
+            mixed_guests = [
+                {"id": "g_res", "nombre": "María", "nivel": "Reserva", "montotarjeta": "100000"},
+                {"id": "g_inv", "nombre": "Lucas", "nivel": "Invitado", "montotarjeta": ""},
+            ]
+            with patch("app.table.get_by_invitacion", return_value=mixed_guests):
+                ctx_mixta = get_guest_context("slug_mixta")
+                self.assertEqual(ctx_mixta["group_type"], "mixta")
+                slide_ids = [s["id"] for s in ctx_mixta["active_slides"]]
+                self.assertIn("intro", slide_ids)
+                self.assertIn("mixta", slide_ids)
+                self.assertNotIn("reservas", slide_ids)
+                self.assertNotIn("invitacion", slide_ids)
+
+                # Verify ordering in mixed invitations: invitado (Lucas) must be first!
+                self.assertEqual(ctx_mixta["guests"][0]["nombre"], "Lucas")
+                self.assertEqual(ctx_mixta["guests"][1]["nombre"], "María")
+                self.assertEqual(ctx_mixta["inv_names"], "Lucas")
+                self.assertEqual(ctx_mixta["res_names"], "María")
+                self.assertEqual(ctx_mixta["card_value"], "$100.000")
 
 
     def test_clean_token_route_without_i(self):

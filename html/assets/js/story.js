@@ -1140,6 +1140,7 @@
 
         const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]'));
         let unpaidTotal = 0;
+        let hasAnyReservaAmount = false;
         const attendingItems = [];
 
         cards.forEach(card => {
@@ -1147,9 +1148,13 @@
             const rawMonto = card.getAttribute('data-monto') || '';
             const monto = parseCurrencyAmount(rawMonto);
             const isPaid = !!(card.getAttribute('data-pagado') || '').trim();
+            const isInvitado = (monto === 0);
 
             const isConfirmedOrPending = (status !== 'no');
-            if (isConfirmedOrPending && monto > 0) {
+            if (isConfirmedOrPending) {
+                if (monto > 0) {
+                    hasAnyReservaAmount = true;
+                }
                 const nInput = card.querySelector('input[name^="nombre_"]');
                 const aInput = card.querySelector('input[name^="apellido_"]');
                 const nameEl = card.querySelector('.rsvp-guest-name') || card.querySelector('.guest-header-name');
@@ -1158,14 +1163,14 @@
                     : (nameEl ? nameEl.textContent.trim() : 'Acompañante');
                 if (!name || name.toLowerCase() === 'invitado') name = 'Acompañante';
 
-                attendingItems.push({ name, monto, isPaid });
-                if (!isPaid) {
+                attendingItems.push({ name, monto, isPaid, isInvitado });
+                if (!isPaid && !isInvitado) {
                     unpaidTotal += monto;
                 }
             }
         });
 
-        if (attendingItems.length === 0) {
+        if (!hasAnyReservaAmount || attendingItems.length === 0) {
             paymentSection.style.display = 'none';
             const payCard = paymentSection.querySelector('.rsvp-payment-card');
             if (payCard) payCard.classList.remove('focused-highlight');
@@ -1176,10 +1181,16 @@
         if (unpaidTotal === 0) {
             let rowsHtml = '';
             attendingItems.forEach(item => {
+                let badgeHtml = '';
+                if (item.isInvitado) {
+                    badgeHtml = '<span class="payment-invitado-badge">✨ $0</span>';
+                } else {
+                    badgeHtml = '<span class="payment-paid-badge">✓ Pago registrado</span>';
+                }
                 rowsHtml += `
                     <div class="payment-breakdown-row">
                         <span>${item.name}</span>
-                        <span class="payment-paid-badge">✓ Pago registrado</span>
+                        ${badgeHtml}
                     </div>
                 `;
             });
@@ -1214,13 +1225,18 @@
         // Case 2: At least one attending guest has pending payment
         let rowsHtml = '';
         attendingItems.forEach(item => {
+            let amountHtml = '';
+            if (item.isInvitado) {
+                amountHtml = '<span class="payment-invitado-badge">✨ $0</span>';
+            } else if (item.isPaid) {
+                amountHtml = '<span class="payment-paid-badge">✓ Pago registrado</span>';
+            } else {
+                amountHtml = `<span>${formatCurrency(item.monto)}</span>`;
+            }
             rowsHtml += `
                 <div class="payment-breakdown-row">
                     <span>${item.name}</span>
-                    ${item.isPaid
-                    ? '<span class="payment-paid-badge">✓ Pago registrado</span>'
-                    : `<span>${formatCurrency(item.monto)}</span>`
-                }
+                    ${amountHtml}
                 </div>
             `;
         });

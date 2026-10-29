@@ -1374,6 +1374,12 @@
             color: #6ee7b7;
         }
 
+        .btn-target-opt[data-target="mixta"].active {
+            background: rgba(168, 85, 247, 0.22);
+            border-color: rgba(168, 85, 247, 0.5);
+            color: #d8b4fe;
+        }
+
         /* TinyMCE-style Text Editor Toolbar */
         .text-editor-toolbar {
             display: flex;
@@ -3666,6 +3672,9 @@
                                             <button type="button" class="btn-target-opt" data-target="reserva" onclick="setSlideTarget('reserva')" title="Visible solo para tarjetas con Reserva">
                                                 <span>💳 Reserva</span>
                                             </button>
+                                            <button type="button" class="btn-target-opt" data-target="mixta" onclick="setSlideTarget('mixta')" title="Visible solo para tarjetas Mixtas (invitado + reserva)">
+                                                <span>🔀 Mixta</span>
+                                            </button>
                                         </div>
                                         <input type="hidden" id="slideTargetSelect" value="all">
                                     </div>
@@ -5570,6 +5579,12 @@
                     invBadge.textContent = '💌';
                     invBadge.title = 'Visible solo para tarjetas de Invitación';
                     chip.appendChild(invBadge);
+                } else if (slide.target === 'mixta') {
+                    const mixBadge = document.createElement('span');
+                    mixBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
+                    mixBadge.textContent = '🔀';
+                    mixBadge.title = 'Visible solo para tarjetas Mixtas (invitado + reserva)';
+                    chip.appendChild(mixBadge);
                 }
 
                 if (isDirty) {
@@ -6641,6 +6656,8 @@
                         <!-- Variable Shortcuts -->
                         <div style="display: flex; align-items: center; gap: 4px; margin-left: auto; flex-wrap: wrap;">
                             <span class="tb-chip-var" style="color: #38bdf8;" title="Insertar nombre(s) del invitado" data-insert="{name}">+{name}</span>
+                            <span class="tb-chip-var" style="color: #60a5fa;" title="Insertar nombre(s) de invitados sin cargo" data-insert="{inv}">+{inv}</span>
+                            <span class="tb-chip-var" style="color: #a7f3d0;" title="Insertar nombre(s) de reservas" data-insert="{res}">+{res}</span>
                             <span class="tb-chip-var" style="color: #34d399;" title="Insertar monto/valor" data-insert="{value}">+{value}</span>
                             <span class="tb-chip-var" style="color: #f59e0b;" title="Insertar singular/plural condicional ({sin|plu})" data-insert="{sin|plu}">+{sin|plu}</span>
                             <span class="tb-chip-var" style="color: #c084fc;" title="Insertar plantilla de itinerario en 2 columnas" data-insert="18:00 | Recepción&#10;18:30 | Ceremonia civil&#10;19:30 | Cena&#10;21:00 | Baile&#10;02:00 | Fin">+ Itinerario</span>
@@ -7645,9 +7662,13 @@
                 if (!str) return '';
                 const isSingle = previewGuestMode === 'single';
                 const nameVal = isSingle ? 'Juan' : 'Juan y María';
+                const invVal = isSingle ? 'Juan' : 'Juan';
+                const resVal = isSingle ? 'María' : 'María';
                 const priceVal = DEFAULT_CARD_VALUE;
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, () => nameVal)
+                    .replace(/\{(?:inv|invitado|invitados)\}/gi, () => invVal)
+                    .replace(/\{(?:res|reserva|reservas)\}/gi, () => resVal)
                     .replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => priceVal)
                     .replace(/\(([^|()]*)\|([^|()]*)\)/g, isSingle ? '$1' : '$2')
                     .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, isSingle ? '$1' : '$2');

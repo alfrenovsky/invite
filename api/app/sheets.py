@@ -87,16 +87,25 @@ def generate_whatsapp_url(phone: str, url: str) -> str:
 
 def get_group_target_type(guests: list[dict]) -> str:
     """
-    Determines whether a group of guests is 'reserva' or 'invitacion'.
-    If at least one guest in the invitation has nivel=='reserva' or montotarjeta > 0, returns 'reserva'.
-    If all guests have no monto or 0 (and not reserva), returns 'invitacion'.
+    Determines whether a group of guests is 'reserva', 'invitacion', or 'mixta'.
+    - If there are both invitados (monto 0 and not reserva) and reservas -> 'mixta'.
+    - If all guests are reservas (monto > 0 or nivel == 'reserva') -> 'reserva'.
+    - If all guests have no monto or 0 (and not reserva) -> 'invitacion'.
     """
+    has_reserva = False
+    has_invitado = False
     for g in (guests or []):
         is_res = (str(g.get("nivel", "") or "").strip().lower() == "reserva")
         raw_monto = re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))
         has_monto = bool(raw_monto and int(raw_monto) > 0)
         if is_res or has_monto:
-            return "reserva"
+            has_reserva = True
+        else:
+            has_invitado = True
+    if has_reserva and has_invitado:
+        return "mixta"
+    if has_reserva:
+        return "reserva"
     return "invitacion"
 
 
