@@ -1647,34 +1647,82 @@
             return `${namesList.slice(0, -1).join(', ')} y ${namesList[namesList.length - 1]}`;
         }
 
-        function getActiveGuestFirstNames() {
-            const nameInputs = Array.from(document.querySelectorAll('.rsvp-guest-card input[name^="nombre_"], .rsvp-card input[name^="nombre_"]'));
-            const names = [];
-            nameInputs.forEach(input => {
-                const val = input.value.trim();
-                if (val) names.push(val);
-            });
-            return names;
-        }
-
         function updateStoryGuestNames() {
-            const currentNames = getActiveGuestFirstNames();
-            const totalGuestCards = document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]').length;
-            let formattedNames = '';
-            let count = lastValidCount;
+            const guestCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]'));
 
-            if (currentNames.length > 0) {
-                formattedNames = formatGuestNames(currentNames);
+            const allGuests = [];
+            const invGuests = [];
+            const resGuests = [];
+
+            guestCards.forEach(card => {
+                const nInput = card.querySelector('input[name^="nombre_"]');
+                const aInput = card.querySelector('input[name^="apellido_"]');
+                const nombreVal = (nInput ? nInput.value.trim() : '') || (aInput ? aInput.value.trim() : '');
+
+                const nivel = (card.getAttribute('data-nivel') || '').trim().toLowerCase();
+                const rawMonto = (card.getAttribute('data-monto') || '').replace(/[^\d]/g, '');
+                const monto = parseInt(rawMonto, 10) || 0;
+                const isReserva = (nivel === 'reserva' || monto > 0);
+
+                const item = { nombre: nombreVal, isReserva: isReserva };
+                allGuests.push(item);
+                if (isReserva) {
+                    resGuests.push(item);
+                } else {
+                    invGuests.push(item);
+                }
+            });
+
+            function formatSubgroup(subgroupList) {
+                if (!subgroupList || subgroupList.length === 0) return '';
+                const named = subgroupList
+                    .map(g => g.nombre)
+                    .filter(n => n && n.toLowerCase() !== 'invitado');
+                const unnamedCount = subgroupList.length - named.length;
+                if (named.length === 0) {
+                    return unnamedCount <= 1 ? 'Acompañante' : 'Acompañantes';
+                }
+                const items = [...named];
+                if (unnamedCount === 1) items.push('Acompañante');
+                else if (unnamedCount > 1) items.push('Acompañantes');
+                return formatGuestNames(items);
+            }
+
+            // 1. All guest names ({name})
+            const allNamed = allGuests.map(g => g.nombre).filter(Boolean);
+            let formattedNames = '';
+            let count = guestCards.length || lastValidCount || 1;
+
+            if (allNamed.length > 0) {
+                formattedNames = formatGuestNames(allNamed);
                 lastValidGroupNames = formattedNames;
-                count = Math.max(currentNames.length, totalGuestCards || 1);
                 lastValidCount = count;
-            } else if (totalGuestCards > 0) {
-                count = totalGuestCards;
+            } else if (guestCards.length > 0) {
+                formattedNames = lastValidGroupNames || initialGroupNames || 'Familia / Pareja';
                 lastValidCount = count;
-                formattedNames = lastValidGroupNames || '';
             } else {
-                formattedNames = lastValidGroupNames || '';
+                formattedNames = lastValidGroupNames || initialGroupNames || 'Familia / Pareja';
                 count = lastValidCount || 1;
+            }
+
+            // 2. Invitados names ({inv}) and count
+            let currentInvNames = '';
+            let currentInvCount = initialInvCount;
+            if (invGuests.length > 0) {
+                currentInvNames = formatSubgroup(invGuests);
+                currentInvCount = invGuests.length;
+            } else if (initialInvNames) {
+                currentInvNames = initialInvNames;
+            }
+
+            // 3. Reservas names ({res}) and count
+            let currentResNames = '';
+            let currentResCount = initialResCount;
+            if (resGuests.length > 0) {
+                currentResNames = formatSubgroup(resGuests);
+                currentResCount = resGuests.length;
+            } else if (initialResNames) {
+                currentResNames = initialResNames;
             }
 
             // Retrieve price for the first guest in the invitation
@@ -1739,14 +1787,14 @@
                 const hasSingPlur = /\(([^|()]*)\|([^|()]*)\)/.test(raw) || /\{([^|{}]*)\|([^|{}]*)\}/.test(raw);
                 if (hasNamesVar || hasInvVar || hasResVar || hasValueVar || hasTargetPlur || hasSingPlur) {
                     let text = raw;
-                    if (hasNamesVar && formattedNames) {
-                        text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, () => formattedNames);
+                    if (hasNamesVar) {
+                        text = text.replace(/\{(?:name|names|nombre|nombres)\}/gi, () => (formattedNames || ''));
                     }
-                    if (hasInvVar && initialInvNames) {
-                        text = text.replace(/\{(?:inv|invitado|invitados)\}/gi, () => initialInvNames);
+                    if (hasInvVar) {
+                        text = text.replace(/\{(?:inv|invitado|invitados)\}/gi, () => (currentInvNames || ''));
                     }
-                    if (hasResVar && initialResNames) {
-                        text = text.replace(/\{(?:res|reserva|reservas)\}/gi, () => initialResNames);
+                    if (hasResVar) {
+                        text = text.replace(/\{(?:res|reserva|reservas)\}/gi, () => (currentResNames || ''));
                     }
                     if (hasValueVar) {
                         text = text.replace(/(\$\s*)?\{(?:value|valor|precio|monto)\}/gi, () => (cardValue || ''));
@@ -1756,9 +1804,9 @@
                             const tid = targetId.toLowerCase();
                             let c = count;
                             if (tid === 'i' || tid === 'inv' || tid === 'invitado' || tid === 'invitados' || tid === 'invitacion') {
-                                c = initialInvCount;
+                                c = currentInvCount;
                             } else if (tid === 'r' || tid === 'res' || tid === 'reserva' || tid === 'reservas') {
-                                c = initialResCount;
+                                c = currentResCount;
                             }
                             if (c === 0) {
                                 return zero !== undefined ? zero : '';
