@@ -1422,6 +1422,24 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(ctx_mixta["res_names"], "María")
                 self.assertEqual(ctx_mixta["card_value"], "$100.000")
 
+            # Test multiple targets in a single slide: ["reserva", "mixta"] and synonym ["invitados", "mixta"]
+            test_multi_slides = [
+                {"id": "slide_both", "target": ["reserva", "mixta"], "enabled": True},
+                {"id": "slide_inv_syn", "target": ["invitados"], "enabled": True},
+            ]
+            with patch("app.load_slides", return_value=test_multi_slides):
+                with patch("app.table.get_by_invitacion", return_value=mixed_guests):
+                    ctx = get_guest_context("slug_mix")
+                    slide_ids = [s["id"] for s in ctx["active_slides"]]
+                    self.assertIn("slide_both", slide_ids)
+                    self.assertNotIn("slide_inv_syn", slide_ids)
+
+                with patch("app.table.get_by_invitacion", return_value=[{"id": "1", "nivel": "Invitado", "montotarjeta": ""}]):
+                    ctx_inv = get_guest_context("slug_inv")
+                    slide_ids = [s["id"] for s in ctx_inv["active_slides"]]
+                    self.assertIn("slide_inv_syn", slide_ids)
+                    self.assertNotIn("slide_both", slide_ids)
+
 
     def test_clean_token_route_without_i(self):
         code = compute_check_code("familia_clean")

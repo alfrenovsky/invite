@@ -3663,16 +3663,16 @@
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">Mostrar para:</span>
                                         <div class="slide-target-group">
-                                            <button type="button" class="btn-target-opt active" data-target="all" onclick="setSlideTarget('all')" title="Visible para todos">
-                                                <span>🌐 Para todos</span>
+                                            <button type="button" class="btn-target-opt active" data-target="all" onclick="toggleSlideTarget('all')" title="Visible para todos (habilita los 3)">
+                                                <span>🌐 Todos</span>
                                             </button>
-                                            <button type="button" class="btn-target-opt" data-target="invitacion" onclick="setSlideTarget('invitacion')" title="Visible solo para tarjetas de Invitación">
-                                                <span>💌 Solo invitados</span>
+                                            <button type="button" class="btn-target-opt" data-target="invitacion" onclick="toggleSlideTarget('invitacion')" title="Visible para tarjetas de Invitación">
+                                                <span>💌 Invitados</span>
                                             </button>
-                                            <button type="button" class="btn-target-opt" data-target="reserva" onclick="setSlideTarget('reserva')" title="Visible solo para tarjetas con Reserva">
+                                            <button type="button" class="btn-target-opt" data-target="reserva" onclick="toggleSlideTarget('reserva')" title="Visible para tarjetas con Reserva">
                                                 <span>💳 Reserva</span>
                                             </button>
-                                            <button type="button" class="btn-target-opt" data-target="mixta" onclick="setSlideTarget('mixta')" title="Visible solo para tarjetas Mixtas (invitado + reserva)">
+                                            <button type="button" class="btn-target-opt" data-target="mixta" onclick="toggleSlideTarget('mixta')" title="Visible para tarjetas Mixtas (invitado + reserva)">
                                                 <span>🔀 Mixta</span>
                                             </button>
                                         </div>
@@ -5567,23 +5567,35 @@
                     chip.appendChild(hiddenIcon);
                 }
 
-                if (slide.target === 'reserva') {
-                    const resBadge = document.createElement('span');
-                    resBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
-                    resBadge.textContent = '💳';
-                    resBadge.title = 'Visible solo para tarjetas con Reserva';
-                    chip.appendChild(resBadge);
-                } else if (slide.target === 'invitacion') {
+                let targetList = [];
+                if (!slide.target || slide.target === 'all') {
+                    // 'all' has no special badges
+                } else if (Array.isArray(slide.target)) {
+                    targetList = slide.target.map(t => (t === 'invitados' ? 'invitacion' : t));
+                } else if (typeof slide.target === 'string') {
+                    const norm = (slide.target === 'invitados' ? 'invitacion' : slide.target);
+                    targetList = [norm];
+                }
+
+                if (targetList.includes('invitacion')) {
                     const invBadge = document.createElement('span');
                     invBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
                     invBadge.textContent = '💌';
-                    invBadge.title = 'Visible solo para tarjetas de Invitación';
+                    invBadge.title = 'Visible para tarjetas de Invitación';
                     chip.appendChild(invBadge);
-                } else if (slide.target === 'mixta') {
+                }
+                if (targetList.includes('reserva')) {
+                    const resBadge = document.createElement('span');
+                    resBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
+                    resBadge.textContent = '💳';
+                    resBadge.title = 'Visible para tarjetas con Reserva';
+                    chip.appendChild(resBadge);
+                }
+                if (targetList.includes('mixta')) {
                     const mixBadge = document.createElement('span');
                     mixBadge.style.cssText = 'font-size: 0.70rem; line-height: 1; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 4px; padding: 1px 3px; margin-left: 2px; font-weight: 600;';
                     mixBadge.textContent = '🔀';
-                    mixBadge.title = 'Visible solo para tarjetas Mixtas (invitado + reserva)';
+                    mixBadge.title = 'Visible para tarjetas Mixtas (invitado + reserva)';
                     chip.appendChild(mixBadge);
                 }
 
@@ -5617,23 +5629,93 @@
             updateDirtySlideChipsUI();
         }
 
-        function setSlideTarget(target) {
+        function toggleSlideTarget(opt) {
             const slide = getCurrentSlide();
             if (!slide) return;
-            slide.target = target;
-            updateSlideTargetUI(target);
+
+            const allOpts = ['invitacion', 'reserva', 'mixta'];
+            let current = slide.target;
+
+            // Normalize current into a Set of specific targets
+            let active = new Set();
+            if (!current || current === 'all') {
+                allOpts.forEach(o => active.add(o));
+            } else if (Array.isArray(current)) {
+                current.forEach(o => {
+                    const norm = (o === 'invitados' ? 'invitacion' : o);
+                    if (allOpts.includes(norm)) active.add(norm);
+                });
+            } else if (typeof current === 'string') {
+                const norm = (current === 'invitados' ? 'invitacion' : current);
+                if (allOpts.includes(norm)) active.add(norm);
+            }
+
+            if (opt === 'all') {
+                // Clicking "Todos" enables all 3
+                active = new Set(allOpts);
+            } else {
+                if (!current || current === 'all') {
+                    active = new Set([opt]);
+                } else {
+                    if (active.has(opt)) {
+                        active.delete(opt);
+                        if (active.size === 0) {
+                            active = new Set(allOpts);
+                        }
+                    } else {
+                        active.add(opt);
+                    }
+                }
+            }
+
+            if (active.size === allOpts.length) {
+                slide.target = 'all';
+            } else if (active.size === 1) {
+                slide.target = Array.from(active)[0];
+            } else {
+                slide.target = Array.from(active);
+            }
+
+            updateSlideTargetUI(slide.target);
             renderSlideChips();
             updateDirtySlideChipsUI();
             updateLivePreview();
         }
 
+        window.setSlideTarget = toggleSlideTarget;
+
         function updateSlideTargetUI(target) {
-            const val = target || 'all';
+            const allOpts = ['invitacion', 'reserva', 'mixta'];
+            let active = new Set();
+            if (!target || target === 'all') {
+                allOpts.forEach(o => active.add(o));
+                active.add('all');
+            } else if (Array.isArray(target)) {
+                target.forEach(o => {
+                    const norm = (o === 'invitados' ? 'invitacion' : o);
+                    if (allOpts.includes(norm)) active.add(norm);
+                });
+                if (active.size === allOpts.length) {
+                    active.add('all');
+                }
+            } else if (typeof target === 'string') {
+                const norm = (target === 'invitados' ? 'invitacion' : target);
+                if (norm === 'all') {
+                    allOpts.forEach(o => active.add(o));
+                    active.add('all');
+                } else if (allOpts.includes(norm)) {
+                    active.add(norm);
+                }
+            }
+
             document.querySelectorAll('.btn-target-opt').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-target') === val);
+                const opt = btn.getAttribute('data-target');
+                btn.classList.toggle('active', active.has(opt));
             });
             const targetSelect = document.getElementById('slideTargetSelect');
-            if (targetSelect) targetSelect.value = val;
+            if (targetSelect) {
+                targetSelect.value = (active.has('all') ? 'all' : Array.from(active).join(','));
+            }
         }
 
         function selectSlide(slideId) {

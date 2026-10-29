@@ -673,11 +673,15 @@ def get_guest_context(validated_slug):
         if not s.get("enabled", True):
             continue
         target = s.get("target") or s.get("target_audience") or "all"
-        if isinstance(target, list):
-            if group_type not in target and "all" not in target:
+        if target == "all":
+            pass
+        elif isinstance(target, list):
+            norm_targets = [("invitacion" if t in ("invitados", "invitacion") else t) for t in target]
+            if "all" not in norm_targets and group_type not in norm_targets:
                 continue
         elif isinstance(target, str):
-            if target != "all" and target != group_type:
+            norm_target = "invitacion" if target in ("invitados", "invitacion") else target
+            if norm_target != "all" and norm_target != group_type:
                 continue
         filtered_slides.append(s)
 
