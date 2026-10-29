@@ -8193,12 +8193,12 @@
                                 <div class="rsvp-payment-card" style="margin-top: 0; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 5px;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 3px; margin-bottom: 0;">
                                         <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">Tarjeta de la fiesta</span>
-                                        ${(el.alias_cbu) ? `<span style="font-size: 0.70rem; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 2px 7px; color: #fff;">📋 ${escapeHtml(el.alias_cbu)}</span>` : ''}
                                     </div>
                                     <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #34d399; font-weight: 700;">
-                                        <span>Total a transferir</span>
+                                        <span>Total</span>
                                         <span>$50.000</span>
                                     </div>
+                                    ${(el.alias_cbu) ? `<div style="display: flex; justify-content: center; width: 100%; margin-top: 3px;"><span style="font-size: 0.72rem; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 3px 10px; color: #fff; display: inline-flex; align-items: center; gap: 4px;">📋 Transferir a ${escapeHtml(el.alias_cbu)}</span></div>` : ''}
                                 </div>
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.72em; color: #68d391; margin-top: 8px; font-family: 'Montserrat', sans-serif;">
                                     <span>✓ Respuestas guardadas</span>

@@ -1133,7 +1133,7 @@
         const breakdownEl = document.getElementById('paymentBreakdown');
         if (!paymentSection || !breakdownEl) return;
 
-        const aliasBadge = paymentSection.querySelector('.payment-alias-badge');
+        const aliasBadge = paymentSection.querySelector('.payment-alias-center-row') || paymentSection.querySelector('.payment-alias-badge');
         const uploadWrapper = document.getElementById('rsvpUploadWrapper');
 
         const wasHidden = (paymentSection.style.display === 'none' || !paymentSection.offsetParent);
@@ -1226,7 +1226,7 @@
         });
         rowsHtml += `
             <div class="payment-total-row">
-                <span>Total a transferir</span>
+                <span>Total</span>
                 <span>${formatCurrency(unpaidTotal)}</span>
             </div>
         `;

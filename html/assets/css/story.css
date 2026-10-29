@@ -1793,22 +1793,33 @@
             margin: 0;
         }
 
+        .payment-alias-center-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 6px;
+            margin-bottom: 2px;
+        }
+
         .payment-alias-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: 6px;
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px;
-            padding: 2px 8px;
+            padding: 4px 12px;
             color: #ffffff;
             font-family: inherit;
-            font-size: 0.72rem;
+            font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            max-width: 100%;
         }
 
         .payment-alias-badge:hover {
@@ -1822,7 +1833,7 @@
         }
 
         .payment-alias-icon {
-            font-size: 0.76rem;
+            font-size: 0.82rem;
             line-height: 1;
         }
 
