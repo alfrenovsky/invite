@@ -1609,6 +1609,115 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res_refresh.status_code, 200)
                 self.assertTrue(res_refresh.get_json()["ok"])
 
+    def test_panel_designs_save_load_delete_and_asset_protection(self):
+        from app import app, is_font_in_use, get_designs_dir
+        import shutil
+
+        test_designs_dir = "/tmp/test_designs_unittest"
+        if os.path.exists(test_designs_dir):
+            shutil.rmtree(test_designs_dir)
+        os.makedirs(test_designs_dir, exist_ok=True)
+
+        auth_headers = get_panel_auth_headers("ari", "gato")
+
+        with patch("app.get_designs_dir", return_value=test_designs_dir), \
+             patch("app.rebuild_slides_crops", return_value=None):
+            with app.test_client() as client:
+                # 1. Unauthenticated requests must return 401
+                self.assertEqual(client.get("/panel/designs").status_code, 401)
+                self.assertEqual(client.post("/panel/designs/save", json={"name": "A"}).status_code, 401)
+                self.assertEqual(client.post("/panel/designs/load", json={"slug": "a"}).status_code, 401)
+                self.assertEqual(client.post("/panel/designs/delete", json={"slug": "a"}).status_code, 401)
+
+                # 2. Initially empty designs list
+                res_list = client.get("/panel/designs", headers=auth_headers)
+                self.assertEqual(res_list.status_code, 200)
+                self.assertEqual(res_list.get_json()["designs"], [])
+
+                # 3. Save a new design
+                sample_slides = [
+                    {
+                        "id": "portada_test",
+                        "title": "Portada",
+                        "background": "test_bg_saved.jpeg",
+                        "elements": [
+                            {"id": "el1", "type": "text", "content": "Hola", "fontFamily": "SavedFontSpecial"}
+                        ]
+                    }
+                ]
+                sample_styles = {
+                    "desktop_background": "desktop_test_saved.jpeg",
+                    "title": {"fontFamily": "TitleFontSpecial", "fontSize": 40}
+                }
+
+                res_save = client.post(
+                    "/panel/designs/save",
+                    headers=auth_headers,
+                    json={
+                        "name": "Diseño Vintage Floral",
+                        "slides": sample_slides,
+                        "styles": sample_styles,
+                    }
+                )
+                self.assertEqual(res_save.status_code, 200)
+                save_data = res_save.get_json()
+                self.assertTrue(save_data["ok"])
+                self.assertEqual(save_data["design"]["slug"], "diseno_vintage_floral")
+                self.assertEqual(save_data["active_design"]["slug"], "diseno_vintage_floral")
+
+                # Verify file was written
+                saved_file = os.path.join(test_designs_dir, "diseno_vintage_floral.json")
+                self.assertTrue(os.path.isfile(saved_file))
+
+                # 4. List designs contains the newly saved design
+                res_list2 = client.get("/panel/designs", headers=auth_headers)
+                self.assertEqual(res_list2.status_code, 200)
+                designs = res_list2.get_json()["designs"]
+                self.assertEqual(len(designs), 1)
+                self.assertEqual(designs[0]["name"], "Diseño Vintage Floral")
+
+                # 5. Asset protection: font in saved design is marked in use
+                self.assertTrue(is_font_in_use("SavedFontSpecial", styles={}, slides=[]))
+                self.assertTrue(is_font_in_use("TitleFontSpecial", styles={}, slides=[]))
+                self.assertFalse(is_font_in_use("FontNotInAnyDesign", styles={}, slides=[]))
+
+                # Background protection: deleting a background used in saved design is blocked
+                with patch("app.load_slides", return_value=[]), \
+                     patch("app.load_styles", return_value={}):
+                    res_del_bg = client.post(
+                        "/panel/delete-background",
+                        headers=auth_headers,
+                        json={"filename": "test_bg_saved.jpeg"}
+                    )
+                    self.assertEqual(res_del_bg.status_code, 400)
+                    self.assertIn("en uso en el diseño guardado", res_del_bg.get_json()["error"])
+
+                # 6. Load design
+                res_load = client.post(
+                    "/panel/designs/load",
+                    headers=auth_headers,
+                    json={"slug": "diseno_vintage_floral"}
+                )
+                self.assertEqual(res_load.status_code, 200)
+                load_data = res_load.get_json()
+                self.assertTrue(load_data["ok"])
+                self.assertEqual(load_data["name"], "Diseño Vintage Floral")
+
+                # 7. Delete design
+                res_del = client.post(
+                    "/panel/designs/delete",
+                    headers=auth_headers,
+                    json={"slug": "diseno_vintage_floral"}
+                )
+                self.assertEqual(res_del.status_code, 200)
+                del_data = res_del.get_json()
+                self.assertTrue(del_data["ok"])
+                self.assertEqual(del_data["active_design"]["slug"], "")
+                self.assertFalse(os.path.isfile(saved_file))
+
+        if os.path.exists(test_designs_dir):
+            shutil.rmtree(test_designs_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

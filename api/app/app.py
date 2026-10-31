@@ -6,11 +6,12 @@ import threading
 import urllib.parse
 import uuid
 import secrets
+from datetime import datetime, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect, Response
 from markupsafe import Markup, escape
 from werkzeug.utils import secure_filename
-from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type, DEFAULT_RESERVA_MONTO
+from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type, DEFAULT_RESERVA_MONTO, slugify
 import telegram_bot
 try:
     from PIL import Image, ImageOps
@@ -50,6 +51,115 @@ def get_data_dir():
 DATA_DIR = get_data_dir()
 SLIDES_JSON_PATH = os.path.join(DATA_DIR, "slides.json")
 STYLES_JSON_PATH = os.path.join(DATA_DIR, "styles.json")
+DESIGNS_DIR = os.path.join(DATA_DIR, "designs")
+
+
+def get_designs_dir():
+    candidates = [
+        os.path.join(get_data_dir(), "designs"),
+        "/data/designs",
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    target = candidates[0]
+    os.makedirs(target, exist_ok=True)
+    return target
+
+
+def slugify_design_name(name):
+    if not name:
+        return ""
+    clean = slugify(name).replace("-", "_")
+    clean = re.sub(r"[^a-zA-Z0-9_\-]", "_", clean)
+    clean = re.sub(r"_+", "_", clean).strip("_")
+    return clean or f"diseno_{int(time.time())}"
+
+
+def get_active_design():
+    active_file = os.path.join(get_designs_dir(), "_active.json")
+    if os.path.isfile(active_file):
+        try:
+            with open(active_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {"slug": "", "name": ""}
+
+
+def set_active_design(slug, name=""):
+    active_file = os.path.join(get_designs_dir(), "_active.json")
+    if not slug:
+        if os.path.isfile(active_file):
+            try:
+                os.remove(active_file)
+            except Exception:
+                pass
+        return {"slug": "", "name": ""}
+    data = {"slug": slug, "name": name or slug}
+    try:
+        with open(active_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+    return data
+
+
+def list_designs():
+    designs_dir = get_designs_dir()
+    if not os.path.exists(designs_dir):
+        return []
+    results = []
+    try:
+        for fname in sorted(os.listdir(designs_dir)):
+            if fname.startswith("_") or not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(designs_dir, fname)
+            if not os.path.isfile(fpath):
+                continue
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                    slug = os.path.splitext(fname)[0]
+                    name = d.get("name") or slug
+                    updated_at = d.get("updated_at") or ""
+                    slides_count = len(d.get("slides") or [])
+                    results.append({
+                        "slug": slug,
+                        "name": name,
+                        "updated_at": updated_at,
+                        "slides_count": slides_count,
+                    })
+            except Exception:
+                continue
+    except Exception:
+        pass
+    results.sort(key=lambda x: str(x["name"]).lower())
+    return results
+
+
+def load_all_saved_designs_data():
+    designs_dir = get_designs_dir()
+    if not os.path.exists(designs_dir):
+        return []
+    all_designs = []
+    try:
+        for fname in os.listdir(designs_dir):
+            if fname.startswith("_") or not fname.endswith(".json"):
+                continue
+            fpath = os.path.join(designs_dir, fname)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                    if isinstance(d, dict):
+                        all_designs.append(d)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return all_designs
 
 SLIDES_CONFIG_DEFAULT = [
     {
@@ -249,7 +359,7 @@ def save_styles(styles_dict):
 SYSTEM_REQUIRED_FONTS = {"aveny-t", "aveny-t-medium", "aveny t"}
 
 
-def is_font_in_use(family, styles=None, slides=None):
+def is_font_in_use(family, styles=None, slides=None, include_designs=True):
     if not family:
         return False
     fam_norm = family.strip().lower()
@@ -270,6 +380,21 @@ def is_font_in_use(family, styles=None, slides=None):
                 el_ff = (el.get("fontFamily") or el.get("font") or "").strip().lower()
                 if el_ff == fam_norm:
                     return True
+    if include_designs:
+        for design in load_all_saved_designs_data():
+            d_styles = design.get("styles") or {}
+            for s_val in d_styles.values():
+                if isinstance(s_val, dict):
+                    ff = (s_val.get("fontFamily") or "").strip().lower()
+                    if ff == fam_norm:
+                        return True
+            d_slides = design.get("slides") or []
+            for slide in d_slides:
+                for el in slide.get("elements", []):
+                    if isinstance(el, dict):
+                        el_ff = (el.get("fontFamily") or el.get("font") or "").strip().lower()
+                        if el_ff == fam_norm:
+                            return True
     return False
 
 
@@ -630,6 +755,32 @@ def crop_slide_image(slide_id, bg_filename, bg_x=0.0, bg_y=0.0, bg_zoom=100.0, q
     except Exception as e:
         print(f"Error cropping slide image '{slide_id}': {e}")
         return False
+
+
+def rebuild_slides_crops(slides_list):
+    bg_dir = get_backgrounds_dir()
+    temp_dir = os.path.join(bg_dir, "temp")
+    if os.path.exists(temp_dir):
+        try:
+            for f in os.listdir(temp_dir):
+                if f.endswith(".webp"):
+                    try:
+                        os.remove(os.path.join(temp_dir, f))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+    for s in (slides_list or []):
+        sid = s.get("id")
+        bg = (s.get("background") or "").strip()
+        if sid and bg and not bg.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) and not bg.startswith("/"):
+            crop_slide_image(
+                sid,
+                bg,
+                bg_x=s.get("bg_x", 0.0),
+                bg_y=s.get("bg_y", 0.0),
+                bg_zoom=s.get("bg_zoom", 100.0),
+            )
 
 
 def resolve_invitation_slide(slide):
@@ -1066,6 +1217,13 @@ def panel_view():
     desktop_bg = (styles.get("desktop_background") or "").strip()
     if desktop_bg:
         used_backgrounds.add(desktop_bg)
+    for design in load_all_saved_designs_data():
+        for s in (design.get("slides") or []):
+            if s.get("background"):
+                used_backgrounds.add(s.get("background"))
+        d_bg = (design.get("styles", {}).get("desktop_background") or "").strip()
+        if d_bg:
+            used_backgrounds.add(d_bg)
 
     default_monto_raw = DEFAULT_RESERVA_MONTO
     try:
@@ -1081,6 +1239,9 @@ def panel_view():
     default_card_num = int(clean_digits) if clean_digits else 105000
     default_card_value = format_currency_ar(default_card_num) or "$105.000"
 
+    designs = list_designs()
+    active_design = get_active_design()
+
     return render_template(
         "panel.html",
         slides=slides,
@@ -1088,6 +1249,8 @@ def panel_view():
         styles=styles,
         fonts=all_fonts,
         used_backgrounds=used_backgrounds,
+        designs=designs,
+        active_design=active_design,
         default_card_value=default_card_value,
         default_card_num=default_card_num,
     )
@@ -1443,6 +1606,150 @@ def panel_upload_slides():
     return jsonify({"ok": True, "slides": saved, "message": "slides.json importado correctamente"})
 
 
+@app.get("/panel/designs")
+@require_panel_auth
+def panel_list_designs():
+    return jsonify({
+        "ok": True,
+        "designs": list_designs(),
+        "active_design": get_active_design(),
+    })
+
+
+@app.post("/panel/designs/save")
+@require_panel_auth
+def panel_save_design():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not data or not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+
+    raw_name = str(data.get("name", "")).strip()
+    if not raw_name:
+        return jsonify({"ok": False, "error": "Nombre del diseño requerido"}), 400
+
+    slug = slugify_design_name(raw_name)
+    if not slug:
+        return jsonify({"ok": False, "error": "Nombre del diseño inválido"}), 400
+
+    slides = data.get("slides")
+    if slides is None or not isinstance(slides, list):
+        slides = load_slides()
+
+    styles = data.get("styles")
+    if styles is None or not isinstance(styles, dict):
+        styles = load_styles()
+
+    designs_dir = get_designs_dir()
+    os.makedirs(designs_dir, exist_ok=True)
+    design_record = {
+        "name": raw_name,
+        "slug": slug,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "slides": slides,
+        "styles": styles,
+    }
+
+    fpath = os.path.join(designs_dir, f"{slug}.json")
+    with open(fpath, "w", encoding="utf-8") as f:
+        json.dump(design_record, f, indent=2, ensure_ascii=False)
+
+    save_slides(slides)
+    save_styles(styles)
+    rebuild_slides_crops(slides)
+    active = set_active_design(slug, raw_name)
+
+    return jsonify({
+        "ok": True,
+        "design": {
+            "slug": slug,
+            "name": raw_name,
+            "updated_at": design_record["updated_at"],
+            "slides_count": len(slides),
+        },
+        "designs": list_designs(),
+        "active_design": active,
+        "message": f"Diseño '{raw_name}' guardado correctamente",
+    })
+
+
+@app.post("/panel/designs/load")
+@require_panel_auth
+def panel_load_design():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not data or not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+
+    slug = str(data.get("slug", "")).strip()
+    if not slug:
+        return jsonify({"ok": False, "error": "Identificador de diseño requerido"}), 400
+
+    designs_dir = get_designs_dir()
+    fpath = os.path.join(designs_dir, f"{slug}.json")
+    if not os.path.isfile(fpath):
+        return jsonify({"ok": False, "error": f"El diseño '{slug}' no existe"}), 404
+
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            design_record = json.load(f)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Error leyendo diseño: {str(e)}"}), 500
+
+    slides = design_record.get("slides") or []
+    styles = design_record.get("styles") or {}
+    name = design_record.get("name") or slug
+
+    save_slides(slides)
+    save_styles(styles)
+    rebuild_slides_crops(slides)
+    active = set_active_design(slug, name)
+
+    return jsonify({
+        "ok": True,
+        "slug": slug,
+        "name": name,
+        "slides": load_slides(),
+        "styles": load_styles(),
+        "designs": list_designs(),
+        "active_design": active,
+        "message": f"Diseño '{name}' activado correctamente",
+    })
+
+
+@app.post("/panel/designs/delete")
+@require_panel_auth
+def panel_delete_design():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not data or not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+
+    slug = str(data.get("slug", "")).strip()
+    if not slug:
+        return jsonify({"ok": False, "error": "Identificador de diseño requerido"}), 400
+
+    designs_dir = get_designs_dir()
+    fpath = os.path.join(designs_dir, f"{slug}.json")
+    if not os.path.isfile(fpath):
+        return jsonify({"ok": False, "error": f"El diseño '{slug}' no existe"}), 404
+
+    try:
+        os.remove(fpath)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Error eliminando diseño: {str(e)}"}), 500
+
+    active = get_active_design()
+    if active.get("slug") == slug:
+        set_active_design("")
+        active = {"slug": "", "name": ""}
+
+    return jsonify({
+        "ok": True,
+        "deleted_slug": slug,
+        "designs": list_designs(),
+        "active_design": active,
+        "message": "Diseño eliminado correctamente",
+    })
+
+
 @app.post("/panel/upload-background")
 @require_panel_auth
 def panel_upload_background():
@@ -1726,6 +2033,30 @@ def panel_rename_background():
             styles["desktop_background"] = sanitized_new_name
             save_styles(styles)
 
+        # Update any saved design that was using old_name
+        designs_dir = get_designs_dir()
+        if os.path.exists(designs_dir):
+            for fname in os.listdir(designs_dir):
+                if fname.startswith("_") or not fname.endswith(".json"):
+                    continue
+                fpath = os.path.join(designs_dir, fname)
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        d = json.load(f)
+                    mod = False
+                    for s in (d.get("slides") or []):
+                        if s.get("background") == old_name:
+                            s["background"] = sanitized_new_name
+                            mod = True
+                    if d.get("styles", {}).get("desktop_background") == old_name:
+                        d["styles"]["desktop_background"] = sanitized_new_name
+                        mod = True
+                    if mod:
+                        with open(fpath, "w", encoding="utf-8") as f:
+                            json.dump(d, f, indent=2, ensure_ascii=False)
+                except Exception:
+                    pass
+
     return jsonify({
         "ok": True,
         "old_name": old_name,
@@ -1781,6 +2112,20 @@ def panel_delete_background():
             "ok": False,
             "error": f"No se puede eliminar '{filename}' porque está en uso como Fondo Principal para PC"
         }), 400
+
+    for design in load_all_saved_designs_data():
+        d_name = design.get("name") or "un diseño guardado"
+        for s in (design.get("slides") or []):
+            if s.get("background") == filename:
+                return jsonify({
+                    "ok": False,
+                    "error": f"No se puede eliminar '{filename}' porque está en uso en el diseño guardado '{d_name}'"
+                }), 400
+        if design.get("styles", {}).get("desktop_background") == filename:
+            return jsonify({
+                "ok": False,
+                "error": f"No se puede eliminar '{filename}' porque está en uso como Fondo de PC en el diseño '{d_name}'"
+            }), 400
 
     bg_dir = get_backgrounds_dir()
     file_path = os.path.join(bg_dir, filename)

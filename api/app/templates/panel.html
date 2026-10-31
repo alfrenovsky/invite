@@ -3608,6 +3608,37 @@
                                     </button>
                                 </div>
                             </div>
+                            <!-- Designs / Versions Bar -->
+                            <div class="designs-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 6px 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 240px;">
+                                    <span style="font-size: 0.76rem; font-weight: 700; color: #d4af37; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">🎨 Diseño:</span>
+                                    <select id="designPresetSelect" class="form-select" style="flex: 1; min-width: 150px; height: 30px; padding: 3px 8px; font-size: 0.80rem;" onchange="onDesignSelectChanged(this.value)">
+                                        <option value="">(Sin guardar como diseño / Actual)</option>
+                                        {% for d in designs %}
+                                        <option value="{{ d.slug }}" {% if active_design and active_design.slug == d.slug %}selected{% endif %}>
+                                            {{ d.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span id="activeDesignBadge" style="display: inline-flex; align-items: center; font-size: 0.70rem; padding: 2px 6px; border-radius: 4px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3); white-space: nowrap; {% if not active_design or not active_design.slug %}display: none;{% endif %}">
+                                        Activo: <strong id="activeDesignNameBadge" style="margin-left: 4px;">{{ active_design.name if active_design else '' }}</strong>
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <button type="button" class="btn-ctrl" id="btnLoadDesign" onclick="loadSelectedDesign()" title="Activar el diseño seleccionado en toda la aplicación" style="height: 30px; padding: 0 9px; font-size: 0.76rem; border-color: rgba(212, 175, 55, 0.4); color: #d4af37;">
+                                        <span>⚡ Activar</span>
+                                    </button>
+                                    <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnSaveDesign" onclick="saveCurrentDesign()" title="Guardar cambios sobre el diseño activo" style="height: 30px; padding: 0 9px; font-size: 0.76rem;">
+                                        <span>💾 Guardar</span>
+                                    </button>
+                                    <button type="button" class="btn-ctrl" id="btnSaveDesignAs" onclick="openSaveDesignModal()" title="Guardar diseño actual con un nuevo nombre" style="height: 30px; padding: 0 9px; font-size: 0.76rem;">
+                                        <span>➕ Guardar Como...</span>
+                                    </button>
+                                    <button type="button" class="btn-ctrl btn-ctrl-danger" id="btnDeleteDesign" onclick="deleteSelectedDesign()" title="Eliminar diseño seleccionado" style="height: 30px; padding: 0 8px; font-size: 0.76rem;">
+                                        <span>🗑️</span>
+                                    </button>
+                                </div>
+                            </div>
                             <div class="slides-chips-row">
                                 <div class="slides-chips-container" id="slidesChipsContainer">
                                     <!-- Populated dynamically by JS -->
@@ -4546,6 +4577,23 @@
         </div>
     </div>
 
+    <!-- Modal: Guardar Versión / Diseño -->
+    <div id="saveDesignModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <h3 class="section-title" style="margin-bottom: 16px;">
+                <span>🎨 Guardar Versión / Diseño</span>
+            </h3>
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label for="newDesignName">Nombre del Diseño (ej. Minimalista, Floral Rosa, Oscuro)</label>
+                <input type="text" class="form-input" id="newDesignName" placeholder="ej. Opción Floral B" spellcheck="false" autocomplete="off" onkeydown="if(event.key==='Enter') confirmSaveDesignAs();">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-ctrl" onclick="closeSaveDesignModal()">Cancelar</button>
+                <button type="button" class="btn-ctrl btn-ctrl-primary" onclick="confirmSaveDesignAs()">Guardar Diseño</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Global Notification Toast -->
     <div class="toast-notify" id="toastNotify">
         <span id="toastMsg">Cambios guardados con éxito</span>
@@ -4557,6 +4605,8 @@
         let savedSlidesSnapshot = JSON.parse(JSON.stringify(slidesData));
         let backgroundsData = {{ backgrounds| tojson }};
         let stylesData = {{ styles| tojson if styles else '{}' }};
+        let designsData = {{ designs| tojson if designs else '[]' }};
+        let activeDesignData = {{ active_design| tojson if active_design else '{"slug":"","name":""}' }};
         let currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
         let activeStyleKey = 'title'; // 'title' | 'tag' | 'body'
 
@@ -5537,6 +5587,241 @@
                 }
             } catch (err) {
                 alert('Error al leer o cargar el archivo: ' + err.message);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // SAVED INVITATION DESIGNS & VERSIONS ENGINE
+        // -------------------------------------------------------------
+        function updateDesignsUI() {
+            const select = document.getElementById('designPresetSelect');
+            const activeBadge = document.getElementById('activeDesignBadge');
+            const activeNameBadge = document.getElementById('activeDesignNameBadge');
+
+            if (select) {
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">(Sin guardar como diseño / Actual)</option>';
+                designsData.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.slug;
+                    const isActive = activeDesignData && activeDesignData.slug === d.slug;
+                    opt.textContent = d.name + (isActive ? ' (Activo)' : '');
+                    if (d.slug === currentVal || (isActive && !currentVal)) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            }
+
+            if (activeBadge && activeNameBadge) {
+                if (activeDesignData && activeDesignData.slug) {
+                    activeNameBadge.textContent = activeDesignData.name || activeDesignData.slug;
+                    activeBadge.style.display = 'inline-flex';
+                } else {
+                    activeBadge.style.display = 'none';
+                }
+            }
+        }
+
+        function onDesignSelectChanged(slug) {
+            // Dropdown selection changed
+        }
+
+        function openSaveDesignModal() {
+            const modal = document.getElementById('saveDesignModal');
+            const input = document.getElementById('newDesignName');
+            if (input) {
+                input.value = activeDesignData && activeDesignData.name ? `${activeDesignData.name} (Copia)` : '';
+            }
+            if (modal) modal.style.display = 'flex';
+            if (input) input.focus();
+        }
+
+        function closeSaveDesignModal() {
+            const modal = document.getElementById('saveDesignModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function confirmSaveDesignAs() {
+            const input = document.getElementById('newDesignName');
+            const name = input ? input.value.trim() : '';
+            if (!name) {
+                showToast('Por favor ingresá un nombre para el diseño', true);
+                return;
+            }
+            closeSaveDesignModal();
+            await executeSaveDesign(name);
+        }
+
+        async function saveCurrentDesign() {
+            const select = document.getElementById('designPresetSelect');
+            const selectedSlug = select ? select.value : '';
+            let targetName = '';
+
+            if (activeDesignData && activeDesignData.name && (!selectedSlug || selectedSlug === activeDesignData.slug)) {
+                targetName = activeDesignData.name;
+            } else if (selectedSlug) {
+                const match = designsData.find(d => d.slug === selectedSlug);
+                targetName = match ? match.name : selectedSlug;
+            }
+
+            if (!targetName) {
+                openSaveDesignModal();
+                return;
+            }
+
+            await executeSaveDesign(targetName);
+        }
+
+        async function executeSaveDesign(name) {
+            const btn = document.getElementById('btnSaveDesign');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Guardando...</span>';
+            }
+
+            try {
+                const cleanSlides = slidesData.map(s => {
+                    const c = { ...s };
+                    delete c._origId;
+                    return c;
+                });
+
+                const res = await fetch('/panel/designs/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        slides: cleanSlides,
+                        styles: stylesData
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    designsData = data.designs || [];
+                    activeDesignData = data.active_design || { slug: data.design?.slug, name: name };
+                    savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
+
+                    updateDesignsUI();
+                    const select = document.getElementById('designPresetSelect');
+                    if (select) select.value = activeDesignData.slug;
+
+                    updateDirtySlideChipsUI();
+                    showToast(data.message || `Diseño "${name}" guardado correctamente`);
+                } else {
+                    showToast(data.error || 'Error al guardar diseño', true);
+                }
+            } catch (err) {
+                showToast('Error de red al guardar diseño', true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>💾 Guardar</span>';
+                }
+            }
+        }
+
+        async function loadSelectedDesign() {
+            const select = document.getElementById('designPresetSelect');
+            const slug = select ? select.value : '';
+            if (!slug) {
+                showToast('Seleccioná un diseño guardado en la lista para activar', true);
+                return;
+            }
+
+            const btn = document.getElementById('btnLoadDesign');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Activando...</span>';
+            }
+
+            try {
+                const res = await fetch('/panel/designs/load', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug: slug })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    slidesData = data.slides || [];
+                    stylesData = data.styles || {};
+                    designsData = data.designs || [];
+                    activeDesignData = data.active_design || { slug: slug, name: data.name };
+                    savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
+
+                    currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
+
+                    renderSlideChips();
+                    loadSlideIntoForm();
+                    renderStylesEditor();
+                    renderHeaderEditor();
+                    applyStylesToDOM(stylesData);
+                    updateDesignsUI();
+                    if (select) select.value = slug;
+
+                    updateBackgroundsInUseUI();
+                    updateFontsInUseUI();
+                    updateDirtySlideChipsUI();
+                    updateLivePreview();
+
+                    showToast(data.message || `Diseño "${data.name}" activado correctamente`);
+                } else {
+                    showToast(data.error || 'Error al activar diseño', true);
+                }
+            } catch (err) {
+                showToast('Error de red al activar diseño', true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>⚡ Activar</span>';
+                }
+            }
+        }
+
+        async function deleteSelectedDesign() {
+            const select = document.getElementById('designPresetSelect');
+            const slug = select ? select.value : '';
+            if (!slug) {
+                showToast('Seleccioná un diseño para eliminar', true);
+                return;
+            }
+
+            const match = designsData.find(d => d.slug === slug);
+            const name = match ? match.name : slug;
+
+            if (!confirm(`¿Eliminar permanentemente el diseño guardado "${name}"?`)) {
+                return;
+            }
+
+            const btn = document.getElementById('btnDeleteDesign');
+            if (btn) {
+                btn.disabled = true;
+            }
+
+            try {
+                const res = await fetch('/panel/designs/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug: slug })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    designsData = data.designs || [];
+                    activeDesignData = data.active_design || { slug: '', name: '' };
+                    updateDesignsUI();
+                    if (select) select.value = '';
+                    updateBackgroundsInUseUI();
+                    updateFontsInUseUI();
+                    showToast(data.message || `Diseño "${name}" eliminado`);
+                } else {
+                    showToast(data.error || 'Error al eliminar diseño', true);
+                }
+            } catch (err) {
+                showToast('Error de red al eliminar diseño', true);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                }
             }
         }
 
@@ -10127,6 +10412,7 @@
             renderStylesEditor();
             renderHeaderEditor();
             applyStylesToDOM(stylesData);
+            updateDesignsUI();
             updateFontsInUseUI();
             updateBackgroundsInUseUI();
             updateUndoRedoUI();
