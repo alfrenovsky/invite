@@ -1039,7 +1039,7 @@
         /* Navigation Bar */
         .panel-nav-bar {
             display: flex;
-            justify-content: flex-start;
+            justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
@@ -1057,6 +1057,7 @@
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
+            width: 100%;
         }
 
         .nav-tab {
@@ -3517,6 +3518,10 @@
             <p class="mobile-blocker-desc">
                 El editor visual está optimizado exclusivamente para computadoras de escritorio.
             </p>
+            <a href="/panel/stats" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.45); color: #d4af37; text-decoration: none; font-weight: 700; font-size: 0.9rem;">
+                <span>📊</span>
+                <span>Ver Estadísticas</span>
+            </a>
         </div>
     </div>
 
@@ -3555,6 +3560,12 @@
                             <span class="tab-label">Fuentes</span>
                             <span class="tab-badge" id="fontsNavBadge">{{ fonts|length if fonts else 0 }}</span>
                         </button>
+                        <a href="/panel/stats" class="nav-tab" id="tabBtnStats"
+                            title="Estadísticas de invitados, tarjetas y confirmaciones"
+                            style="text-decoration: none; margin-left: auto; border-color: rgba(212, 175, 55, 0.35); background: rgba(212, 175, 55, 0.1); color: var(--accent);">
+                            <span class="tab-icon">📊</span>
+                            <span class="tab-label">Stats</span>
+                        </a>
                     </div>
                 </nav>
 

@@ -1093,6 +1093,248 @@ def panel_view():
     )
 
 
+def sanitize_stats_records(raw_records):
+    clean = []
+    for r in (raw_records or []):
+        rec_id = str(r.get("id", "") or "").strip()
+        inv_id = str(r.get("invitacion_id") or r.get("invitacion") or rec_id or "").strip().lower().replace(" ", "_").replace("-", "_")
+        if not inv_id:
+            inv_id = f"guest_{rec_id}"
+
+        nombre = str(r.get("nombre", "") or "").strip()
+        apellido = str(r.get("apellido", "") or "").strip()
+        has_name = bool((nombre and nombre.lower() not in ("invitado", "acompañante", "acompaniante")) or apellido)
+
+        dq = str(r.get("dequien", "") or "").strip() or "Sin definir"
+        origin = dq.split()[0].capitalize() if dq and dq != "Sin definir" else "Sin definir"
+
+        is_res_level = (str(r.get("nivel", "") or "").strip().lower() == "reserva")
+        raw_monto = re.sub(r"[^\d]", "", str(r.get("montotarjeta", "") or ""))
+        has_monto = bool(raw_monto and int(raw_monto) > 0)
+        nivel = "Reserva" if (is_res_level or has_monto) else "Invitado"
+
+        conf_raw = str(r.get("confirmacion", "") or "").strip().lower()
+        if conf_raw in ("si", "sí", "confirmado"):
+            confirmacion = "si"
+        elif conf_raw in ("no", "rechazado"):
+            confirmacion = "no"
+        else:
+            confirmacion = ""
+
+        pagado_raw = str(r.get("pagado", "") or "").strip().lower()
+        pagado = bool(pagado_raw and pagado_raw not in ("no", "false", "0"))
+        comprobante = bool(str(r.get("comprobante", "") or "").strip())
+        abierto = str(r.get("abierto", "") or "").strip().lower() in ("si", "sí", "true", "1")
+
+        clean.append({
+            "id": rec_id,
+            "invitacion_id": inv_id,
+            "nombre": nombre,
+            "apellido": apellido,
+            "has_name": has_name,
+            "dequien": dq,
+            "origin": origin,
+            "tipo": str(r.get("tipo", "") or "").strip(),
+            "nivel": nivel,
+            "confirmacion": confirmacion,
+            "pagado": pagado,
+            "comprobante": comprobante,
+            "abierto": abierto,
+        })
+    return clean
+
+
+def compute_stats_summary(clean_records):
+    records = clean_records or []
+
+    def _summarize_people(recs):
+        total = len(recs)
+        with_name = sum(1 for r in recs if r["has_name"])
+        without_name = total - with_name
+        confirmados = sum(1 for r in recs if r["confirmacion"] == "si")
+        confirmados_with_name = sum(1 for r in recs if r["confirmacion"] == "si" and r["has_name"])
+        confirmados_without_name = confirmados - confirmados_with_name
+        rechazados = sum(1 for r in recs if r["confirmacion"] == "no")
+        pendientes = total - confirmados - rechazados
+        pagados = sum(1 for r in recs if r["pagado"])
+        con_comprobante = sum(1 for r in recs if r["comprobante"])
+        leidos = sum(1 for r in recs if r["abierto"])
+        return {
+            "total": total,
+            "with_name": with_name,
+            "without_name": without_name,
+            "confirmados": confirmados,
+            "confirmados_with_name": confirmados_with_name,
+            "confirmados_without_name": confirmados_without_name,
+            "rechazados": rechazados,
+            "pendientes": pendientes,
+            "pagados": pagados,
+            "con_comprobante": con_comprobante,
+            "leidos": leidos,
+        }
+
+    inv_records = [r for r in records if r["nivel"] == "Invitado"]
+    res_records = [r for r in records if r["nivel"] == "Reserva"]
+
+    groups = {}
+    for r in records:
+        groups.setdefault(r["invitacion_id"], []).append(r)
+
+    def _summarize_cards(card_groups):
+        total = len(card_groups)
+        leidas = 0
+        no_leidas = 0
+        with_all_names = 0
+        with_unnamed = 0
+        confirmadas_completas = 0
+        confirmadas_parciales = 0
+        con_confirmados = 0
+        rechazadas_completas = 0
+        pendientes_completas = 0
+        pagadas_completas = 0
+        pagadas_parciales = 0
+        con_comprobante = 0
+
+        for g in card_groups:
+            g_tot = len(g)
+            if any(r["abierto"] for r in g):
+                leidas += 1
+            else:
+                no_leidas += 1
+
+            if all(r["has_name"] for r in g):
+                with_all_names += 1
+            else:
+                with_unnamed += 1
+
+            g_si = sum(1 for r in g if r["confirmacion"] == "si")
+            g_no = sum(1 for r in g if r["confirmacion"] == "no")
+            g_pend = g_tot - g_si - g_no
+
+            if g_si > 0:
+                con_confirmados += 1
+
+            if g_si == g_tot:
+                confirmadas_completas += 1
+            elif g_no == g_tot:
+                rechazadas_completas += 1
+            elif g_pend == g_tot:
+                pendientes_completas += 1
+            else:
+                confirmadas_parciales += 1
+
+            if any(r["comprobante"] for r in g):
+                con_comprobante += 1
+
+            attending = [r for r in g if r["confirmacion"] == "si"]
+            target = attending if attending else [r for r in g if r["confirmacion"] != "no"]
+            if target:
+                paid_cnt = sum(1 for r in target if r["pagado"])
+                if paid_cnt == len(target) and paid_cnt > 0:
+                    pagadas_completas += 1
+                elif paid_cnt > 0:
+                    pagadas_parciales += 1
+
+        return {
+            "total": total,
+            "leidas": leidas,
+            "no_leidas": no_leidas,
+            "with_all_names": with_all_names,
+            "with_unnamed": with_unnamed,
+            "confirmadas_completas": confirmadas_completas,
+            "confirmadas_parciales": confirmadas_parciales,
+            "con_confirmados": con_confirmados,
+            "rechazadas_completas": rechazadas_completas,
+            "pendientes_completas": pendientes_completas,
+            "pagadas_completas": pagadas_completas,
+            "pagadas_parciales": pagadas_parciales,
+            "con_comprobante": con_comprobante,
+        }
+
+    all_card_groups = list(groups.values())
+    inv_card_groups = []
+    res_card_groups = []
+    mix_card_groups = []
+
+    for g in all_card_groups:
+        has_inv = any(r["nivel"] == "Invitado" for r in g)
+        has_res = any(r["nivel"] == "Reserva" for r in g)
+        if has_inv and has_res:
+            mix_card_groups.append(g)
+        elif has_res:
+            res_card_groups.append(g)
+        else:
+            inv_card_groups.append(g)
+
+    return {
+        "people": {
+            "all": _summarize_people(records),
+            "invitados": _summarize_people(inv_records),
+            "reserva": _summarize_people(res_records),
+        },
+        "tarjetas": {
+            "all": _summarize_cards(all_card_groups),
+            "invitados": _summarize_cards(inv_card_groups),
+            "reserva": _summarize_cards(res_card_groups),
+            "mixta": _summarize_cards(mix_card_groups),
+        },
+    }
+
+
+@app.get("/panel/stats")
+@require_panel_auth
+def panel_stats_view():
+    force = request.args.get("refresh") == "1"
+    try:
+        if force:
+            try:
+                table.flush_local_to_remote()
+            except Exception:
+                pass
+            raw_records = table.get_all(force_remote=True)
+        else:
+            raw_records = table.get_all()
+    except Exception:
+        raw_records = []
+
+    clean_records = sanitize_stats_records(raw_records)
+    stats = compute_stats_summary(clean_records)
+
+    if request.args.get("format") == "json":
+        return jsonify({
+            "ok": True,
+            "records": clean_records,
+            "stats": stats,
+        })
+
+    return render_template(
+        "stats.html",
+        records=clean_records,
+        stats=stats,
+    )
+
+
+@app.post("/panel/stats/refresh")
+@require_panel_auth
+def panel_stats_refresh():
+    try:
+        try:
+            table.flush_local_to_remote()
+        except Exception:
+            pass
+        raw_records = table.get_all(force_remote=True)
+        clean_records = sanitize_stats_records(raw_records)
+        stats = compute_stats_summary(clean_records)
+        return jsonify({
+            "ok": True,
+            "records": clean_records,
+            "stats": stats,
+            "message": "Estadísticas sincronizadas con Google Sheets",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.post("/panel/styles")
 @require_panel_auth
 def panel_save_styles():

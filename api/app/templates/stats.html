@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas — Panel de Control</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f15;
+            --card-bg: rgba(22, 30, 42, 0.78);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent: #d4af37;
+            --accent-soft: rgba(212, 175, 55, 0.14);
+            --blue: #38bdf8;
+            --blue-soft: rgba(56, 189, 248, 0.14);
+            --green: #48bb78;
+            --green-soft: rgba(72, 187, 120, 0.14);
+            --purple: #a78bfa;
+            --purple-soft: rgba(167, 139, 250, 0.14);
+            --amber: #f6ad55;
+            --amber-soft: rgba(246, 173, 85, 0.14);
+            --danger: #f56565;
+            --danger-soft: rgba(245, 101, 101, 0.14);
+            --text-main: #f7fafc;
+            --text-muted: #94a3b8;
+            --radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.10) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            padding: 16px 20px 40px;
+        }
+
+        .stats-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* Top Bar */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(18, 24, 38, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.28);
+        }
+
+        .page-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sync {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 15px;
+            background: rgba(56, 189, 248, 0.14);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 10px;
+            color: var(--blue);
+            font-family: inherit;
+            font-size: 0.83rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sync:hover:not(:disabled) {
+            background: rgba(56, 189, 248, 0.24);
+        }
+
+        .btn-sync:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        /* Filter Card */
+        .panel-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+        }
+
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            min-width: 115px;
+        }
+
+        .pills-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 13px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .filter-pill:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: #fff;
+        }
+
+        .filter-pill.active {
+            background: rgba(212, 175, 55, 0.18);
+            border-color: rgba(212, 175, 55, 0.55);
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.18);
+        }
+
+        .filter-pill.sub-pill.active {
+            background: rgba(56, 189, 248, 0.18);
+            border-color: rgba(56, 189, 248, 0.55);
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(56, 189, 248, 0.18);
+        }
+
+        .pill-count {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        .filter-pill.active .pill-count {
+            background: rgba(212, 175, 55, 0.35);
+            color: #fff;
+        }
+
+        .filter-pill.sub-pill.active .pill-count {
+            background: rgba(56, 189, 248, 0.35);
+            color: #fff;
+        }
+
+        /* KPI Grid (4 Main Cards) */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kpi-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .kpi-icon {
+            font-size: 1.15rem;
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .kpi-main-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .kpi-value {
+            font-size: 2.1rem;
+            font-weight: 800;
+            line-height: 1;
+            color: #fff;
+        }
+
+        .kpi-subvalue {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .kpi-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .stat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 9px;
+            border-radius: 7px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e2e8f0;
+        }
+
+        .stat-chip strong {
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .chip-gold {
+            background: var(--accent-soft);
+            border-color: rgba(212, 175, 55, 0.3);
+            color: #f6e05e;
+        }
+
+        .chip-blue {
+            background: var(--blue-soft);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #7dd3fc;
+        }
+
+        .chip-green {
+            background: var(--green-soft);
+            border-color: rgba(72, 187, 120, 0.3);
+            color: #68d391;
+        }
+
+        .chip-amber {
+            background: var(--amber-soft);
+            border-color: rgba(246, 173, 85, 0.3);
+            color: #fbd38d;
+        }
+
+        .chip-red {
+            background: var(--danger-soft);
+            border-color: rgba(245, 101, 101, 0.3);
+            color: #feb2b2;
+        }
+
+        .chip-purple {
+            background: var(--purple-soft);
+            border-color: rgba(167, 139, 250, 0.3);
+            color: #d6bcfa;
+        }
+
+        /* Graphs Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+            gap: 16px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .chart-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .donut-layout {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .donut-wrap {
+            position: relative;
+            width: 132px;
+            height: 132px;
+            flex-shrink: 0;
+        }
+
+        .donut-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .donut-segment {
+            fill: none;
+            stroke-width: 15;
+            transition: stroke-dasharray 0.4s ease, stroke-dashoffset 0.4s ease;
+        }
+
+        .donut-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .donut-pct {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.05;
+        }
+
+        .donut-sub {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .donut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #e2e8f0;
+            gap: 8px;
+        }
+
+        .legend-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-weight: 600;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .legend-val {
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* Stacked Horizontal Bars */
+        .bars-stack-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .bar-item-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 999px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.4s ease;
+        }
+
+        /* Horizontal Bar Chart by De Quién */
+        .dq-bars-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dq-bar-row {
+            display: grid;
+            grid-template-columns: 155px 1fr 110px;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 10px;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .dq-bar-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .dq-bar-row.selected-row {
+            background: rgba(212, 175, 55, 0.14);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+        }
+
+        .dq-bar-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dq-bar-stats {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: right;
+            color: #e2e8f0;
+            white-space: nowrap;
+        }
+
+        /* Subtotals Grid: Invitados vs Reserva */
+        .subtotals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 18px;
+        }
+
+        .subtotal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .subtotal-card.invitados-card {
+            border-top: 3px solid var(--blue);
+        }
+
+        .subtotal-card.reserva-card {
+            border-top: 3px solid var(--accent);
+        }
+
+        .subtotal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .subtotal-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+
+        .subtotal-big-count {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .metrics-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metrics-group-label {
+            font-size: 0.73rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .metrics-boxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
+        }
+
+        .metric-box {
+            background: rgba(11, 15, 21, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .metric-box-label {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .metric-box-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .metric-box-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Breakdown Table */
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+            min-width: 820px;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 11px 12px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stats-table th:first-child,
+        .stats-table td:first-child {
+            text-align: left;
+        }
+
+        .stats-table thead th {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            background: rgba(11, 15, 21, 0.6);
+            position: sticky;
+            top: 0;
+        }
+
+        .stats-table tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .stats-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .stats-table tbody tr.selected-row {
+            background: rgba(212, 175, 55, 0.12);
+        }
+
+        .stats-table tfoot td {
+            font-weight: 800;
+            color: #fff;
+            background: rgba(212, 175, 55, 0.08);
+            border-top: 2px solid rgba(212, 175, 55, 0.35);
+            border-bottom: none;
+        }
+
+        .dq-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .origin-tag {
+            font-size: 0.68rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        .cell-sub {
+            display: block;
+            font-size: 0.71rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1a202c;
+            border: 1px solid var(--accent);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+            font-size: 0.85rem;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 10px 12px 30px;
+            }
+            .kpi-value {
+                font-size: 1.75rem;
+            }
+            .subtotals-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-label {
+                min-width: 100%;
+            }
+            .dq-bar-row {
+                grid-template-columns: 115px 1fr 85px;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stats-container">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="top-nav-left">
+                <a href="/panel" class="btn-back" title="Volver al Panel de Control">
+                    <span>←</span>
+                    <span>Panel</span>
+                </a>
+                <h1 class="page-title">
+                    <span>📊</span>
+                    <span>Estadísticas de Invitados y Tarjetas</span>
+                </h1>
+            </div>
+            <div class="top-nav-right">
+                <span id="activeFilterBadge" class="stat-chip chip-gold">Filtro: Todos</span>
+                <button type="button" class="btn-sync" id="btnSyncSheets" onclick="refreshFromSheets()">
+                    <span id="syncIcon">🔄</span>
+                    <span id="syncLabel">Sincronizar Sheets</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- De Quién Filter Bar -->
+        <section class="panel-card filter-section">
+            <div class="filter-row">
+                <span class="filter-label">Origen (De quién):</span>
+                <div class="pills-wrap" id="originPillsContainer"></div>
+            </div>
+            <div class="filter-row" id="subFilterRow">
+                <span class="filter-label">Grupo específico:</span>
+                <div class="pills-wrap" id="dequienPillsContainer"></div>
+            </div>
+        </section>
+
+        <!-- Main KPI Summary Cards -->
+        <section class="kpi-grid">
+            <!-- 1. Personas / Invitados Totales -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Personas (Lugares)</span>
+                    <span class="kpi-icon">👥</span>
+                </div>
+                <div class="kpi-main-row">
+                    <span class="kpi-value" id="kpiTotalPeople">{{ stats.people.all.total }}</span>
+                    <span class="kpi-subvalue">lugares en total</span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip chip-blue">👤 Con nombre: <strong id="kpiPeopleWithName">{{ stats.people.all.with_name }}</strong></span>
+                    <span class="stat-chip">👥 Sin nombre: <strong id="kpiPeopleWithoutName">{{ stats.people.all.without_name }}</strong></span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip">💌 Invitados: <strong id="kpiPeopleInv">{{ stats.people.invitados.total }}</strong></span>
+                    <span class="stat-chip chip-gold">💳 Reserva: <strong id="kpiPeopleRes">{{ stats.people.reserva.total }}</strong></span>
+                </div>
+            </div>
+
+            <!-- 2. Confirmados -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Confirmados (Asistencia)</span>
+                    <span class="kpi-icon">✅</span>
+                </div>
+                <div class="kpi-main-row">
+                    <span class="kpi-value" id="kpiConfirmedTotal" style="color: var(--green);">{{ stats.people.all.confirmados }}</span>
+                    <span class="kpi-subvalue" id="kpiConfirmedPct">de {{ stats.people.all.total }}</span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip chip-green">✅ Asisten: <strong id="kpiConfSi">{{ stats.people.all.confirmados }}</strong></span>
+                    <span class="stat-chip chip-red">❌ No asisten: <strong id="kpiConfNo">{{ stats.people.all.rechazados }}</strong></span>
+                    <span class="stat-chip chip-amber">⏳ Pendientes: <strong id="kpiConfPend">{{ stats.people.all.pendientes }}</strong></span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip">💌 Inv. Conf.: <strong id="kpiConfInv">{{ stats.people.invitados.confirmados }}</strong></span>
+                    <span class="stat-chip chip-gold">💳 Res. Conf.: <strong id="kpiConfRes">{{ stats.people.reserva.confirmados }}</strong></span>
+                </div>
+            </div>
+
+            <!-- 3. Tarjetas & Tarjetas Leídas -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Tarjetas y Lectura</span>
+                    <span class="kpi-icon">💌</span>
+                </div>
+                <div class="kpi-main-row">
+                    <span class="kpi-value" id="kpiCardsTotal">{{ stats.tarjetas.all.total }}</span>
+                    <span class="kpi-subvalue">tarjetas (<strong id="kpiCardsReadInline" style="color: var(--blue);">{{ stats.tarjetas.all.leidas }}</strong> leídas 📖)</span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip chip-blue">📖 Leídas: <strong id="kpiCardsRead">{{ stats.tarjetas.all.leidas }}</strong></span>
+                    <span class="stat-chip">🙈 Sin abrir: <strong id="kpiCardsUnread">{{ stats.tarjetas.all.no_leidas }}</strong></span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip">💌 Tarj. Invitados: <strong id="kpiCardsInvCount">{{ stats.tarjetas.invitados.total }}</strong></span>
+                    <span class="stat-chip chip-gold">💳 Tarj. Reserva: <strong id="kpiCardsResCount">{{ stats.tarjetas.reserva.total }}</strong></span>
+                </div>
+            </div>
+
+            <!-- 4. Pagados -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Pagos y Comprobantes</span>
+                    <span class="kpi-icon">💳</span>
+                </div>
+                <div class="kpi-main-row">
+                    <span class="kpi-value" id="kpiPaidPeople" style="color: var(--accent);">{{ stats.people.all.pagados }}</span>
+                    <span class="kpi-subvalue" id="kpiPaidSub">personas pagadas</span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip chip-green">✅ Tarj. Pagadas: <strong id="kpiCardsPaidFull">{{ stats.tarjetas.all.pagadas_completas }}</strong></span>
+                    <span class="stat-chip chip-amber">⚠️ Pago parcial: <strong id="kpiCardsPaidPart">{{ stats.tarjetas.all.pagadas_parciales }}</strong></span>
+                </div>
+                <div class="kpi-badges">
+                    <span class="stat-chip chip-purple">📎 Tarj. con comprobante: <strong id="kpiCardsComprobante">{{ stats.tarjetas.all.con_comprobante }}</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Graphs Section -->
+        <section class="charts-grid">
+            <!-- Graph 1: Asistencia / Confirmaciones Donut -->
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span>📈 Estado de Confirmaciones (Personas)</span>
+                </div>
+                <div class="donut-layout">
+                    <div class="donut-wrap">
+                        <svg class="donut-svg" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="15"></circle>
+                            <circle id="donutConfSi" class="donut-segment" cx="60" cy="60" r="46" stroke="#48bb78" stroke-dasharray="0 289" stroke-dashoffset="0"></circle>
+                            <circle id="donutConfNo" class="donut-segment" cx="60" cy="60" r="46" stroke="#f56565" stroke-dasharray="0 289" stroke-dashoffset="0"></circle>
+                            <circle id="donutConfPend" class="donut-segment" cx="60" cy="60" r="46" stroke="#f6ad55" stroke-dasharray="0 289" stroke-dashoffset="0"></circle>
+                        </svg>
+                        <div class="donut-center">
+                            <span class="donut-pct" id="donutConfCenterPct">0%</span>
+                            <span class="donut-sub">Confirmado</span>
+                        </div>
+                    </div>
+                    <div class="donut-legend">
+                        <div class="legend-item">
+                            <span class="legend-label"><span class="legend-dot" style="background: #48bb78;"></span>Confirmados</span>
+                            <span class="legend-val" id="legendConfSi">0</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-label"><span class="legend-dot" style="background: #f56565;"></span>No asisten</span>
+                            <span class="legend-val" id="legendConfNo">0</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-label"><span class="legend-dot" style="background: #f6ad55;"></span>Pendientes</span>
+                            <span class="legend-val" id="legendConfPend">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph 2: Tarjetas Leídas Donut -->
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span>📖 Apertura de Tarjetas (Leídas)</span>
+                </div>
+                <div class="donut-layout">
+                    <div class="donut-wrap">
+                        <svg class="donut-svg" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="15"></circle>
+                            <circle id="donutCardsRead" class="donut-segment" cx="60" cy="60" r="46" stroke="#38bdf8" stroke-dasharray="0 289" stroke-dashoffset="0"></circle>
+                        </svg>
+                        <div class="donut-center">
+                            <span class="donut-pct" id="donutReadCenterPct">0%</span>
+                            <span class="donut-sub">Leídas</span>
+                        </div>
+                    </div>
+                    <div class="donut-legend">
+                        <div class="legend-item">
+                            <span class="legend-label"><span class="legend-dot" style="background: #38bdf8;"></span>Tarjetas leídas</span>
+                            <span class="legend-val" id="legendCardsRead">0</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-label"><span class="legend-dot" style="background: rgba(255,255,255,0.2);"></span>Sin abrir</span>
+                            <span class="legend-val" id="legendCardsUnread">0</span>
+                        </div>
+                        <div class="legend-item" style="padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.07);">
+                            <span class="legend-label"><span class="legend-dot" style="background: #d4af37;"></span>Reservas pagadas</span>
+                            <span class="legend-val" id="legendResPaid">0 / 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graph 3: Con Nombre vs Sin Nombre (Invitados & Reserva) -->
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span>👤 Con Nombre vs Sin Nombre</span>
+                </div>
+                <div class="bars-stack-list">
+                    <div class="bar-item">
+                        <div class="bar-item-head">
+                            <span>Total Personas</span>
+                            <span id="barTotalNamesLabel">0 con nombre · 0 sin nombre</span>
+                        </div>
+                        <div class="bar-track">
+                            <div id="barTotalNamedFill" class="bar-fill" style="width: 0%; background: #38bdf8;" title="Con nombre"></div>
+                            <div id="barTotalUnnamedFill" class="bar-fill" style="width: 0%; background: rgba(148, 163, 184, 0.35);" title="Sin nombre"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-item">
+                        <div class="bar-item-head">
+                            <span>💌 Subtotal Invitados</span>
+                            <span id="barInvNamesLabel">0 con nombre · 0 sin nombre</span>
+                        </div>
+                        <div class="bar-track">
+                            <div id="barInvNamedFill" class="bar-fill" style="width: 0%; background: #38bdf8;" title="Invitados con nombre"></div>
+                            <div id="barInvUnnamedFill" class="bar-fill" style="width: 0%; background: rgba(56, 189, 248, 0.28);" title="Invitados sin nombre"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-item">
+                        <div class="bar-item-head">
+                            <span>💳 Subtotal Reserva</span>
+                            <span id="barResNamesLabel">0 con nombre · 0 sin nombre</span>
+                        </div>
+                        <div class="bar-track">
+                            <div id="barResNamedFill" class="bar-fill" style="width: 0%; background: #d4af37;" title="Reserva con nombre"></div>
+                            <div id="barResUnnamedFill" class="bar-fill" style="width: 0%; background: rgba(212, 175, 55, 0.3);" title="Reserva sin nombre"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Graph 4: Distribución por De Quién -->
+        <section class="panel-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="font-size: 0.95rem; font-weight: 800; color: #fff;">
+                    📊 Distribución por "De quién" (Invitados vs Reserva)
+                </h2>
+                <div style="display: flex; align-items: center; gap: 14px; font-size: 0.75rem; color: #cbd5e1; font-weight: 600;">
+                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="legend-dot" style="background: #38bdf8;"></span>Invitados</span>
+                    <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="legend-dot" style="background: #d4af37;"></span>Reserva</span>
+                </div>
+            </div>
+            <div class="dq-bars-grid" id="dqBarsChartContainer"></div>
+        </section>
+
+        <!-- Subtotals Section: Invitados vs Reserva -->
+        <section class="subtotals-grid">
+            <!-- Subtotal Invitados -->
+            <div class="subtotal-card invitados-card">
+                <div class="subtotal-header">
+                    <div class="subtotal-title">
+                        <span>💌</span>
+                        <span>Subtotal Invitados (Sin costo de tarjeta)</span>
+                    </div>
+                    <span class="subtotal-big-count" id="subInvTotal">{{ stats.people.invitados.total }}</span>
+                </div>
+
+                <div class="metrics-group">
+                    <span class="metrics-group-label">Personas (Con nombre vs Sin nombre)</span>
+                    <div class="metrics-boxes">
+                        <div class="metric-box">
+                            <span class="metric-box-label">Total Invitados</span>
+                            <span class="metric-box-val" id="subInvBoxTotal">{{ stats.people.invitados.total }}</span>
+                            <span class="metric-box-sub">lugares</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">👤 Con Nombre</span>
+                            <span class="metric-box-val" id="subInvWithName" style="color: var(--blue);">{{ stats.people.invitados.with_name }}</span>
+                            <span class="metric-box-sub" id="subInvWithNameConf">✅ 0 confirmados</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">👥 Sin Nombre</span>
+                            <span class="metric-box-val" id="subInvWithoutName">{{ stats.people.invitados.without_name }}</span>
+                            <span class="metric-box-sub" id="subInvWithoutNameConf">✅ 0 confirmados</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-group">
+                    <span class="metrics-group-label">Confirmación de Invitados (Personas)</span>
+                    <div class="metrics-boxes">
+                        <div class="metric-box">
+                            <span class="metric-box-label">✅ Confirmados</span>
+                            <span class="metric-box-val" id="subInvConfSi" style="color: var(--green);">{{ stats.people.invitados.confirmados }}</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">❌ No asisten</span>
+                            <span class="metric-box-val" id="subInvConfNo" style="color: var(--danger);">{{ stats.people.invitados.rechazados }}</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">⏳ Pendientes</span>
+                            <span class="metric-box-val" id="subInvConfPend" style="color: var(--amber);">{{ stats.people.invitados.pendientes }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-group">
+                    <span class="metrics-group-label">Tarjetas de Invitados</span>
+                    <div class="kpi-badges">
+                        <span class="stat-chip">💌 Tarjetas: <strong id="subInvCardsTotal">{{ stats.tarjetas.invitados.total }}</strong></span>
+                        <span class="stat-chip chip-blue">📖 Leídas: <strong id="subInvCardsRead">{{ stats.tarjetas.invitados.leidas }}</strong></span>
+                        <span class="stat-chip chip-green">✅ Conf. completas: <strong id="subInvCardsConfFull">{{ stats.tarjetas.invitados.confirmadas_completas }}</strong></span>
+                        <span class="stat-chip chip-amber">⚠️ Parciales: <strong id="subInvCardsConfPart">{{ stats.tarjetas.invitados.confirmadas_parciales }}</strong></span>
+                        <span class="stat-chip chip-red">❌ No asisten: <strong id="subInvCardsNo">{{ stats.tarjetas.invitados.rechazadas_completas }}</strong></span>
+                        <span class="stat-chip">⏳ Sin responder: <strong id="subInvCardsPend">{{ stats.tarjetas.invitados.pendientes_completas }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtotal Reserva -->
+            <div class="subtotal-card reserva-card">
+                <div class="subtotal-header">
+                    <div class="subtotal-title">
+                        <span>💳</span>
+                        <span>Subtotal Reserva (Con tarjeta)</span>
+                    </div>
+                    <span class="subtotal-big-count" id="subResTotal">{{ stats.people.reserva.total }}</span>
+                </div>
+
+                <div class="metrics-group">
+                    <span class="metrics-group-label">Personas (Con nombre vs Sin nombre)</span>
+                    <div class="metrics-boxes">
+                        <div class="metric-box">
+                            <span class="metric-box-label">Total Reserva</span>
+                            <span class="metric-box-val" id="subResBoxTotal">{{ stats.people.reserva.total }}</span>
+                            <span class="metric-box-sub">lugares</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">👤 Con Nombre</span>
+                            <span class="metric-box-val" id="subResWithName" style="color: var(--accent);">{{ stats.people.reserva.with_name }}</span>
+                            <span class="metric-box-sub" id="subResWithNameConf">✅ 0 confirmados</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">👥 Sin Nombre</span>
+                            <span class="metric-box-val" id="subResWithoutName">{{ stats.people.reserva.without_name }}</span>
+                            <span class="metric-box-sub" id="subResWithoutNameConf">✅ 0 confirmados</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-group">
+                    <span class="metrics-group-label">Confirmación y Pagos de Reserva (Personas)</span>
+                    <div class="metrics-boxes">
+                        <div class="metric-box">
+                            <span class="metric-box-label">✅ Confirmados</span>
+                            <span class="metric-box-val" id="subResConfSi" style="color: var(--green);">{{ stats.people.reserva.confirmados }}</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">❌ No asisten</span>
+                            <span class="metric-box-val" id="subResConfNo" style="color: var(--danger);">{{ stats.people.reserva.rechazados }}</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">⏳ Pendientes</span>
+                            <span class="metric-box-val" id="subResConfPend" style="color: var(--amber);">{{ stats.people.reserva.pendientes }}</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-box-label">💳 Pagados</span>
+                            <span class="metric-box-val" id="subResPaid" style="color: var(--accent);">{{ stats.people.reserva.pagados }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-group">
+                    <span class="metrics-group-label">Tarjetas de Reserva</span>
+                    <div class="kpi-badges">
+                        <span class="stat-chip">💌 Tarjetas: <strong id="subResCardsTotal">{{ stats.tarjetas.reserva.total }}</strong></span>
+                        <span class="stat-chip chip-blue">📖 Leídas: <strong id="subResCardsRead">{{ stats.tarjetas.reserva.leidas }}</strong></span>
+                        <span class="stat-chip chip-green">✅ Conf. completas: <strong id="subResCardsConfFull">{{ stats.tarjetas.reserva.confirmadas_completas }}</strong></span>
+                        <span class="stat-chip chip-amber">⚠️ Parciales: <strong id="subResCardsConfPart">{{ stats.tarjetas.reserva.confirmadas_parciales }}</strong></span>
+                        <span class="stat-chip chip-red">❌ No asisten: <strong id="subResCardsNo">{{ stats.tarjetas.reserva.rechazadas_completas }}</strong></span>
+                        <span class="stat-chip">⏳ Sin responder: <strong id="subResCardsPend">{{ stats.tarjetas.reserva.pendientes_completas }}</strong></span>
+                        <span class="stat-chip chip-gold">💳 Tarj. Pagadas: <strong id="subResCardsPaid">{{ stats.tarjetas.reserva.pagadas_completas }}</strong></span>
+                        <span class="stat-chip chip-purple">📎 Con comprobante: <strong id="subResCardsComp">{{ stats.tarjetas.reserva.con_comprobante }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mixta Cards Notice (shown only when there are mixed cards) -->
+        <section class="panel-card" id="mixtaCardsBanner" style="display: none; padding: 14px 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">
+                    🔀 Tarjetas Mixtas (tienen integrantes Invitados y Reserva en la misma tarjeta):
+                </span>
+                <div class="kpi-badges">
+                    <span class="stat-chip chip-purple">Total Mixtas: <strong id="subMixCardsTotal">0</strong></span>
+                    <span class="stat-chip chip-blue">📖 Leídas: <strong id="subMixCardsRead">0</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Breakdown Table by De Quién -->
+        <section class="panel-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                <h2 style="font-size: 1rem; font-weight: 800; color: #fff;">
+                    📋 Desglose por "De quién"
+                </h2>
+                <span style="font-size: 0.76rem; color: var(--text-muted);">
+                    Hacé clic en una fila para filtrar por ese grupo
+                </span>
+            </div>
+            <div class="table-wrap">
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>De quién</th>
+                            <th>Tarjetas (Leídas 📖)</th>
+                            <th>Personas Total (Con / Sin nombre)</th>
+                            <th>Subtotal Invitados (Con / Sin nombre)</th>
+                            <th>Subtotal Reserva (Con / Sin nombre)</th>
+                            <th>Confirmados ✅</th>
+                            <th>No / Pend.</th>
+                            <th>Pagados 💳</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dequienTableBody"></tbody>
+                    <tfoot id="dequienTableFoot"></tfoot>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="toast-notify" id="toastNotify">
+        <span id="toastMsg"></span>
+    </div>
+
+    <script>
+        let allRecords = {{ records | tojson }};
+        let selectedOrigin = 'ALL';
+        let selectedDequien = 'ALL';
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toastNotify');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = msg;
+            toast.style.borderColor = isError ? 'var(--danger)' : 'var(--accent)';
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function summarizePeople(recs) {
+            const total = recs.length;
+            let with_name = 0;
+            let confirmados = 0;
+            let confirmados_with_name = 0;
+            let rechazados = 0;
+            let pagados = 0;
+            let con_comprobante = 0;
+            let leidos = 0;
+
+            for (const r of recs) {
+                if (r.has_name) with_name++;
+                if (r.confirmacion === 'si') {
+                    confirmados++;
+                    if (r.has_name) confirmados_with_name++;
+                } else if (r.confirmacion === 'no') {
+                    rechazados++;
+                }
+                if (r.pagado) pagados++;
+                if (r.comprobante) con_comprobante++;
+                if (r.abierto) leidos++;
+            }
+
+            const without_name = total - with_name;
+            const confirmados_without_name = confirmados - confirmados_with_name;
+            const pendientes = total - confirmados - rechazados;
+
+            return {
+                total,
+                with_name,
+                without_name,
+                confirmados,
+                confirmados_with_name,
+                confirmados_without_name,
+                rechazados,
+                pendientes,
+                pagados,
+                con_comprobante,
+                leidos
+            };
+        }
+
+        function summarizeCards(cardGroups) {
+            const total = cardGroups.length;
+            let leidas = 0;
+            let no_leidas = 0;
+            let with_all_names = 0;
+            let with_unnamed = 0;
+            let confirmadas_completas = 0;
+            let confirmadas_parciales = 0;
+            let con_confirmados = 0;
+            let rechazadas_completas = 0;
+            let pendientes_completas = 0;
+            let pagadas_completas = 0;
+            let pagadas_parciales = 0;
+            let con_comprobante = 0;
+
+            for (const g of cardGroups) {
+                const gTot = g.length;
+                if (g.some(r => r.abierto)) leidas++;
+                else no_leidas++;
+
+                if (g.every(r => r.has_name)) with_all_names++;
+                else with_unnamed++;
+
+                const gSi = g.filter(r => r.confirmacion === 'si').length;
+                const gNo = g.filter(r => r.confirmacion === 'no').length;
+                const gPend = gTot - gSi - gNo;
+
+                if (gSi > 0) con_confirmados++;
+
+                if (gSi === gTot) confirmadas_completas++;
+                else if (gNo === gTot) rechazadas_completas++;
+                else if (gPend === gTot) pendientes_completas++;
+                else confirmadas_parciales++;
+
+                if (g.some(r => r.comprobante)) con_comprobante++;
+
+                const attending = g.filter(r => r.confirmacion === 'si');
+                const target = attending.length > 0 ? attending : g.filter(r => r.confirmacion !== 'no');
+                if (target.length > 0) {
+                    const paidCnt = target.filter(r => r.pagado).length;
+                    if (paidCnt === target.length && paidCnt > 0) pagadas_completas++;
+                    else if (paidCnt > 0) pagadas_parciales++;
+                }
+            }
+
+            return {
+                total,
+                leidas,
+                no_leidas,
+                with_all_names,
+                with_unnamed,
+                confirmadas_completas,
+                confirmadas_parciales,
+                con_confirmados,
+                rechazadas_completas,
+                pendientes_completas,
+                pagadas_completas,
+                pagadas_parciales,
+                con_comprobante
+            };
+        }
+
+        function computeStats(recs) {
+            const invRecs = recs.filter(r => r.nivel === 'Invitado');
+            const resRecs = recs.filter(r => r.nivel === 'Reserva');
+
+            const groupsMap = new Map();
+            for (const r of recs) {
+                if (!groupsMap.has(r.invitacion_id)) {
+                    groupsMap.set(r.invitacion_id, []);
+                }
+                groupsMap.get(r.invitacion_id).push(r);
+            }
+
+            const allCardGroups = Array.from(groupsMap.values());
+            const invCardGroups = [];
+            const resCardGroups = [];
+            const mixCardGroups = [];
+
+            for (const g of allCardGroups) {
+                const hasInv = g.some(r => r.nivel === 'Invitado');
+                const hasRes = g.some(r => r.nivel === 'Reserva');
+                if (hasInv && hasRes) mixCardGroups.push(g);
+                else if (hasRes) resCardGroups.push(g);
+                else invCardGroups.push(g);
+            }
+
+            return {
+                people: {
+                    all: summarizePeople(recs),
+                    invitados: summarizePeople(invRecs),
+                    reserva: summarizePeople(resRecs)
+                },
+                tarjetas: {
+                    all: summarizeCards(allCardGroups),
+                    invitados: summarizeCards(invCardGroups),
+                    reserva: summarizeCards(resCardGroups),
+                    mixta: summarizeCards(mixCardGroups)
+                }
+            };
+        }
+
+        function getFilteredRecords() {
+            return allRecords.filter(r => {
+                if (selectedOrigin !== 'ALL' && r.origin !== selectedOrigin) return false;
+                if (selectedDequien !== 'ALL' && r.dequien !== selectedDequien) return false;
+                return true;
+            });
+        }
+
+        function selectOrigin(orig) {
+            selectedOrigin = orig;
+            selectedDequien = 'ALL';
+            renderAll();
+        }
+
+        function selectDequien(dq) {
+            if (selectedDequien === dq) {
+                selectedDequien = 'ALL';
+            } else {
+                selectedDequien = dq;
+            }
+            renderAll();
+        }
+
+        function renderFilters() {
+            const originCounts = new Map();
+            for (const r of allRecords) {
+                originCounts.set(r.origin, (originCounts.get(r.origin) || 0) + 1);
+            }
+            const origins = Array.from(originCounts.keys()).sort();
+
+            const originContainer = document.getElementById('originPillsContainer');
+            let origHtml = `<button type="button" class="filter-pill ${selectedOrigin === 'ALL' ? 'active' : ''}" onclick="selectOrigin('ALL')">
+                <span>🌐 Todos</span>
+                <span class="pill-count">${allRecords.length}</span>
+            </button>`;
+
+            for (const orig of origins) {
+                const active = selectedOrigin === orig ? 'active' : '';
+                origHtml += `<button type="button" class="filter-pill ${active}" onclick="selectOrigin('${orig.replace(/'/g, "\\'")}')">
+                    <span>${orig}</span>
+                    <span class="pill-count">${originCounts.get(orig)}</span>
+                </button>`;
+            }
+            originContainer.innerHTML = origHtml;
+
+            // Sub-filter by exact dequien
+            const dqCounts = new Map();
+            const baseRecs = selectedOrigin === 'ALL' ? allRecords : allRecords.filter(r => r.origin === selectedOrigin);
+            for (const r of baseRecs) {
+                dqCounts.set(r.dequien, (dqCounts.get(r.dequien) || 0) + 1);
+            }
+            const dqs = Array.from(dqCounts.keys()).sort();
+
+            const dqContainer = document.getElementById('dequienPillsContainer');
+            let dqHtml = `<button type="button" class="filter-pill sub-pill ${selectedDequien === 'ALL' ? 'active' : ''}" onclick="selectDequien('ALL')">
+                <span>Todos (${selectedOrigin === 'ALL' ? 'General' : selectedOrigin})</span>
+                <span class="pill-count">${baseRecs.length}</span>
+            </button>`;
+
+            for (const dq of dqs) {
+                const active = selectedDequien === dq ? 'active' : '';
+                dqHtml += `<button type="button" class="filter-pill sub-pill ${active}" onclick="selectDequien('${dq.replace(/'/g, "\\'")}')">
+                    <span>${dq}</span>
+                    <span class="pill-count">${dqCounts.get(dq)}</span>
+                </button>`;
+            }
+            dqContainer.innerHTML = dqHtml;
+
+            // Update header badge
+            const badge = document.getElementById('activeFilterBadge');
+            if (selectedDequien !== 'ALL') {
+                badge.textContent = `Filtro: ${selectedDequien}`;
+            } else if (selectedOrigin !== 'ALL') {
+                badge.textContent = `Filtro: ${selectedOrigin}`;
+            } else {
+                badge.textContent = 'Filtro: Todos';
+            }
+        }
+
+        function setText(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
+
+        function renderCharts(st) {
+            const CIRC = 2 * Math.PI * 46; // ~289.026
+
+            // 1. Donut Confirmaciones
+            const totPeople = st.people.all.total;
+            const cSi = st.people.all.confirmados;
+            const cNo = st.people.all.rechazados;
+            const cPend = st.people.all.pendientes;
+
+            const lenSi = totPeople > 0 ? (cSi / totPeople) * CIRC : 0;
+            const lenNo = totPeople > 0 ? (cNo / totPeople) * CIRC : 0;
+            const lenPend = totPeople > 0 ? (cPend / totPeople) * CIRC : 0;
+
+            const segSi = document.getElementById('donutConfSi');
+            const segNo = document.getElementById('donutConfNo');
+            const segPend = document.getElementById('donutConfPend');
+
+            if (segSi) {
+                segSi.setAttribute('stroke-dasharray', `${lenSi} ${CIRC}`);
+                segSi.setAttribute('stroke-dashoffset', '0');
+            }
+            if (segNo) {
+                segNo.setAttribute('stroke-dasharray', `${lenNo} ${CIRC}`);
+                segNo.setAttribute('stroke-dashoffset', `${-lenSi}`);
+            }
+            if (segPend) {
+                segPend.setAttribute('stroke-dasharray', `${lenPend} ${CIRC}`);
+                segPend.setAttribute('stroke-dashoffset', `${-(lenSi + lenNo)}`);
+            }
+
+            const pctConf = totPeople > 0 ? Math.round((cSi / totPeople) * 100) : 0;
+            setText('donutConfCenterPct', `${pctConf}%`);
+            setText('legendConfSi', `${cSi} (${pctConf}%)`);
+            setText('legendConfNo', cNo);
+            setText('legendConfPend', cPend);
+
+            // 2. Donut Tarjetas Leídas
+            const totCards = st.tarjetas.all.total;
+            const cRead = st.tarjetas.all.leidas;
+            const lenRead = totCards > 0 ? (cRead / totCards) * CIRC : 0;
+            const segRead = document.getElementById('donutCardsRead');
+            if (segRead) {
+                segRead.setAttribute('stroke-dasharray', `${lenRead} ${CIRC}`);
+                segRead.setAttribute('stroke-dashoffset', '0');
+            }
+            const pctRead = totCards > 0 ? Math.round((cRead / totCards) * 100) : 0;
+            setText('donutReadCenterPct', `${pctRead}%`);
+            setText('legendCardsRead', `${cRead} (${pctRead}%)`);
+            setText('legendCardsUnread', st.tarjetas.all.no_leidas);
+            setText('legendResPaid', `${st.people.reserva.pagados} / ${st.people.reserva.total}`);
+
+            // 3. Con nombre vs Sin nombre stacked bars
+            const setSplitBar = (namedId, unnamedId, labelId, named, unnamed, total) => {
+                const pNamed = total > 0 ? (named / total) * 100 : 0;
+                const pUnnamed = total > 0 ? (unnamed / total) * 100 : 0;
+                const elN = document.getElementById(namedId);
+                const elU = document.getElementById(unnamedId);
+                if (elN) elN.style.width = `${pNamed}%`;
+                if (elU) elU.style.width = `${pUnnamed}%`;
+                setText(labelId, `${named} con nombre · ${unnamed} sin nombre`);
+            };
+
+            setSplitBar('barTotalNamedFill', 'barTotalUnnamedFill', 'barTotalNamesLabel', st.people.all.with_name, st.people.all.without_name, st.people.all.total);
+            setSplitBar('barInvNamedFill', 'barInvUnnamedFill', 'barInvNamesLabel', st.people.invitados.with_name, st.people.invitados.without_name, st.people.invitados.total);
+            setSplitBar('barResNamedFill', 'barResUnnamedFill', 'barResNamesLabel', st.people.reserva.with_name, st.people.reserva.without_name, st.people.reserva.total);
+
+            // 4. Horizontal Bars by De Quién
+            const baseForChart = selectedOrigin === 'ALL'
+                ? allRecords
+                : allRecords.filter(r => r.origin === selectedOrigin);
+
+            const byDq = new Map();
+            for (const r of baseForChart) {
+                if (!byDq.has(r.dequien)) byDq.set(r.dequien, []);
+                byDq.get(r.dequien).push(r);
+            }
+
+            let maxGroupSize = 1;
+            for (const recs of byDq.values()) {
+                if (recs.length > maxGroupSize) maxGroupSize = recs.length;
+            }
+
+            const sortedDqs = Array.from(byDq.entries()).sort((a, b) => b[1].length - a[1].length);
+            const chartContainer = document.getElementById('dqBarsChartContainer');
+            let chartHtml = '';
+
+            for (const [dq, recs] of sortedDqs) {
+                const s = computeStats(recs);
+                const invW = (s.people.invitados.total / maxGroupSize) * 100;
+                const resW = (s.people.reserva.total / maxGroupSize) * 100;
+                const isSel = selectedDequien === dq ? 'selected-row' : '';
+
+                chartHtml += `<div class="dq-bar-row ${isSel}" onclick="selectDequien('${dq.replace(/'/g, "\\'")}')" title="${dq}: ${s.people.invitados.total} invitados, ${s.people.reserva.total} reserva (${s.people.all.with_name} con nombre, ${s.people.all.without_name} sin nombre)">
+                    <span class="dq-bar-name">${dq}</span>
+                    <div class="bar-track" style="height: 14px;">
+                        <div class="bar-fill" style="width: ${invW}%; background: #38bdf8;"></div>
+                        <div class="bar-fill" style="width: ${resW}%; background: #d4af37;"></div>
+                    </div>
+                    <span class="dq-bar-stats">${s.people.all.total} <span style="color: var(--text-muted); font-weight: 500;">(✅${s.people.all.confirmados})</span></span>
+                </div>`;
+            }
+            if (chartContainer) chartContainer.innerHTML = chartHtml;
+        }
+
+        function renderDashboard() {
+            const filtered = getFilteredRecords();
+            const st = computeStats(filtered);
+
+            // 1. KPI People
+            setText('kpiTotalPeople', st.people.all.total);
+            setText('kpiPeopleWithName', st.people.all.with_name);
+            setText('kpiPeopleWithoutName', st.people.all.without_name);
+            setText('kpiPeopleInv', st.people.invitados.total);
+            setText('kpiPeopleRes', st.people.reserva.total);
+
+            // 2. KPI Confirmados
+            const pctConf = st.people.all.total > 0 ? Math.round((st.people.all.confirmados / st.people.all.total) * 100) : 0;
+            setText('kpiConfirmedTotal', st.people.all.confirmados);
+            setText('kpiConfirmedPct', `de ${st.people.all.total} (${pctConf}%)`);
+            setText('kpiConfSi', st.people.all.confirmados);
+            setText('kpiConfNo', st.people.all.rechazados);
+            setText('kpiConfPend', st.people.all.pendientes);
+            setText('kpiConfInv', st.people.invitados.confirmados);
+            setText('kpiConfRes', st.people.reserva.confirmados);
+
+            // 3. KPI Tarjetas & Leídas
+            setText('kpiCardsTotal', st.tarjetas.all.total);
+            setText('kpiCardsReadInline', st.tarjetas.all.leidas);
+            setText('kpiCardsRead', st.tarjetas.all.leidas);
+            setText('kpiCardsUnread', st.tarjetas.all.no_leidas);
+            setText('kpiCardsInvCount', st.tarjetas.invitados.total);
+            setText('kpiCardsResCount', st.tarjetas.reserva.total);
+
+            // 4. KPI Pagados
+            setText('kpiPaidPeople', st.people.all.pagados);
+            setText('kpiPaidSub', `de ${st.people.reserva.total} reservas`);
+            setText('kpiCardsPaidFull', st.tarjetas.all.pagadas_completas);
+            setText('kpiCardsPaidPart', st.tarjetas.all.pagadas_parciales);
+            setText('kpiCardsComprobante', st.tarjetas.all.con_comprobante);
+
+            // 5. Subtotal Invitados
+            setText('subInvTotal', st.people.invitados.total);
+            setText('subInvBoxTotal', st.people.invitados.total);
+            setText('subInvWithName', st.people.invitados.with_name);
+            setText('subInvWithNameConf', `✅ ${st.people.invitados.confirmados_with_name} confirmados`);
+            setText('subInvWithoutName', st.people.invitados.without_name);
+            setText('subInvWithoutNameConf', `✅ ${st.people.invitados.confirmados_without_name} confirmados`);
+            setText('subInvConfSi', st.people.invitados.confirmados);
+            setText('subInvConfNo', st.people.invitados.rechazados);
+            setText('subInvConfPend', st.people.invitados.pendientes);
+
+            setText('subInvCardsTotal', st.tarjetas.invitados.total);
+            setText('subInvCardsRead', st.tarjetas.invitados.leidas);
+            setText('subInvCardsConfFull', st.tarjetas.invitados.confirmadas_completas);
+            setText('subInvCardsConfPart', st.tarjetas.invitados.confirmadas_parciales);
+            setText('subInvCardsNo', st.tarjetas.invitados.rechazadas_completas);
+            setText('subInvCardsPend', st.tarjetas.invitados.pendientes_completas);
+
+            // 6. Subtotal Reserva
+            setText('subResTotal', st.people.reserva.total);
+            setText('subResBoxTotal', st.people.reserva.total);
+            setText('subResWithName', st.people.reserva.with_name);
+            setText('subResWithNameConf', `✅ ${st.people.reserva.confirmados_with_name} confirmados`);
+            setText('subResWithoutName', st.people.reserva.without_name);
+            setText('subResWithoutNameConf', `✅ ${st.people.reserva.confirmados_without_name} confirmados`);
+            setText('subResConfSi', st.people.reserva.confirmados);
+            setText('subResConfNo', st.people.reserva.rechazados);
+            setText('subResConfPend', st.people.reserva.pendientes);
+            setText('subResPaid', st.people.reserva.pagados);
+
+            setText('subResCardsTotal', st.tarjetas.reserva.total);
+            setText('subResCardsRead', st.tarjetas.reserva.leidas);
+            setText('subResCardsConfFull', st.tarjetas.reserva.confirmadas_completas);
+            setText('subResCardsConfPart', st.tarjetas.reserva.confirmadas_parciales);
+            setText('subResCardsNo', st.tarjetas.reserva.rechazadas_completas);
+            setText('subResCardsPend', st.tarjetas.reserva.pendientes_completas);
+            setText('subResCardsPaid', st.tarjetas.reserva.pagadas_completas);
+            setText('subResCardsComp', st.tarjetas.reserva.con_comprobante);
+
+            // Mixta banner
+            const mixBanner = document.getElementById('mixtaCardsBanner');
+            if (st.tarjetas.mixta.total > 0) {
+                mixBanner.style.display = 'block';
+                setText('subMixCardsTotal', st.tarjetas.mixta.total);
+                setText('subMixCardsRead', st.tarjetas.mixta.leidas);
+            } else {
+                mixBanner.style.display = 'none';
+            }
+
+            renderCharts(st);
+            renderBreakdownTable(filtered, st);
+        }
+
+        function renderBreakdownTable(filteredRecs, totalSt) {
+            const baseForTable = selectedOrigin === 'ALL'
+                ? allRecords
+                : allRecords.filter(r => r.origin === selectedOrigin);
+
+            const tableSt = computeStats(baseForTable);
+
+            const byDq = new Map();
+            for (const r of baseForTable) {
+                if (!byDq.has(r.dequien)) {
+                    byDq.set(r.dequien, []);
+                }
+                byDq.get(r.dequien).push(r);
+            }
+
+            const sortedDqs = Array.from(byDq.keys()).sort();
+            const tbody = document.getElementById('dequienTableBody');
+            let rowsHtml = '';
+
+            for (const dq of sortedDqs) {
+                const recs = byDq.get(dq);
+                const s = computeStats(recs);
+                const origin = recs[0] ? recs[0].origin : '';
+                const isSelected = selectedDequien === dq ? 'selected-row' : '';
+
+                rowsHtml += `<tr class="${isSelected}" onclick="selectDequien('${dq.replace(/'/g, "\\'")}')">
+                    <td>
+                        <div class="dq-cell">
+                            <span>${dq}</span>
+                            <span class="origin-tag">${origin}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <strong>${s.tarjetas.all.total}</strong>
+                        <span class="cell-sub">📖 ${s.tarjetas.all.leidas} leídas</span>
+                        <span class="cell-sub">🙈 ${s.tarjetas.all.no_leidas} sin abrir</span>
+                    </td>
+                    <td>
+                        <strong>${s.people.all.total}</strong>
+                        <span class="cell-sub">👤 ${s.people.all.with_name} con nombre</span>
+                        <span class="cell-sub">👥 ${s.people.all.without_name} sin nombre</span>
+                    </td>
+                    <td>
+                        <strong style="color: var(--blue);">${s.people.invitados.total}</strong>
+                        <span class="cell-sub">👤 ${s.people.invitados.with_name} con nombre</span>
+                        <span class="cell-sub">👥 ${s.people.invitados.without_name} sin nombre</span>
+                    </td>
+                    <td>
+                        <strong style="color: var(--accent);">${s.people.reserva.total}</strong>
+                        <span class="cell-sub">👤 ${s.people.reserva.with_name} con nombre</span>
+                        <span class="cell-sub">👥 ${s.people.reserva.without_name} sin nombre</span>
+                    </td>
+                    <td>
+                        <strong style="color: var(--green);">${s.people.all.confirmados}</strong>
+                        <span class="cell-sub">💌 ${s.people.invitados.confirmados} inv</span>
+                        <span class="cell-sub">💳 ${s.people.reserva.confirmados} res</span>
+                    </td>
+                    <td>
+                        <span class="cell-sub">❌ ${s.people.all.rechazados} no asisten</span>
+                        <span class="cell-sub">⏳ ${s.people.all.pendientes} pendientes</span>
+                    </td>
+                    <td>
+                        <strong style="color: var(--accent);">${s.people.all.pagados}</strong>
+                        <span class="cell-sub">📎 ${s.tarjetas.all.con_comprobante} comprob.</span>
+                    </td>
+                </tr>`;
+            }
+            tbody.innerHTML = rowsHtml;
+
+            const tfoot = document.getElementById('dequienTableFoot');
+            tfoot.innerHTML = `<tr>
+                <td>TOTAL (${selectedOrigin !== 'ALL' ? selectedOrigin : 'General'})</td>
+                <td>
+                    ${tableSt.tarjetas.all.total}
+                    <span class="cell-sub">📖 ${tableSt.tarjetas.all.leidas} leídas</span>
+                    <span class="cell-sub">🙈 ${tableSt.tarjetas.all.no_leidas} sin abrir</span>
+                </td>
+                <td>
+                    ${tableSt.people.all.total}
+                    <span class="cell-sub">👤 ${tableSt.people.all.with_name} con nombre</span>
+                    <span class="cell-sub">👥 ${tableSt.people.all.without_name} sin nombre</span>
+                </td>
+                <td>
+                    ${tableSt.people.invitados.total}
+                    <span class="cell-sub">👤 ${tableSt.people.invitados.with_name} con nombre</span>
+                    <span class="cell-sub">👥 ${tableSt.people.invitados.without_name} sin nombre</span>
+                </td>
+                <td>
+                    ${tableSt.people.reserva.total}
+                    <span class="cell-sub">👤 ${tableSt.people.reserva.with_name} con nombre</span>
+                    <span class="cell-sub">👥 ${tableSt.people.reserva.without_name} sin nombre</span>
+                </td>
+                <td>
+                    ${tableSt.people.all.confirmados}
+                    <span class="cell-sub">💌 ${tableSt.people.invitados.confirmados} inv</span>
+                    <span class="cell-sub">💳 ${tableSt.people.reserva.confirmados} res</span>
+                </td>
+                <td>
+                    <span class="cell-sub">❌ ${tableSt.people.all.rechazados} no asisten</span>
+                    <span class="cell-sub">⏳ ${tableSt.people.all.pendientes} pendientes</span>
+                </td>
+                <td>
+                    ${tableSt.people.all.pagados}
+                    <span class="cell-sub">📎 ${tableSt.tarjetas.all.con_comprobante} comprob.</span>
+                </td>
+            </tr>`;
+        }
+
+        function renderAll() {
+            renderFilters();
+            renderDashboard();
+        }
+
+        async function refreshFromSheets() {
+            const btn = document.getElementById('btnSyncSheets');
+            const label = document.getElementById('syncLabel');
+            btn.disabled = true;
+            label.textContent = 'Sincronizando...';
+            try {
+                const res = await fetch('/panel/stats/refresh', { method: 'POST' });
+                const data = await res.json();
+                if (data.ok && Array.isArray(data.records)) {
+                    allRecords = data.records;
+                    renderAll();
+                    showToast(data.message || 'Sincronizado con Google Sheets');
+                } else {
+                    showToast(data.error || 'Error al sincronizar', true);
+                }
+            } catch (err) {
+                showToast('Error de red al sincronizar con Google Sheets', true);
+            } finally {
+                btn.disabled = false;
+                label.textContent = 'Sincronizar Sheets';
+            }
+        }
+
+        renderAll();
+    </script>
+</body>
+
+</html>

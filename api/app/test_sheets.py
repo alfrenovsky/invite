@@ -1489,6 +1489,126 @@ class TestGoogleSheetsTable(unittest.TestCase):
                     res_panel = client.get("/panel")
                     self.assertNotEqual(res_panel.status_code, 403)
 
+    def test_panel_stats_auth_and_calculations(self):
+        from app import app
+        sample_records = [
+            {
+                "id": "r1",
+                "invitacion_id": "fam_perez",
+                "nombre": "Juan",
+                "apellido": "Perez",
+                "dequien": "Alfredo Amigos",
+                "nivel": "Invitado",
+                "montotarjeta": "",
+                "confirmacion": "si",
+                "pagado": "",
+                "comprobante": "",
+                "abierto": "si",
+            },
+            {
+                "id": "r2",
+                "invitacion_id": "fam_perez",
+                "nombre": "",
+                "apellido": "",
+                "dequien": "Alfredo Amigos",
+                "nivel": "Invitado",
+                "montotarjeta": "",
+                "confirmacion": "",
+                "pagado": "",
+                "comprobante": "",
+                "abierto": "si",
+            },
+            {
+                "id": "r3",
+                "invitacion_id": "pareja_gomez",
+                "nombre": "Maria",
+                "apellido": "Gomez",
+                "dequien": "Celia Familia",
+                "nivel": "Reserva",
+                "montotarjeta": "105000",
+                "confirmacion": "si",
+                "pagado": "si",
+                "comprobante": "https://nos.vamos.acas.ar/comprobantes/c1.jpg",
+                "abierto": "si",
+            },
+            {
+                "id": "r4",
+                "invitacion_id": "pareja_gomez",
+                "nombre": "Carlos",
+                "apellido": "Gomez",
+                "dequien": "Celia Familia",
+                "nivel": "Reserva",
+                "montotarjeta": "105000",
+                "confirmacion": "no",
+                "pagado": "",
+                "comprobante": "https://nos.vamos.acas.ar/comprobantes/c1.jpg",
+                "abierto": "si",
+            },
+        ]
+
+        with patch("app.table.get_all", return_value=sample_records), \
+             patch("app.table.flush_local_to_remote", return_value=0):
+            with app.test_client() as client:
+                # 1. Unauthenticated requests must be rejected with 401
+                self.assertEqual(client.get("/panel/stats").status_code, 401)
+                self.assertEqual(client.post("/panel/stats/refresh").status_code, 401)
+
+                auth_headers = get_panel_auth_headers("ari", "gato")
+
+                # 2. Panel HTML includes the Stats icon link
+                res_panel = client.get("/panel", headers=auth_headers)
+                self.assertEqual(res_panel.status_code, 200)
+                self.assertIn(b'/panel/stats', res_panel.data)
+
+                # 3. Authenticated GET /panel/stats HTML
+                res_html = client.get("/panel/stats", headers=auth_headers)
+                self.assertEqual(res_html.status_code, 200)
+                self.assertIn(b'Estad\xc3\xadsticas de Invitados y Tarjetas', res_html.data)
+
+                # 4. Authenticated GET /panel/stats?format=json
+                res_json = client.get("/panel/stats?format=json", headers=auth_headers)
+                self.assertEqual(res_json.status_code, 200)
+                payload = res_json.get_json()
+                self.assertTrue(payload["ok"])
+                stats = payload["stats"]
+
+                # People totals & with/without name
+                self.assertEqual(stats["people"]["all"]["total"], 4)
+                self.assertEqual(stats["people"]["all"]["with_name"], 3)
+                self.assertEqual(stats["people"]["all"]["without_name"], 1)
+                self.assertEqual(stats["people"]["all"]["confirmados"], 2)
+                self.assertEqual(stats["people"]["all"]["rechazados"], 1)
+                self.assertEqual(stats["people"]["all"]["pendientes"], 1)
+                self.assertEqual(stats["people"]["all"]["pagados"], 1)
+
+                # Invitados subtotal
+                self.assertEqual(stats["people"]["invitados"]["total"], 2)
+                self.assertEqual(stats["people"]["invitados"]["with_name"], 1)
+                self.assertEqual(stats["people"]["invitados"]["without_name"], 1)
+                self.assertEqual(stats["people"]["invitados"]["confirmados"], 1)
+
+                # Reserva subtotal
+                self.assertEqual(stats["people"]["reserva"]["total"], 2)
+                self.assertEqual(stats["people"]["reserva"]["with_name"], 2)
+                self.assertEqual(stats["people"]["reserva"]["without_name"], 0)
+                self.assertEqual(stats["people"]["reserva"]["confirmados"], 1)
+                self.assertEqual(stats["people"]["reserva"]["pagados"], 1)
+
+                # Tarjetas summary
+                self.assertEqual(stats["tarjetas"]["all"]["total"], 2)
+                self.assertEqual(stats["tarjetas"]["all"]["leidas"], 2)
+                self.assertEqual(stats["tarjetas"]["all"]["with_all_names"], 1)
+                self.assertEqual(stats["tarjetas"]["all"]["with_unnamed"], 1)
+                self.assertEqual(stats["tarjetas"]["invitados"]["total"], 1)
+                self.assertEqual(stats["tarjetas"]["reserva"]["total"], 1)
+                self.assertEqual(stats["tarjetas"]["reserva"]["pagadas_completas"], 1)
+                self.assertEqual(stats["tarjetas"]["reserva"]["con_comprobante"], 1)
+
+                # 5. Authenticated POST /panel/stats/refresh
+                res_refresh = client.post("/panel/stats/refresh", headers=auth_headers)
+                self.assertEqual(res_refresh.status_code, 200)
+                self.assertTrue(res_refresh.get_json()["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()
