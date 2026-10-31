@@ -1496,10 +1496,129 @@
             transform: translateY(-1px);
         }
 
-        .text-editor-toolbar + textarea.el-text-content {
+        .text-editor-toolbar + textarea.el-text-content,
+        .text-editor-toolbar + .custom-typo-panel + textarea.el-text-content,
+        .custom-typo-panel + textarea.el-text-content {
             border-top-left-radius: 0 !important;
             border-top-right-radius: 0 !important;
             border-top: none !important;
+        }
+
+        .tb-gear-btn {
+            position: relative;
+        }
+
+        .tb-gear-btn.active-open {
+            background: rgba(56, 189, 248, 0.25) !important;
+            border-color: rgba(56, 189, 248, 0.6) !important;
+            color: #38bdf8 !important;
+        }
+
+        .tb-gear-btn.has-overrides {
+            border-color: rgba(212, 175, 55, 0.7);
+            color: #f6e05e;
+        }
+
+        .tb-gear-btn.has-overrides::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 6px;
+            height: 6px;
+            background: #d4af37;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(212, 175, 55, 0.9);
+        }
+
+        .custom-typo-panel {
+            background: rgba(15, 23, 42, 0.96);
+            border-left: 1px solid var(--card-border);
+            border-right: 1px solid var(--card-border);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 12px 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        .typo-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .typo-panel-title {
+            font-size: 0.70rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .typo-reset-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 0.70rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+        }
+
+        .typo-reset-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        .typo-panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 14px;
+        }
+
+        @media (max-width: 640px) {
+            .typo-panel-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .typo-panel-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .typo-panel-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 72px;
+            margin: 0 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            flex-shrink: 0;
+        }
+
+        .typo-panel-row .form-select {
+            height: 28px;
+            padding: 2px 6px;
+            font-size: 0.78rem;
+            width: 100%;
+        }
+
+        .typo-panel-row .range-badge {
+            min-width: 48px;
+            text-align: right;
+            font-size: 0.70rem;
+            font-family: monospace;
+            color: #38bdf8;
+            flex-shrink: 0;
         }
 
         /* Sticker Editor Toolbar & Inline Inputs */
@@ -6934,18 +7053,29 @@
                     const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
                     const currentVAlign = (el.valign && ['top', 'center', 'bottom'].includes(el.valign)) ? el.valign : 'center';
                     const currentColor = el.color || '#ffffff';
+                    const hasCustomTypo = Boolean(
+                        el.fontFamily ||
+                        el.fontWeight ||
+                        (el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '') ||
+                        (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '')
+                    );
 
                     const textGroup = document.createElement('div');
                     textGroup.className = 'form-group';
                     textGroup.innerHTML = `
                     <label style="margin-bottom: 6px;">Contenido del Texto</label>
                     <div class="text-editor-toolbar" id="tb_${el.id}">
-                        <!-- Style Selector -->
-                        <select class="tb-select tb-style-select" title="Estilo del texto">
-                            <option value="title" ${currentStyle === 'title' ? 'selected' : ''}>🔤 Título</option>
-                            <option value="tag" ${currentStyle === 'tag' ? 'selected' : ''}>🏷️ Tag</option>
-                            <option value="body" ${currentStyle === 'body' ? 'selected' : ''}>📄 Cuerpo</option>
-                        </select>
+                        <!-- Style Selector and Custom Typography Button -->
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <select class="tb-select tb-style-select" title="Estilo del texto">
+                                <option value="title" ${currentStyle === 'title' ? 'selected' : ''}>🔤 Título</option>
+                                <option value="tag" ${currentStyle === 'tag' ? 'selected' : ''}>🏷️ Tag</option>
+                                <option value="body" ${currentStyle === 'body' ? 'selected' : ''}>📄 Cuerpo</option>
+                            </select>
+                            <button type="button" class="tb-btn-square tb-gear-btn ${hasCustomTypo ? 'has-overrides' : ''}" id="gearBtn_${el.id}" title="Ajustes tipográficos específicos (fuente, peso, interlineado, espaciado)">
+                                ⚙️
+                            </button>
+                        </div>
 
                         <div class="tb-divider"></div>
 
@@ -7043,6 +7173,56 @@
                             <span class="tb-chip-var" style="color: #c084fc;" title="Insertar línea de itinerario (izq|der)" data-insert="izq|der">+ Itinerario</span>
                         </div>
                     </div>
+                    <div class="custom-typo-panel" id="typoPanel_${el.id}" style="display: none;">
+                        <div class="typo-panel-header">
+                            <span class="typo-panel-title">⚙️ Tipografía propia (anula estilo base)</span>
+                            <button type="button" class="typo-reset-btn" id="typoResetBtn_${el.id}" title="Restablecer tipografía a los valores del estilo base">↺ Restablecer</button>
+                        </div>
+                        <div class="typo-panel-grid">
+                            <!-- Fuente -->
+                            <div class="typo-panel-row">
+                                <label class="typo-panel-label" for="typoFont_${el.id}">Fuente:</label>
+                                <select class="form-select typo-font-select" id="typoFont_${el.id}">
+                                    <option value="">(Heredar de estilo base)</option>
+                                    ${AVAILABLE_FONTS.map(f => `<option value="${escapeHtml(f)}" style="font-family: '${escapeHtml(f)}', sans-serif;" ${el.fontFamily === f ? 'selected' : ''}>${f === 'Montserrat' ? 'Montserrat (Estándar)' : escapeHtml(f)}</option>`).join('')}
+                                    ${el.fontFamily && !AVAILABLE_FONTS.includes(el.fontFamily) ? `<option value="${escapeHtml(el.fontFamily)}" selected>${escapeHtml(el.fontFamily)}</option>` : ''}
+                                </select>
+                            </div>
+
+                            <!-- Peso -->
+                            <div class="typo-panel-row">
+                                <label class="typo-panel-label" for="typoWeight_${el.id}">Peso:</label>
+                                <select class="form-select typo-weight-select" id="typoWeight_${el.id}">
+                                    <option value="">(Heredar de estilo base)</option>
+                                    <option value="300" ${String(el.fontWeight) === '300' ? 'selected' : ''}>300 — Light</option>
+                                    <option value="400" ${String(el.fontWeight) === '400' ? 'selected' : ''}>400 — Normal</option>
+                                    <option value="500" ${String(el.fontWeight) === '500' ? 'selected' : ''}>500 — Medium</option>
+                                    <option value="600" ${String(el.fontWeight) === '600' ? 'selected' : ''}>600 — SemiBold</option>
+                                    <option value="700" ${String(el.fontWeight) === '700' ? 'selected' : ''}>700 — Bold</option>
+                                    <option value="800" ${String(el.fontWeight) === '800' ? 'selected' : ''}>800 — ExtraBold</option>
+                                    <option value="900" ${String(el.fontWeight) === '900' ? 'selected' : ''}>900 — Black</option>
+                                </select>
+                            </div>
+
+                            <!-- Espaciado -->
+                            <div class="typo-panel-row">
+                                <label class="typo-panel-label" for="typoSpacing_${el.id}">Espaciado:</label>
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                                    <input type="range" class="pos-range typo-spacing-slider" id="typoSpacing_${el.id}" min="-0.15" max="0.50" step="0.01" value="${el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '' ? el.letterSpacing : 0}">
+                                    <span class="range-badge typo-spacing-badge" id="typoSpacingBadge_${el.id}">${el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '' ? el.letterSpacing + 'em' : '(heredado)'}</span>
+                                </div>
+                            </div>
+
+                            <!-- Interlineado -->
+                            <div class="typo-panel-row">
+                                <label class="typo-panel-label" for="typoLh_${el.id}">Interlineado:</label>
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                                    <input type="range" class="pos-range typo-lh-slider" id="typoLh_${el.id}" min="0.70" max="2.50" step="0.05" value="${el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '' ? el.lineHeight : 1.2}">
+                                    <span class="range-badge typo-lh-badge" id="typoLhBadge_${el.id}">${el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '' ? Number(el.lineHeight).toFixed(2) : '(heredado)'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
                 `;
 
@@ -7078,6 +7258,109 @@
                         updateLivePreview();
                         updateElementCardHeader(el, idx);
                     };
+
+                    // Specific Typography Overrides (Gear Dialog)
+                    const gearBtn = textGroup.querySelector(`#gearBtn_${el.id}`);
+                    const typoPanel = textGroup.querySelector(`#typoPanel_${el.id}`);
+                    const fontSelect = textGroup.querySelector(`#typoFont_${el.id}`);
+                    const weightSelect = textGroup.querySelector(`#typoWeight_${el.id}`);
+                    const spacingSlider = textGroup.querySelector(`#typoSpacing_${el.id}`);
+                    const spacingBadge = textGroup.querySelector(`#typoSpacingBadge_${el.id}`);
+                    const lhSlider = textGroup.querySelector(`#typoLh_${el.id}`);
+                    const lhBadge = textGroup.querySelector(`#typoLhBadge_${el.id}`);
+                    const typoResetBtn = textGroup.querySelector(`#typoResetBtn_${el.id}`);
+
+                    function refreshTypoOverrideState() {
+                        const hasAny = Boolean(
+                            el.fontFamily ||
+                            el.fontWeight ||
+                            (el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '') ||
+                            (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '')
+                        );
+                        if (gearBtn) gearBtn.classList.toggle('has-overrides', hasAny);
+                    }
+
+                    if (gearBtn && typoPanel) {
+                        gearBtn.onclick = (e) => {
+                            e.preventDefault();
+                            const isHidden = typoPanel.style.display === 'none';
+                            typoPanel.style.display = isHidden ? 'flex' : 'none';
+                            gearBtn.classList.toggle('active-open', isHidden);
+                        };
+                    }
+
+                    if (fontSelect) {
+                        fontSelect.onchange = () => {
+                            recordHistorySnapshot();
+                            const val = fontSelect.value.trim();
+                            if (val) {
+                                el.fontFamily = val;
+                            } else {
+                                delete el.fontFamily;
+                            }
+                            refreshTypoOverrideState();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    }
+
+                    if (weightSelect) {
+                        weightSelect.onchange = () => {
+                            recordHistorySnapshot();
+                            const val = weightSelect.value.trim();
+                            if (val) {
+                                el.fontWeight = parseInt(val, 10);
+                            } else {
+                                delete el.fontWeight;
+                            }
+                            refreshTypoOverrideState();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    }
+
+                    if (spacingSlider && spacingBadge) {
+                        spacingSlider.oninput = (e) => {
+                            const val = parseFloat(e.target.value);
+                            el.letterSpacing = val;
+                            spacingBadge.textContent = `${val.toFixed(2)}em`;
+                            refreshTypoOverrideState();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    }
+
+                    if (lhSlider && lhBadge) {
+                        lhSlider.oninput = (e) => {
+                            const val = parseFloat(e.target.value);
+                            el.lineHeight = val;
+                            lhBadge.textContent = Number(val).toFixed(2);
+                            refreshTypoOverrideState();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    }
+
+                    if (typoResetBtn) {
+                        typoResetBtn.onclick = (e) => {
+                            e.preventDefault();
+                            recordHistorySnapshot();
+                            delete el.fontFamily;
+                            delete el.fontWeight;
+                            delete el.letterSpacing;
+                            delete el.lineHeight;
+                            if (fontSelect) fontSelect.value = '';
+                            if (weightSelect) weightSelect.value = '';
+                            if (spacingSlider) spacingSlider.value = 0;
+                            if (spacingBadge) spacingBadge.textContent = '(heredado)';
+                            if (lhSlider) lhSlider.value = 1.2;
+                            if (lhBadge) lhBadge.textContent = '(heredado)';
+                            refreshTypoOverrideState();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                            showToast('↺ Tipografía restablecida al estilo base');
+                        };
+                    }
 
                     // Horizontal Alignment Buttons
                     const alignBtns = textGroup.querySelectorAll('.tb-align-btn');
@@ -8127,6 +8410,18 @@
                             textDiv.style.transformOrigin = `center ${originY}`;
                             textDiv.style.transformStyle = 'preserve-3d';
                             textDiv.style.color = el.color || '#ffffff';
+                            if (el.fontFamily) {
+                                textDiv.style.fontFamily = `'${el.fontFamily}', sans-serif`;
+                            }
+                            if (el.fontWeight) {
+                                textDiv.style.fontWeight = el.fontWeight;
+                            }
+                            if (el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '') {
+                                textDiv.style.letterSpacing = `${el.letterSpacing}em`;
+                            }
+                            if (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '') {
+                                textDiv.style.lineHeight = el.lineHeight;
+                            }
                             const processedText = replacePreviewVariables(el.content || '');
                             const itineraryHtml = renderSlideTextHtml(processedText);
                             if (itineraryHtml !== null) {
