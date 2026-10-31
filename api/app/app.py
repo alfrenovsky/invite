@@ -45,6 +45,10 @@ def get_data_dir():
             return p
     target = candidates[0]
     os.makedirs(target, exist_ok=True)
+    try:
+        os.chmod(target, 0o777)
+    except Exception:
+        pass
     return target
 
 
@@ -64,6 +68,10 @@ def get_designs_dir():
             return p
     target = candidates[0]
     os.makedirs(target, exist_ok=True)
+    try:
+        os.chmod(target, 0o777)
+    except Exception:
+        pass
     return target
 
 
@@ -102,6 +110,10 @@ def set_active_design(slug, name=""):
     try:
         with open(active_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        try:
+            os.chmod(active_file, 0o666)
+        except Exception:
+            pass
     except Exception:
         pass
     return data
@@ -410,6 +422,10 @@ def get_backgrounds_dir():
             return p
     target = candidates[0]
     os.makedirs(target, exist_ok=True)
+    try:
+        os.chmod(target, 0o777)
+    except Exception:
+        pass
     return target
 
 
@@ -452,6 +468,10 @@ def get_fonts_dir():
             return p
     target = candidates[0]
     os.makedirs(target, exist_ok=True)
+    try:
+        os.chmod(target, 0o777)
+    except Exception:
+        pass
     return target
 
 
@@ -1652,6 +1672,10 @@ def panel_save_design():
     fpath = os.path.join(designs_dir, f"{slug}.json")
     with open(fpath, "w", encoding="utf-8") as f:
         json.dump(design_record, f, indent=2, ensure_ascii=False)
+    try:
+        os.chmod(fpath, 0o666)
+    except Exception:
+        pass
 
     save_slides(slides)
     save_styles(styles)
