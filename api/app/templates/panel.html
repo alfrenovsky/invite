@@ -3740,12 +3740,12 @@
                                         {% endfor %}
                                     </select>
                                     <span id="activeDesignBadge" style="display: inline-flex; align-items: center; font-size: 0.70rem; padding: 2px 6px; border-radius: 4px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3); white-space: nowrap; {% if not active_design or not active_design.slug %}display: none;{% endif %}">
-                                        Activo: <strong id="activeDesignNameBadge" style="margin-left: 4px;">{{ active_design.name if active_design else '' }}</strong>
+                                        Publicado: <strong id="activeDesignNameBadge" style="margin-left: 4px;">{{ active_design.name if active_design else '' }}</strong>
                                     </span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <button type="button" class="btn-ctrl" id="btnLoadDesign" onclick="activateCurrentDesign()" title="Activar este diseño en la invitación pública" style="height: 30px; padding: 0 9px; font-size: 0.76rem; border-color: rgba(212, 175, 55, 0.4); color: #d4af37;">
-                                        <span>⚡ Activar en Invitación</span>
+                                    <button type="button" class="btn-ctrl" id="btnLoadDesign" onclick="activateCurrentDesign()" title="Publicar este diseño para los invitados" style="height: 30px; padding: 0 9px; font-size: 0.76rem; border-color: rgba(212, 175, 55, 0.4); color: #d4af37;">
+                                        <span>⚡ Publicar</span>
                                     </button>
                                     <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnSaveDesign" onclick="saveCurrentDesign()" title="Guardar cambios sobre el diseño activo" style="height: 30px; padding: 0 9px; font-size: 0.76rem;">
                                         <span>💾 Guardar</span>
@@ -5732,7 +5732,7 @@
                         const opt = document.createElement('option');
                         opt.value = d.slug;
                         const isLiveActive = activeDesignData && activeDesignData.slug === d.slug;
-                        opt.textContent = d.name + (isLiveActive ? ' ★ [Activo en invitación]' : '');
+                        opt.textContent = d.name + (isLiveActive ? ' ★ [Publicado]' : '');
                         if (d.slug === currentDesignSlug) {
                             opt.selected = true;
                         }
@@ -5754,27 +5754,27 @@
                     activeBadge.style.background = 'rgba(16, 185, 129, 0.15)';
                     activeBadge.style.color = '#10b981';
                     activeBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-                    activeBadge.innerHTML = '<span>✅ <strong>Activo en la invitación pública</strong></span>';
+                    activeBadge.innerHTML = '<span>✅ <strong>Publicado</strong></span>';
                 } else {
                     activeBadge.style.background = 'rgba(212, 175, 55, 0.15)';
                     activeBadge.style.color = '#d4af37';
                     activeBadge.style.borderColor = 'rgba(212, 175, 55, 0.4)';
                     const liveName = activeDesignData ? (activeDesignData.name || activeDesignData.slug || 'Ninguno') : 'Ninguno';
-                    activeBadge.innerHTML = `<span>✏️ <strong>Borrador en edición</strong> (Activo en vivo: <em>${escapeHtml(liveName)}</em>)</span>`;
+                    activeBadge.innerHTML = `<span>✏️ <strong>Borrador en edición</strong> (Publicado: <em>${escapeHtml(liveName)}</em>)</span>`;
                 }
             }
 
             if (btnActivate) {
                 if (isCurrentActive) {
                     btnActivate.disabled = true;
-                    btnActivate.innerHTML = '<span>✓ Ya está activo</span>';
+                    btnActivate.innerHTML = '<span>✓ Ya publicado</span>';
                     btnActivate.style.opacity = '0.6';
-                    btnActivate.title = 'Este diseño ya es el activo en la invitación pública';
+                    btnActivate.title = 'Este diseño ya está publicado para los invitados';
                 } else {
                     btnActivate.disabled = false;
-                    btnActivate.innerHTML = '<span>⚡ Activar en Invitación</span>';
+                    btnActivate.innerHTML = '<span>⚡ Publicar</span>';
                     btnActivate.style.opacity = '1';
-                    btnActivate.title = 'Hacer que este diseño sea el visible para los invitados';
+                    btnActivate.title = 'Publicar este diseño para los invitados';
                 }
             }
         }
@@ -5935,7 +5935,7 @@
 
         async function activateCurrentDesign() {
             if (!currentDesignSlug) {
-                showToast('No hay un diseño seleccionado para activar', true);
+                showToast('No hay un diseño seleccionado para publicar', true);
                 return;
             }
 
@@ -5948,7 +5948,7 @@
             const btn = document.getElementById('btnLoadDesign');
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<span>Activando...</span>';
+                btn.innerHTML = '<span>Publicando...</span>';
             }
 
             try {
@@ -5962,12 +5962,12 @@
                     activeDesignData = data.active_design;
                     designsData = data.designs || designsData;
                     updateDesignsUI();
-                    showToast(`⚡ ¡Diseño "${currentDesignName}" activado en la invitación pública!`);
+                    showToast(`⚡ ¡Diseño "${currentDesignName}" publicado!`);
                 } else {
-                    showToast(data.error || 'Error al activar diseño', true);
+                    showToast(data.error || 'Error al publicar diseño', true);
                 }
             } catch (err) {
-                showToast('Error de red al activar diseño', true);
+                showToast('Error de red al publicar diseño', true);
             } finally {
                 updateDesignsUI();
             }
@@ -5982,7 +5982,7 @@
             }
 
             if (activeDesignData && activeDesignData.slug === slug) {
-                showToast('No podés eliminar el diseño que está actualmente activo en la invitación', true);
+                showToast('No podés eliminar el diseño que está actualmente publicado', true);
                 return;
             }
 

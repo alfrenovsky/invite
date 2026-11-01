@@ -1813,7 +1813,7 @@ def panel_activate_design():
         "styles": styles,
         "designs": list_designs(),
         "active_design": active,
-        "message": f"Diseño '{name}' activado en la invitación pública",
+        "message": f"Diseño '{name}' publicado correctamente",
     })
 
 
