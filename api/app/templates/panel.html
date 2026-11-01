@@ -5869,8 +5869,8 @@
                 return;
             }
             closeSaveDesignModal();
-            // Save as a new design (null slug forces new slug generation)
-            await executeSaveDesign(name, null);
+            // Save as a new design (is_new = true forces unique slug generation)
+            await executeSaveDesign(name, '', true);
         }
 
         async function saveCurrentDesign() {
@@ -5878,17 +5878,17 @@
                 openSaveDesignModal();
                 return;
             }
-            await executeSaveDesign(currentDesignName || currentDesignSlug, currentDesignSlug);
+            await executeSaveDesign(currentDesignName || currentDesignSlug, currentDesignSlug, false);
         }
 
-        async function executeSaveDesign(name, targetSlug = null) {
+        async function executeSaveDesign(name, targetSlug = null, isNew = false) {
             const btn = document.getElementById('btnSaveDesign');
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
             }
 
-            const slugToSave = targetSlug || currentDesignSlug || '';
+            const slugToSave = isNew ? '' : (targetSlug !== null ? targetSlug : (currentDesignSlug || ''));
 
             try {
                 const cleanSlides = slidesData.map(s => {
@@ -5903,6 +5903,7 @@
                     body: JSON.stringify({
                         name: name,
                         slug: slugToSave,
+                        is_new: isNew,
                         slides: cleanSlides,
                         styles: stylesData
                     })

@@ -1678,10 +1678,21 @@ def panel_save_design():
 
     raw_name = str(data.get("name", "")).strip()
     slug = str(data.get("slug", "")).strip()
-    if not slug and raw_name:
-        slug = slugify_design_name(raw_name)
-    if not slug:
+    is_new = bool(data.get("is_new", False))
+    designs_dir = get_designs_dir()
+    os.makedirs(designs_dir, exist_ok=True)
+
+    if not raw_name and not slug:
         return jsonify({"ok": False, "error": "Identificador o nombre del diseño requerido"}), 400
+
+    if is_new or not slug:
+        base_slug = slugify_design_name(raw_name or slug)
+        slug = base_slug
+        counter = 1
+        while os.path.isfile(os.path.join(designs_dir, f"{slug}.json")):
+            slug = f"{base_slug}_{counter}"
+            counter += 1
+
     if not raw_name:
         raw_name = slug
 
@@ -1693,8 +1704,6 @@ def panel_save_design():
     if styles is None or not isinstance(styles, dict):
         styles = load_styles()
 
-    designs_dir = get_designs_dir()
-    os.makedirs(designs_dir, exist_ok=True)
     design_record = {
         "name": raw_name,
         "slug": slug,
@@ -1712,12 +1721,18 @@ def panel_save_design():
         pass
 
     active = get_active_design()
-    # If no active design is set yet, or if the design saved is currently the ACTIVE design in production, sync public invitation files
-    if not (active and active.get("slug")) or (active and active.get("slug") == slug):
+    # If no active design is set yet, or if this existing design is currently the ACTIVE design in production, sync public invitation files
+    if not (active and active.get("slug")):
         save_slides(slides)
         save_styles(styles)
         rebuild_slides_crops(slides)
         active = set_active_design(slug, raw_name)
+    elif not is_new and active.get("slug") == slug:
+        save_slides(slides)
+        save_styles(styles)
+        rebuild_slides_crops(slides)
+        if active.get("name") != raw_name:
+            active = set_active_design(slug, raw_name)
 
     return jsonify({
         "ok": True,
