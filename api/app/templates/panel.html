@@ -3739,13 +3739,11 @@
                                         </option>
                                         {% endfor %}
                                     </select>
-                                    <span id="activeDesignBadge" style="display: inline-flex; align-items: center; font-size: 0.70rem; padding: 2px 6px; border-radius: 4px; background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3); white-space: nowrap; {% if not active_design or not active_design.slug %}display: none;{% endif %}">
-                                        Publicado: <strong id="activeDesignNameBadge" style="margin-left: 4px;">{{ active_design.name if active_design else '' }}</strong>
-                                    </span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                    <button type="button" class="btn-ctrl" id="btnLoadDesign" onclick="activateCurrentDesign()" title="Publicar este diseño para los invitados" style="height: 30px; padding: 0 9px; font-size: 0.76rem; border-color: rgba(212, 175, 55, 0.4); color: #d4af37;">
-                                        <span>⚡ Publicar</span>
+                                    {% set is_initial_active = (active_design and active_design.slug) %}
+                                    <button type="button" class="btn-ctrl" id="btnLoadDesign" onclick="activateCurrentDesign()" title="{% if is_initial_active %}Este diseño ya está publicado para los invitados{% else %}Publicar este diseño para los invitados{% endif %}" style="height: 30px; padding: 0 9px; font-size: 0.76rem; border-color: {% if is_initial_active %}rgba(16, 185, 129, 0.4){% else %}rgba(212, 175, 55, 0.4){% endif %}; color: {% if is_initial_active %}#10b981{% else %}#d4af37{% endif %}; {% if is_initial_active %}opacity: 0.7; cursor: default;{% endif %}" {% if is_initial_active %}disabled{% endif %}>
+                                        <span>{% if is_initial_active %}✅ Publicado{% else %}⚡ Publicar{% endif %}</span>
                                     </button>
                                     <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnSaveDesign" onclick="saveCurrentDesign()" title="Guardar cambios sobre el diseño activo" style="height: 30px; padding: 0 9px; font-size: 0.76rem;">
                                         <span>💾 Guardar</span>
@@ -5720,7 +5718,6 @@
         // -------------------------------------------------------------
         function updateDesignsUI() {
             const select = document.getElementById('designPresetSelect');
-            const activeBadge = document.getElementById('activeDesignBadge');
             const btnActivate = document.getElementById('btnLoadDesign');
 
             if (select) {
@@ -5748,32 +5745,22 @@
                 currentDesignSlug === activeDesignData.slug
             );
 
-            if (activeBadge) {
-                activeBadge.style.display = 'inline-flex';
-                if (isCurrentActive) {
-                    activeBadge.style.background = 'rgba(16, 185, 129, 0.15)';
-                    activeBadge.style.color = '#10b981';
-                    activeBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-                    activeBadge.innerHTML = '<span>✅ <strong>Publicado</strong></span>';
-                } else {
-                    activeBadge.style.background = 'rgba(212, 175, 55, 0.15)';
-                    activeBadge.style.color = '#d4af37';
-                    activeBadge.style.borderColor = 'rgba(212, 175, 55, 0.4)';
-                    const liveName = activeDesignData ? (activeDesignData.name || activeDesignData.slug || 'Ninguno') : 'Ninguno';
-                    activeBadge.innerHTML = `<span>✏️ <strong>Borrador en edición</strong> (Publicado: <em>${escapeHtml(liveName)}</em>)</span>`;
-                }
-            }
-
             if (btnActivate) {
                 if (isCurrentActive) {
                     btnActivate.disabled = true;
-                    btnActivate.innerHTML = '<span>✓ Ya publicado</span>';
-                    btnActivate.style.opacity = '0.6';
+                    btnActivate.innerHTML = '<span>✅ Publicado</span>';
+                    btnActivate.style.opacity = '0.7';
+                    btnActivate.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                    btnActivate.style.color = '#10b981';
+                    btnActivate.style.cursor = 'default';
                     btnActivate.title = 'Este diseño ya está publicado para los invitados';
                 } else {
                     btnActivate.disabled = false;
                     btnActivate.innerHTML = '<span>⚡ Publicar</span>';
                     btnActivate.style.opacity = '1';
+                    btnActivate.style.borderColor = 'rgba(212, 175, 55, 0.4)';
+                    btnActivate.style.color = '#d4af37';
+                    btnActivate.style.cursor = 'pointer';
                     btnActivate.title = 'Publicar este diseño para los invitados';
                 }
             }
