@@ -138,13 +138,14 @@
                 {% set cd_blur_val = el.bg_blur if (el.bg_blur is defined and el.bg_blur is not none and el.bg_blur != '') else 0 %}
                 {% set cd_bg = cd_bg_val | rgba(cd_opacity_val) %}
                 {% set cd_color = el.color or '#111827' %}
+                {% set cd_pad_y = el.pad_y if (el.pad_y is defined and el.pad_y is not none and el.pad_y != '') else 2 %}
                 {% set cd_glass_css = ('backdrop-filter: blur(' ~ cd_blur_val ~ 'px); -webkit-backdrop-filter: blur(' ~ cd_blur_val ~ 'px); border: 1px solid rgba(255,255,255,0.22);') if cd_blur_val > 0 else '' %}
                 <div class="slide-el slide-el-countdown"
                      style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); width: {{ el.w or 90 }}%; max-width: {{ el.w or 90 }}%; transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
                     <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{ (el.title or 'Boda Celia y Alfredo')|urlencode }}&dates=20270319T210000Z/20270320T070000Z&location=Luna+India%3A+Castro+Barros%2C+M5513%2C+Mendoza&details={{ (invitation_url or '')|urlencode }}"
                        target="_blank" rel="noopener noreferrer"
                        class="countdown-sticker dynamic-countdown-sticker"
-                       style="background: {{ cd_bg }}; color: {{ cd_color }}; {{ cd_glass_css }}"
+                       style="background: {{ cd_bg }}; color: {{ cd_color }}; padding-top: {{ cd_pad_y }}px; padding-bottom: {{ cd_pad_y }}px; {{ cd_glass_css }}"
                        data-target-date="{{ target_iso }}"
                        data-precision="{{ precision_val }}"
                        aria-label="Agendar en Google Calendar">

@@ -3063,7 +3063,7 @@
             align-items: center;
             background: #ffffff;
             border-radius: 16px;
-            padding: 8px 14px 10px 14px;
+            padding: 2px 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             width: 100%;
             max-width: 100%;
@@ -6839,6 +6839,42 @@
                         if (!isNaN(val)) updateWidth(Math.max(40, Math.min(100, val)));
                     };
 
+                    // Vertical Padding / Height Control
+                    const currPadY = (el.pad_y !== undefined && el.pad_y !== null && el.pad_y !== '') ? Number(el.pad_y) : 2;
+                    const padYRow = document.createElement('div');
+                    padYRow.className = 'pos-slider-wrap countdown-pady-wrap';
+                    padYRow.style.marginTop = '4px';
+                    padYRow.innerHTML = `
+                        <div class="pos-slider-header">
+                            <span>Alto / Relleno Vertical</span>
+                            <span class="pos-val-badge" id="badgePadY_${idx}">${currPadY}px</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderPadY_${idx}" min="0" max="24" step="1" value="${currPadY}">
+                            <input type="number" class="pos-num-input" id="numPadY_${idx}" min="0" max="24" step="1" value="${currPadY}">
+                        </div>
+                    `;
+                    body.appendChild(padYRow);
+
+                    const sliderPadY = padYRow.querySelector(`#sliderPadY_${idx}`);
+                    const numPadY = padYRow.querySelector(`#numPadY_${idx}`);
+                    const badgePadY = padYRow.querySelector(`#badgePadY_${idx}`);
+
+                    const updatePadY = (newPad) => {
+                        el.pad_y = newPad;
+                        sliderPadY.value = newPad;
+                        numPadY.value = newPad;
+                        badgePadY.textContent = `${newPad}px`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    };
+
+                    sliderPadY.oninput = () => updatePadY(parseInt(sliderPadY.value, 10));
+                    numPadY.oninput = () => {
+                        const val = parseInt(numPadY.value, 10);
+                        if (!isNaN(val)) updatePadY(Math.max(0, Math.min(24, val)));
+                    };
+
                     // Countdown Styling: Background color, Opacity, Font Color, and Frosted Glass Blur
                     const cdStyleRow = document.createElement('div');
                     cdStyleRow.className = 'countdown-style-wrap';
@@ -7018,7 +7054,9 @@
                         delete el.bg_opacity;
                         delete el.bg_blur;
                         delete el.color;
+                        delete el.pad_y;
                         updateWidth(90);
+                        if (typeof updatePadY === 'function') updatePadY(2);
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         renderElementsList();
                         updateLivePreview();
@@ -8571,7 +8609,8 @@
                 bg_color: '#ffffff',
                 bg_opacity: 100,
                 bg_blur: 0,
-                color: '#111827'
+                color: '#111827',
+                pad_y: 2
             };
             slide.elements.push(newEl);
             collapsedElementIds.add('background');
@@ -9330,11 +9369,12 @@
                             const cdBlurVal = (el.bg_blur !== undefined && el.bg_blur !== null && el.bg_blur !== '') ? Number(el.bg_blur) : 0;
                             const cdBgRgba = hexToRgba(cdBgVal, cdOpVal);
                             const cdColorVal = el.color || '#111827';
+                            const cdPadY = (el.pad_y !== undefined && el.pad_y !== null && el.pad_y !== '') ? Number(el.pad_y) : 2;
                             const cdGlassCss = cdBlurVal > 0 ? `backdrop-filter: blur(${cdBlurVal}px); -webkit-backdrop-filter: blur(${cdBlurVal}px); border: 1px solid rgba(255, 255, 255, 0.22);` : '';
 
                             cdDiv.innerHTML = `
                             ${isSelected ? `<div class="sticker-rot-handle" title="Arrastrá para rotar">⟳</div>` : ''}
-                            <div class="countdown-sticker" style="cursor: grab; width: 100%; box-sizing: border-box; background: ${cdBgRgba}; color: ${cdColorVal}; ${cdGlassCss}">
+                            <div class="countdown-sticker" style="cursor: grab; width: 100%; box-sizing: border-box; background: ${cdBgRgba}; color: ${cdColorVal}; padding-top: ${cdPadY}px; padding-bottom: ${cdPadY}px; ${cdGlassCss}">
                                 <div class="countdown-sticker-content">
                                     <div class="countdown-sticker-header">
                                         <span class="countdown-sticker-title">${escapeHtml(el.title || 'FALTA POCO')}</span>
