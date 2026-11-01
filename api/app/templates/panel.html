@@ -7449,7 +7449,7 @@
                             </div>
 
                             <!-- Sombra de texto -->
-                            <div class="typo-panel-row">
+                            <div class="typo-panel-row" style="grid-column: 1 / -1;">
                                 <label class="typo-panel-label" for="typoShadow_${el.id}">Sombra:</label>
                                 <select class="form-select typo-shadow-select" id="typoShadow_${el.id}">
                                     <option value="" ${!el.shadow ? 'selected' : ''}>(Heredar de estilo base)</option>
@@ -7459,20 +7459,25 @@
                                     <option value="glow" ${el.shadow === 'glow' ? 'selected' : ''}>Brillo / Glow</option>
                                 </select>
                             </div>
+                        </div>
 
-                            <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0;"></div>
-                            <div style="font-size: 0.73rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Caja / Fondo del Texto (Sticker)</div>
+                        <!-- Sección Caja / Fondo del Texto (Sticker) -->
+                        <div class="typo-panel-header" style="margin-top: 6px;">
+                            <span class="typo-panel-title">📦 Caja / Fondo del Texto (Sticker)</span>
+                        </div>
 
-                            <!-- Presets de Caja / Fondo -->
-                            <div class="typo-panel-row" style="flex-wrap: wrap; gap: 4px;" id="boxPresets_${el.id}">
-                                <button type="button" class="tb-btn-style box-preset-btn ${!el.bg_color ? 'active' : ''}" data-preset="none" title="Sin caja ni fondo">Sin fondo</button>
-                                <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#ffffff' && el.bg_opacity == 20 && el.bg_blur == 12 ? 'active' : ''}" data-preset="glass-light" title="Fondo vidrio claro translúcido con desenfoque">✨ Vidrio Claro</button>
-                                <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#000000' && el.bg_opacity == 45 && el.bg_blur == 14 ? 'active' : ''}" data-preset="glass-dark" title="Fondo vidrio oscuro translúcido con desenfoque">🌫️ Vidrio Oscuro</button>
-                                <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#d4af37' && el.bg_opacity == 25 && el.bg_blur == 10 ? 'active' : ''}" data-preset="glass-gold" title="Fondo vidrio dorado translúcido con desenfoque">✨ Dorado</button>
-                                <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#ffffff' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0) ? 'active' : ''}" data-preset="white" title="Caja blanca opaca">Blanco</button>
-                                <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#000000' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0) ? 'active' : ''}" data-preset="black" title="Caja negra opaca">Negro</button>
-                            </div>
+                        <!-- Presets de Caja / Fondo a ancho completo -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px 0;" id="boxPresets_${el.id}">
+                            <button type="button" class="tb-btn-style box-preset-btn ${!el.bg_color ? 'active' : ''}" data-preset="none" title="Sin caja ni fondo">Sin fondo</button>
+                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#ffffff' && el.bg_opacity == 20 && el.bg_blur == 12 ? 'active' : ''}" data-preset="glass-light" title="Fondo vidrio claro translúcido con desenfoque">✨ Vidrio Claro</button>
+                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#000000' && el.bg_opacity == 45 && el.bg_blur == 14 ? 'active' : ''}" data-preset="glass-dark" title="Fondo vidrio oscuro translúcido con desenfoque">🌫️ Vidrio Oscuro</button>
+                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#d4af37' && el.bg_opacity == 25 && el.bg_blur == 10 ? 'active' : ''}" data-preset="glass-gold" title="Fondo vidrio dorado translúcido con desenfoque">✨ Dorado</button>
+                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#ffffff' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0) ? 'active' : ''}" data-preset="white" title="Caja blanca opaca">Blanco</button>
+                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#000000' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0) ? 'active' : ''}" data-preset="black" title="Caja negra opaca">Negro</button>
+                        </div>
 
+                        <!-- Grid para los controles de la caja -->
+                        <div class="typo-panel-grid">
                             <!-- Color de Fondo y Opacidad -->
                             <div class="typo-panel-row">
                                 <label class="typo-panel-label" for="typoBoxBg_${el.id}">Color fondo:</label>
@@ -7494,7 +7499,7 @@
                             </div>
 
                             <!-- Bordes redondeados (Radius) -->
-                            <div class="typo-panel-row">
+                            <div class="typo-panel-row" style="grid-column: 1 / -1;">
                                 <label class="typo-panel-label" for="typoBoxRadius_${el.id}">Bordes redondeados:</label>
                                 <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
                                     <input type="range" class="pos-range typo-box-radius-slider" id="typoBoxRadius_${el.id}" min="0" max="32" step="2" value="${el.box_radius !== undefined && el.box_radius !== null && el.box_radius !== '' ? el.box_radius : 12}" style="flex: 1;">
