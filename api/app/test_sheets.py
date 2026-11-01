@@ -1692,18 +1692,30 @@ class TestGoogleSheetsTable(unittest.TestCase):
                     self.assertEqual(res_del_bg.status_code, 400)
                     self.assertIn("en uso en el diseño guardado", res_del_bg.get_json()["error"])
 
-                # 6. Load design
-                res_load = client.post(
-                    "/panel/designs/load",
+                # 6. Select design (loads into editor without changing active design)
+                res_sel = client.post(
+                    "/panel/designs/select",
                     headers=auth_headers,
                     json={"slug": "diseno_vintage_floral"}
                 )
-                self.assertEqual(res_load.status_code, 200)
-                load_data = res_load.get_json()
-                self.assertTrue(load_data["ok"])
-                self.assertEqual(load_data["name"], "Diseño Vintage Floral")
+                self.assertEqual(res_sel.status_code, 200)
+                sel_data = res_sel.get_json()
+                self.assertTrue(sel_data["ok"])
+                self.assertEqual(sel_data["name"], "Diseño Vintage Floral")
+                self.assertEqual(len(sel_data["slides"]), 1)
 
-                # 7. Delete design
+                # 7. Activate design (sets as active in public invitation)
+                res_act = client.post(
+                    "/panel/designs/activate",
+                    headers=auth_headers,
+                    json={"slug": "diseno_vintage_floral"}
+                )
+                self.assertEqual(res_act.status_code, 200)
+                act_data = res_act.get_json()
+                self.assertTrue(act_data["ok"])
+                self.assertEqual(act_data["active_design"]["slug"], "diseno_vintage_floral")
+
+                # 8. Delete design
                 res_del = client.post(
                     "/panel/designs/delete",
                     headers=auth_headers,

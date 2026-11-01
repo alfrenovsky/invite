@@ -1524,13 +1524,46 @@ def panel_save_styles():
     data = request.get_json(silent=True) or request.form.to_dict()
     if not data or not isinstance(data, dict):
         return jsonify({"ok": False, "error": "Datos inválidos"}), 400
-    current = load_styles()
+
+    design_slug = str(data.pop("design_slug", "")).strip()
+    active = get_active_design()
+    active_slug = (active.get("slug") or "") if active else ""
+
+    design_record = None
+    design_fpath = None
+    if design_slug:
+        design_fpath = os.path.join(get_designs_dir(), f"{design_slug}.json")
+        if os.path.isfile(design_fpath):
+            try:
+                with open(design_fpath, "r", encoding="utf-8") as f:
+                    design_record = json.load(f)
+                current = design_record.get("styles") or {}
+            except Exception:
+                current = load_styles()
+        else:
+            current = load_styles()
+    else:
+        current = load_styles()
+
     for k, v in data.items():
         if isinstance(v, dict) and k in current and isinstance(current[k], dict):
             current[k].update(v)
         else:
             current[k] = v
-    save_styles(current)
+
+    if design_record and design_fpath:
+        design_record["styles"] = current
+        design_record["updated_at"] = datetime.now(timezone.utc).isoformat()
+        try:
+            with open(design_fpath, "w", encoding="utf-8") as f:
+                json.dump(design_record, f, indent=2, ensure_ascii=False)
+            os.chmod(design_fpath, 0o666)
+        except Exception:
+            pass
+
+    if not design_slug or design_slug == active_slug:
+        save_styles(current)
+
     return jsonify({"ok": True, "styles": current, "message": "Estilos guardados correctamente"})
 
 
@@ -1644,12 +1677,13 @@ def panel_save_design():
         return jsonify({"ok": False, "error": "Datos inválidos"}), 400
 
     raw_name = str(data.get("name", "")).strip()
-    if not raw_name:
-        return jsonify({"ok": False, "error": "Nombre del diseño requerido"}), 400
-
-    slug = slugify_design_name(raw_name)
+    slug = str(data.get("slug", "")).strip()
+    if not slug and raw_name:
+        slug = slugify_design_name(raw_name)
     if not slug:
-        return jsonify({"ok": False, "error": "Nombre del diseño inválido"}), 400
+        return jsonify({"ok": False, "error": "Identificador o nombre del diseño requerido"}), 400
+    if not raw_name:
+        raw_name = slug
 
     slides = data.get("slides")
     if slides is None or not isinstance(slides, list):
@@ -1677,10 +1711,13 @@ def panel_save_design():
     except Exception:
         pass
 
-    save_slides(slides)
-    save_styles(styles)
-    rebuild_slides_crops(slides)
-    active = set_active_design(slug, raw_name)
+    active = get_active_design()
+    # If no active design is set yet, or if the design saved is currently the ACTIVE design in production, sync public invitation files
+    if not (active and active.get("slug")) or (active and active.get("slug") == slug):
+        save_slides(slides)
+        save_styles(styles)
+        rebuild_slides_crops(slides)
+        active = set_active_design(slug, raw_name)
 
     return jsonify({
         "ok": True,
@@ -1696,9 +1733,9 @@ def panel_save_design():
     })
 
 
-@app.post("/panel/designs/load")
+@app.post("/panel/designs/select")
 @require_panel_auth
-def panel_load_design():
+def panel_select_design():
     data = request.get_json(silent=True) or request.form.to_dict()
     if not data or not isinstance(data, dict):
         return jsonify({"ok": False, "error": "Datos inválidos"}), 400
@@ -1722,6 +1759,47 @@ def panel_load_design():
     styles = design_record.get("styles") or {}
     name = design_record.get("name") or slug
 
+    # Note: Does NOT modify public invitation files (slides.json / styles.json) or _active.json!
+    return jsonify({
+        "ok": True,
+        "slug": slug,
+        "name": name,
+        "slides": slides,
+        "styles": styles,
+        "designs": list_designs(),
+        "active_design": get_active_design(),
+        "message": f"Diseño '{name}' cargado en el editor",
+    })
+
+
+@app.post("/panel/designs/activate")
+@app.post("/panel/designs/load")
+@require_panel_auth
+def panel_activate_design():
+    data = request.get_json(silent=True) or request.form.to_dict()
+    if not data or not isinstance(data, dict):
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+
+    slug = str(data.get("slug", "")).strip()
+    if not slug:
+        return jsonify({"ok": False, "error": "Identificador de diseño requerido"}), 400
+
+    designs_dir = get_designs_dir()
+    fpath = os.path.join(designs_dir, f"{slug}.json")
+    if not os.path.isfile(fpath):
+        return jsonify({"ok": False, "error": f"El diseño '{slug}' no existe"}), 404
+
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            design_record = json.load(f)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Error leyendo diseño: {str(e)}"}), 500
+
+    slides = design_record.get("slides") or []
+    styles = design_record.get("styles") or {}
+    name = design_record.get("name") or slug
+
+    # Promote to ACTIVE for wedding guests in public invitation
     save_slides(slides)
     save_styles(styles)
     rebuild_slides_crops(slides)
@@ -1731,11 +1809,11 @@ def panel_load_design():
         "ok": True,
         "slug": slug,
         "name": name,
-        "slides": load_slides(),
-        "styles": load_styles(),
+        "slides": slides,
+        "styles": styles,
         "designs": list_designs(),
         "active_design": active,
-        "message": f"Diseño '{name}' activado correctamente",
+        "message": f"Diseño '{name}' activado en la invitación pública",
     })
 
 
@@ -1833,16 +1911,34 @@ def panel_upload_background():
 @app.post("/panel/slide/<slide_id>")
 @require_panel_auth
 def panel_update_slide(slide_id):
-
-    slides = load_slides()
-    target_slide = next((s for s in slides if s["id"] == slide_id or s.get("title") == slide_id or s.get("_origId") == slide_id), None)
-    if not target_slide:
-        return jsonify({"ok": False, "error": f"Slide {slide_id} no encontrado"}), 404
-
     if request.is_json:
         data = request.get_json(silent=True) or {}
     else:
         data = request.form.to_dict()
+
+    design_slug = str(data.get("design_slug", "")).strip()
+    active = get_active_design()
+    active_slug = (active.get("slug") or "") if active else ""
+
+    design_record = None
+    design_fpath = None
+    if design_slug:
+        design_fpath = os.path.join(get_designs_dir(), f"{design_slug}.json")
+        if os.path.isfile(design_fpath):
+            try:
+                with open(design_fpath, "r", encoding="utf-8") as f:
+                    design_record = json.load(f)
+                slides = design_record.get("slides") or []
+            except Exception:
+                slides = load_slides()
+        else:
+            slides = load_slides()
+    else:
+        slides = load_slides()
+
+    target_slide = next((s for s in slides if s["id"] == slide_id or s.get("title") == slide_id or s.get("_origId") == slide_id), None)
+    if not target_slide:
+        return jsonify({"ok": False, "error": f"Slide {slide_id} no encontrado"}), 404
 
     if "background" in data:
         target_slide["background"] = data["background"].strip()
@@ -1875,7 +1971,7 @@ def panel_update_slide(slide_id):
     target_slide["title"] = target_slide["id"]
 
     for key, val in data.items():
-        if key not in ("slide_id", "background", "duration", "bg_zoom", "bg_x", "bg_y", "id", "new_id", "hidden"):
+        if key not in ("slide_id", "design_slug", "background", "duration", "bg_zoom", "bg_x", "bg_y", "id", "new_id", "hidden"):
             target_slide[key] = val
 
     if any(k in data for k in ("background", "bg_zoom", "bg_x", "bg_y", "id", "new_id")):
@@ -1917,20 +2013,54 @@ def panel_update_slide(slide_id):
                 except Exception:
                     pass
 
-    save_slides(slides)
+    if design_record and design_fpath:
+        design_record["slides"] = slides
+        design_record["updated_at"] = datetime.now(timezone.utc).isoformat()
+        try:
+            with open(design_fpath, "w", encoding="utf-8") as f:
+                json.dump(design_record, f, indent=2, ensure_ascii=False)
+            os.chmod(design_fpath, 0o666)
+        except Exception:
+            pass
+
+    # Only save to public invitation slides.json if this design is ACTIVE in production
+    if not design_slug or design_slug == active_slug:
+        save_slides(slides)
+
     return jsonify({"ok": True, "slide": target_slide, "message": "Slide actualizado"})
 
 
 @app.post("/panel/slides")
 @require_panel_auth
 def panel_save_all_slides():
-
     data = request.get_json(silent=True)
-    if not data or not isinstance(data, list):
+    if not data:
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+
+    slides = data if isinstance(data, list) else data.get("slides")
+    design_slug = data.get("design_slug", "").strip() if isinstance(data, dict) else ""
+    if not isinstance(slides, list):
         return jsonify({"ok": False, "error": "Se esperaba una lista de slides"}), 400
 
-    save_slides(data)
-    return jsonify({"ok": True, "slides": data, "message": "Todos los slides guardados"})
+    active_slug = (get_active_design() or {}).get("slug", "")
+    if design_slug:
+        design_fpath = os.path.join(get_designs_dir(), f"{design_slug}.json")
+        if os.path.isfile(design_fpath):
+            try:
+                with open(design_fpath, "r", encoding="utf-8") as f:
+                    rec = json.load(f)
+                rec["slides"] = slides
+                rec["updated_at"] = datetime.now(timezone.utc).isoformat()
+                with open(design_fpath, "w", encoding="utf-8") as f:
+                    json.dump(rec, f, indent=2, ensure_ascii=False)
+                os.chmod(design_fpath, 0o666)
+            except Exception:
+                pass
+
+    if not design_slug or design_slug == active_slug:
+        save_slides(slides)
+
+    return jsonify({"ok": True, "slides": slides, "message": "Todos los slides guardados"})
 
 
 @app.post("/panel/slides/new")
@@ -1942,11 +2072,29 @@ def panel_create_slide():
     else:
         data = request.form.to_dict()
 
+    design_slug = str(data.get("design_slug", "")).strip()
+    active_slug = (get_active_design() or {}).get("slug", "")
+
+    design_record = None
+    design_fpath = None
+    if design_slug:
+        design_fpath = os.path.join(get_designs_dir(), f"{design_slug}.json")
+        if os.path.isfile(design_fpath):
+            try:
+                with open(design_fpath, "r", encoding="utf-8") as f:
+                    design_record = json.load(f)
+                slides = design_record.get("slides") or []
+            except Exception:
+                slides = load_slides()
+        else:
+            slides = load_slides()
+    else:
+        slides = load_slides()
+
     raw_id = (data.get("id") or data.get("title") or "").strip()
     slug = re.sub(r"[^a-zA-Z0-9_-]", "_", raw_id.lower()) if raw_id else f"slide_{int(time.time())}"
     raw_id = slug or f"slide_{int(time.time())}"
 
-    slides = load_slides()
     slide_id = raw_id
     counter = 1
     while any(s["id"] == slide_id for s in slides):
@@ -1979,15 +2127,46 @@ def panel_create_slide():
         "elements": data.get("elements", []) if isinstance(data.get("elements"), list) else [],
     }
     slides.append(new_slide)
-    save_slides(slides)
+
+    if design_record and design_fpath:
+        design_record["slides"] = slides
+        design_record["updated_at"] = datetime.now(timezone.utc).isoformat()
+        try:
+            with open(design_fpath, "w", encoding="utf-8") as f:
+                json.dump(design_record, f, indent=2, ensure_ascii=False)
+            os.chmod(design_fpath, 0o666)
+        except Exception:
+            pass
+
+    if not design_slug or design_slug == active_slug:
+        save_slides(slides)
+
     return jsonify({"ok": True, "slide": new_slide, "message": f"Slide '{slide_id}' creado correctamente"})
 
 
 @app.post("/panel/slide/<slide_id>/delete")
 @require_panel_auth
 def panel_delete_slide(slide_id):
+    data = (request.get_json(silent=True) or {}) if request.is_json else request.form.to_dict()
+    design_slug = str(data.get("design_slug", "")).strip() if isinstance(data, dict) else ""
+    active_slug = (get_active_design() or {}).get("slug", "")
 
-    slides = load_slides()
+    design_record = None
+    design_fpath = None
+    if design_slug:
+        design_fpath = os.path.join(get_designs_dir(), f"{design_slug}.json")
+        if os.path.isfile(design_fpath):
+            try:
+                with open(design_fpath, "r", encoding="utf-8") as f:
+                    design_record = json.load(f)
+                slides = design_record.get("slides") or []
+            except Exception:
+                slides = load_slides()
+        else:
+            slides = load_slides()
+    else:
+        slides = load_slides()
+
     filtered = [s for s in slides if s["id"] != slide_id]
     if len(filtered) == len(slides):
         return jsonify({"ok": False, "error": f"Slide '{slide_id}' no encontrado"}), 404
@@ -2000,7 +2179,19 @@ def panel_delete_slide(slide_id):
         except Exception:
             pass
 
-    save_slides(filtered)
+    if design_record and design_fpath:
+        design_record["slides"] = filtered
+        design_record["updated_at"] = datetime.now(timezone.utc).isoformat()
+        try:
+            with open(design_fpath, "w", encoding="utf-8") as f:
+                json.dump(design_record, f, indent=2, ensure_ascii=False)
+            os.chmod(design_fpath, 0o666)
+        except Exception:
+            pass
+
+    if not design_slug or design_slug == active_slug:
+        save_slides(filtered)
+
     return jsonify({"ok": True, "slide_id": slide_id, "message": f"Slide '{slide_id}' eliminado"})
 
 
