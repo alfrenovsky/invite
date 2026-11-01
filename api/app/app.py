@@ -719,9 +719,35 @@ def format_slide_text_filter(text):
     return format_slide_text(text)
 
 
+@app.template_filter("rgba")
+def hex_to_rgba_filter(hex_code, opacity=100):
+    if not hex_code:
+        return ""
+    code_str = str(hex_code).strip()
+    if code_str.startswith("rgba") or code_str.startswith("rgb"):
+        return code_str
+    hex_clean = code_str.lstrip("#")
+    try:
+        op = float(opacity) / 100.0
+        op = max(0.0, min(1.0, op))
+    except (ValueError, TypeError):
+        op = 1.0
+    if len(hex_clean) == 3:
+        hex_clean = "".join([c * 2 for c in hex_clean])
+    if len(hex_clean) == 6:
+        try:
+            r = int(hex_clean[0:2], 16)
+            g = int(hex_clean[2:4], 16)
+            b = int(hex_clean[4:6], 16)
+            return f"rgba({r}, {g}, {b}, {op:.2f})"
+        except ValueError:
+            pass
+    return code_str
+
+
 @app.context_processor
 def utility_processor():
-    return dict(replace_guest_names=replace_guest_names, format_slide_text=format_slide_text)
+    return dict(replace_guest_names=replace_guest_names, format_slide_text=format_slide_text, rgba=hex_to_rgba_filter)
 
 
 TARGET_CANVAS_W = 1284

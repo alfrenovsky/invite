@@ -48,9 +48,13 @@
                 {% set custom_spacing = ('letter-spacing: ' ~ el.letterSpacing ~ 'em;') if (el.letterSpacing is defined and el.letterSpacing is not none and el.letterSpacing != '') else '' %}
                 {% set custom_lh = ('line-height: ' ~ el.lineHeight ~ ';') if (el.lineHeight is defined and el.lineHeight is not none and el.lineHeight != '') else '' %}
                 {% set custom_shadow = ('text-shadow: none;' if el.shadow == 'none' else ('text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);' if el.shadow == 'soft' else ('text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);' if el.shadow == 'strong' else ('text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(212, 175, 55, 0.6);' if el.shadow == 'glow' else '')))) if el.shadow else '' %}
+                {% set box_bg = (el.bg_color | rgba(el.bg_opacity if (el.bg_opacity is defined and el.bg_opacity is not none and el.bg_opacity != '') else 100)) if el.bg_color else '' %}
+                {% set box_radius = el.box_radius if (el.box_radius is defined and el.box_radius is not none and el.box_radius != '') else 12 %}
+                {% set box_blur = el.bg_blur if (el.bg_blur is defined and el.bg_blur is not none and el.bg_blur != '') else 0 %}
+                {% set custom_box = ('background: ' ~ box_bg ~ '; padding: 8px 16px; border-radius: ' ~ box_radius ~ 'px; box-sizing: border-box; ' ~ (('backdrop-filter: blur(' ~ box_blur ~ 'px); -webkit-backdrop-filter: blur(' ~ box_blur ~ 'px); border: 1px solid rgba(255,255,255,0.18); ') if box_blur > 0 else '')) if box_bg else '' %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }} align-{{ text_align }}"
                      data-raw-content="{{ el.content }}"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg) scale({{ text_zoom }}); transform-style: preserve-3d; transform-origin: center {{ origin_y }}; {{ custom_font }} {{ custom_weight }} {{ custom_spacing }} {{ custom_lh }} {{ custom_shadow }}">{{ el.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg) scale({{ text_zoom }}); transform-style: preserve-3d; transform-origin: center {{ origin_y }}; {{ custom_font }} {{ custom_weight }} {{ custom_spacing }} {{ custom_lh }} {{ custom_shadow }} {{ custom_box }}">{{ el.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
             {% elif el.type in ('location', 'link', 'copy') %}
                 {% set sticker_icon = el.icon or ('location' if el.type == 'location' else ('copy' if el.type == 'copy' else 'link')) %}
                 {% set sticker_color = el.color or ('#10b981' if el.type == 'copy' else '#0488db') %}
@@ -129,11 +133,18 @@
                 {% set loc_zoom = (el.zoom if (el.zoom is defined and el.zoom is not none) else 100) / 100 %}
                 {% set target_iso = el.target_date or '2027-03-19T18:00' %}
                 {% set precision_val = el.precision or 'seconds' %}
+                {% set cd_bg_val = el.bg_color or '#ffffff' %}
+                {% set cd_opacity_val = el.bg_opacity if (el.bg_opacity is defined and el.bg_opacity is not none and el.bg_opacity != '') else 100 %}
+                {% set cd_blur_val = el.bg_blur if (el.bg_blur is defined and el.bg_blur is not none and el.bg_blur != '') else 0 %}
+                {% set cd_bg = cd_bg_val | rgba(cd_opacity_val) %}
+                {% set cd_color = el.color or '#111827' %}
+                {% set cd_glass_css = ('backdrop-filter: blur(' ~ cd_blur_val ~ 'px); -webkit-backdrop-filter: blur(' ~ cd_blur_val ~ 'px); border: 1px solid rgba(255,255,255,0.22);') if cd_blur_val > 0 else '' %}
                 <div class="slide-el slide-el-countdown"
                      style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); width: {{ el.w or 90 }}%; max-width: {{ el.w or 90 }}%; transform: translate(-50%, -50%) rotate({{ loc_rot }}deg) scale({{ loc_zoom }}); transform-origin: center center;">
                     <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{ (el.title or 'Boda Celia y Alfredo')|urlencode }}&dates=20270319T210000Z/20270320T070000Z&location=Luna+India%3A+Castro+Barros%2C+M5513%2C+Mendoza&details={{ (invitation_url or '')|urlencode }}"
                        target="_blank" rel="noopener noreferrer"
                        class="countdown-sticker dynamic-countdown-sticker"
+                       style="background: {{ cd_bg }}; color: {{ cd_color }}; {{ cd_glass_css }}"
                        data-target-date="{{ target_iso }}"
                        data-precision="{{ precision_val }}"
                        aria-label="Agendar en Google Calendar">
