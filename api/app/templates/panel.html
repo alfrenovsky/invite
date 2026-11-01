@@ -2357,7 +2357,8 @@
         }
 
         .pos-sliders-trio,
-        .pos-sliders-quad {
+        .pos-sliders-quad,
+        .pos-sliders-penta {
             display: grid;
             gap: 10px;
             grid-column: 1 / -1;
@@ -2371,10 +2372,21 @@
             grid-template-columns: repeat(4, minmax(0, 1fr));
         }
 
+        .pos-sliders-penta {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
         .pos-sliders-trio .pos-num-input,
-        .pos-sliders-quad .pos-num-input {
+        .pos-sliders-quad .pos-num-input,
+        .pos-sliders-penta .pos-num-input {
             width: 48px;
             padding: 4px 4px;
+        }
+
+        @media (max-width: 1024px) {
+            .pos-sliders-penta {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         @media (max-width: 900px) {
@@ -2385,7 +2397,8 @@
 
         @media (max-width: 680px) {
             .pos-sliders-trio,
-            .pos-sliders-quad {
+            .pos-sliders-quad,
+            .pos-sliders-penta {
                 grid-template-columns: 1fr;
             }
         }
@@ -6578,7 +6591,7 @@
                 const isCountdown = el.type === 'countdown';
                 const isForm = el.type === 'form';
                 const isTransformable = isLocation || isCountdown;
-                const is3dActive = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y || (el.rotate && el.type === 'text')));
+                const is3dActive = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y));
 
                 // Header
                 const headerData = getElementHeaderData(el, idx);
@@ -7125,7 +7138,8 @@
                         el.fontFamily ||
                         el.fontWeight ||
                         (el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '') ||
-                        (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '')
+                        (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '') ||
+                        (el.shadow !== undefined && el.shadow !== null && el.shadow !== '')
                     );
 
                     const textGroup = document.createElement('div');
@@ -7289,6 +7303,18 @@
                                     <span class="range-badge typo-lh-badge" id="typoLhBadge_${el.id}">${el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '' ? Number(el.lineHeight).toFixed(2) : '(heredado)'}</span>
                                 </div>
                             </div>
+
+                            <!-- Sombra de texto -->
+                            <div class="typo-panel-row">
+                                <label class="typo-panel-label" for="typoShadow_${el.id}">Sombra:</label>
+                                <select class="form-select typo-shadow-select" id="typoShadow_${el.id}">
+                                    <option value="" ${!el.shadow ? 'selected' : ''}>(Heredar de estilo base)</option>
+                                    <option value="none" ${el.shadow === 'none' ? 'selected' : ''}>Sin sombra (Plano)</option>
+                                    <option value="soft" ${el.shadow === 'soft' ? 'selected' : ''}>Suave (Discreta)</option>
+                                    <option value="strong" ${el.shadow === 'strong' ? 'selected' : ''}>Fuerte (Destacada)</option>
+                                    <option value="glow" ${el.shadow === 'glow' ? 'selected' : ''}>Brillo / Glow</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
@@ -7336,6 +7362,7 @@
                     const spacingBadge = textGroup.querySelector(`#typoSpacingBadge_${el.id}`);
                     const lhSlider = textGroup.querySelector(`#typoLh_${el.id}`);
                     const lhBadge = textGroup.querySelector(`#typoLhBadge_${el.id}`);
+                    const shadowSelect = textGroup.querySelector(`#typoShadow_${el.id}`);
                     const typoResetBtn = textGroup.querySelector(`#typoResetBtn_${el.id}`);
 
                     function refreshTypoOverrideState() {
@@ -7343,7 +7370,8 @@
                             el.fontFamily ||
                             el.fontWeight ||
                             (el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '') ||
-                            (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '')
+                            (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '') ||
+                            (el.shadow !== undefined && el.shadow !== null && el.shadow !== '')
                         );
                         if (gearBtn) gearBtn.classList.toggle('has-overrides', hasAny);
                     }
@@ -7409,6 +7437,21 @@
                         };
                     }
 
+                    if (shadowSelect) {
+                        shadowSelect.onchange = () => {
+                            recordHistorySnapshot();
+                            const val = shadowSelect.value.trim();
+                            if (val) {
+                                el.shadow = val;
+                            } else {
+                                delete el.shadow;
+                            }
+                            refreshTypoOverrideState();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    }
+
                     if (typoResetBtn) {
                         typoResetBtn.onclick = (e) => {
                             e.preventDefault();
@@ -7417,12 +7460,14 @@
                             delete el.fontWeight;
                             delete el.letterSpacing;
                             delete el.lineHeight;
+                            delete el.shadow;
                             if (fontSelect) fontSelect.value = '';
                             if (weightSelect) weightSelect.value = '';
                             if (spacingSlider) spacingSlider.value = 0;
                             if (spacingBadge) spacingBadge.textContent = '(heredado)';
                             if (lhSlider) lhSlider.value = 1.2;
                             if (lhBadge) lhBadge.textContent = '(heredado)';
+                            if (shadowSelect) shadowSelect.value = '';
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
@@ -7540,12 +7585,11 @@
                         if (!nextState) {
                             el.rot_x = 0;
                             el.rot_y = 0;
-                            el.rotate = 0;
                             el.perspective = 800;
                             syncPanel3DControls(el);
                             const gizmo = document.getElementById('previewGizmoContainer');
                             if (gizmo) gizmo.style.display = 'none';
-                            showToast('🎯 Modo 2D activado (rotaciones restablecidas, arrastrá con el mouse)');
+                            showToast('🎯 Modo 2D activado (inclinaciones 3D restablecidas, rotación y zoom 2D conservados)');
                         } else {
                             if (selectedElementId === el.id) {
                                 renderGizmo(el);
@@ -7612,7 +7656,7 @@
                 const currPers = el.perspective !== undefined ? el.perspective : 800;
 
                 posRow.innerHTML = `
-                <div class="${el.type === 'text' ? 'pos-sliders-quad' : 'pos-sliders-trio'}">
+                <div class="${el.type === 'text' ? 'pos-sliders-penta' : 'pos-sliders-trio'}">
                     <!-- Horizontal X -->
                     <div class="pos-slider-wrap">
                         <div class="pos-slider-header">
@@ -7659,6 +7703,18 @@
                         <div class="pos-input-group">
                             <input type="range" class="pos-range-slider" id="sliderZoom_${idx}" min="30" max="250" step="5" value="${currZoom}">
                             <input type="number" class="pos-num-input" id="numZoom_${idx}" min="30" max="250" step="5" value="${currZoom}">
+                        </div>
+                    </div>
+
+                    <!-- Rotación 2D del Texto -->
+                    <div class="pos-slider-wrap">
+                        <div class="pos-slider-header">
+                            <span>Rotación 2D</span>
+                            <span class="pos-val-badge" id="badgeRot2D_${idx}">${currRotZ}°</span>
+                        </div>
+                        <div class="pos-input-group">
+                            <input type="range" class="pos-range-slider" id="sliderRot2D_${idx}" min="-180" max="180" step="1" value="${currRotZ}">
+                            <input type="number" class="pos-num-input" id="numRot2D_${idx}" min="-180" max="180" step="1" value="${currRotZ}">
                         </div>
                     </div>
                     ` : ''}
@@ -7732,8 +7788,8 @@
                             <span class="pos-val-badge" id="badgeRotX_${idx}">${currRotX}°</span>
                         </div>
                         <div class="pos-input-group">
-                            <input type="range" class="pos-range-slider" id="sliderRotX_${idx}" min="-60" max="60" step="1" value="${currRotX}">
-                            <input type="number" class="pos-num-input" id="numRotX_${idx}" min="-60" max="60" step="1" value="${currRotX}">
+                            <input type="range" class="pos-range-slider" id="sliderRotX_${idx}" min="-85" max="85" step="1" value="${currRotX}">
+                            <input type="number" class="pos-num-input" id="numRotX_${idx}" min="-85" max="85" step="1" value="${currRotX}">
                         </div>
                     </div>
 
@@ -7744,8 +7800,8 @@
                             <span class="pos-val-badge" id="badgeRotY_${idx}">${currRotY}°</span>
                         </div>
                         <div class="pos-input-group">
-                            <input type="range" class="pos-range-slider" id="sliderRotY_${idx}" min="-60" max="60" step="1" value="${currRotY}">
-                            <input type="number" class="pos-num-input" id="numRotY_${idx}" min="-60" max="60" step="1" value="${currRotY}">
+                            <input type="range" class="pos-range-slider" id="sliderRotY_${idx}" min="-85" max="85" step="1" value="${currRotY}">
+                            <input type="number" class="pos-num-input" id="numRotY_${idx}" min="-85" max="85" step="1" value="${currRotY}">
                         </div>
                     </div>
 
@@ -7893,6 +7949,34 @@
                 }
 
                 if (el.type === 'text') {
+                    // Bind 2D Rotate for Text
+                    const sliderRot2D = posRow.querySelector(`#sliderRot2D_${idx}`);
+                    const numRot2D = posRow.querySelector(`#numRot2D_${idx}`);
+                    const badgeRot2D = posRow.querySelector(`#badgeRot2D_${idx}`);
+
+                    const syncRot2D = (val) => {
+                        let parsed = parseInt(val, 10);
+                        if (isNaN(parsed)) parsed = 0;
+                        parsed = Math.max(-180, Math.min(180, parsed));
+                        el.rotate = parsed;
+                        if (sliderRot2D) sliderRot2D.value = parsed;
+                        if (numRot2D) numRot2D.value = parsed;
+                        if (badgeRot2D) badgeRot2D.textContent = `${parsed}°`;
+
+                        // Synchronize with 3D Roll Z if present
+                        const sliderRotZ = posRow.querySelector(`#sliderRotZ_${idx}`);
+                        const numRotZ = posRow.querySelector(`#numRotZ_${idx}`);
+                        const badgeRotZ = posRow.querySelector(`#badgeRotZ_${idx}`);
+                        if (sliderRotZ) sliderRotZ.value = parsed;
+                        if (numRotZ) numRotZ.value = parsed;
+                        if (badgeRotZ) badgeRotZ.textContent = `${parsed}°`;
+
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    };
+                    if (sliderRot2D) sliderRot2D.oninput = (e) => syncRot2D(e.target.value);
+                    if (numRot2D) numRot2D.oninput = (e) => syncRot2D(e.target.value);
+
                     // Bind Pitch X
                     const sliderRotX = posRow.querySelector(`#sliderRotX_${idx}`);
                     const numRotX = posRow.querySelector(`#numRotX_${idx}`);
@@ -7901,11 +7985,12 @@
                     const syncRotX = (val) => {
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 0;
-                        parsed = Math.max(-60, Math.min(60, parsed));
+                        parsed = Math.max(-85, Math.min(85, parsed));
                         el.rot_x = parsed;
                         if (sliderRotX) sliderRotX.value = parsed;
                         if (numRotX) numRotX.value = parsed;
                         if (badgeRotX) badgeRotX.textContent = `${parsed}°`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
                     if (sliderRotX) sliderRotX.oninput = (e) => syncRotX(e.target.value);
@@ -7919,11 +8004,12 @@
                     const syncRotY = (val) => {
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 0;
-                        parsed = Math.max(-60, Math.min(60, parsed));
+                        parsed = Math.max(-85, Math.min(85, parsed));
                         el.rot_y = parsed;
                         if (sliderRotY) sliderRotY.value = parsed;
                         if (numRotY) numRotY.value = parsed;
                         if (badgeRotY) badgeRotY.textContent = `${parsed}°`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
                     if (sliderRotY) sliderRotY.oninput = (e) => syncRotY(e.target.value);
@@ -7942,6 +8028,12 @@
                         if (sliderRotZ) sliderRotZ.value = parsed;
                         if (numRotZ) numRotZ.value = parsed;
                         if (badgeRotZ) badgeRotZ.textContent = `${parsed}°`;
+
+                        if (sliderRot2D) sliderRot2D.value = parsed;
+                        if (numRot2D) numRot2D.value = parsed;
+                        if (badgeRot2D) badgeRot2D.textContent = `${parsed}°`;
+
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
                     if (sliderRotZ) sliderRotZ.oninput = (e) => syncRotZ(e.target.value);
@@ -8489,6 +8581,17 @@
                             }
                             if (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '') {
                                 textDiv.style.lineHeight = el.lineHeight;
+                            }
+                            if (el.shadow === 'none') {
+                                textDiv.style.textShadow = 'none';
+                            } else if (el.shadow === 'soft') {
+                                textDiv.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.75)';
+                            } else if (el.shadow === 'strong') {
+                                textDiv.style.textShadow = '0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9)';
+                            } else if (el.shadow === 'glow') {
+                                textDiv.style.textShadow = '0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(212, 175, 55, 0.6)';
+                            } else {
+                                textDiv.style.textShadow = '';
                             }
                             const processedText = replacePreviewVariables(el.content || '');
                             const itineraryHtml = renderSlideTextHtml(processedText);
@@ -9173,6 +9276,13 @@
             if (numRotZ) numRotZ.value = el.rotate || 0;
             if (badgeRotZ) badgeRotZ.textContent = `${el.rotate || 0}°`;
 
+            const sliderRot2D = document.getElementById(`sliderRot2D_${idx}`);
+            const numRot2D = document.getElementById(`numRot2D_${idx}`);
+            const badgeRot2D = document.getElementById(`badgeRot2D_${idx}`);
+            if (sliderRot2D) sliderRot2D.value = el.rotate || 0;
+            if (numRot2D) numRot2D.value = el.rotate || 0;
+            if (badgeRot2D) badgeRot2D.textContent = `${el.rotate || 0}°`;
+
             const sliderPers = document.getElementById(`sliderPers_${idx}`);
             const numPers = document.getElementById(`numPers_${idx}`);
             const badgePers = document.getElementById(`badgePers_${idx}`);
@@ -9391,17 +9501,17 @@
                 const dy = e.clientY - startClientY;
 
                 if (dragMode === 'trackball') {
-                    const newRotY = Math.max(-60, Math.min(60, Math.round(initRotY + dx * 0.7)));
-                    const newRotX = Math.max(-60, Math.min(60, Math.round(initRotX - dy * 0.7)));
+                    const newRotY = Math.max(-85, Math.min(85, Math.round(initRotY + dx * 0.7)));
+                    const newRotX = Math.max(-85, Math.min(85, Math.round(initRotX - dy * 0.7)));
                     el.rot_y = newRotY;
                     el.rot_x = newRotX;
                     updateTargetTransform();
                 } else if (dragMode === 'yaw') {
-                    const newRotY = Math.max(-60, Math.min(60, Math.round(initRotY + dx * 0.8)));
+                    const newRotY = Math.max(-85, Math.min(85, Math.round(initRotY + dx * 0.8)));
                     el.rot_y = newRotY;
                     updateTargetTransform();
                 } else if (dragMode === 'pitch') {
-                    const newRotX = Math.max(-60, Math.min(60, Math.round(initRotX - dy * 0.8)));
+                    const newRotX = Math.max(-85, Math.min(85, Math.round(initRotX - dy * 0.8)));
                     el.rot_x = newRotX;
                     updateTargetTransform();
                 } else if (dragMode === 'roll') {
