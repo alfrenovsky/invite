@@ -1989,7 +1989,9 @@ def panel_update_slide(slide_id):
         if key not in ("slide_id", "design_slug", "background", "duration", "bg_zoom", "bg_x", "bg_y", "id", "new_id", "hidden"):
             target_slide[key] = val
 
-    if any(k in data for k in ("background", "bg_zoom", "bg_x", "bg_y", "id", "new_id")):
+    is_active_target = (not design_slug or design_slug == active_slug)
+
+    if is_active_target and any(k in data for k in ("background", "bg_zoom", "bg_x", "bg_y", "id", "new_id")):
         # If slide ID changed, remove old temp file
         if clean_new_id and clean_new_id != slide_id:
             old_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
@@ -2039,7 +2041,7 @@ def panel_update_slide(slide_id):
             pass
 
     # Only save to public invitation slides.json if this design is ACTIVE in production
-    if not design_slug or design_slug == active_slug:
+    if is_active_target:
         save_slides(slides)
 
     return jsonify({"ok": True, "slide": target_slide, "message": "Slide actualizado"})
@@ -2186,13 +2188,15 @@ def panel_delete_slide(slide_id):
     if len(filtered) == len(slides):
         return jsonify({"ok": False, "error": f"Slide '{slide_id}' no encontrado"}), 404
 
-    clean_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
-    temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{clean_sid}.webp")
-    if os.path.isfile(temp_file):
-        try:
-            os.remove(temp_file)
-        except Exception:
-            pass
+    is_active_target = (not design_slug or design_slug == active_slug)
+    if is_active_target:
+        clean_sid = re.sub(r"[^a-zA-Z0-9_-]", "_", str(slide_id).strip().lower())
+        temp_file = os.path.join(get_backgrounds_dir(), "temp", f"{clean_sid}.webp")
+        if os.path.isfile(temp_file):
+            try:
+                os.remove(temp_file)
+            except Exception:
+                pass
 
     if design_record and design_fpath:
         design_record["slides"] = filtered
@@ -2204,7 +2208,7 @@ def panel_delete_slide(slide_id):
         except Exception:
             pass
 
-    if not design_slug or design_slug == active_slug:
+    if is_active_target:
         save_slides(filtered)
 
     return jsonify({"ok": True, "slide_id": slide_id, "message": f"Slide '{slide_id}' eliminado"})
