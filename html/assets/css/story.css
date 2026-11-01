@@ -2475,10 +2475,12 @@
 
         /* Instagram-like Countdown Sticker */
         .countdown-sticker {
-            display: inline-block;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
             background: #ffffff;
             border-radius: 16px;
-            padding: 0px 12px 0px 12px;
+            padding: 8px 14px 10px 14px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             width: 100%;
             max-width: 100%;
@@ -2500,12 +2502,21 @@
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
         }
 
+        .countdown-sticker-content {
+            display: inline-flex;
+            flex-direction: column;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
         .countdown-sticker-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            width: 100%;
             margin-bottom: 2px;
-            padding: 0 1px;
+            padding: 0;
             gap: 10px;
         }
 
@@ -2544,8 +2555,9 @@
         .countdown-sticker-grid {
             display: flex;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 2px;
+            width: 100%;
         }
 
         .countdown-sticker-unit {

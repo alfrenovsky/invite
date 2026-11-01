@@ -3058,10 +3058,12 @@
         }
 
         .story-preview-viewport .countdown-sticker {
-            display: inline-block;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
             background: #ffffff;
             border-radius: 16px;
-            padding: 0px 12px 0px 12px;
+            padding: 8px 14px 10px 14px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
             width: 100%;
             max-width: 100%;
@@ -3075,12 +3077,21 @@
             transition: transform 0.2s ease;
         }
 
+        .story-preview-viewport .countdown-sticker-content {
+            display: inline-flex;
+            flex-direction: column;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
         .story-preview-viewport .countdown-sticker-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            width: 100%;
             margin-bottom: 2px;
-            padding: 0 1px;
+            padding: 0;
             gap: 10px;
         }
 
@@ -3122,8 +3133,9 @@
         .story-preview-viewport .countdown-sticker-grid {
             display: flex;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 2px;
+            width: 100%;
         }
 
         .story-preview-viewport .countdown-sticker-unit {
@@ -6837,7 +6849,7 @@
                     const cdCurrentColor = el.color || '#111827';
 
                     cdStyleRow.innerHTML = `
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
                             <span style="font-size: 0.74rem; font-weight: 600; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.5px;">Estilo & Colores del Contador</span>
                             <div class="cd-preset-strip" style="display: flex; gap: 4px; align-items: center;">
                                 <button type="button" class="tb-btn-style cd-preset-btn" data-preset="white" title="Blanco clásico opaco">Blanco</button>
@@ -6847,7 +6859,24 @@
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+                        <!-- Fila Color de Texto con Paleta Rápida -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <label style="font-size: 0.74rem; color: #cbd5e1; margin: 0; font-weight: 600;">Color Texto:</label>
+                                <div class="cd-text-color-swatches" style="display: flex; align-items: center; gap: 5px;">
+                                    <button type="button" class="color-dot-btn cd-text-dot ${cdCurrentColor.toLowerCase() === '#111827' || cdCurrentColor.toLowerCase() === '#1a1a1a' ? 'selected' : ''}" data-color="#111827" style="background:#111827; border: 1px solid rgba(255,255,255,0.3);" title="Negro Carbón"></button>
+                                    <button type="button" class="color-dot-btn cd-text-dot ${cdCurrentColor.toLowerCase() === '#ffffff' ? 'selected' : ''}" data-color="#ffffff" style="background:#ffffff; border: 1px solid rgba(0,0,0,0.3);" title="Blanco"></button>
+                                    <button type="button" class="color-dot-btn cd-text-dot ${cdCurrentColor.toLowerCase() === '#d4af37' ? 'selected' : ''}" data-color="#d4af37" style="background:#d4af37;" title="Dorado Boda"></button>
+                                    <button type="button" class="color-dot-btn cd-text-dot ${cdCurrentColor.toLowerCase() === '#0488db' ? 'selected' : ''}" data-color="#0488db" style="background:#0488db;" title="Azul Clásico"></button>
+                                    <button type="button" class="color-dot-btn cd-text-dot ${cdCurrentColor.toLowerCase() === '#e1306c' ? 'selected' : ''}" data-color="#e1306c" style="background:#e1306c;" title="Magenta"></button>
+                                    <button type="button" class="color-dot-btn cd-text-dot ${cdCurrentColor.toLowerCase() === '#10b981' ? 'selected' : ''}" data-color="#10b981" style="background:#10b981;" title="Verde"></button>
+                                    <input type="color" class="custom-color-input cd-color-input" value="${cdCurrentColor.startsWith('#') ? cdCurrentColor : '#111827'}" title="Color de texto personalizado">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fila Color de Fondo y Opacidad -->
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 6px;">
                                 <label style="font-size: 0.74rem; color: #94a3b8; margin: 0;">Fondo:</label>
                                 <input type="color" class="custom-color-input cd-bg-input" value="${cdCurrentBg.startsWith('#') ? cdCurrentBg : '#ffffff'}" title="Color de fondo del sticker">
@@ -6857,12 +6886,9 @@
                                 <input type="range" class="pos-range cd-opacity-slider" min="0" max="100" step="5" value="${cdCurrentOp}" style="flex: 1;">
                                 <span class="range-badge cd-opacity-badge" style="min-width: 36px; text-align: center;">${cdCurrentOp}%</span>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <label style="font-size: 0.74rem; color: #94a3b8; margin: 0;">Texto:</label>
-                                <input type="color" class="custom-color-input cd-color-input" value="${cdCurrentColor.startsWith('#') ? cdCurrentColor : '#111827'}" title="Color de la tipografía y números">
-                            </div>
                         </div>
 
+                        <!-- Fila Desenfoque (Blur) -->
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <label style="font-size: 0.74rem; color: #94a3b8; margin: 0; min-width: 75px;">Desenfoque:</label>
                             <input type="range" class="pos-range cd-blur-slider" min="0" max="25" step="1" value="${cdCurrentBlur}" style="flex: 1;">
@@ -6875,9 +6901,34 @@
                     const cdOpacitySlider = cdStyleRow.querySelector('.cd-opacity-slider');
                     const cdOpacityBadge = cdStyleRow.querySelector('.cd-opacity-badge');
                     const cdColorInput = cdStyleRow.querySelector('.cd-color-input');
+                    const cdTextDots = cdStyleRow.querySelectorAll('.cd-text-dot');
                     const cdBlurSlider = cdStyleRow.querySelector('.cd-blur-slider');
                     const cdBlurBadge = cdStyleRow.querySelector('.cd-blur-badge');
                     const cdPresetBtns = cdStyleRow.querySelectorAll('.cd-preset-btn');
+
+                    function updateCdTextColorUI(color) {
+                        el.color = color;
+                        cdColorInput.value = color.startsWith('#') ? color : '#111827';
+                        cdTextDots.forEach(dot => {
+                            dot.classList.toggle('selected', dot.dataset.color.toLowerCase() === color.toLowerCase());
+                        });
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        updateLivePreview();
+                    }
+
+                    cdTextDots.forEach(dot => {
+                        dot.onclick = () => {
+                            recordHistorySnapshot();
+                            updateCdTextColorUI(dot.dataset.color);
+                        };
+                    });
+
+                    cdColorInput.oninput = (e) => {
+                        updateCdTextColorUI(e.target.value);
+                    };
+                    cdColorInput.onchange = () => {
+                        recordHistorySnapshot();
+                    };
 
                     function syncCdPresetUI() {
                         cdPresetBtns.forEach(btn => {
@@ -6903,27 +6954,26 @@
                                 el.bg_color = '#ffffff';
                                 el.bg_opacity = 100;
                                 el.bg_blur = 0;
-                                el.color = '#111827';
+                                updateCdTextColorUI('#111827');
                             } else if (p === 'glass-light') {
                                 el.bg_color = '#ffffff';
                                 el.bg_opacity = 20;
                                 el.bg_blur = 14;
-                                el.color = '#ffffff';
+                                updateCdTextColorUI('#ffffff');
                             } else if (p === 'glass-dark') {
                                 el.bg_color = '#000000';
                                 el.bg_opacity = 50;
                                 el.bg_blur = 14;
-                                el.color = '#f1f5f9';
+                                updateCdTextColorUI('#f1f5f9');
                             } else if (p === 'black') {
                                 el.bg_color = '#000000';
                                 el.bg_opacity = 100;
                                 el.bg_blur = 0;
-                                el.color = '#ffffff';
+                                updateCdTextColorUI('#ffffff');
                             }
                             cdBgInput.value = el.bg_color;
                             cdOpacitySlider.value = el.bg_opacity;
                             cdOpacityBadge.textContent = `${el.bg_opacity}%`;
-                            cdColorInput.value = el.color;
                             cdBlurSlider.value = el.bg_blur;
                             cdBlurBadge.textContent = el.bg_blur ? `${el.bg_blur}px` : '0px';
                             syncCdPresetUI();
@@ -6944,12 +6994,6 @@
                         el.bg_opacity = val;
                         cdOpacityBadge.textContent = `${val}%`;
                         syncCdPresetUI();
-                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
-                        updateLivePreview();
-                    };
-
-                    cdColorInput.oninput = (e) => {
-                        el.color = e.target.value;
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
@@ -9291,14 +9335,16 @@
                             cdDiv.innerHTML = `
                             ${isSelected ? `<div class="sticker-rot-handle" title="Arrastrá para rotar">⟳</div>` : ''}
                             <div class="countdown-sticker" style="cursor: grab; width: 100%; box-sizing: border-box; background: ${cdBgRgba}; color: ${cdColorVal}; ${cdGlassCss}">
-                                <div class="countdown-sticker-header">
-                                    <span class="countdown-sticker-title">${escapeHtml(el.title || 'FALTA POCO')}</span>
-                                    <div class="countdown-sticker-arrow" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                <div class="countdown-sticker-content">
+                                    <div class="countdown-sticker-header">
+                                        <span class="countdown-sticker-title">${escapeHtml(el.title || 'FALTA POCO')}</span>
+                                        <div class="countdown-sticker-arrow" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="countdown-sticker-grid">
-                                    ${gridHtml}
+                                    <div class="countdown-sticker-grid">
+                                        ${gridHtml}
+                                    </div>
                                 </div>
                             </div>
                         `;
