@@ -8865,9 +8865,9 @@
             function replacePreviewVariables(str) {
                 if (!str) return '';
                 const isSingle = previewGuestMode === 'single';
-                const nameVal = isSingle ? 'Juan' : 'Juan y María';
-                const invVal = isSingle ? 'Juan' : 'Juan';
-                const resVal = isSingle ? 'María' : 'María y Pedro';
+                const nameVal = isSingle ? 'Alejandro' : 'María y Alejandro';
+                const invVal = isSingle ? 'Alejandro' : 'María';
+                const resVal = isSingle ? 'Alejandro' : 'Alejandro y Pedro';
                 const priceVal = DEFAULT_CARD_VALUE;
                 const countAll = isSingle ? 1 : 2;
                 const countInv = isSingle ? 1 : 1;
@@ -9447,7 +9447,7 @@
                                     <div class="rsvp-guest-card expanded" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(18,20,28,0.40); border: 1px solid rgba(255,255,255,0.3); overflow: hidden;">
                                         <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: transparent;">
                                             <span class="rsvp-bullet bullet-si" style="width: 14px; height: 14px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.7); display: inline-block;"></span>
-                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Juan Pérez</span>
+                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">María Gómez</span>
                                             <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; margin-right: 6px;">
                                                 <img src="/assets/sin_gluten.svg" alt="Sin gluten" style="width: 18px; height: 18px; border-radius: 50%; display: block; object-fit: contain;">
                                                 <span style="font-size: 1.05rem; line-height: 1;">🍽️</span>
@@ -9461,8 +9461,8 @@
                                                 <button type="button" style="padding: 6px 2px; border-radius: 7px; background: rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.78rem; border: 1px solid rgba(255,255,255,0.2); font-family: 'Montserrat', sans-serif;">Pendiente</button>
                                             </div>
                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                                <input type="text" value="Juan" readonly style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; width: 100%; box-sizing: border-box;">
-                                                <input type="text" value="Pérez" readonly style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; width: 100%; box-sizing: border-box;">
+                                                <input type="text" value="María" readonly style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; width: 100%; box-sizing: border-box;">
+                                                <input type="text" value="Gómez" readonly style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; width: 100%; box-sizing: border-box;">
                                             </div>
                                             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 2px;">
                                                 <span style="font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.05em; font-family: 'Montserrat', sans-serif;">Menú</span>
@@ -9481,7 +9481,7 @@
                                     <div class="rsvp-guest-card" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
                                         <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px;">
                                             <span class="rsvp-bullet bullet-pending" style="width: 14px; height: 14px; border-radius: 50%; background: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.7); display: inline-block;"></span>
-                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">María Gómez</span>
+                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Alejandro Pérez</span>
                                             <span style="margin-left: auto; color: rgba(255,255,255,0.6); font-size: 0.75rem;">▼</span>
                                         </div>
                                     </div>
