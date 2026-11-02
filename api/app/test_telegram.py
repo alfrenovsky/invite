@@ -1,5 +1,7 @@
 import json
 import os
+os.environ["TESTING"] = "1"
+os.environ["FLASK_ENV"] = "testing"
 import tempfile
 import time
 import unittest
@@ -252,18 +254,18 @@ class TestTelegramBot(unittest.TestCase):
             {"id": "4", "nombre": "Martin", "apellido": "Diaz", "dequien": "Alfredo Amigos", "telefono": "3333", "abierto": "", "url": "http://nos.vamos.acas.ar/i/martin_123"},
         ]
 
-        # 1. /send with no argument -> usage instructions
+        # 1. /send with no argument -> interactive options
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send"}}, table=mock_table)
-        self.assertIn("Uso del comando /send", mock_send.call_args[0][1])
+        self.assertIn("¿De quién querés enviar invitaciones?", mock_send.call_args[0][1])
 
-        # 2. /send Celia -> includes Camila (has phone, not opened), excludes Sofia (opened) and Lucia (no phone)
+        # 2. /send Celia -> includes Camila and Sofia (Sofia with 👀 because opened but non-sent), excludes Lucia (no phone)
         mock_send.reset_mock()
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send Celia"}}, table=mock_table)
         call_text = mock_send.call_args[0][1]
         self.assertIn("Camila Perez", call_text)
-        self.assertIn("wa.me/1111", call_text)
-        self.assertIn('<a href="https://wa.me/1111', call_text)
-        self.assertNotIn("Sofia Gomez", call_text)
+        self.assertIn("/send/1111?id=1", call_text)
+        self.assertIn("Sofia Gomez", call_text)
+        self.assertIn("👀", call_text)
         self.assertNotIn("Lucia Lopez", call_text)
 
         # 3. /send Alfredo -> includes Martin

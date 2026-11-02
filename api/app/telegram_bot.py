@@ -142,6 +142,9 @@ def remove_subscriber(chat_id: int | str) -> bool:
 
 
 def call_telegram_api(method: str, payload: dict = None) -> dict | None:
+    if os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing":
+        return {"ok": True, "result": {}}
+
     if not TELEGRAM_BOT_TOKEN:
         return None
 
@@ -168,6 +171,9 @@ def call_telegram_api(method: str, payload: dict = None) -> dict | None:
 
 
 def send_message(chat_id: int | str, text: str, parse_mode: str = "HTML", reply_markup: dict = None) -> bool:
+    if os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing":
+        return True
+
     payload = {
         "chat_id": chat_id,
         "text": text,
@@ -182,6 +188,9 @@ def send_message(chat_id: int | str, text: str, parse_mode: str = "HTML", reply_
 
 def broadcast_message(text: str, parse_mode: str = "HTML"):
     """Broadcasts a notification message asynchronously to all authorized subscribers."""
+    if os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing":
+        return
+
     def _do_broadcast():
         subs = _load_subscribers()
         if not subs:

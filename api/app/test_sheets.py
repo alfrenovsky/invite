@@ -1,4 +1,6 @@
 import os
+os.environ["TESTING"] = "1"
+os.environ["FLASK_ENV"] = "testing"
 import time
 import unittest
 from unittest.mock import MagicMock, patch
@@ -26,6 +28,19 @@ def get_panel_auth_headers(user="ari", password="gato"):
 
 class TestGoogleSheetsTable(unittest.TestCase):
     def setUp(self):
+        # Isolate Telegram completely: never send real messages in tests
+        import telegram_bot
+        self.orig_tg_subscribers = telegram_bot.SUBSCRIBERS_FILE
+        self.temp_subs_path = "/tmp/test_empty_subscribers.json"
+        telegram_bot.SUBSCRIBERS_FILE = self.temp_subs_path
+        telegram_bot._subscribers_cache = []
+
+        self.tg_api_patcher = patch("telegram_bot.call_telegram_api", return_value={"ok": True, "result": {}})
+        self.mock_tg_api = self.tg_api_patcher.start()
+
+        self.tg_bcast_patcher = patch("telegram_bot.broadcast_message", return_value=None)
+        self.mock_tg_bcast = self.tg_bcast_patcher.start()
+
         self.cache_path = "/tmp/test_cache_unittest.json"
         if os.path.exists(self.cache_path):
             os.remove(self.cache_path)
@@ -58,8 +73,16 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
     def tearDown(self):
         self.patcher.stop()
+        self.tg_bcast_patcher.stop()
+        self.tg_api_patcher.stop()
+        if hasattr(self, "orig_tg_subscribers"):
+            import telegram_bot
+            telegram_bot.SUBSCRIBERS_FILE = self.orig_tg_subscribers
+            telegram_bot._subscribers_cache = None
         if os.path.exists(self.cache_path):
             os.remove(self.cache_path)
+        if os.path.exists(self.temp_subs_path):
+            os.remove(self.temp_subs_path)
 
     def test_get_all_and_cache(self):
         sample_data = [
