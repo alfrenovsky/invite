@@ -627,36 +627,37 @@
             min-height: 14px;
             border-radius: 50%;
             display: inline-block;
-            transition: background-color 0.25s ease, box-shadow 0.25s ease;
+            transition: background-color 0.25s ease;
             box-sizing: border-box;
             flex-shrink: 0;
+            box-shadow: none !important;
         }
 
         /* Green if confirmed */
         .rsvp-bullet.bullet-si {
-            background-color: #2ecc71;
-            box-shadow: 0 0 10px rgba(46, 204, 113, 0.7);
+            background-color: #16a34a;
+            box-shadow: none !important;
         }
 
         /* Red if confirmed not to go */
         .rsvp-bullet.bullet-no {
-            background-color: #e74c3c;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.7);
+            background-color: #dc2626;
+            box-shadow: none !important;
         }
 
-        /* Yellow if not / pending */
+        /* Orange if not / pending */
         .rsvp-bullet.bullet-pending {
-            background-color: #f1c40f;
-            box-shadow: 0 0 10px rgba(241, 196, 15, 0.7);
+            background-color: #ea580c;
+            box-shadow: none !important;
         }
 
         .rsvp-guest-name {
             font-family: 'Montserrat', sans-serif !important;
             font-weight: 600;
             font-size: 1.02rem;
-            color: #ffffff;
+            color: #ffffff !important;
             letter-spacing: -0.01em;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+            text-shadow: none !important;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -755,9 +756,11 @@
             letter-spacing: 0.01em;
             padding: 9px 4px;
             border-radius: 9px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.08);
-            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.10);
+            color: #ffffff !important;
+            text-shadow: none !important;
+            box-shadow: none !important;
             cursor: pointer;
             text-align: center;
             user-select: none;
@@ -768,37 +771,40 @@
         }
 
         .rsvp-status-btn:hover {
-            background: rgba(255, 255, 255, 0.14);
-            color: #f1f5f9;
-            border-color: rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.45);
         }
 
         .rsvp-status-btn:active {
             transform: scale(0.97);
         }
 
-        /* Selected Status Colors: Keep gray background, change border and text color */
+        /* Selected Status Colors: Asiste=Green, No asiste=Red, Pendiente=Orange */
         .rsvp-status-btn.btn-asiste.selected {
-            background: rgba(255, 255, 255, 0.12);
-            color: #2ecc71;
-            border: 1.5px solid #2ecc71;
-            box-shadow: 0 0 10px rgba(46, 204, 113, 0.35);
+            background: #16a34a !important;
+            color: #ffffff !important;
+            border: 1.5px solid #22c55e !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
             font-weight: 700;
         }
 
         .rsvp-status-btn.btn-no.selected {
-            background: rgba(255, 255, 255, 0.12);
-            color: #e74c3c;
-            border: 1.5px solid #e74c3c;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.35);
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            border: 1.5px solid #ef4444 !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
             font-weight: 700;
         }
 
         .rsvp-status-btn.btn-pendiente.selected {
-            background: rgba(255, 255, 255, 0.12);
-            color: #f1c40f;
-            border: 1.5px solid #f1c40f;
-            box-shadow: 0 0 10px rgba(241, 196, 15, 0.35);
+            background: #ea580c !important;
+            color: #ffffff !important;
+            border: 1.5px solid #f97316 !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
             font-weight: 700;
         }
 
@@ -866,34 +872,38 @@
             font-family: 'Montserrat', sans-serif !important;
             font-size: 0.68rem;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.65);
+            color: #ffffff !important;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            text-shadow: none !important;
         }
 
         .rsvp-field input {
             font-family: 'Montserrat', sans-serif !important;
             font-size: 0.88rem;
             font-weight: 500;
-            color: #ffffff;
+            color: #ffffff !important;
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 8px;
             padding: 8px 10px;
             outline: none;
             box-sizing: border-box;
             width: 100%;
-            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+            text-shadow: none !important;
+            box-shadow: none !important;
+            transition: border-color 0.2s ease, background 0.2s ease;
         }
 
         .rsvp-field input:focus {
             background: rgba(255, 255, 255, 0.16);
-            border-color: rgba(255, 255, 255, 0.65);
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.75);
+            box-shadow: none !important;
         }
 
         .rsvp-field input::placeholder {
-            color: rgba(255, 255, 255, 0.35);
+            color: rgba(255, 255, 255, 0.5) !important;
+            text-shadow: none !important;
         }
 
         /* Dietary Menu Selector (Only shown if confirmed) */
@@ -920,9 +930,10 @@
             font-family: 'Montserrat', sans-serif !important;
             font-size: 0.68rem;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.65);
+            color: #ffffff !important;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            text-shadow: none !important;
         }
 
         .rsvp-menu-buttons {
@@ -940,9 +951,11 @@
             letter-spacing: 0.01em;
             padding: 8px 4px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             background: rgba(255, 255, 255, 0.08);
-            color: #94a3b8;
+            color: #ffffff !important;
+            text-shadow: none !important;
+            box-shadow: none !important;
             cursor: pointer;
             text-align: center;
             user-select: none;
@@ -953,9 +966,9 @@
         }
 
         .rsvp-menu-btn:hover {
-            background: rgba(255, 255, 255, 0.14);
-            color: #f1f5f9;
-            border-color: rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.45);
         }
 
         .rsvp-menu-btn:active {
@@ -963,10 +976,11 @@
         }
 
         .rsvp-menu-btn.selected {
-            background: rgba(255, 255, 255, 0.24);
-            color: #ffffff;
-            border: 1.5px solid rgba(255, 255, 255, 0.55);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.32) !important;
+            color: #ffffff !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.75) !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
             font-weight: 700;
         }
 
@@ -985,8 +999,9 @@
             -webkit-user-select: none;
             font-family: 'Montserrat', sans-serif !important;
             font-size: 0.82rem;
-            color: rgba(255, 255, 255, 0.85);
+            color: #ffffff !important;
             font-weight: 500;
+            text-shadow: none !important;
         }
 
         .rsvp-celiac-checkbox {
@@ -1491,6 +1506,12 @@
             pointer-events: auto;
             display: flex;
             flex-direction: column;
+            color: #ffffff;
+        }
+
+        .rsvp-form-container,
+        .rsvp-form-container * {
+            text-shadow: none !important;
         }
 
         .rsvp-form-container form {
