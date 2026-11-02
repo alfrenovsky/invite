@@ -65,6 +65,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
             ttl_read=600,
             ttl_write=120,
         )
+        self.table._ws = self.mock_ws
         try:
             from app import table as app_table
             app_table.cache_file_path = self.cache_path
@@ -1754,10 +1755,47 @@ class TestGoogleSheetsTable(unittest.TestCase):
             shutil.rmtree(test_designs_dir)
 
     def test_enviado_column_and_internal_whatsapp(self):
-        # 1. FIELDNAMES must include 'enviado' and NOT 'whatsapp'
+        # 1. FIELDNAMES must include 'enviado' and NOT 'whatsapp', and respect requested layout
         self.assertIn("enviado", FIELDNAMES)
         self.assertNotIn("whatsapp", FIELDNAMES)
-        self.assertEqual(FIELDNAMES.index("enviado"), 14)  # Col O (0-indexed 14)
+        self.assertEqual(FIELDNAMES.index("telefono"), 5)     # Col F (just after apellido)
+        self.assertEqual(FIELDNAMES.index("enviado"), 14)     # Col O
+        self.assertEqual(FIELDNAMES.index("abierto"), 15)     # Col P
+        self.assertEqual(FIELDNAMES.index("pagado"), 16)      # Col Q
+        self.assertEqual(FIELDNAMES.index("comprobante"), 17) # Col R
+
+    def test_ensure_header_safely_reorders_existing_sheet_data(self):
+        old_headers = [
+            "id", "updated_at", "invitacion_id", "nombre", "apellido",
+            "dequien", "tipo", "nivel", "confirmacion", "montotarjeta",
+            "telefono", "pa", "celiaco", "url", "enviado",
+            "comprobante", "pagado", "abierto"
+        ]
+        old_row_data = [
+            "abc12345", "2026-11-02 12:00:00", "fam_perez", "Juan", "Perez",
+            "Celia", "Cena", "Invitado", "si", "0",
+            "+5491112345678", "general", "no", "http://test/url", "si",
+            "comprobante.jpg", "si", "si"
+        ]
+        self.mock_ws.row_values.return_value = old_headers
+        self.mock_ws.get_all_values.return_value = [old_headers, old_row_data]
+
+        self.table.ensure_header()
+
+        self.assertTrue(self.mock_ws.update.called)
+        called_args = self.mock_ws.update.call_args[0]
+        self.assertEqual(called_args[0], "A1")
+        reordered_matrix = called_args[1]
+        self.assertEqual(reordered_matrix[0], FIELDNAMES)
+
+        new_data_row = reordered_matrix[1]
+        # Verify columns moved safely to their new exact positions
+        self.assertEqual(new_data_row[FIELDNAMES.index("telefono")], "+5491112345678")
+        self.assertEqual(new_data_row[FIELDNAMES.index("dequien")], "Celia")
+        self.assertEqual(new_data_row[FIELDNAMES.index("enviado")], "si")
+        self.assertEqual(new_data_row[FIELDNAMES.index("abierto")], "si")
+        self.assertEqual(new_data_row[FIELDNAMES.index("pagado")], "si")
+        self.assertEqual(new_data_row[FIELDNAMES.index("comprobante")], "comprobante.jpg")
 
         # 2. _map_record_to_row generates internal item['whatsapp'], but row stores 'enviado'
         rec = {

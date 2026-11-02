@@ -17,19 +17,19 @@ FIELDNAMES = [
     "invitacion_id",
     "nombre",
     "apellido",
+    "telefono",
     "dequien",
     "tipo",
     "nivel",
     "confirmacion",
     "montotarjeta",
-    "telefono",
     "pa",
     "celiaco",
     "url",
     "enviado",
-    "comprobante",
-    "pagado",
     "abierto",
+    "pagado",
+    "comprobante",
 ]
 
 
@@ -209,10 +209,29 @@ class GoogleSheetsTable:
         return self._ws
 
     def ensure_header(self):
-        ws = self._ws
+        ws = self._ws if self._ws is not None else self._get_worksheet()
         valores = ws.row_values(1)
-        if valores != FIELDNAMES:
+        if not valores:
             ws.update("A1", [FIELDNAMES])
+            return
+
+        if valores != FIELDNAMES:
+            all_values = ws.get_all_values()
+            if all_values and len(all_values) > 1:
+                header_row = all_values[0]
+                reordered_matrix = [FIELDNAMES]
+                for row_data in all_values[1:]:
+                    val_map = {h: val for h, val in zip(header_row, row_data)}
+                    new_row = [str(val_map.get(col, "")) for col in FIELDNAMES]
+                    reordered_matrix.append(new_row)
+                ws.update("A1", reordered_matrix, value_input_option="USER_ENTERED")
+                self._log_event(
+                    "SYNC",
+                    "REMOTE",
+                    f"Safely reordered {len(all_values)-1} rows in Google Sheets to match new column layout"
+                )
+            else:
+                ws.update("A1", [FIELDNAMES])
 
     def _load_cache(self):
         if not os.path.exists(self.cache_file_path):

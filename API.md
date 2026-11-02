@@ -49,19 +49,19 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 | C | `invitacion_id` | `string` | Invitation group slug / token | `"familia_perez"` |
 | D | `nombre` | `string` | First name | `"Juan"` |
 | E | `apellido` | `string` | Last name | `"Pérez"` |
-| F | `dequien` | `string` | Host affiliation | `"novia"` / `"novio"` |
-| G | `tipo` | `string` | Guest type / category | `"amigo"` |
-| H | `nivel` | `string` | Guest category (`"Reserva"`, `"Invitado"`) | `"Reserva"` |
-| I | `confirmacion` | `string` | Attendance confirmation (`"si"`, `"no"`, `""`) | `"si"` |
-| J | `montotarjeta` | `string` | Ticket/card amount (defaults to `100000` for `"Reserva"` if empty) | `"100000"` |
-| K | `telefono` | `string` | Phone number | `"+5491112345678"` |
+| F | `telefono` | `string` | Phone number (immediately after apellido) | `"+5491112345678"` |
+| G | `dequien` | `string` | Host affiliation | `"novia"` / `"novio"` |
+| H | `tipo` | `string` | Guest type / category | `"amigo"` |
+| I | `nivel` | `string` | Guest category (`"Reserva"`, `"Invitado"`) | `"Reserva"` |
+| J | `confirmacion` | `string` | Attendance confirmation (`"si"`, `"no"`, `""`) | `"si"` |
+| K | `montotarjeta` | `string` | Ticket/card amount (defaults to `100000` for `"Reserva"` if empty) | `"100000"` |
 | L | `pa` | `string` | Main dietary preference (`"general"`, `"vegetariano"`, `"vegano"`) | `"general"` |
 | M | `celiaco` | `string` | Celiac / Gluten-Free flag (`"si"`, `""`) | `"si"` |
 | N | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/familia_perez_a1b2c3"` |
 | O | `enviado` | `string` | Invitation sent via WhatsApp flag (`"si"`, `""`) | `"si"` |
-| P | `comprobante` | `string` | Uploaded transfer receipt filename/URL | `"comprobante_a1b2c3d4.jpg"` |
+| P | `abierto` | `string` | Invitation opened by a human (`"si"`, `""`) | `"si"` |
 | Q | `pagado` | `string` | Payment received verification (`"si"`, `""`) | `"si"` |
-| R | `abierto` | `string` | Invitation opened by a human (`"si"`, `""`) | `"si"` |
+| R | `comprobante` | `string` | Uploaded transfer receipt filename/URL | `"comprobante_a1b2c3d4.jpg"` |
 
 
 
