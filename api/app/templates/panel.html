@@ -2540,6 +2540,115 @@
             box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
         }
 
+        /* Simulation Toolbar & Popover above Sticky Preview */
+        .preview-sim-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 8px;
+            width: 100%;
+            max-width: 100%;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .preview-sim-label {
+            font-size: 0.70rem;
+            color: #94a3b8;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .preview-sim-presets {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .preview-sim-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #cbd5e1;
+            font-size: 0.70rem;
+            padding: 2px 7px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+
+        .preview-sim-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .preview-sim-btn.active {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.7);
+            color: #38bdf8;
+            font-weight: 700;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+        }
+
+        .preview-sim-popover {
+            background: #0f172a;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        .sim-popover-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .sim-popover-label {
+            font-size: 0.72rem;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        .sim-popover-buttons {
+            display: flex;
+            gap: 3px;
+        }
+
+        .sim-scope-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .sim-scope-btn:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .sim-scope-btn.active {
+            background: rgba(56, 189, 248, 0.25);
+            border-color: #38bdf8;
+            color: #38bdf8;
+            font-weight: 700;
+        }
+
 
         .story-preview-viewport {
             height: calc(98vh - 44px);
@@ -4721,6 +4830,45 @@
                     <button type="button" class="preview-ratio-btn" id="btnRatioCompact" onclick="setPreviewDevice('compact')" title="Proporción Compacto (16:9 - 390x693)">📱 Compacto</button>
                     <button type="button" class="preview-ratio-btn" id="btnToggleBgBounds" onclick="toggleBgBounds()" title="Ver la imagen completa original sin recortar por el marco">👁️ Ver Original</button>
                 </div>
+                <!-- Live Simulation Toolbar -->
+                <div class="preview-sim-bar" id="previewSimBar">
+                    <span class="preview-sim-label">🎭 Simular:</span>
+                    <div class="preview-sim-presets">
+                        <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="single" onclick="setSimulationPreset('single')" title="Simular 1 persona (Singular total)">👤 1 Persona</button>
+                        <button type="button" class="preview-sim-btn sim-preset-btn active" data-preset="plural" onclick="setSimulationPreset('plural')" title="Simular grupo (Plural total)">👥 Grupo</button>
+                        <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="only_inv" onclick="setSimulationPreset('only_inv')" title="Simular solo invitados sin cargo (0 reservas)">🎟️ Solo Inv</button>
+                        <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="only_res" onclick="setSimulationPreset('only_res')" title="Simular solo con tarjeta / reservas (0 invitados)">💳 Solo Res</button>
+                        <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="mixed" onclick="setSimulationPreset('mixed')" title="Simular mixto (1 invitado + 1 reserva)">🔀 Mixto</button>
+                    </div>
+                    <button type="button" class="preview-sim-btn preview-sim-custom-toggle" id="btnToggleSimCustom" onclick="toggleSimulationCustomPopover()" title="Ajustar cantidades individuales de Todos, Invitados y Reservas">⚙️</button>
+                </div>
+
+                <!-- Expandable Custom Simulation Popover -->
+                <div class="preview-sim-popover" id="previewSimPopover" style="display: none;">
+                    <div class="sim-popover-row">
+                        <span class="sim-popover-label">Todos ({name}):</span>
+                        <div class="sim-popover-buttons">
+                            <button type="button" class="sim-scope-btn" data-scope="all" data-val="1" onclick="setSimulationCustom('all', 1)">1 (Singular)</button>
+                            <button type="button" class="sim-scope-btn active" data-scope="all" data-val="2" onclick="setSimulationCustom('all', 2)">2+ (Plural)</button>
+                        </div>
+                    </div>
+                    <div class="sim-popover-row">
+                        <span class="sim-popover-label">Invitados ({inv}):</span>
+                        <div class="sim-popover-buttons">
+                            <button type="button" class="sim-scope-btn" data-scope="inv" data-val="0" onclick="setSimulationCustom('inv', 0)">0 (Ninguno)</button>
+                            <button type="button" class="sim-scope-btn" data-scope="inv" data-val="1" onclick="setSimulationCustom('inv', 1)">1 (Singular)</button>
+                            <button type="button" class="sim-scope-btn active" data-scope="inv" data-val="2" onclick="setSimulationCustom('inv', 2)">2+ (Plural)</button>
+                        </div>
+                    </div>
+                    <div class="sim-popover-row">
+                        <span class="sim-popover-label">Reservas ({res}):</span>
+                        <div class="sim-popover-buttons">
+                            <button type="button" class="sim-scope-btn" data-scope="res" data-val="0" onclick="setSimulationCustom('res', 0)">0 (Ninguno)</button>
+                            <button type="button" class="sim-scope-btn" data-scope="res" data-val="1" onclick="setSimulationCustom('res', 1)">1 (Singular)</button>
+                            <button type="button" class="sim-scope-btn active" data-scope="res" data-val="2" onclick="setSimulationCustom('res', 2)">2+ (Plural)</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="story-preview-viewport" id="storyPreviewViewport">
                     <div class="story-container" id="storyContainer">
                         <!-- Top Bar: Progress & Meta Header -->
@@ -6440,9 +6588,88 @@
 
         const collapsedElementIds = new Set();
         let selectedElementId = null;
-        let previewGuestMode = 'plural';
         const DEFAULT_CARD_VALUE = "{{ default_card_value or '$105.000' }}";
         const DEFAULT_CARD_NUM = {{ default_card_num or 105000 }};
+
+        const previewSimulation = {
+            mode: 'plural', // 'single', 'plural', 'only_inv', 'only_res', 'mixed', 'custom'
+            all: 2,         // 1 = singular, 2 = plural
+            inv: 2,         // 0 = cero, 1 = singular, 2 = plural
+            res: 2,         // 0 = cero, 1 = singular, 2 = plural
+            value: DEFAULT_CARD_VALUE
+        };
+        let previewGuestMode = 'plural'; // Backwards compatibility
+
+        function updateSimulationUI() {
+            document.querySelectorAll('.sim-preset-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.preset === previewSimulation.mode);
+            });
+            document.querySelectorAll('.sim-scope-btn').forEach(btn => {
+                const scope = btn.dataset.scope;
+                const val = parseInt(btn.dataset.val, 10);
+                btn.classList.toggle('active', previewSimulation[scope] === val);
+            });
+            document.querySelectorAll('.tb-guest-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === (previewSimulation.all === 1 ? 'single' : 'plural'));
+            });
+        }
+
+        function setSimulationPreset(preset) {
+            previewSimulation.mode = preset;
+            if (preset === 'single') {
+                previewSimulation.all = 1;
+                previewSimulation.inv = 1;
+                previewSimulation.res = 1;
+                previewGuestMode = 'single';
+            } else if (preset === 'plural') {
+                previewSimulation.all = 2;
+                previewSimulation.inv = 2;
+                previewSimulation.res = 2;
+                previewGuestMode = 'plural';
+            } else if (preset === 'only_inv') {
+                previewSimulation.all = 2;
+                previewSimulation.inv = 2;
+                previewSimulation.res = 0;
+                previewGuestMode = 'plural';
+            } else if (preset === 'only_res') {
+                previewSimulation.all = 2;
+                previewSimulation.inv = 0;
+                previewSimulation.res = 2;
+                previewGuestMode = 'plural';
+            } else if (preset === 'mixed') {
+                previewSimulation.all = 2;
+                previewSimulation.inv = 1;
+                previewSimulation.res = 1;
+                previewGuestMode = 'plural';
+            }
+            updateSimulationUI();
+            updateLivePreview();
+            const labels = {
+                single: '👤 1 Persona (Singular total)',
+                plural: '👥 Grupo (Plural total)',
+                only_inv: '🎟️ Solo Invitados (0 reservas)',
+                only_res: '💳 Solo Reservas (0 invitados)',
+                mixed: '🔀 Mixto (1 inv + 1 res)'
+            };
+            if (typeof showToast === 'function' && labels[preset]) showToast(`Simulación: ${labels[preset]}`);
+        }
+
+        function setSimulationCustom(scope, val) {
+            previewSimulation.mode = 'custom';
+            previewSimulation[scope] = parseInt(val, 10);
+            previewGuestMode = previewSimulation.all === 1 ? 'single' : 'plural';
+            updateSimulationUI();
+            updateLivePreview();
+        }
+
+        function toggleSimulationCustomPopover() {
+            const pop = document.getElementById('previewSimPopover');
+            const btn = document.getElementById('btnToggleSimCustom');
+            if (!pop) return;
+            const isHidden = pop.style.display === 'none';
+            pop.style.display = isHidden ? 'flex' : 'none';
+            if (btn) btn.classList.toggle('active', isHidden);
+        }
         function formatCurrency(val) {
             if (val === null || val === undefined || isNaN(val)) return '';
             const num = Math.round(val);
@@ -6647,6 +6874,126 @@
                 preview.title = data.fullText;
                 preview.classList.toggle('is-empty', data.isEmpty);
             }
+        }
+
+        function syncBoxSlidersAcrossCards(boxId) {
+            const slide = getCurrentSlide();
+            if (!slide || !slide.boxes || !slide.boxes[boxId]) return;
+            const boxObj = slide.boxes[boxId];
+
+            (slide.elements || []).forEach(otherEl => {
+                if (otherEl.box_id === boxId) {
+                    const card = document.getElementById('elCard_' + otherEl.id);
+                    if (!card) return;
+
+                    // Pos X
+                    const sX = card.querySelector('.pos-range-slider[id^="sliderX_"]');
+                    const nX = card.querySelector('.pos-num-input[id^="numX_"]');
+                    const bX = card.querySelector('.pos-val-badge[id^="badgeX_"]');
+                    const valX = boxObj.x !== undefined ? boxObj.x : 0;
+                    if (sX && sX.value != valX) sX.value = valX;
+                    if (nX && nX.value != valX) nX.value = valX;
+                    if (bX) bX.textContent = `${valX}%`;
+
+                    // Pos Y
+                    const sY = card.querySelector('.pos-range-slider[id^="sliderY_"]');
+                    const nY = card.querySelector('.pos-num-input[id^="numY_"]');
+                    const bY = card.querySelector('.pos-val-badge[id^="badgeY_"]');
+                    const valY = boxObj.y !== undefined ? boxObj.y : 0;
+                    if (sY && sY.value != valY) sY.value = valY;
+                    if (nY && nY.value != valY) nY.value = valY;
+                    if (bY) bY.textContent = `${valY}%`;
+
+                    // Width W
+                    const sW = card.querySelector('.pos-range-slider[id^="sliderW_"]');
+                    const nW = card.querySelector('.pos-num-input[id^="numW_"]');
+                    const bW = card.querySelector('.pos-val-badge[id^="badgeW_"]');
+                    const valW = boxObj.w !== undefined ? boxObj.w : 88;
+                    if (sW && sW.value != valW) sW.value = valW;
+                    if (nW && nW.value != valW) nW.value = valW;
+                    if (bW) bW.textContent = `${valW}%`;
+
+                    // Zoom
+                    const sZ = card.querySelector('.pos-range-slider[id^="sliderZoom_"]');
+                    const nZ = card.querySelector('.pos-num-input[id^="numZoom_"]');
+                    const bZ = card.querySelector('.pos-val-badge[id^="badgeZoom_"]');
+                    const valZ = boxObj.zoom !== undefined ? boxObj.zoom : 100;
+                    if (sZ && sZ.value != valZ) sZ.value = valZ;
+                    if (nZ && nZ.value != valZ) nZ.value = valZ;
+                    if (bZ) bZ.textContent = `${valZ}%`;
+
+                    // Rotate 2D
+                    const sR = card.querySelector('.pos-range-slider[id^="sliderRot2D_"]');
+                    const nR = card.querySelector('.pos-num-input[id^="numRot2D_"]');
+                    const bR = card.querySelector('.pos-val-badge[id^="badgeRot2D_"]');
+                    const valR = boxObj.rotate !== undefined ? boxObj.rotate : 0;
+                    if (sR && sR.value != valR) sR.value = valR;
+                    if (nR && nR.value != valR) nR.value = valR;
+                    if (bR) bR.textContent = `${valR}°`;
+
+                    // Styling: Background color
+                    const bgIn = card.querySelector('.typo-box-bg-input');
+                    if (bgIn && boxObj.bg_color && bgIn.value !== boxObj.bg_color) bgIn.value = boxObj.bg_color;
+
+                    // Opacity
+                    const opSl = card.querySelector('.typo-box-opacity-slider');
+                    const opBd = card.querySelector('.typo-box-opacity-badge');
+                    const valOp = boxObj.bg_opacity !== undefined ? boxObj.bg_opacity : 45;
+                    if (opSl && opSl.value != valOp) opSl.value = valOp;
+                    if (opBd) opBd.textContent = `${valOp}%`;
+
+                    // Blur
+                    const blSl = card.querySelector('.typo-box-blur-slider');
+                    const blBd = card.querySelector('.typo-box-blur-badge');
+                    const valBl = boxObj.bg_blur !== undefined ? boxObj.bg_blur : 14;
+                    if (blSl && blSl.value != valBl) blSl.value = valBl;
+                    if (blBd) blBd.textContent = `${valBl}px`;
+
+                    // Radius
+                    const rdSl = card.querySelector('.typo-box-radius-slider');
+                    const rdBd = card.querySelector('.typo-box-radius-badge');
+                    const valRd = boxObj.box_radius !== undefined ? boxObj.box_radius : 16;
+                    if (rdSl && rdSl.value != valRd) rdSl.value = valRd;
+                    if (rdBd) rdBd.textContent = `${valRd}px`;
+
+                    // Gap
+                    const gpSl = card.querySelector('.typo-box-gap-slider');
+                    const gpBd = card.querySelector('.typo-box-gap-badge');
+                    const valGp = boxObj.gap !== undefined ? boxObj.gap : 8;
+                    if (gpSl && gpSl.value != valGp) gpSl.value = valGp;
+                    if (gpBd) gpBd.textContent = `${valGp}px`;
+
+                    // Pad Y
+                    const pySl = card.querySelector('.typo-box-pady-slider');
+                    const pyBd = card.querySelector('.typo-box-pady-badge');
+                    const valPy = boxObj.pad_y !== undefined ? boxObj.pad_y : 12;
+                    if (pySl && pySl.value != valPy) pySl.value = valPy;
+                    if (pyBd) pyBd.textContent = `${valPy}px`;
+
+                    // Preset buttons
+                    const boxPresetBtns = card.querySelectorAll('.box-preset-btn');
+                    if (boxPresetBtns.length > 0 && typeof BOX_PRESETS_CONFIG !== 'undefined') {
+                        boxPresetBtns.forEach(btn => {
+                            const p = btn.dataset.preset;
+                            let isMatch = false;
+                            if (p === 'none' && !boxObj.bg_color) isMatch = true;
+                            else if (BOX_PRESETS_CONFIG[p]) {
+                                const presetCfg = BOX_PRESETS_CONFIG[p];
+                                const curBg = (boxObj.bg_color || '').toLowerCase();
+                                const expBg = (presetCfg.bg_color || '').toLowerCase();
+                                const curOp = boxObj.bg_opacity !== undefined ? Number(boxObj.bg_opacity) : 100;
+                                const expOp = Number(presetCfg.bg_opacity !== undefined ? presetCfg.bg_opacity : 100);
+                                const curBl = Number(boxObj.bg_blur || 0);
+                                const expBl = Number(presetCfg.bg_blur || 0);
+                                if (curBg === expBg && curOp === expOp && curBl === expBl) {
+                                    isMatch = true;
+                                }
+                            }
+                            btn.classList.toggle('active', isMatch);
+                        });
+                    }
+                }
+            });
         }
 
         function renderElementsList() {
@@ -7955,6 +8302,7 @@
                             const target = getTargetBox();
                             target.gap = val;
                             if (boxGapBadge) boxGapBadge.textContent = `${val}px`;
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
                         };
@@ -7966,6 +8314,7 @@
                             const target = getTargetBox();
                             target.pad_y = val;
                             if (boxPadYBadge) boxPadYBadge.textContent = `${val}px`;
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
                         };
@@ -8006,6 +8355,7 @@
                                 }
                             }
                             syncBoxPresetUI();
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
@@ -8022,6 +8372,7 @@
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '100%';
                             }
                             syncBoxPresetUI();
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
@@ -8040,6 +8391,7 @@
                                 delete target.bg_color;
                             }
                             syncBoxPresetUI();
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
@@ -8053,6 +8405,7 @@
                             target.bg_blur = val;
                             boxBlurBadge.textContent = `${val}px`;
                             syncBoxPresetUI();
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
@@ -8065,6 +8418,7 @@
                             const target = getTargetBox();
                             target.box_radius = val;
                             boxRadiusBadge.textContent = `${val}px`;
+                            if (el.box_id) syncBoxSlidersAcrossCards(el.box_id);
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
@@ -8348,12 +8702,15 @@
                     textGroup.querySelectorAll('.tb-guest-mode-btn').forEach(btn => {
                         btn.onclick = () => {
                             const mode = btn.dataset.mode;
-                            previewGuestMode = mode;
-                            document.querySelectorAll('.tb-guest-mode-btn').forEach(b => {
-                                b.classList.toggle('active', b.dataset.mode === mode);
-                            });
-                            updateLivePreview();
-                            showToast(mode === 'single' ? '👤 Vista simulada: 1 persona (singular)' : '👥 Vista simulada: grupo (plural)');
+                            if (typeof setSimulationPreset === 'function') {
+                                setSimulationPreset(mode);
+                            } else {
+                                previewGuestMode = mode;
+                                document.querySelectorAll('.tb-guest-mode-btn').forEach(b => {
+                                    b.classList.toggle('active', b.dataset.mode === mode);
+                                });
+                                updateLivePreview();
+                            }
                         };
                     });
 
@@ -8571,8 +8928,12 @@
                     let parsed = parseInt(val, 10);
                     if (isNaN(parsed)) parsed = 0;
                     parsed = Math.max(-60, Math.min(60, parsed));
-                    if (isSharedBox) boxObj.x = parsed;
-                    else el.x = parsed;
+                    if (isSharedBox) {
+                        boxObj.x = parsed;
+                        syncBoxSlidersAcrossCards(el.box_id);
+                    } else {
+                        el.x = parsed;
+                    }
                     sliderX.value = parsed;
                     numX.value = parsed;
                     badgeX.textContent = `${parsed}%`;
@@ -8592,8 +8953,12 @@
                     let parsed = parseInt(val, 10);
                     if (isNaN(parsed)) parsed = 0;
                     parsed = Math.max(-60, Math.min(60, parsed));
-                    if (isSharedBox) boxObj.y = parsed;
-                    else el.y = parsed;
+                    if (isSharedBox) {
+                        boxObj.y = parsed;
+                        syncBoxSlidersAcrossCards(el.box_id);
+                    } else {
+                        el.y = parsed;
+                    }
                     sliderY.value = parsed;
                     numY.value = parsed;
                     badgeY.textContent = `${parsed}%`;
@@ -8611,8 +8976,12 @@
 
                 const syncW = (val) => {
                     if (val === '' || val === null) {
-                        if (isSharedBox) delete boxObj.w;
-                        else delete el.w;
+                        if (isSharedBox) {
+                            delete boxObj.w;
+                            syncBoxSlidersAcrossCards(el.box_id);
+                        } else {
+                            delete el.w;
+                        }
                         badgeW.textContent = 'Auto';
                         numW.value = '';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
@@ -8632,8 +9001,12 @@
                         parsed = 88;
                     }
                     parsed = Math.max(10, Math.min(200, parsed));
-                    if (isSharedBox) boxObj.w = parsed;
-                    else el.w = parsed;
+                    if (isSharedBox) {
+                        boxObj.w = parsed;
+                        syncBoxSlidersAcrossCards(el.box_id);
+                    } else {
+                        el.w = parsed;
+                    }
                     sliderW.value = parsed;
                     numW.value = parsed;
                     badgeW.textContent = `${parsed}%`;
@@ -8676,8 +9049,12 @@
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 100;
                         parsed = Math.max(30, Math.min(250, parsed));
-                        if (isSharedBox) boxObj.zoom = parsed;
-                        else el.zoom = parsed;
+                        if (isSharedBox) {
+                            boxObj.zoom = parsed;
+                            syncBoxSlidersAcrossCards(el.box_id);
+                        } else {
+                            el.zoom = parsed;
+                        }
                         sliderZoom.value = parsed;
                         numZoom.value = parsed;
                         badgeZoom.textContent = `${parsed}%`;
@@ -8699,8 +9076,12 @@
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 0;
                         parsed = Math.max(-180, Math.min(180, parsed));
-                        if (isSharedBox) boxObj.rotate = parsed;
-                        else el.rotate = parsed;
+                        if (isSharedBox) {
+                            boxObj.rotate = parsed;
+                            syncBoxSlidersAcrossCards(el.box_id);
+                        } else {
+                            el.rotate = parsed;
+                        }
                         if (sliderRot2D) sliderRot2D.value = parsed;
                         if (numRot2D) numRot2D.value = parsed;
                         if (badgeRot2D) badgeRot2D.textContent = `${parsed}°`;
@@ -9275,14 +9656,15 @@
 
             function replacePreviewVariables(str) {
                 if (!str) return '';
-                const isSingle = previewGuestMode === 'single';
-                const nameVal = isSingle ? 'Alejandro' : 'María y Alejandro';
-                const invVal = isSingle ? 'Alejandro' : 'María';
-                const resVal = isSingle ? 'Alejandro' : 'Alejandro y Pedro';
-                const priceVal = DEFAULT_CARD_VALUE;
-                const countAll = isSingle ? 1 : 2;
-                const countInv = isSingle ? 1 : 1;
-                const countRes = isSingle ? 1 : 2;
+                const isSingle = (typeof previewSimulation !== 'undefined' && previewSimulation.all === 1) || previewGuestMode === 'single';
+                const countAll = (typeof previewSimulation !== 'undefined' && previewSimulation.all !== undefined) ? previewSimulation.all : (isSingle ? 1 : 2);
+                const countInv = (typeof previewSimulation !== 'undefined' && previewSimulation.inv !== undefined) ? previewSimulation.inv : (isSingle ? 1 : 2);
+                const countRes = (typeof previewSimulation !== 'undefined' && previewSimulation.res !== undefined) ? previewSimulation.res : (isSingle ? 1 : 2);
+
+                const nameVal = countAll === 1 ? 'Alejandro' : 'María y Alejandro';
+                const invVal = countInv === 0 ? '' : (countInv === 1 ? 'María' : 'María y Alejandro');
+                const resVal = countRes === 0 ? '' : (countRes === 1 ? 'Alejandro' : 'Alejandro y Pedro');
+                const priceVal = (typeof previewSimulation !== 'undefined' && previewSimulation.value) ? previewSimulation.value : DEFAULT_CARD_VALUE;
 
                 return str
                     .replace(/\{(?:name|names|nombre|nombres)\}/gi, () => nameVal)
@@ -9300,8 +9682,8 @@
                         if (c === 0) return zero !== undefined ? zero : '';
                         return c === 1 ? sing : plur;
                     })
-                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, isSingle ? '$1' : '$2')
-                    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, isSingle ? '$1' : '$2');
+                    .replace(/\(([^|()]*)\|([^|()]*)\)/g, countAll === 1 ? '$1' : '$2')
+                    .replace(/\{([^|{}]*)\|([^|{}]*)\}/g, countAll === 1 ? '$1' : '$2');
             }
 
             function renderSlideTextHtml(text) {
@@ -9406,6 +9788,7 @@
                                         if (Math.abs(diff) > 2) hasRotated = true;
                                         box.rotate = finalRot;
                                         boxDiv.style.transform = `translate(-50%, -50%) rotate(${finalRot}deg) scale(${(box.zoom || 100) / 100})`;
+                                        syncBoxSlidersAcrossCards(boxId);
                                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                     };
                                     const onRotUp = () => {
@@ -9444,13 +9827,7 @@
                                         if (Math.abs(newZoom - initZoom) > 1) hasScaled = true;
                                         box.zoom = newZoom;
                                         boxDiv.style.transform = `translate(-50%, -50%) rotate(${box.rotate || 0}deg) scale(${newZoom / 100})`;
-
-                                        const zoomSlider = document.querySelector('.pos-slider-wrap input[id^="sliderZoom_"]');
-                                        const zoomNum = document.querySelector('.pos-slider-wrap input[id^="numZoom_"]');
-                                        const zoomBadge = document.querySelector('.pos-slider-wrap span[id^="badgeZoom_"]');
-                                        if (zoomSlider) zoomSlider.value = newZoom;
-                                        if (zoomNum) zoomNum.value = newZoom;
-                                        if (zoomBadge) zoomBadge.textContent = `${newZoom}%`;
+                                        syncBoxSlidersAcrossCards(boxId);
                                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                     };
 
@@ -9537,6 +9914,7 @@
                                         box.y = newY;
                                         boxDiv.style.left = `calc(50% + ${newX}%)`;
                                         boxDiv.style.top = `calc(50% + ${newY}%)`;
+                                        syncBoxSlidersAcrossCards(boxId);
                                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                     }
                                 };
@@ -9578,21 +9956,7 @@
                                 const curZ = (box.zoom !== undefined && box.zoom !== null) ? box.zoom : 100;
                                 const curR = box.rotate || 0;
                                 boxDiv.style.transform = `translate(-50%, -50%) rotate(${curR}deg) scale(${curZ / 100})`;
-
-                                const zoomSlider = document.querySelector('.pos-slider-wrap input[id^="sliderZoom_"]');
-                                const zoomNum = document.querySelector('.pos-slider-wrap input[id^="numZoom_"]');
-                                const zoomBadge = document.querySelector('.pos-slider-wrap span[id^="badgeZoom_"]');
-                                if (zoomSlider) zoomSlider.value = curZ;
-                                if (zoomNum) zoomNum.value = curZ;
-                                if (zoomBadge) zoomBadge.textContent = `${curZ}%`;
-
-                                const rotSlider = document.querySelector('.pos-slider-wrap input[id^="sliderRot2D_"]');
-                                const rotNum = document.querySelector('.pos-slider-wrap input[id^="numRot2D_"]');
-                                const rotBadge = document.querySelector('.pos-slider-wrap span[id^="badgeRot2D_"]');
-                                if (rotSlider) rotSlider.value = curR;
-                                if (rotNum) rotNum.value = curR;
-                                if (rotBadge) rotBadge.textContent = `${curR}°`;
-
+                                syncBoxSlidersAcrossCards(boxId);
                                 if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                 updateDirtySlideChipsUI();
                             };
@@ -10123,6 +10487,11 @@
                             formDiv.style.transform = 'translate(-50%, -50%)';
                             formDiv.style.overflowY = 'auto';
                             formDiv.style.pointerEvents = 'auto';
+
+                            const showSecondGuest = (typeof previewSimulation !== 'undefined') ? (previewSimulation.all > 1) : true;
+                            const showPaymentCard = (typeof previewSimulation !== 'undefined') ? (previewSimulation.res > 0) : true;
+                            const cardAmountStr = (typeof previewSimulation !== 'undefined' && previewSimulation.res === 1) ? '$25.000 (1 tarjeta)' : '$50.000 (2 tarjetas)';
+
                             formDiv.innerHTML = `
                             <div class="interactive-content rsvp-form-container" style="padding: 4px; box-sizing: border-box; width: 100%; font-family: 'Montserrat', sans-serif;">
                                 <div class="rsvp-guest-list" style="display: flex; flex-direction: column; gap: 8px;">
@@ -10160,6 +10529,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    ${showSecondGuest ? `
                                     <div class="rsvp-guest-card" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
                                         <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px;">
                                             <span class="rsvp-bullet bullet-pending" style="width: 14px; height: 14px; border-radius: 50%; background: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.7); display: inline-block;"></span>
@@ -10167,17 +10537,20 @@
                                             <span style="margin-left: auto; color: rgba(255,255,255,0.6); font-size: 0.75rem;">▼</span>
                                         </div>
                                     </div>
+                                    ` : ''}
                                 </div>
+                                ${showPaymentCard ? `
                                 <div class="rsvp-payment-card" style="margin-top: 0; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 5px;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 3px; margin-bottom: 0;">
                                         <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">Tarjeta de la fiesta</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #34d399; font-weight: 700;">
                                         <span>Total</span>
-                                        <span>$50.000</span>
+                                        <span>${cardAmountStr}</span>
                                     </div>
                                     ${(el.alias_cbu) ? `<div style="display: flex; justify-content: center; width: 100%; margin-top: 3px;"><span style="font-size: 0.72rem; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 3px 10px; color: #fff; display: inline-flex; align-items: center; gap: 4px;">📋 Transferir a ${escapeHtml(el.alias_cbu)}</span></div>` : ''}
                                 </div>
+                                ` : ''}
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.72em; color: #68d391; margin-top: 8px; font-family: 'Montserrat', sans-serif;">
                                     <span>✓ Respuestas guardadas</span>
                                 </div>
