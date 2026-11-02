@@ -511,6 +511,8 @@
             position: absolute;
             display: flex;
             flex-direction: column;
+            width: fit-content;
+            max-width: 100%;
             box-sizing: border-box;
             word-break: break-word;
             pointer-events: auto;
@@ -527,6 +529,7 @@
             box-sizing: border-box;
             word-break: break-word;
             white-space: pre-line;
+            text-wrap: balance;
             background: none !important;
             padding: 0 !important;
             border: none !important;

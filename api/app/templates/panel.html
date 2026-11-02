@@ -3077,6 +3077,8 @@
             position: absolute;
             display: flex;
             flex-direction: column;
+            width: fit-content;
+            max-width: 100%;
             box-sizing: border-box;
             word-break: break-word;
             pointer-events: auto;
@@ -3100,6 +3102,7 @@
             box-sizing: border-box;
             word-break: break-word;
             white-space: pre-line;
+            text-wrap: balance;
             background: none !important;
             padding: 0 !important;
             border: none !important;
@@ -9359,7 +9362,7 @@
                             boxDiv.dataset.boxId = boxId;
                             boxDiv.style.left = `calc(50% + ${boxX}%)`;
                             boxDiv.style.top = `calc(50% + ${boxY}%)`;
-                            boxDiv.style.width = `${boxW}%`;
+                            boxDiv.style.width = 'fit-content';
                             boxDiv.style.maxWidth = `${boxW}%`;
                             boxDiv.style.transform = `translate(-50%, -50%) rotate(${boxRot}deg) scale(${boxZoom / 100})`;
                             boxDiv.style.transformOrigin = 'center center';
@@ -9475,6 +9478,7 @@
                                 childDiv.className = `slide-box-item slide-el-${child.style || 'body'} align-${childAlign} preview-text-el style-${child.style || 'body'}${isChildSelected ? ' is-selected' : ''}`;
                                 childDiv.dataset.elId = child.id;
                                 childDiv.style.textAlign = childAlign;
+                                childDiv.style.textWrap = 'balance';
                                 childDiv.style.color = child.color || '#ffffff';
                                 if (child.fontFamily) childDiv.style.fontFamily = `'${child.fontFamily}', sans-serif`;
                                 if (child.fontWeight) childDiv.style.fontWeight = child.fontWeight;
@@ -9620,6 +9624,7 @@
                             textDiv.style.width = `${widthVal}%`;
                             textDiv.style.maxWidth = `${widthVal}%`;
                             textDiv.style.textAlign = textAlign;
+                            textDiv.style.textWrap = 'balance';
                             textDiv.style.transform = `translate(-50%, ${transY}) perspective(${pers}px) rotateX(${rotX}deg) rotateY(${rotY}deg) rotateZ(${rotZ}deg) scale(${zoomVal / 100})`;
                             textDiv.style.transformOrigin = `center ${originY}`;
                             textDiv.style.transformStyle = 'preserve-3d';
@@ -9648,6 +9653,8 @@
                                 textDiv.style.textShadow = '';
                             }
                             if (el.bg_color) {
+                                textDiv.style.width = 'fit-content';
+                                textDiv.style.maxWidth = `${widthVal}%`;
                                 const bgOpacity = (el.bg_opacity !== undefined && el.bg_opacity !== null && el.bg_opacity !== '') ? Number(el.bg_opacity) : 100;
                                 const bgBlur = (el.bg_blur !== undefined && el.bg_blur !== null && el.bg_blur !== '') ? Number(el.bg_blur) : 0;
                                 const boxRadius = (el.box_radius !== undefined && el.box_radius !== null && el.box_radius !== '') ? Number(el.box_radius) : 12;
