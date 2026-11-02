@@ -6,7 +6,6 @@ const BOX_PRESETS_CONFIG = {
     'none': {
         name: 'Sin fondo',
         bg_color: '',
-        bg_rgb: '',
         bg_opacity: 0,
         bg_blur: 0,
         box_radius: 12
@@ -14,40 +13,33 @@ const BOX_PRESETS_CONFIG = {
     'glass-gold': {
         name: 'Dorado',
         bg_color: '#d4af37',
-        bg_rgb: '212, 175, 55',
         bg_opacity: 25,
         bg_blur: 10,
         box_radius: 14,
         dark_color: '#916912',
-        dark_rgb: '145, 105, 18',
         dark_opacity: 50
     },
     'glass-light': {
         name: 'Vidrio Claro',
         bg_color: '#ffffff',
-        bg_rgb: '255, 255, 255',
         bg_opacity: 20,
         bg_blur: 12,
         box_radius: 16,
         dark_color: '#e6ebf5',
-        dark_rgb: '230, 235, 245',
         dark_opacity: 35
     },
     'glass-dark': {
         name: 'Vidrio Oscuro',
         bg_color: '#000000',
-        bg_rgb: '0, 0, 0',
         bg_opacity: 45,
         bg_blur: 14,
         box_radius: 16,
         dark_color: '#0a0f19',
-        dark_rgb: '10, 15, 25',
         dark_opacity: 65
     },
     'white': {
         name: 'Blanco',
         bg_color: '#ffffff',
-        bg_rgb: '255, 255, 255',
         bg_opacity: 100,
         bg_blur: 0,
         box_radius: 16
@@ -55,12 +47,31 @@ const BOX_PRESETS_CONFIG = {
     'black': {
         name: 'Negro',
         bg_color: '#000000',
-        bg_rgb: '0, 0, 0',
         bg_opacity: 100,
         bg_blur: 0,
         box_radius: 16
     }
 };
+
+/**
+ * Converts a hex color string (#rrggbb or #rgb) to an "r, g, b" triplet string.
+ * @param {string} hex
+ * @returns {string} e.g. "212, 175, 55"
+ */
+function hexToRgb(hex) {
+    if (!hex || typeof hex !== 'string') return '';
+    let clean = hex.replace('#', '').trim();
+    if (clean.length === 3) {
+        clean = clean.split('').map(c => c + c).join('');
+    }
+    if (clean.length !== 6) return '';
+    const num = parseInt(clean, 16);
+    if (isNaN(num)) return '';
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `${r}, ${g}, ${b}`;
+}
 
 /**
  * Applies the given box preset to the document root as CSS variables for RSVP cards.
@@ -71,12 +82,12 @@ function applyRsvpBoxPreset(presetName = 'glass-gold') {
     if (!cfg || !document.documentElement) return;
 
     const root = document.documentElement;
-    const bgRgb = cfg.bg_rgb || '212, 175, 55';
+    const bgRgb = hexToRgb(cfg.bg_color) || '212, 175, 55';
     const bgAlpha = (cfg.bg_opacity !== undefined ? cfg.bg_opacity : 25) / 100;
     const blurPx = cfg.bg_blur !== undefined ? cfg.bg_blur : 10;
     const radiusPx = cfg.box_radius || 14;
 
-    const darkRgb = cfg.dark_rgb || '145, 105, 18';
+    const darkRgb = hexToRgb(cfg.dark_color) || hexToRgb(cfg.bg_color) || '145, 105, 18';
     const darkAlpha = (cfg.dark_opacity !== undefined ? cfg.dark_opacity : 50) / 100;
 
     root.style.setProperty('--rsvp-card-bg', `rgba(${bgRgb}, ${bgAlpha})`);
@@ -98,4 +109,3 @@ if (typeof document !== 'undefined') {
         applyRsvpBoxPreset('glass-gold');
     }
 }
-
