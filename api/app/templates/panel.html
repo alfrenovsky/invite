@@ -6897,8 +6897,8 @@
                             <span class="pos-val-badge" id="badgeW_${idx}">${currW}%</span>
                         </div>
                         <div class="pos-input-group">
-                            <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="40" max="100" step="1" value="${currW}">
-                            <input type="number" class="pos-num-input" id="numW_${idx}" min="40" max="100" step="1" value="${currW}">
+                            <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="40" max="200" step="1" value="${currW}">
+                            <input type="number" class="pos-num-input" id="numW_${idx}" min="40" max="200" step="1" value="${currW}">
                         </div>
                     `;
                     body.appendChild(widthRow);
@@ -6919,7 +6919,7 @@
                     sliderW.oninput = () => updateWidth(parseInt(sliderW.value, 10));
                     numW.oninput = () => {
                         const val = parseInt(numW.value, 10);
-                        if (!isNaN(val)) updateWidth(Math.max(40, Math.min(100, val)));
+                        if (!isNaN(val)) updateWidth(Math.max(40, Math.min(200, val)));
                     };
 
                     // Vertical Padding / Height Control
@@ -6974,6 +6974,7 @@
                                 <button type="button" class="tb-btn-style cd-preset-btn" data-preset="white" title="Blanco clásico opaco">Blanco</button>
                                 <button type="button" class="tb-btn-style cd-preset-btn" data-preset="glass-light" title="Vidrio claro translúcido">✨ Vidrio Claro</button>
                                 <button type="button" class="tb-btn-style cd-preset-btn" data-preset="glass-dark" title="Vidrio oscuro translúcido">🌫️ Vidrio Oscuro</button>
+                                <button type="button" class="tb-btn-style cd-preset-btn" data-preset="glass-gold" title="Fondo vidrio dorado translúcido con desenfoque">✨ Dorado</button>
                                 <button type="button" class="tb-btn-style cd-preset-btn" data-preset="black" title="Negro opaco">Negro</button>
                             </div>
                         </div>
@@ -7054,9 +7055,18 @@
                             const p = btn.dataset.preset;
                             let isMatch = false;
                             const curBg = (el.bg_color || '#ffffff').toLowerCase();
-                            const curOp = el.bg_opacity !== undefined ? el.bg_opacity : 100;
-                            const curBl = el.bg_blur || 0;
-                            if (p === 'white' && curBg === '#ffffff' && curOp == 100 && curBl == 0) isMatch = true;
+                            const curOp = el.bg_opacity !== undefined ? Number(el.bg_opacity) : 100;
+                            const curBl = Number(el.bg_blur || 0);
+
+                            if (typeof BOX_PRESETS_CONFIG !== 'undefined' && BOX_PRESETS_CONFIG[p]) {
+                                const cfg = BOX_PRESETS_CONFIG[p];
+                                const expBg = (cfg.bg_color || '').toLowerCase();
+                                const expOp = Number(cfg.bg_opacity !== undefined ? cfg.bg_opacity : 100);
+                                const expBl = Number(cfg.bg_blur || 0);
+                                if (curBg === expBg && curOp === expOp && curBl === expBl) {
+                                    isMatch = true;
+                                }
+                            } else if (p === 'white' && curBg === '#ffffff' && curOp == 100 && curBl == 0) isMatch = true;
                             else if (p === 'glass-light' && curBg === '#ffffff' && curOp == 20 && curBl == 14) isMatch = true;
                             else if (p === 'glass-dark' && curBg === '#000000' && curOp == 50 && curBl == 14) isMatch = true;
                             else if (p === 'black' && curBg === '#000000' && curOp == 100 && curBl == 0) isMatch = true;
@@ -7069,7 +7079,20 @@
                         btn.onclick = () => {
                             recordHistorySnapshot();
                             const p = btn.dataset.preset;
-                            if (p === 'white') {
+                            const cfg = (typeof BOX_PRESETS_CONFIG !== 'undefined' && BOX_PRESETS_CONFIG[p]) ? BOX_PRESETS_CONFIG[p] : null;
+
+                            if (cfg) {
+                                el.bg_color = cfg.bg_color;
+                                el.bg_opacity = cfg.bg_opacity;
+                                el.bg_blur = cfg.bg_blur;
+                                if (p === 'white') {
+                                    updateCdTextColorUI('#111827');
+                                } else if (p === 'glass-light' || p === 'glass-gold' || p === 'black') {
+                                    updateCdTextColorUI('#ffffff');
+                                } else if (p === 'glass-dark') {
+                                    updateCdTextColorUI('#f1f5f9');
+                                }
+                            } else if (p === 'white') {
                                 el.bg_color = '#ffffff';
                                 el.bg_opacity = 100;
                                 el.bg_blur = 0;
@@ -8393,8 +8416,8 @@
                             <span class="pos-val-badge" id="badgeW_${idx}">${currW !== '' ? currW + '%' : 'Auto'}</span>
                         </div>
                         <div class="pos-input-group">
-                            <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="100" step="1" value="${currW || (isForm ? 92 : 88)}">
-                            <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="100" step="1" value="${currW || ''}" placeholder="Auto">
+                            <input type="range" class="pos-range-slider" id="sliderW_${idx}" min="10" max="200" step="1" value="${currW || (isForm ? 92 : 88)}">
+                            <input type="number" class="pos-num-input" id="numW_${idx}" min="10" max="200" step="1" value="${currW || ''}" placeholder="Auto">
                         </div>
                     </div>
 
@@ -8606,7 +8629,7 @@
                         }
                         parsed = 88;
                     }
-                    parsed = Math.max(10, Math.min(100, parsed));
+                    parsed = Math.max(10, Math.min(200, parsed));
                     if (isSharedBox) boxObj.w = parsed;
                     else el.w = parsed;
                     sliderW.value = parsed;
