@@ -11,7 +11,16 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, abort, send_file, send_from_directory, redirect, Response
 from markupsafe import Markup, escape
 from werkzeug.utils import secure_filename
-from sheets import GoogleSheetsTable, parse_and_validate_token, BASE_URL, get_group_target_type, DEFAULT_RESERVA_MONTO, slugify
+from sheets import (
+    GoogleSheetsTable,
+    parse_and_validate_token,
+    BASE_URL,
+    get_group_target_type,
+    DEFAULT_RESERVA_MONTO,
+    slugify,
+    clean_phone_number,
+    generate_whatsapp_url,
+)
 import telegram_bot
 try:
     from PIL import Image, ImageOps
@@ -2607,6 +2616,62 @@ def delete_invitado(record_id):
         return jsonify({"ok": True, "message": "Invitado eliminado correctamente"})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/send/<phone>", methods=["GET"])
+def send_redirect_to_whatsapp(phone):
+    user_agent = request.headers.get("User-Agent", "").lower()
+    is_crawler = any(c in user_agent for c in [
+        "whatsapp", "facebookexternalhit", "facebot", "twitterbot", "telegrambot",
+        "googlebot", "bingbot", "yandex", "baiduspider", "linkedinbot", "slackbot"
+    ])
+
+    clean_target = clean_phone_number(phone)
+    if not clean_target:
+        return redirect(BASE_URL or "/", code=302)
+
+    records = table.get_all()
+    matching_guests = [
+        r for r in records
+        if clean_phone_number(r.get("telefono", "")) == clean_target
+    ]
+
+    if not matching_guests:
+        return redirect(BASE_URL or "/", code=302)
+
+    guest_id_param = request.args.get("id")
+    target_guest = None
+    if guest_id_param:
+        for g in matching_guests:
+            if str(g.get("id")) == str(guest_id_param):
+                target_guest = g
+                break
+
+    if not target_guest:
+        # Prefer the first one that is not marked as enviado yet
+        for g in matching_guests:
+            if str(g.get("enviado", "")).strip().lower() not in ("si", "sí", "true", "1"):
+                target_guest = g
+                break
+        if not target_guest:
+            target_guest = matching_guests[0]
+
+    # If NOT a crawler and not already marked as enviado, mark as enviado="si"
+    # Note: Only this specific recipient is marked, NOT the whole invitation!
+    if not is_crawler and str(target_guest.get("enviado", "")).strip().lower() not in ("si", "sí", "true", "1"):
+        target_id = target_guest.get("id")
+        if target_id:
+            table.update_record(target_id, {"enviado": "si"})
+
+    # Determine WhatsApp URL
+    wa_url = target_guest.get("whatsapp")
+    if not wa_url and target_guest.get("telefono") and target_guest.get("url"):
+        wa_url = generate_whatsapp_url(target_guest["telefono"], target_guest["url"])
+
+    if not wa_url:
+        wa_url = target_guest.get("url") or BASE_URL or "/"
+
+    return redirect(wa_url, code=302)
 
 
 @app.get("/telegram/auth-link")

@@ -10,7 +10,13 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from sheets import generate_whatsapp_url, generate_invitation_url, get_group_target_type
+from sheets import (
+    generate_whatsapp_url,
+    generate_invitation_url,
+    get_group_target_type,
+    clean_phone_number,
+    BASE_URL,
+)
 
 logger = logging.getLogger("telegram_bot")
 
@@ -161,13 +167,16 @@ def call_telegram_api(method: str, payload: dict = None) -> dict | None:
         return None
 
 
-def send_message(chat_id: int | str, text: str, parse_mode: str = "HTML") -> bool:
-    res = call_telegram_api("sendMessage", {
+def send_message(chat_id: int | str, text: str, parse_mode: str = "HTML", reply_markup: dict = None) -> bool:
+    payload = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": parse_mode,
         "disable_web_page_preview": True,
-    })
+    }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    res = call_telegram_api("sendMessage", payload)
     return bool(res and res.get("ok"))
 
 
@@ -522,59 +531,87 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         send_message(chat_id, "No se encontraron invitados.")
         return
 
-    # Extract all distinct origins in records
-    available_origins = set()
+    # Extract all distinct dequien values and count non-sent pending contacts
+    pending_by_dequien = {}
     for r in records:
         dq = str(r.get("dequien", "") or "").strip()
-        if dq:
-            fw = dq.split()[0].capitalize()
-            if fw:
-                available_origins.add(fw)
+        if not dq:
+            continue
+        if dq not in pending_by_dequien:
+            pending_by_dequien[dq] = 0
+        phone = clean_phone_number(r.get("telefono", ""))
+        enviado = str(r.get("enviado", "") or "").strip().lower()
+        if phone and enviado not in ("si", "sí", "true", "1"):
+            pending_by_dequien[dq] += 1
 
-    sorted_origins = sorted(available_origins)
+    sorted_dequien = sorted(pending_by_dequien.keys())
+
+    if not sorted_dequien:
+        send_message(chat_id, "ℹ️ No hay registros con 'de quien' configurado en la base de datos.")
+        return
+
     arg = (arg or "").strip()
 
     if not arg:
-        origins_str = " · ".join(f"<code>{o}</code>" for o in sorted_origins) if sorted_origins else "Celia · Alfredo · Amigos"
-        examples = "\n".join(f"• <code>/send {o}</code>" for o in sorted_origins) if sorted_origins else "• <code>/send Celia</code>\n• <code>/send Alfredo</code>\n• <code>/send Amigos</code>"
+        # Build interactive inline buttons (2 per row)
+        inline_keyboard = []
+        row = []
+        for dq in sorted_dequien:
+            count = pending_by_dequien[dq]
+            btn_text = f"{dq} ({count})" if count > 0 else f"{dq} (0)"
+            row.append({"text": btn_text, "callback_data": f"send:{dq}"})
+            if len(row) == 2:
+                inline_keyboard.append(row)
+                row = []
+        if row:
+            inline_keyboard.append(row)
+
+        cmd_list = "\n".join(f"• <code>/send {dq}</code> ({pending_by_dequien[dq]} pendientes)" for dq in sorted_dequien)
         send_message(
             chat_id,
-            f"ℹ️ <b>Uso del comando /send:</b>\n"
-            f"<code>/send &lt;origen&gt;</code>\n\n"
-            f"Orígenes disponibles:\n{origins_str}\n\n"
-            f"Ejemplos:\n{examples}"
+            f"📤 <b>¿De quién querés enviar invitaciones?</b>\n\n"
+            f"Elegí una opción para ver los contactos pendientes:\n\n"
+            f"{cmd_list}",
+            reply_markup={"inline_keyboard": inline_keyboard} if inline_keyboard else None
         )
         return
 
-    target_orig = arg.lower()
+    target = arg.lower()
     matching_guests = []
     for r in records:
-        dq = str(r.get("dequien", "") or "").strip()
-        fw = dq.split()[0].lower() if dq else ""
-        if fw == target_orig:
-            phone = str(r.get("telefono", "") or "").strip()
-            abierto = str(r.get("abierto", "") or "").strip().lower()
+        dq = str(r.get("dequien", "") or "").strip().lower()
+        first_word = dq.split()[0] if dq else ""
+        if dq == target or first_word == target or dq.startswith(target):
+            phone = clean_phone_number(r.get("telefono", ""))
             enviado = str(r.get("enviado", "") or "").strip().lower()
-            if phone and abierto not in ("si", "sí", "true", "1") and enviado not in ("si", "sí", "true", "1"):
+            if phone and enviado not in ("si", "sí", "true", "1"):
                 matching_guests.append(r)
 
-    display_orig = arg.capitalize()
+    display_orig = arg
+    for orig in sorted_dequien:
+        if orig.lower() == target or orig.lower().split()[0] == target:
+            display_orig = orig
+            break
+
     if not matching_guests:
         send_message(
             chat_id,
-            f"✅ No hay invitaciones pendientes con teléfono para <b>{display_orig}</b>\n"
-            f"(todas fueron enviadas, abiertas o no tienen teléfono registrado)."
+            f"✅ No hay invitaciones pendientes con teléfono para <b>{html.escape(display_orig)}</b>\n"
+            f"(todas fueron enviadas o no tienen teléfono registrado)."
         )
         return
 
-    header = f"📤 <b>Invitaciones para enviar ({display_orig}) - {len(matching_guests)} contactos:</b>"
+    header = f"📤 <b>Invitaciones para enviar ({html.escape(display_orig)}) - {len(matching_guests)} pendientes:</b>"
     items = []
+    base_site = (BASE_URL or "https://nos.vamos.acas.ar").rstrip("/")
     for r in matching_guests:
         nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
-        wa_url = str(r.get("whatsapp", "") or "").strip()
-        if not wa_url and r.get("telefono") and r.get("url"):
-            wa_url = generate_whatsapp_url(r["telefono"], r["url"])
-        items.append(f'👉 <a href="{wa_url}"><b>{html.escape(nombre)}</b></a>')
+        clean_p = clean_phone_number(r.get("telefono", ""))
+        gid = str(r.get("id", "") or "").strip()
+        send_url = f"{base_site}/send/{clean_p}?id={gid}" if gid else f"{base_site}/send/{clean_p}"
+        tel_display = str(r.get("telefono", "") or "").strip()
+        tel_suffix = f" ({html.escape(tel_display)})" if tel_display else ""
+        items.append(f'👉 <a href="{send_url}"><b>{html.escape(nombre)}</b></a>{tel_suffix}')
 
     _send_chunked_messages(chat_id, header, items)
 
@@ -662,6 +699,30 @@ def _handle_sintelefono_command(chat_id: int | str, arg: str, table):
 
 
 def _handle_update(update: dict, table=None):
+    # 0. Handle callback_query from inline keyboards
+    if "callback_query" in update:
+        cq = update["callback_query"]
+        cq_id = cq.get("id")
+        cq_data = (cq.get("data") or "").strip()
+        cq_msg = cq.get("message") or {}
+        cq_chat = cq_msg.get("chat") or {}
+        cq_chat_id = cq_chat.get("id")
+
+        if cq_id:
+            call_telegram_api("answerCallbackQuery", {"callback_query_id": cq_id})
+
+        if not cq_chat_id:
+            return
+
+        if not is_subscribed(cq_chat_id):
+            send_message(cq_chat_id, "🔒 <b>Acceso no autorizado</b>")
+            return
+
+        if cq_data.startswith("send:"):
+            target_dq = cq_data[len("send:"):].strip()
+            _handle_send_command(cq_chat_id, target_dq, table or _table_ref)
+        return
+
     msg = update.get("message") or update.get("edited_message")
     if not msg:
         return
@@ -734,7 +795,9 @@ def _handle_update(update: dict, table=None):
         return
 
     # 4. /send command
-    if raw_cmd == "/send":
+    if raw_cmd == "/send" or raw_cmd.startswith("/send_"):
+        if raw_cmd.startswith("/send_") and not arg:
+            arg = raw_cmd[len("/send_"):].replace("_", " ")
         _handle_send_command(chat_id, arg, table or _table_ref)
         return
 

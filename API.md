@@ -369,6 +369,16 @@ Renders and returns the HTML snippet for a specific slide ID (`intro`, `fecha_lu
 
 ---
 
+### 3.10 Send Redirect to WhatsApp (`DISPATCH`)
+
+#### `GET /send/<phone>`
+Marks the recipient individual record as sent (`enviado="si"`) in Google Sheets / local cache, then immediately issues a `302 Found` HTTP redirect to their direct WhatsApp chat (`https://wa.me/<phone>?text=...`). Social crawler bots are automatically ignored to avoid false sent flags. An optional `?id=<guest_id>` query param can be passed to disambiguate guests who share the exact same phone number.
+
+##### Response (`302 Found`)
+- Header: `Location: https://wa.me/5491112345678?text=...`
+
+---
+
 ## 🔒 4. Concurrency & Thread Safety
 
 Google Sheets API operations are synchronized in Python using `threading.RLock()` inside [`GoogleSheetsTable`](file:///home/alfredo/dev/boda/api/app/sheets.py).

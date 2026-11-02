@@ -1772,24 +1772,94 @@ class TestGoogleSheetsTable(unittest.TestCase):
         mock_tbl = MagicMock()
         mock_tbl.get_all.return_value = [
             # 1. Matching, not sent, not opened -> should be listed
-            {"id": "g1", "nombre": "Pendiente", "apellido": "Uno", "dequien": "Celia Amigos", "telefono": "111", "url": "http://test/1", "abierto": "", "enviado": ""},
+            {"id": "g1", "nombre": "Pendiente", "apellido": "Uno", "dequien": "Celia Amigos", "telefono": "+54 9 11 1111-1111", "url": "http://test/1", "abierto": "", "enviado": ""},
             # 2. Already sent (enviado='si') -> must be excluded
-            {"id": "g2", "nombre": "YaEnviado", "apellido": "Dos", "dequien": "Celia Amigos", "telefono": "222", "url": "http://test/2", "abierto": "", "enviado": "si"},
-            # 3. Already opened (abierto='si') -> must be excluded
-            {"id": "g3", "nombre": "YaAbierto", "apellido": "Tres", "dequien": "Celia Amigos", "telefono": "333", "url": "http://test/3", "abierto": "si", "enviado": ""},
-            # 4. No phone -> must be excluded
+            {"id": "g2", "nombre": "YaEnviado", "apellido": "Dos", "dequien": "Celia Amigos", "telefono": "+54 9 11 2222-2222", "url": "http://test/2", "abierto": "", "enviado": "si"},
+            # 3. No phone -> must be excluded
             {"id": "g4", "nombre": "SinTel", "apellido": "Cuatro", "dequien": "Celia Amigos", "telefono": "", "url": "http://test/4", "abierto": "", "enviado": ""},
         ]
 
+        # A. /send without argument -> asks for "de quien" with inline options
         with patch("telegram_bot.send_message") as mock_send:
-            telegram_bot._handle_send_command(12345, "Celia", mock_tbl)
+            telegram_bot._handle_send_command(12345, "", mock_tbl)
             self.assertTrue(mock_send.called)
-            # The message should contain Pendiente Uno and NOT YaEnviado Dos or YaAbierto Tres
-            called_args = mock_send.call_args[0]
-            msg_text = called_args[1]
-            self.assertIn("Pendiente Uno", msg_text)
-            self.assertNotIn("YaEnviado Dos", msg_text)
-            self.assertNotIn("YaAbierto Tres", msg_text)
+            called_kwargs = mock_send.call_args[1]
+            markup = called_kwargs.get("reply_markup") or {}
+            self.assertIn("inline_keyboard", markup)
+            buttons = markup["inline_keyboard"]
+            self.assertTrue(any("Celia Amigos (1)" in btn["text"] for row in buttons for btn in row))
+
+        # B. /send with argument -> lists only non-sent with /send/<phone> URL
+        with patch("telegram_bot._send_chunked_messages") as mock_chunked:
+            telegram_bot._handle_send_command(12345, "Celia Amigos", mock_tbl)
+            self.assertTrue(mock_chunked.called)
+            items = mock_chunked.call_args[0][2]
+            self.assertEqual(len(items), 1)
+            self.assertIn("/send/5491111111111?id=g1", items[0])
+            self.assertIn("Pendiente Uno", items[0])
+
+        # C. callback_query update -> executes send command
+        with patch("telegram_bot._handle_send_command") as mock_handle_send, \
+             patch("telegram_bot.call_telegram_api") as mock_api:
+            update = {
+                "callback_query": {
+                    "id": "cq_test_1",
+                    "data": "send:Celia Amigos",
+                    "message": {"chat": {"id": 12345}}
+                }
+            }
+            with patch("telegram_bot.is_subscribed", return_value=True):
+                telegram_bot._handle_update(update, mock_tbl)
+                mock_api.assert_called_with("answerCallbackQuery", {"callback_query_id": "cq_test_1"})
+                mock_handle_send.assert_called_once_with(12345, "Celia Amigos", mock_tbl)
+
+    def test_endpoint_send_redirect_and_mark_recipient(self):
+        from app import app
+        guests = [
+            {
+                "id": "rec_juan",
+                "invitacion_id": "fam_perez",
+                "nombre": "Juan",
+                "apellido": "Perez",
+                "telefono": "+54 9 11 1234-5678",
+                "url": "http://nos.vamos.acas.ar/i/fam_perez_123",
+                "whatsapp": "https://wa.me/5491112345678?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ffam_perez_123",
+                "enviado": ""
+            },
+            {
+                "id": "rec_pedro",
+                "invitacion_id": "fam_perez",
+                "nombre": "Pedro",
+                "apellido": "Perez",
+                "telefono": "+54 9 11 9876-5432",
+                "url": "http://nos.vamos.acas.ar/i/fam_perez_123",
+                "whatsapp": "https://wa.me/5491198765432?text=http%3A%2F%2Fnos.vamos.acas.ar%2Fi%2Ffam_perez_123",
+                "enviado": ""
+            }
+        ]
+
+        with patch("app.table.get_all", return_value=guests), \
+             patch("app.table.update_record") as mock_update:
+            with app.test_client() as client:
+                # 1. Human browser requests /send/<phone> -> marks Juan as enviado and redirects to WA
+                res = client.get(
+                    "/send/5491112345678",
+                    headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)"}
+                )
+                self.assertEqual(res.status_code, 302)
+                self.assertTrue(res.headers.get("Location").startswith("https://wa.me/5491112345678?text="))
+                # Only Juan is updated, NOT Pedro or the whole invitation
+                mock_update.assert_called_once_with("rec_juan", {"enviado": "si"})
+
+                # 2. Crawler request -> must NOT mark recipient as enviado
+                mock_update.reset_mock()
+                res_crawler = client.get(
+                    "/send/5491198765432",
+                    headers={"User-Agent": "WhatsApp/2.21.12.21 A"}
+                )
+                self.assertEqual(res_crawler.status_code, 302)
+                self.assertTrue(res_crawler.headers.get("Location").startswith("https://wa.me/5491198765432?text="))
+                mock_update.assert_not_called()
 
 
 if __name__ == "__main__":
