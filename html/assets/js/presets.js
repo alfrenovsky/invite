@@ -12,11 +12,11 @@ const BOX_PRESETS_CONFIG = {
     },
     'glass-gold': {
         name: 'Dorado',
-        bg_color: '#d4af37',
+        bg_color: '#9f8329',
         bg_opacity: 25,
         bg_blur: 10,
         box_radius: 14,
-        dark_color: '#916912',
+        dark_color: '#75611e',
         dark_opacity: 50
     },
     'glass-light': {
