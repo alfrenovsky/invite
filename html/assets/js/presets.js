@@ -98,3 +98,4 @@ if (typeof document !== 'undefined') {
         applyRsvpBoxPreset('glass-gold');
     }
 }
+
