@@ -3044,6 +3044,42 @@
             font-weight: 600;
         }
 
+        .story-preview-viewport .slide-el-box-group {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            word-break: break-word;
+            pointer-events: auto;
+            transform-style: preserve-3d;
+            backface-visibility: visible;
+            transform-origin: center center;
+            z-index: 15;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            user-select: none;
+            cursor: grab;
+        }
+
+        .story-preview-viewport .slide-el-box-group.is-selected {
+            outline: 2px dashed #38bdf8;
+            outline-offset: 4px;
+        }
+
+        .story-preview-viewport .slide-el-box-group .slide-box-item {
+            position: relative;
+            width: 100%;
+            box-sizing: border-box;
+            word-break: break-word;
+            white-space: pre-line;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            cursor: pointer;
+        }
+
         .story-preview-viewport .slide-el-countdown,
         .preview-countdown-el {
             position: absolute;
@@ -6540,13 +6576,22 @@
             const isEmpty = !contentSnippet;
             const displayText = isEmpty ? '(Sin texto)' : (contentSnippet.length > 40 ? contentSnippet.substring(0, 40) + '…' : contentSnippet);
 
+            let boxBadgeHtml = '';
+            if (el.box_id) {
+                const slide = getCurrentSlide();
+                const boxObj = (slide && slide.boxes) ? slide.boxes[el.box_id] : null;
+                const boxName = boxObj ? (boxObj.title || el.box_id) : el.box_id;
+                boxBadgeHtml = `<span class="element-box-badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 4px; padding: 1px 6px; font-size: 0.68rem; font-weight: 600; margin-right: 4px; white-space: nowrap;" title="Agrupado en ${escapeHtml(boxName)}">📦 ${escapeHtml(boxName)}</span>`;
+            }
+
             return {
                 typeBadgeClass,
                 typeIcon,
                 typeText,
                 displayText,
                 fullText: contentSnippet || '(Sin contenido)',
-                isEmpty
+                isEmpty,
+                boxBadgeHtml
             };
         }
 
@@ -6556,6 +6601,10 @@
             const data = getElementHeaderData(el, idx);
             const badge = card.querySelector('.element-type-badge');
             const preview = card.querySelector('.element-content-preview');
+            const boxSlot = card.querySelector('.element-box-badge-slot');
+            if (boxSlot) {
+                boxSlot.innerHTML = data.boxBadgeHtml || '';
+            }
             if (badge) {
                 badge.className = 'element-type-badge ' + data.typeBadgeClass;
                 badge.innerHTML = `<span>${data.typeIcon}</span><span>${data.typeText}</span>`;
@@ -6617,6 +6666,7 @@
                 <div class="element-header-left">
                     <span class="element-collapse-icon">${isCollapsed ? '▶' : '▼'}</span>
                     <span class="element-index-badge">#${idx + 1}</span>
+                    <span class="element-box-badge-slot">${headerData.boxBadgeHtml || ''}</span>
                     <span class="element-type-badge ${headerData.typeBadgeClass}">
                         <span>${headerData.typeIcon}</span><span>${headerData.typeText}</span>
                     </span>
@@ -7544,30 +7594,55 @@
                         </div>
 
                         <!-- Sección Caja / Fondo del Texto (Sticker) -->
-                        <div class="typo-panel-header" style="margin-top: 6px;">
-                            <span class="typo-panel-title">📦 Caja / Fondo del Texto (Sticker)</span>
+                        <div class="typo-panel-header" style="margin-top: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
+                            <span class="typo-panel-title">📦 Caja / Fondo del Texto</span>
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <label style="font-size: 0.72rem; color: #94a3b8; margin: 0;">Modo:</label>
+                                <select class="form-select typo-box-mode-select" id="typoBoxMode_${el.id}" style="padding: 2px 6px; font-size: 0.74rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: #fff;">
+                                    <option value="none" ${!el.bg_color && !el.box_id ? 'selected' : ''}>Sin fondo</option>
+                                    <option value="individual" ${el.bg_color && !el.box_id ? 'selected' : ''}>Individual</option>
+                                    <option value="shared" ${el.box_id ? 'selected' : ''}>Caja Compartida</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Selector y Controles de Caja Compartida -->
+                        <div id="sharedBoxControlsRow_${el.id}" style="display: ${el.box_id ? 'block' : 'none'}; background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25); border-radius: 8px; padding: 8px 10px; margin: 6px 0 8px 0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
+                                    <span style="font-size: 0.74rem; font-weight: 600; color: #38bdf8;">Caja:</span>
+                                    <select class="form-select shared-box-picker" id="sharedBoxPicker_${el.id}" style="flex: 1; padding: 3px 8px; font-size: 0.76rem; background: #0f172a; border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 6px; color: #38bdf8;">
+                                        ${Object.entries(slide.boxes || {}).map(([bId, b]) => `<option value="${bId}" ${el.box_id === bId ? 'selected' : ''}>${escapeHtml(b.title || bId)}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <button type="button" class="btn-ctrl btn-new-box" id="btnNewBox_${el.id}" style="padding: 2px 8px; font-size: 0.72rem; border-color: rgba(14, 165, 233, 0.4); color: #38bdf8;" title="Crear una nueva caja compartida">+ Nueva Caja</button>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: #94a3b8;">
+                                <span>Nombre:</span>
+                                <input type="text" class="form-input shared-box-title-input" id="sharedBoxTitle_${el.id}" value="${escapeHtml((slide.boxes && el.box_id && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].title || el.box_id) : '')}" placeholder="Nombre de la caja (ej. Caja 1)" style="flex: 1; padding: 2px 6px; font-size: 0.74rem; height: 24px;">
+                            </div>
                         </div>
 
                         <!-- Presets de Caja / Fondo a ancho completo -->
                         <div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px 0;" id="boxPresets_${el.id}">
-                            <button type="button" class="tb-btn-style box-preset-btn ${!el.bg_color ? 'active' : ''}" data-preset="none" title="Sin caja ni fondo">Sin fondo</button>
-                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#ffffff' && el.bg_opacity == 20 && el.bg_blur == 12 ? 'active' : ''}" data-preset="glass-light" title="Fondo vidrio claro translúcido con desenfoque">✨ Vidrio Claro</button>
-                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#000000' && el.bg_opacity == 45 && el.bg_blur == 14 ? 'active' : ''}" data-preset="glass-dark" title="Fondo vidrio oscuro translúcido con desenfoque">🌫️ Vidrio Oscuro</button>
-                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#d4af37' && el.bg_opacity == 25 && el.bg_blur == 10 ? 'active' : ''}" data-preset="glass-gold" title="Fondo vidrio dorado translúcido con desenfoque">✨ Dorado</button>
-                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#ffffff' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0) ? 'active' : ''}" data-preset="white" title="Caja blanca opaca">Blanco</button>
-                            <button type="button" class="tb-btn-style box-preset-btn ${el.bg_color === '#000000' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0) ? 'active' : ''}" data-preset="black" title="Caja negra opaca">Negro</button>
+                            <button type="button" class="tb-btn-style box-preset-btn" data-preset="none" title="Sin caja ni fondo">Sin fondo</button>
+                            <button type="button" class="tb-btn-style box-preset-btn" data-preset="glass-light" title="Fondo vidrio claro translúcido con desenfoque">✨ Vidrio Claro</button>
+                            <button type="button" class="tb-btn-style box-preset-btn" data-preset="glass-dark" title="Fondo vidrio oscuro translúcido con desenfoque">🌫️ Vidrio Oscuro</button>
+                            <button type="button" class="tb-btn-style box-preset-btn" data-preset="glass-gold" title="Fondo vidrio dorado translúcido con desenfoque">✨ Dorado</button>
+                            <button type="button" class="tb-btn-style box-preset-btn" data-preset="white" title="Caja blanca opaca">Blanco</button>
+                            <button type="button" class="tb-btn-style box-preset-btn" data-preset="black" title="Caja negra opaca">Negro</button>
                         </div>
 
                         <!-- Grid para los controles de la caja -->
-                        <div class="typo-panel-grid">
+                        <div class="typo-panel-grid" id="boxControlsGrid_${el.id}">
                             <!-- Color de Fondo y Opacidad -->
                             <div class="typo-panel-row">
                                 <label class="typo-panel-label" for="typoBoxBg_${el.id}">Color fondo:</label>
                                 <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
-                                    <input type="color" class="custom-color-input typo-box-bg-input" id="typoBoxBg_${el.id}" value="${el.bg_color || '#000000'}" title="Color de fondo de la caja">
+                                    <input type="color" class="custom-color-input typo-box-bg-input" id="typoBoxBg_${el.id}" value="${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].bg_color || '#000000') : (el.bg_color || '#000000')}" title="Color de fondo de la caja">
                                     <label style="font-size: 0.74rem; color: #94a3b8; margin: 0;">Opacidad:</label>
-                                    <input type="range" class="pos-range typo-box-opacity-slider" id="typoBoxOpacity_${el.id}" min="0" max="100" step="5" value="${el.bg_opacity !== undefined && el.bg_opacity !== null && el.bg_opacity !== '' ? el.bg_opacity : (el.bg_color ? 100 : 0)}" style="flex: 1;">
-                                    <span class="range-badge typo-box-opacity-badge" id="typoBoxOpacityBadge_${el.id}" style="min-width: 38px; text-align: center;">${el.bg_opacity !== undefined && el.bg_opacity !== null && el.bg_opacity !== '' ? el.bg_opacity + '%' : (el.bg_color ? '100%' : '0%')}</span>
+                                    <input type="range" class="pos-range typo-box-opacity-slider" id="typoBoxOpacity_${el.id}" min="0" max="100" step="5" value="${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].bg_opacity !== undefined ? slide.boxes[el.box_id].bg_opacity : 45) : (el.bg_opacity !== undefined && el.bg_opacity !== null && el.bg_opacity !== '' ? el.bg_opacity : (el.bg_color ? 100 : 0))}" style="flex: 1;">
+                                    <span class="range-badge typo-box-opacity-badge" id="typoBoxOpacityBadge_${el.id}" style="min-width: 38px; text-align: center;">${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].bg_opacity !== undefined ? slide.boxes[el.box_id].bg_opacity : 45) + '%' : (el.bg_opacity !== undefined && el.bg_opacity !== null && el.bg_opacity !== '' ? el.bg_opacity + '%' : (el.bg_color ? '100%' : '0%'))}</span>
                                 </div>
                             </div>
 
@@ -7575,17 +7650,35 @@
                             <div class="typo-panel-row">
                                 <label class="typo-panel-label" for="typoBoxBlur_${el.id}">Desenfoque (blur):</label>
                                 <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
-                                    <input type="range" class="pos-range typo-box-blur-slider" id="typoBoxBlur_${el.id}" min="0" max="25" step="1" value="${el.bg_blur !== undefined && el.bg_blur !== null && el.bg_blur !== '' ? el.bg_blur : 0}" style="flex: 1;">
-                                    <span class="range-badge typo-box-blur-badge" id="typoBoxBlurBadge_${el.id}" style="min-width: 38px; text-align: center;">${el.bg_blur ? el.bg_blur + 'px' : '0px'}</span>
+                                    <input type="range" class="pos-range typo-box-blur-slider" id="typoBoxBlur_${el.id}" min="0" max="25" step="1" value="${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].bg_blur !== undefined ? slide.boxes[el.box_id].bg_blur : 14) : (el.bg_blur !== undefined && el.bg_blur !== null && el.bg_blur !== '' ? el.bg_blur : 0)}" style="flex: 1;">
+                                    <span class="range-badge typo-box-blur-badge" id="typoBoxBlurBadge_${el.id}" style="min-width: 38px; text-align: center;">${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].bg_blur ? slide.boxes[el.box_id].bg_blur + 'px' : '0px') : (el.bg_blur ? el.bg_blur + 'px' : '0px')}</span>
                                 </div>
                             </div>
 
                             <!-- Bordes redondeados (Radius) -->
-                            <div class="typo-panel-row" style="grid-column: 1 / -1;">
+                            <div class="typo-panel-row">
                                 <label class="typo-panel-label" for="typoBoxRadius_${el.id}">Bordes redondeados:</label>
                                 <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
-                                    <input type="range" class="pos-range typo-box-radius-slider" id="typoBoxRadius_${el.id}" min="0" max="32" step="2" value="${el.box_radius !== undefined && el.box_radius !== null && el.box_radius !== '' ? el.box_radius : 12}" style="flex: 1;">
-                                    <span class="range-badge typo-box-radius-badge" id="typoBoxRadiusBadge_${el.id}" style="min-width: 38px; text-align: center;">${el.box_radius !== undefined && el.box_radius !== null && el.box_radius !== '' ? el.box_radius + 'px' : '12px'}</span>
+                                    <input type="range" class="pos-range typo-box-radius-slider" id="typoBoxRadius_${el.id}" min="0" max="32" step="2" value="${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].box_radius !== undefined ? slide.boxes[el.box_id].box_radius : 16) : (el.box_radius !== undefined && el.box_radius !== null && el.box_radius !== '' ? el.box_radius : 12)}" style="flex: 1;">
+                                    <span class="range-badge typo-box-radius-badge" id="typoBoxRadiusBadge_${el.id}" style="min-width: 38px; text-align: center;">${(el.box_id && slide.boxes && slide.boxes[el.box_id]) ? (slide.boxes[el.box_id].box_radius !== undefined ? slide.boxes[el.box_id].box_radius : 16) + 'px' : (el.box_radius !== undefined && el.box_radius !== null && el.box_radius !== '' ? el.box_radius + 'px' : '12px')}</span>
+                                </div>
+                            </div>
+
+                            <!-- Separación entre textos (Gap) - sólo cuando está en caja compartida -->
+                            <div class="typo-panel-row" id="rowBoxGap_${el.id}" style="display: ${el.box_id ? 'flex' : 'none'};">
+                                <label class="typo-panel-label" for="typoBoxGap_${el.id}">Separación textos:</label>
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                                    <input type="range" class="pos-range typo-box-gap-slider" id="typoBoxGap_${el.id}" min="0" max="32" step="1" value="${(el.box_id && slide.boxes && slide.boxes[el.box_id] && slide.boxes[el.box_id].gap !== undefined) ? slide.boxes[el.box_id].gap : 8}" style="flex: 1;">
+                                    <span class="range-badge typo-box-gap-badge" id="typoBoxGapBadge_${el.id}" style="min-width: 38px; text-align: center;">${(el.box_id && slide.boxes && slide.boxes[el.box_id] && slide.boxes[el.box_id].gap !== undefined) ? slide.boxes[el.box_id].gap : 8}px</span>
+                                </div>
+                            </div>
+
+                            <!-- Relleno vertical (Padding Y) - sólo cuando está en caja compartida -->
+                            <div class="typo-panel-row" id="rowBoxPadY_${el.id}" style="display: ${el.box_id ? 'flex' : 'none'};">
+                                <label class="typo-panel-label" for="typoBoxPadY_${el.id}">Relleno vertical:</label>
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                                    <input type="range" class="pos-range typo-box-pady-slider" id="typoBoxPadY_${el.id}" min="2" max="32" step="1" value="${(el.box_id && slide.boxes && slide.boxes[el.box_id] && slide.boxes[el.box_id].pad_y !== undefined) ? slide.boxes[el.box_id].pad_y : 12}" style="flex: 1;">
+                                    <span class="range-badge typo-box-pady-badge" id="typoBoxPadYBadge_${el.id}" style="min-width: 38px; text-align: center;">${(el.box_id && slide.boxes && slide.boxes[el.box_id] && slide.boxes[el.box_id].pad_y !== undefined) ? slide.boxes[el.box_id].pad_y : 12}px</span>
                                 </div>
                             </div>
                         </div>
@@ -7638,6 +7731,17 @@
                     const shadowSelect = textGroup.querySelector(`#typoShadow_${el.id}`);
                     const typoResetBtn = textGroup.querySelector(`#typoResetBtn_${el.id}`);
 
+                    const boxModeSelect = textGroup.querySelector(`#typoBoxMode_${el.id}`);
+                    const sharedBoxControlsRow = textGroup.querySelector(`#sharedBoxControlsRow_${el.id}`);
+                    const sharedBoxPicker = textGroup.querySelector(`#sharedBoxPicker_${el.id}`);
+                    const btnNewBox = textGroup.querySelector(`#btnNewBox_${el.id}`);
+                    const sharedBoxTitle = textGroup.querySelector(`#sharedBoxTitle_${el.id}`);
+                    const rowBoxGap = textGroup.querySelector(`#rowBoxGap_${el.id}`);
+                    const rowBoxPadY = textGroup.querySelector(`#rowBoxPadY_${el.id}`);
+                    const boxGapSlider = textGroup.querySelector(`#typoBoxGap_${el.id}`);
+                    const boxGapBadge = textGroup.querySelector(`#typoBoxGapBadge_${el.id}`);
+                    const boxPadYSlider = textGroup.querySelector(`#typoBoxPadY_${el.id}`);
+                    const boxPadYBadge = textGroup.querySelector(`#typoBoxPadYBadge_${el.id}`);
                     const boxBgInput = textGroup.querySelector(`#typoBoxBg_${el.id}`);
                     const boxOpacitySlider = textGroup.querySelector(`#typoBoxOpacity_${el.id}`);
                     const boxOpacityBadge = textGroup.querySelector(`#typoBoxOpacityBadge_${el.id}`);
@@ -7647,29 +7751,171 @@
                     const boxRadiusBadge = textGroup.querySelector(`#typoBoxRadiusBadge_${el.id}`);
                     const boxPresetBtns = textGroup.querySelectorAll(`#boxPresets_${el.id} .box-preset-btn`);
 
+                    const getTargetBox = () => {
+                        if (el.box_id && slide.boxes && slide.boxes[el.box_id]) {
+                            return slide.boxes[el.box_id];
+                        }
+                        return el;
+                    };
+
                     function syncBoxPresetUI() {
+                        const target = getTargetBox();
                         boxPresetBtns.forEach(btn => {
                             const p = btn.dataset.preset;
                             let isMatch = false;
-                            if (p === 'none' && !el.bg_color) isMatch = true;
-                            else if (p === 'glass-light' && el.bg_color === '#ffffff' && el.bg_opacity == 20 && el.bg_blur == 12) isMatch = true;
-                            else if (p === 'glass-dark' && el.bg_color === '#000000' && el.bg_opacity == 45 && el.bg_blur == 14) isMatch = true;
-                            else if (p === 'glass-gold' && el.bg_color === '#d4af37' && el.bg_opacity == 25 && el.bg_blur == 10) isMatch = true;
-                            else if (p === 'white' && el.bg_color === '#ffffff' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0)) isMatch = true;
-                            else if (p === 'black' && el.bg_color === '#000000' && (el.bg_opacity === undefined || el.bg_opacity == 100) && (!el.bg_blur || el.bg_blur == 0)) isMatch = true;
+                            if (p === 'none' && !target.bg_color) isMatch = true;
+                            else if (p === 'glass-light' && target.bg_color === '#ffffff' && target.bg_opacity == 20 && target.bg_blur == 12) isMatch = true;
+                            else if (p === 'glass-dark' && target.bg_color === '#000000' && target.bg_opacity == 45 && target.bg_blur == 14) isMatch = true;
+                            else if (p === 'glass-gold' && target.bg_color === '#d4af37' && target.bg_opacity == 25 && target.bg_blur == 10) isMatch = true;
+                            else if (p === 'white' && target.bg_color === '#ffffff' && (target.bg_opacity === undefined || target.bg_opacity == 100) && (!target.bg_blur || target.bg_blur == 0)) isMatch = true;
+                            else if (p === 'black' && target.bg_color === '#000000' && (target.bg_opacity === undefined || target.bg_opacity == 100) && (!target.bg_blur || target.bg_blur == 0)) isMatch = true;
                             btn.classList.toggle('active', isMatch);
                         });
+                    }
+                    syncBoxPresetUI();
+
+                    if (boxModeSelect) {
+                        boxModeSelect.onchange = () => {
+                            recordHistorySnapshot();
+                            const mode = boxModeSelect.value;
+                            if (mode === 'none') {
+                                delete el.box_id;
+                                delete el.bg_color;
+                                delete el.bg_opacity;
+                                delete el.bg_blur;
+                                delete el.box_radius;
+                            } else if (mode === 'individual') {
+                                delete el.box_id;
+                                el.bg_color = el.bg_color || '#000000';
+                                el.bg_opacity = el.bg_opacity !== undefined ? el.bg_opacity : 45;
+                                el.bg_blur = el.bg_blur !== undefined ? el.bg_blur : 14;
+                                el.box_radius = el.box_radius || 16;
+                            } else if (mode === 'shared') {
+                                if (!slide.boxes) slide.boxes = {};
+                                const boxKeys = Object.keys(slide.boxes);
+                                if (boxKeys.length === 0) {
+                                    const newId = 'box_' + Date.now();
+                                    slide.boxes[newId] = {
+                                        id: newId,
+                                        title: 'Caja 1',
+                                        bg_color: el.bg_color || '#000000',
+                                        bg_opacity: el.bg_opacity !== undefined ? el.bg_opacity : 45,
+                                        bg_blur: el.bg_blur !== undefined ? el.bg_blur : 14,
+                                        box_radius: el.box_radius || 16,
+                                        pad_y: 12,
+                                        pad_x: 16,
+                                        gap: 8,
+                                        w: el.w || 88,
+                                        x: el.x || 0,
+                                        y: el.y || 0,
+                                        rotate: el.rotate || 0,
+                                        zoom: el.zoom || 100
+                                    };
+                                    el.box_id = newId;
+                                } else {
+                                    el.box_id = boxKeys[0];
+                                }
+                                delete el.bg_color;
+                                delete el.bg_opacity;
+                                delete el.bg_blur;
+                                delete el.box_radius;
+                            }
+                            renderElementsList();
+                            updateLivePreview();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        };
+                    }
+
+                    if (btnNewBox) {
+                        btnNewBox.onclick = () => {
+                            recordHistorySnapshot();
+                            if (!slide.boxes) slide.boxes = {};
+                            const count = Object.keys(slide.boxes).length + 1;
+                            const newId = 'box_' + Date.now();
+                            slide.boxes[newId] = {
+                                id: newId,
+                                title: 'Caja ' + count,
+                                bg_color: '#000000',
+                                bg_opacity: 45,
+                                bg_blur: 14,
+                                box_radius: 16,
+                                pad_y: 12,
+                                pad_x: 16,
+                                gap: 8,
+                                w: 88,
+                                x: 0,
+                                y: 0,
+                                rotate: 0,
+                                zoom: 100
+                            };
+                            el.box_id = newId;
+                            delete el.bg_color;
+                            delete el.bg_opacity;
+                            delete el.bg_blur;
+                            delete el.box_radius;
+                            renderElementsList();
+                            updateLivePreview();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            showToast(`✨ Creada "${slide.boxes[newId].title}"`);
+                        };
+                    }
+
+                    if (sharedBoxPicker) {
+                        sharedBoxPicker.onchange = () => {
+                            recordHistorySnapshot();
+                            el.box_id = sharedBoxPicker.value;
+                            delete el.bg_color;
+                            delete el.bg_opacity;
+                            delete el.bg_blur;
+                            delete el.box_radius;
+                            renderElementsList();
+                            updateLivePreview();
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                        };
+                    }
+
+                    if (sharedBoxTitle) {
+                        sharedBoxTitle.oninput = (e) => {
+                            if (el.box_id && slide.boxes && slide.boxes[el.box_id]) {
+                                slide.boxes[el.box_id].title = e.target.value.trim() || el.box_id;
+                                updateElementCardHeader(el, idx);
+                                if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            }
+                        };
+                    }
+
+                    if (boxGapSlider) {
+                        boxGapSlider.oninput = (e) => {
+                            const val = parseInt(e.target.value, 10);
+                            const target = getTargetBox();
+                            target.gap = val;
+                            if (boxGapBadge) boxGapBadge.textContent = `${val}px`;
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
+                    }
+
+                    if (boxPadYSlider) {
+                        boxPadYSlider.oninput = (e) => {
+                            const val = parseInt(e.target.value, 10);
+                            const target = getTargetBox();
+                            target.pad_y = val;
+                            if (boxPadYBadge) boxPadYBadge.textContent = `${val}px`;
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                        };
                     }
 
                     boxPresetBtns.forEach(btn => {
                         btn.onclick = () => {
                             recordHistorySnapshot();
                             const p = btn.dataset.preset;
+                            const target = getTargetBox();
                             if (p === 'none') {
-                                delete el.bg_color;
-                                delete el.bg_opacity;
-                                delete el.bg_blur;
-                                delete el.box_radius;
+                                delete target.bg_color;
+                                delete target.bg_opacity;
+                                delete target.bg_blur;
+                                delete target.box_radius;
                                 if (boxBgInput) boxBgInput.value = '#000000';
                                 if (boxOpacitySlider) boxOpacitySlider.value = 0;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '0%';
@@ -7678,50 +7924,50 @@
                                 if (boxRadiusSlider) boxRadiusSlider.value = 12;
                                 if (boxRadiusBadge) boxRadiusBadge.textContent = '12px';
                             } else if (p === 'glass-light') {
-                                el.bg_color = '#ffffff';
-                                el.bg_opacity = 20;
-                                el.bg_blur = 12;
-                                el.box_radius = el.box_radius || 12;
+                                target.bg_color = '#ffffff';
+                                target.bg_opacity = 20;
+                                target.bg_blur = 12;
+                                target.box_radius = target.box_radius || 16;
                                 if (boxBgInput) boxBgInput.value = '#ffffff';
                                 if (boxOpacitySlider) boxOpacitySlider.value = 20;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '20%';
                                 if (boxBlurSlider) boxBlurSlider.value = 12;
                                 if (boxBlurBadge) boxBlurBadge.textContent = '12px';
                             } else if (p === 'glass-dark') {
-                                el.bg_color = '#000000';
-                                el.bg_opacity = 45;
-                                el.bg_blur = 14;
-                                el.box_radius = el.box_radius || 12;
+                                target.bg_color = '#000000';
+                                target.bg_opacity = 45;
+                                target.bg_blur = 14;
+                                target.box_radius = target.box_radius || 16;
                                 if (boxBgInput) boxBgInput.value = '#000000';
                                 if (boxOpacitySlider) boxOpacitySlider.value = 45;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '45%';
                                 if (boxBlurSlider) boxBlurSlider.value = 14;
                                 if (boxBlurBadge) boxBlurBadge.textContent = '14px';
                             } else if (p === 'glass-gold') {
-                                el.bg_color = '#d4af37';
-                                el.bg_opacity = 25;
-                                el.bg_blur = 10;
-                                el.box_radius = el.box_radius || 12;
+                                target.bg_color = '#d4af37';
+                                target.bg_opacity = 25;
+                                target.bg_blur = 10;
+                                target.box_radius = target.box_radius || 16;
                                 if (boxBgInput) boxBgInput.value = '#d4af37';
                                 if (boxOpacitySlider) boxOpacitySlider.value = 25;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '25%';
                                 if (boxBlurSlider) boxBlurSlider.value = 10;
                                 if (boxBlurBadge) boxBlurBadge.textContent = '10px';
                             } else if (p === 'white') {
-                                el.bg_color = '#ffffff';
-                                el.bg_opacity = 100;
-                                el.bg_blur = 0;
-                                el.box_radius = el.box_radius || 12;
+                                target.bg_color = '#ffffff';
+                                target.bg_opacity = 100;
+                                target.bg_blur = 0;
+                                target.box_radius = target.box_radius || 16;
                                 if (boxBgInput) boxBgInput.value = '#ffffff';
                                 if (boxOpacitySlider) boxOpacitySlider.value = 100;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '100%';
                                 if (boxBlurSlider) boxBlurSlider.value = 0;
                                 if (boxBlurBadge) boxBlurBadge.textContent = '0px';
                             } else if (p === 'black') {
-                                el.bg_color = '#000000';
-                                el.bg_opacity = 100;
-                                el.bg_blur = 0;
-                                el.box_radius = el.box_radius || 12;
+                                target.bg_color = '#000000';
+                                target.bg_opacity = 100;
+                                target.bg_blur = 0;
+                                target.box_radius = target.box_radius || 16;
                                 if (boxBgInput) boxBgInput.value = '#000000';
                                 if (boxOpacitySlider) boxOpacitySlider.value = 100;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '100%';
@@ -7737,9 +7983,10 @@
 
                     if (boxBgInput) {
                         boxBgInput.oninput = (e) => {
-                            el.bg_color = e.target.value;
-                            if (el.bg_opacity === undefined || el.bg_opacity === null || el.bg_opacity === 0) {
-                                el.bg_opacity = 100;
+                            const target = getTargetBox();
+                            target.bg_color = e.target.value;
+                            if (target.bg_opacity === undefined || target.bg_opacity === null || target.bg_opacity === 0) {
+                                target.bg_opacity = 100;
                                 if (boxOpacitySlider) boxOpacitySlider.value = 100;
                                 if (boxOpacityBadge) boxOpacityBadge.textContent = '100%';
                             }
@@ -7753,12 +8000,13 @@
                     if (boxOpacitySlider && boxOpacityBadge) {
                         boxOpacitySlider.oninput = (e) => {
                             const val = parseInt(e.target.value, 10);
-                            el.bg_opacity = val;
+                            const target = getTargetBox();
+                            target.bg_opacity = val;
                             boxOpacityBadge.textContent = `${val}%`;
-                            if (val > 0 && !el.bg_color) {
-                                el.bg_color = boxBgInput ? boxBgInput.value : '#000000';
+                            if (val > 0 && !target.bg_color) {
+                                target.bg_color = boxBgInput ? boxBgInput.value : '#000000';
                             } else if (val === 0) {
-                                delete el.bg_color;
+                                delete target.bg_color;
                             }
                             syncBoxPresetUI();
                             refreshTypoOverrideState();
@@ -7770,7 +8018,8 @@
                     if (boxBlurSlider && boxBlurBadge) {
                         boxBlurSlider.oninput = (e) => {
                             const val = parseInt(e.target.value, 10);
-                            el.bg_blur = val;
+                            const target = getTargetBox();
+                            target.bg_blur = val;
                             boxBlurBadge.textContent = `${val}px`;
                             syncBoxPresetUI();
                             refreshTypoOverrideState();
@@ -7782,7 +8031,8 @@
                     if (boxRadiusSlider && boxRadiusBadge) {
                         boxRadiusSlider.oninput = (e) => {
                             const val = parseInt(e.target.value, 10);
-                            el.box_radius = val;
+                            const target = getTargetBox();
+                            target.box_radius = val;
                             boxRadiusBadge.textContent = `${val}px`;
                             refreshTypoOverrideState();
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
@@ -7797,7 +8047,8 @@
                             (el.letterSpacing !== undefined && el.letterSpacing !== null && el.letterSpacing !== '') ||
                             (el.lineHeight !== undefined && el.lineHeight !== null && el.lineHeight !== '') ||
                             (el.shadow !== undefined && el.shadow !== null && el.shadow !== '') ||
-                            el.bg_color
+                            el.bg_color ||
+                            el.box_id
                         );
                         if (gearBtn) gearBtn.classList.toggle('has-overrides', hasAny);
                     }
@@ -7891,6 +8142,7 @@
                             delete el.bg_opacity;
                             delete el.bg_blur;
                             delete el.box_radius;
+                            delete el.box_id;
                             if (fontSelect) fontSelect.value = '';
                             if (weightSelect) weightSelect.value = '';
                             if (spacingSlider) spacingSlider.value = 0;
@@ -8082,18 +8334,27 @@
                 const posRow = document.createElement('div');
                 posRow.className = 'pos-control-row';
 
-                const currX = el.x !== undefined ? el.x : 0;
-                const currY = el.y !== undefined ? el.y : 0;
-                const currW = el.w !== undefined ? el.w : (isTransformable ? '' : (isForm ? 92 : 88));
+                const isSharedBox = el.type === 'text' && !!el.box_id && slide && slide.boxes && !!slide.boxes[el.box_id];
+                const boxObj = isSharedBox ? slide.boxes[el.box_id] : null;
+
+                const currX = boxObj ? (boxObj.x !== undefined ? boxObj.x : 0) : (el.x !== undefined ? el.x : 0);
+                const currY = boxObj ? (boxObj.y !== undefined ? boxObj.y : 0) : (el.y !== undefined ? el.y : 0);
+                const currW = boxObj ? (boxObj.w !== undefined ? boxObj.w : 88) : (el.w !== undefined ? el.w : (isTransformable ? '' : (isForm ? 92 : 88)));
                 const currH = el.h !== undefined ? el.h : (isForm ? 70 : 100);
-                const currRot = el.rotate !== undefined ? el.rotate : 0;
-                const currZoom = el.zoom !== undefined ? el.zoom : 100;
+                const currRot = boxObj ? (boxObj.rotate !== undefined ? boxObj.rotate : 0) : (el.rotate !== undefined ? el.rotate : 0);
+                const currZoom = boxObj ? (boxObj.zoom !== undefined ? boxObj.zoom : 100) : (el.zoom !== undefined ? el.zoom : 100);
                 const currRotX = el.rot_x !== undefined ? el.rot_x : 0;
                 const currRotY = el.rot_y !== undefined ? el.rot_y : 0;
-                const currRotZ = el.rotate !== undefined ? el.rotate : 0;
+                const currRotZ = boxObj ? (boxObj.rotate !== undefined ? boxObj.rotate : 0) : (el.rotate !== undefined ? el.rotate : 0);
                 const currPers = el.perspective !== undefined ? el.perspective : 800;
 
                 posRow.innerHTML = `
+                ${isSharedBox ? `
+                <div style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 6px; padding: 5px 9px; margin-bottom: 8px;">
+                    <span style="font-size: 0.74rem; font-weight: 600; color: #38bdf8;">📦 Posición & Tamaño de la Caja: ${escapeHtml(boxObj.title || el.box_id)}</span>
+                    <span style="font-size: 0.68rem; color: #94a3b8;">Afecta a todos los textos de esta caja</span>
+                </div>
+                ` : ''}
                 <div class="${el.type === 'text' ? 'pos-sliders-penta' : 'pos-sliders-trio'}">
                     <!-- Horizontal X -->
                     <div class="pos-slider-wrap">
@@ -8279,10 +8540,12 @@
                     let parsed = parseInt(val, 10);
                     if (isNaN(parsed)) parsed = 0;
                     parsed = Math.max(-60, Math.min(60, parsed));
-                    el.x = parsed;
+                    if (isSharedBox) boxObj.x = parsed;
+                    else el.x = parsed;
                     sliderX.value = parsed;
                     numX.value = parsed;
                     badgeX.textContent = `${parsed}%`;
+                    if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                     updateLivePreview();
                 };
 
@@ -8298,10 +8561,12 @@
                     let parsed = parseInt(val, 10);
                     if (isNaN(parsed)) parsed = 0;
                     parsed = Math.max(-60, Math.min(60, parsed));
-                    el.y = parsed;
+                    if (isSharedBox) boxObj.y = parsed;
+                    else el.y = parsed;
                     sliderY.value = parsed;
                     numY.value = parsed;
                     badgeY.textContent = `${parsed}%`;
+                    if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                     updateLivePreview();
                 };
 
@@ -8315,9 +8580,11 @@
 
                 const syncW = (val) => {
                     if (val === '' || val === null) {
-                        delete el.w;
+                        if (isSharedBox) delete boxObj.w;
+                        else delete el.w;
                         badgeW.textContent = 'Auto';
                         numW.value = '';
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                         return;
                     }
@@ -8327,16 +8594,19 @@
                             delete el.w;
                             badgeW.textContent = 'Auto';
                             numW.value = '';
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
                             return;
                         }
                         parsed = 88;
                     }
                     parsed = Math.max(10, Math.min(100, parsed));
-                    el.w = parsed;
+                    if (isSharedBox) boxObj.w = parsed;
+                    else el.w = parsed;
                     sliderW.value = parsed;
                     numW.value = parsed;
                     badgeW.textContent = `${parsed}%`;
+                    if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                     updateLivePreview();
                 };
 
@@ -8357,6 +8627,7 @@
                         sliderRot.value = parsed;
                         numRot.value = parsed;
                         badgeRot.textContent = `${parsed}°`;
+                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
 
@@ -8374,7 +8645,8 @@
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 100;
                         parsed = Math.max(30, Math.min(250, parsed));
-                        el.zoom = parsed;
+                        if (isSharedBox) boxObj.zoom = parsed;
+                        else el.zoom = parsed;
                         sliderZoom.value = parsed;
                         numZoom.value = parsed;
                         badgeZoom.textContent = `${parsed}%`;
@@ -8396,7 +8668,8 @@
                         let parsed = parseInt(val, 10);
                         if (isNaN(parsed)) parsed = 0;
                         parsed = Math.max(-180, Math.min(180, parsed));
-                        el.rotate = parsed;
+                        if (isSharedBox) boxObj.rotate = parsed;
+                        else el.rotate = parsed;
                         if (sliderRot2D) sliderRot2D.value = parsed;
                         if (numRot2D) numRot2D.value = parsed;
                         if (badgeRot2D) badgeRot2D.textContent = `${parsed}°`;
@@ -8408,7 +8681,6 @@
                         if (sliderRotZ) sliderRotZ.value = parsed;
                         if (numRotZ) numRotZ.value = parsed;
                         if (badgeRotZ) badgeRotZ.textContent = `${parsed}°`;
-
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
                     };
@@ -8654,10 +8926,19 @@
 
             recordHistorySnapshot();
             const removed = slide.elements.splice(index, 1);
-            if (removed && removed[0] && removed[0].id) {
-                collapsedElementIds.delete(removed[0].id);
-                if (removed[0].id === selectedElementId) {
-                    deselectElement();
+            if (removed && removed[0]) {
+                if (removed[0].id) {
+                    collapsedElementIds.delete(removed[0].id);
+                    if (removed[0].id === selectedElementId) {
+                        deselectElement();
+                    }
+                }
+                if (removed[0].box_id && slide.boxes) {
+                    const bId = removed[0].box_id;
+                    const stillHasMembers = slide.elements.some(e => e.box_id === bId);
+                    if (!stillHasMembers) {
+                        delete slide.boxes[bId];
+                    }
                 }
             }
             renderElementsList();
@@ -9004,7 +9285,183 @@
             if (overlay) {
                 overlay.innerHTML = '';
                 if (Array.isArray(slide.elements)) {
+                    if (!slide.boxes) slide.boxes = {};
+                    const renderedBoxes = new Set();
                     slide.elements.forEach((el, elIdx) => {
+                        if (el.box_id) {
+                            if (renderedBoxes.has(el.box_id)) return;
+                            renderedBoxes.add(el.box_id);
+
+                            const boxId = el.box_id;
+                            const box = slide.boxes[boxId] || {};
+                            const boxBgVal = box.bg_color || el.bg_color || '#000000';
+                            const boxOpVal = (box.bg_opacity !== undefined && box.bg_opacity !== null && box.bg_opacity !== '') ? Number(box.bg_opacity) : (el.bg_opacity !== undefined ? Number(el.bg_opacity) : 45);
+                            const boxBlurVal = (box.bg_blur !== undefined && box.bg_blur !== null && box.bg_blur !== '') ? Number(box.bg_blur) : (el.bg_blur !== undefined ? Number(el.bg_blur) : 14);
+                            const boxRadius = (box.box_radius !== undefined && box.box_radius !== null && box.box_radius !== '') ? Number(box.box_radius) : (el.box_radius !== undefined ? Number(el.box_radius) : 16);
+                            const boxX = box.x !== undefined ? box.x : (el.x !== undefined ? el.x : 0);
+                            const boxY = box.y !== undefined ? box.y : (el.y !== undefined ? el.y : 0);
+                            const boxW = (box.w !== undefined && box.w !== null && box.w !== '') ? box.w : (el.w || 88);
+                            const boxRot = box.rotate !== undefined ? box.rotate : 0;
+                            const boxZoom = (box.zoom !== undefined && box.zoom !== null) ? box.zoom : 100;
+                            const boxPadY = (box.pad_y !== undefined && box.pad_y !== null && box.pad_y !== '') ? Number(box.pad_y) : 12;
+                            const boxPadX = (box.pad_x !== undefined && box.pad_x !== null && box.pad_x !== '') ? Number(box.pad_x) : 16;
+                            const boxGap = (box.gap !== undefined && box.gap !== null && box.gap !== '') ? Number(box.gap) : 8;
+
+                            const boxDiv = document.createElement('div');
+                            const childItems = slide.elements.filter(item => item.box_id === boxId && item.type === 'text');
+                            const isBoxSelected = selectedElementId === boxId || childItems.some(item => item.id === selectedElementId);
+                            boxDiv.className = `slide-el slide-el-box-group preview-box-group${isBoxSelected ? ' is-selected' : ''}`;
+                            boxDiv.dataset.boxId = boxId;
+                            boxDiv.style.left = `calc(50% + ${boxX}%)`;
+                            boxDiv.style.top = `calc(50% + ${boxY}%)`;
+                            boxDiv.style.width = `${boxW}%`;
+                            boxDiv.style.maxWidth = `${boxW}%`;
+                            boxDiv.style.transform = `translate(-50%, -50%) rotate(${boxRot}deg) scale(${boxZoom / 100})`;
+                            boxDiv.style.transformOrigin = 'center center';
+                            boxDiv.style.background = hexToRgba(boxBgVal, boxOpVal);
+                            boxDiv.style.borderRadius = `${boxRadius}px`;
+                            boxDiv.style.padding = `${boxPadY}px ${boxPadX}px`;
+                            boxDiv.style.display = 'flex';
+                            boxDiv.style.flexDirection = 'column';
+                            boxDiv.style.gap = `${boxGap}px`;
+                            boxDiv.style.boxSizing = 'border-box';
+                            if (boxBlurVal > 0) {
+                                boxDiv.style.backdropFilter = `blur(${boxBlurVal}px)`;
+                                boxDiv.style.webkitBackdropFilter = `blur(${boxBlurVal}px)`;
+                                boxDiv.style.border = '1px solid rgba(255, 255, 255, 0.18)';
+                            } else {
+                                boxDiv.style.backdropFilter = '';
+                                boxDiv.style.webkitBackdropFilter = '';
+                                boxDiv.style.border = '';
+                            }
+
+                            if (isBoxSelected) {
+                                const rotHandle = document.createElement('div');
+                                rotHandle.className = 'sticker-rot-handle';
+                                rotHandle.title = 'Arrastrá para rotar la caja';
+                                rotHandle.textContent = '⟳';
+                                boxDiv.appendChild(rotHandle);
+
+                                rotHandle.onpointerdown = (re) => {
+                                    re.stopPropagation();
+                                    const preRotSnapshot = getHistorySnapshot();
+                                    const rect = boxDiv.getBoundingClientRect();
+                                    const centerX = rect.left + rect.width / 2;
+                                    const centerY = rect.top + rect.height / 2;
+                                    const startAngle = Math.atan2(re.clientY - centerY, re.clientX - centerX) * (180 / Math.PI);
+                                    const initRot = box.rotate || 0;
+                                    let hasRotated = false;
+
+                                    const onRotMove = (me) => {
+                                        const curAngle = Math.atan2(me.clientY - centerY, me.clientX - centerX) * (180 / Math.PI);
+                                        let diff = Math.round(curAngle - startAngle);
+                                        let finalRot = ((initRot + diff) % 360);
+                                        if (Math.abs(diff) > 2) hasRotated = true;
+                                        box.rotate = finalRot;
+                                        boxDiv.style.transform = `translate(-50%, -50%) rotate(${finalRot}deg) scale(${(box.zoom || 100) / 100})`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    };
+                                    const onRotUp = () => {
+                                        window.removeEventListener('pointermove', onRotMove);
+                                        window.removeEventListener('pointerup', onRotUp);
+                                        if (hasRotated) {
+                                            pushHistoryState(preRotSnapshot);
+                                            renderElementsList();
+                                        }
+                                    };
+                                    window.addEventListener('pointermove', onRotMove);
+                                    window.addEventListener('pointerup', onRotUp);
+                                };
+                            }
+
+                            // Render all child items in order
+                            childItems.forEach((child) => {
+                                const isChildSelected = selectedElementId === child.id;
+                                const childAlign = (child.align && ['left', 'center', 'right'].includes(child.align)) ? child.align : 'center';
+                                const childDiv = document.createElement('div');
+                                childDiv.className = `slide-box-item slide-el-${child.style || 'body'} align-${childAlign} preview-text-el style-${child.style || 'body'}${isChildSelected ? ' is-selected' : ''}`;
+                                childDiv.dataset.elId = child.id;
+                                childDiv.style.textAlign = childAlign;
+                                childDiv.style.color = child.color || '#ffffff';
+                                if (child.fontFamily) childDiv.style.fontFamily = `'${child.fontFamily}', sans-serif`;
+                                if (child.fontWeight) childDiv.style.fontWeight = child.fontWeight;
+                                if (child.letterSpacing !== undefined && child.letterSpacing !== null && child.letterSpacing !== '') childDiv.style.letterSpacing = `${child.letterSpacing}em`;
+                                if (child.lineHeight !== undefined && child.lineHeight !== null && child.lineHeight !== '') childDiv.style.lineHeight = child.lineHeight;
+                                if (child.shadow === 'none') childDiv.style.textShadow = 'none';
+                                else if (child.shadow === 'soft') childDiv.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.75)';
+                                else if (child.shadow === 'strong') childDiv.style.textShadow = '0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9)';
+                                else if (child.shadow === 'glow') childDiv.style.textShadow = '0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(212, 175, 55, 0.6)';
+
+                                const procText = replacePreviewVariables(child.content || '');
+                                const itHtml = renderSlideTextHtml(procText);
+                                if (itHtml !== null) childDiv.innerHTML = itHtml;
+                                else childDiv.textContent = procText;
+
+                                childDiv.onpointerdown = (ce) => {
+                                    ce.stopPropagation();
+                                    if (selectedElementId !== child.id) {
+                                        selectElementForEditing(child.id);
+                                    }
+                                };
+
+                                boxDiv.appendChild(childDiv);
+                            });
+
+                            // Dragging the whole box
+                            let startDragX = 0, startDragY = 0, initBoxX = 0, initBoxY = 0, hasDragged = false;
+                            let preDragSnapshot = null;
+                            boxDiv.onpointerdown = (e) => {
+                                if (e.target.closest('.sticker-rot-handle')) return;
+                                e.stopPropagation();
+                                preDragSnapshot = getHistorySnapshot();
+                                startDragX = e.clientX;
+                                startDragY = e.clientY;
+                                initBoxX = box.x !== undefined ? box.x : (el.x || 0);
+                                initBoxY = box.y !== undefined ? box.y : (el.y || 0);
+                                hasDragged = false;
+
+                                const onMove = (me) => {
+                                    const dx = me.clientX - startDragX;
+                                    const dy = me.clientY - startDragY;
+                                    if (!hasDragged && Math.hypot(dx, dy) > 4) {
+                                        hasDragged = true;
+                                        if (selectedElementId !== el.id && !childItems.some(c => c.id === selectedElementId)) {
+                                            selectElementForEditing(el.id);
+                                        }
+                                    }
+                                    if (hasDragged) {
+                                        const phoneRect = (document.getElementById('previewElementsLayer') || boxDiv.parentElement).getBoundingClientRect();
+                                        const deltaPercentX = (dx / phoneRect.width) * 100;
+                                        const deltaPercentY = (dy / phoneRect.height) * 100;
+                                        const newX = Math.round(initBoxX + deltaPercentX);
+                                        const newY = Math.round(initBoxY + deltaPercentY);
+                                        box.x = newX;
+                                        box.y = newY;
+                                        boxDiv.style.left = `calc(50% + ${newX}%)`;
+                                        boxDiv.style.top = `calc(50% + ${newY}%)`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    }
+                                };
+
+                                const onUp = () => {
+                                    window.removeEventListener('pointermove', onMove);
+                                    window.removeEventListener('pointerup', onUp);
+                                    if (hasDragged) {
+                                        pushHistoryState(preDragSnapshot);
+                                        renderElementsList();
+                                    } else {
+                                        if (selectedElementId !== el.id && !childItems.some(c => c.id === selectedElementId)) selectElementForEditing(el.id);
+                                    }
+                                };
+
+                                window.addEventListener('pointermove', onMove);
+                                window.addEventListener('pointerup', onUp);
+                            };
+
+                            overlay.appendChild(boxDiv);
+                            return;
+                        }
+
                         if (el.type === 'text') {
                             const isSelected = selectedElementId === el.id;
                             const textAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
@@ -9745,7 +10202,7 @@
                 gizmoContainer.innerHTML = '';
             }
             document.querySelectorAll('.element-card.is-selected').forEach(c => c.classList.remove('is-selected'));
-            document.querySelectorAll('.preview-text-el.is-selected, .slide-el-link.is-selected, .preview-countdown-el.is-selected, .preview-form-el.is-selected').forEach(el => el.classList.remove('is-selected'));
+            document.querySelectorAll('.preview-text-el.is-selected, .slide-el-link.is-selected, .preview-countdown-el.is-selected, .preview-form-el.is-selected, .preview-box-group.is-selected').forEach(el => el.classList.remove('is-selected'));
         }
 
         function syncPanel3DControls(el) {

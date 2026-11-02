@@ -497,6 +497,34 @@
             z-index: 20;
         }
 
+        .slide-el-box-group {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            word-break: break-word;
+            pointer-events: auto;
+            transform-style: preserve-3d;
+            backface-visibility: visible;
+            transform-origin: center center;
+            z-index: 15;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        .slide-el-box-group .slide-box-item {
+            position: relative;
+            width: 100%;
+            box-sizing: border-box;
+            word-break: break-word;
+            white-space: pre-line;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
         .story-slide.active .slide-elements-layer {
             z-index: 550 !important;
             pointer-events: auto !important;

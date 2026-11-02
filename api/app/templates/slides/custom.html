@@ -32,8 +32,42 @@
     {% endif %}
 
     <div class="slide-elements-layer">
+        {% set ns = namespace(rendered_boxes=[]) %}
         {% for el in (slide.elements if slide else []) or [] %}
-            {% if el.type == 'text' %}
+            {% if el.box_id and el.box_id not in ns.rendered_boxes %}
+                {% set _ = ns.rendered_boxes.append(el.box_id) %}
+                {% set box = (slide.boxes[el.box_id] if (slide.boxes is defined and slide.boxes and el.box_id in slide.boxes) else {}) %}
+                {% set box_bg_val = box.bg_color or el.bg_color or '#000000' %}
+                {% set box_op_val = box.bg_opacity if (box.bg_opacity is defined and box.bg_opacity is not none and box.bg_opacity != '') else (el.bg_opacity if (el.bg_opacity is defined and el.bg_opacity is not none and el.bg_opacity != '') else 45) %}
+                {% set box_bg = box_bg_val | rgba(box_op_val) %}
+                {% set box_radius = box.box_radius if (box.box_radius is defined and box.box_radius is not none and box.box_radius != '') else (el.box_radius if (el.box_radius is defined and el.box_radius is not none and el.box_radius != '') else 16) %}
+                {% set box_blur = box.bg_blur if (box.bg_blur is defined and box.bg_blur is not none and box.bg_blur != '') else (el.bg_blur if (el.bg_blur is defined and el.bg_blur is not none and el.bg_blur != '') else 14) %}
+                {% set box_x = box.x if (box.x is defined and box.x is not none) else (el.x or 0) %}
+                {% set box_y = box.y if (box.y is defined and box.y is not none) else (el.y or 0) %}
+                {% set box_w = box.w if (box.w is defined and box.w is not none and box.w != '') else (el.w or 88) %}
+                {% set box_rot = box.rotate if (box.rotate is defined and box.rotate is not none) else 0 %}
+                {% set box_zoom = ((box.zoom if (box.zoom is defined and box.zoom is not none) else 100) / 100) %}
+                {% set box_pad_y = box.pad_y if (box.pad_y is defined and box.pad_y is not none and box.pad_y != '') else 12 %}
+                {% set box_pad_x = box.pad_x if (box.pad_x is defined and box.pad_x is not none and box.pad_x != '') else 16 %}
+                {% set box_gap = box.gap if (box.gap is defined and box.gap is not none and box.gap != '') else 8 %}
+                {% set box_glass_css = ('backdrop-filter: blur(' ~ box_blur ~ 'px); -webkit-backdrop-filter: blur(' ~ box_blur ~ 'px); border: 1px solid rgba(255,255,255,0.18);') if box_blur > 0 else '' %}
+                <div class="slide-el slide-el-box-group"
+                     style="left: calc(50% + {{ box_x }}%); top: calc(50% + {{ box_y }}%); width: {{ box_w }}%; max-width: {{ box_w }}%; transform: translate(-50%, -50%) rotate({{ box_rot }}deg) scale({{ box_zoom }}); transform-origin: center center; background: {{ box_bg }}; border-radius: {{ box_radius }}px; padding: {{ box_pad_y }}px {{ box_pad_x }}px; gap: {{ box_gap }}px; {{ box_glass_css }}">
+                    {% for item in (slide.elements if slide else []) or [] %}
+                        {% if item.box_id == el.box_id and item.type == 'text' %}
+                            {% set item_align = item.align if (item.align in ('left', 'center', 'right')) else 'center' %}
+                            {% set item_font = ('font-family: \'' ~ item.fontFamily ~ '\', sans-serif;') if item.fontFamily else '' %}
+                            {% set item_weight = ('font-weight: ' ~ item.fontWeight ~ ';') if item.fontWeight else '' %}
+                            {% set item_spacing = ('letter-spacing: ' ~ item.letterSpacing ~ 'em;') if (item.letterSpacing is defined and item.letterSpacing is not none and item.letterSpacing != '') else '' %}
+                            {% set item_lh = ('line-height: ' ~ item.lineHeight ~ ';') if (item.lineHeight is defined and item.lineHeight is not none and item.lineHeight != '') else '' %}
+                            {% set item_shadow = ('text-shadow: none;' if item.shadow == 'none' else ('text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);' if item.shadow == 'soft' else ('text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);' if item.shadow == 'strong' else ('text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(212, 175, 55, 0.6);' if item.shadow == 'glow' else '')))) if item.shadow else '' %}
+                            <div class="slide-box-item slide-el-{{ item.style or 'body' }} align-{{ item_align }}"
+                                 data-raw-content="{{ item.content }}"
+                                 style="text-align: {{ item_align }}; color: {{ item.color or '#ffffff' }}; {{ item_font }} {{ item_weight }} {{ item_spacing }} {{ item_lh }} {{ item_shadow }}">{{ item.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% elif not el.box_id and el.type == 'text' %}
                 {% set rot_x = el.rot_x if (el.rot_x is defined and el.rot_x is not none) else 0 %}
                 {% set rot_y = el.rot_y if (el.rot_y is defined and el.rot_y is not none) else 0 %}
                 {% set rot_z = el.rotate if (el.rotate is defined and el.rotate is not none) else 0 %}
