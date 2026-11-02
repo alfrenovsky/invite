@@ -1793,6 +1793,35 @@
             background: #38bdf8;
         }
 
+        .sticker-scale-handle {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            background: #0f172a;
+            border: 1.5px solid #38bdf8;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: nwse-resize;
+            z-index: 50;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .sticker-scale-handle:hover {
+            background: #1e293b;
+            transform: scale(1.15);
+        }
+
+        .sticker-scale-handle:active {
+            cursor: nwse-resize;
+        }
+
         .btn-ctrl {
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--card-border);
@@ -9390,6 +9419,52 @@
                                     window.addEventListener('pointermove', onRotMove);
                                     window.addEventListener('pointerup', onRotUp);
                                 };
+
+                                const scaleHandle = document.createElement('div');
+                                scaleHandle.className = 'sticker-scale-handle';
+                                scaleHandle.title = 'Arrastrá para escalar el zoom de la caja';
+                                scaleHandle.textContent = '⤡';
+                                boxDiv.appendChild(scaleHandle);
+
+                                scaleHandle.onpointerdown = (se) => {
+                                    se.stopPropagation();
+                                    se.preventDefault();
+                                    const preScaleSnapshot = getHistorySnapshot();
+                                    const rect = boxDiv.getBoundingClientRect();
+                                    const centerX = rect.left + rect.width / 2;
+                                    const centerY = rect.top + rect.height / 2;
+                                    const startDist = Math.hypot(se.clientX - centerX, se.clientY - centerY);
+                                    const initZoom = (box.zoom !== undefined && box.zoom !== null) ? box.zoom : 100;
+                                    let hasScaled = false;
+
+                                    const onScaleMove = (me) => {
+                                        const curDist = Math.hypot(me.clientX - centerX, me.clientY - centerY);
+                                        const scaleRatio = curDist / (startDist || 1);
+                                        const newZoom = Math.max(30, Math.min(250, Math.round(initZoom * scaleRatio)));
+                                        if (Math.abs(newZoom - initZoom) > 1) hasScaled = true;
+                                        box.zoom = newZoom;
+                                        boxDiv.style.transform = `translate(-50%, -50%) rotate(${box.rotate || 0}deg) scale(${newZoom / 100})`;
+
+                                        const zoomSlider = document.querySelector('.pos-slider-wrap input[id^="sliderZoom_"]');
+                                        const zoomNum = document.querySelector('.pos-slider-wrap input[id^="numZoom_"]');
+                                        const zoomBadge = document.querySelector('.pos-slider-wrap span[id^="badgeZoom_"]');
+                                        if (zoomSlider) zoomSlider.value = newZoom;
+                                        if (zoomNum) zoomNum.value = newZoom;
+                                        if (zoomBadge) zoomBadge.textContent = `${newZoom}%`;
+                                        if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                    };
+
+                                    const onScaleUp = () => {
+                                        window.removeEventListener('pointermove', onScaleMove);
+                                        window.removeEventListener('pointerup', onScaleUp);
+                                        if (hasScaled) {
+                                            pushHistoryState(preScaleSnapshot);
+                                            renderElementsList();
+                                        }
+                                    };
+                                    window.addEventListener('pointermove', onScaleMove);
+                                    window.addEventListener('pointerup', onScaleUp);
+                                };
                             }
 
                             let clickedChildId = null;
@@ -9428,7 +9503,7 @@
                             let startDragX = 0, startDragY = 0, initBoxX = 0, initBoxY = 0, hasDragged = false;
                             let preDragSnapshot = null;
                             boxDiv.onpointerdown = (e) => {
-                                if (e.target.closest('.sticker-rot-handle')) return;
+                                if (e.target.closest('.sticker-rot-handle') || e.target.closest('.sticker-scale-handle')) return;
                                 e.stopPropagation();
                                 const activeTargetChildId = clickedChildId;
                                 clickedChildId = null;
@@ -9479,6 +9554,43 @@
 
                                 window.addEventListener('pointermove', onMove);
                                 window.addEventListener('pointerup', onUp);
+                            };
+
+                            // Mouse Wheel: Zoom (Scale 30%-250%) & Shift+Wheel (Rotate)
+                            boxDiv.onwheel = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.shiftKey || e.altKey) {
+                                    const step = e.deltaY < 0 ? -5 : 5;
+                                    let newRot = (box.rotate || 0) + step;
+                                    newRot = ((newRot % 360) + 360) % 360;
+                                    if (newRot > 180) newRot -= 360;
+                                    box.rotate = newRot;
+                                } else {
+                                    const step = e.deltaY < 0 ? 5 : -5;
+                                    const curZoom = (box.zoom !== undefined && box.zoom !== null) ? box.zoom : 100;
+                                    box.zoom = Math.max(30, Math.min(250, curZoom + step));
+                                }
+                                const curZ = (box.zoom !== undefined && box.zoom !== null) ? box.zoom : 100;
+                                const curR = box.rotate || 0;
+                                boxDiv.style.transform = `translate(-50%, -50%) rotate(${curR}deg) scale(${curZ / 100})`;
+
+                                const zoomSlider = document.querySelector('.pos-slider-wrap input[id^="sliderZoom_"]');
+                                const zoomNum = document.querySelector('.pos-slider-wrap input[id^="numZoom_"]');
+                                const zoomBadge = document.querySelector('.pos-slider-wrap span[id^="badgeZoom_"]');
+                                if (zoomSlider) zoomSlider.value = curZ;
+                                if (zoomNum) zoomNum.value = curZ;
+                                if (zoomBadge) zoomBadge.textContent = `${curZ}%`;
+
+                                const rotSlider = document.querySelector('.pos-slider-wrap input[id^="sliderRot2D_"]');
+                                const rotNum = document.querySelector('.pos-slider-wrap input[id^="numRot2D_"]');
+                                const rotBadge = document.querySelector('.pos-slider-wrap span[id^="badgeRot2D_"]');
+                                if (rotSlider) rotSlider.value = curR;
+                                if (rotNum) rotNum.value = curR;
+                                if (rotBadge) rotBadge.textContent = `${curR}°`;
+
+                                if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                                updateDirtySlideChipsUI();
                             };
 
                             overlay.appendChild(boxDiv);
