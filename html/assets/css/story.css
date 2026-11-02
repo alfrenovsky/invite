@@ -511,8 +511,6 @@
             position: absolute;
             display: flex;
             flex-direction: column;
-            width: fit-content;
-            max-width: 100%;
             box-sizing: border-box;
             word-break: break-word;
             pointer-events: auto;
@@ -525,11 +523,12 @@
 
         .slide-el-box-group .slide-box-item {
             position: relative;
-            width: 100%;
+            width: 100% !important;
+            max-width: 100% !important;
             box-sizing: border-box;
             word-break: break-word;
             white-space: pre-line;
-            text-wrap: balance;
+            margin: 0 auto;
             background: none !important;
             padding: 0 !important;
             border: none !important;

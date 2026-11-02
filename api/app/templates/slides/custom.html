@@ -52,7 +52,7 @@
                 {% set box_gap = box.gap if (box.gap is defined and box.gap is not none and box.gap != '') else 8 %}
                 {% set box_glass_css = ('backdrop-filter: blur(' ~ box_blur ~ 'px); -webkit-backdrop-filter: blur(' ~ box_blur ~ 'px); border: 1px solid rgba(255,255,255,0.18);') if box_blur > 0 else '' %}
                 <div class="slide-el slide-el-box-group"
-                     style="left: calc(50% + {{ box_x }}%); top: calc(50% + {{ box_y }}%); width: fit-content; max-width: {{ box_w }}%; transform: translate(-50%, -50%) rotate({{ box_rot }}deg) scale({{ box_zoom }}); transform-origin: center center; background: {{ box_bg }}; border-radius: {{ box_radius }}px; padding: {{ box_pad_y }}px {{ box_pad_x }}px; gap: {{ box_gap }}px; {{ box_glass_css }}">
+                     style="left: calc(50% + {{ box_x }}%); top: calc(50% + {{ box_y }}%); width: {{ box_w }}%; max-width: {{ box_w }}%; transform: translate(-50%, -50%) rotate({{ box_rot }}deg) scale({{ box_zoom }}); transform-origin: center center; background: {{ box_bg }}; border-radius: {{ box_radius }}px; padding: {{ box_pad_y }}px {{ box_pad_x }}px; gap: {{ box_gap }}px; {{ box_glass_css }}">
                     {% for item in (slide.elements if slide else []) or [] %}
                         {% if item.box_id == el.box_id and item.type == 'text' %}
                             {% set item_align = item.align if (item.align in ('left', 'center', 'right')) else 'center' %}
@@ -63,7 +63,7 @@
                             {% set item_shadow = ('text-shadow: none;' if item.shadow == 'none' else ('text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);' if item.shadow == 'soft' else ('text-shadow: 0 3px 12px rgba(0, 0, 0, 0.95), 0 1px 3px rgba(0, 0, 0, 0.9);' if item.shadow == 'strong' else ('text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(212, 175, 55, 0.6);' if item.shadow == 'glow' else '')))) if item.shadow else '' %}
                             <div class="slide-box-item slide-el-{{ item.style or 'body' }} align-{{ item_align }}"
                                  data-raw-content="{{ item.content }}"
-                                 style="text-wrap: balance; text-align: {{ item_align }}; color: {{ item.color or '#ffffff' }}; {{ item_font }} {{ item_weight }} {{ item_spacing }} {{ item_lh }} {{ item_shadow }}">{{ item.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
+                                 style="text-align: {{ item_align }}; color: {{ item.color or '#ffffff' }}; {{ item_font }} {{ item_weight }} {{ item_spacing }} {{ item_lh }} {{ item_shadow }}">{{ item.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -77,7 +77,7 @@
                 {% set trans_y = '0%' if v_align == 'top' else ('-100%' if v_align == 'bottom' else '-50%') %}
                 {% set origin_y = 'top' if v_align == 'top' else ('bottom' if v_align == 'bottom' else 'center') %}
                 {% set text_zoom = ((el.zoom if (el.zoom is defined and el.zoom is not none) else 100) / 100) %}
-                {% set custom_font = ('font-family: \'' ~ el.fontFamily ~ '\', sans-serif;') if item is defined and item and item.fontFamily else (('font-family: \'' ~ el.fontFamily ~ '\', sans-serif;') if el.fontFamily else '') %}
+                {% set custom_font = ('font-family: \'' ~ el.fontFamily ~ '\', sans-serif;') if el.fontFamily else '' %}
                 {% set custom_weight = ('font-weight: ' ~ el.fontWeight ~ ';') if el.fontWeight else '' %}
                 {% set custom_spacing = ('letter-spacing: ' ~ el.letterSpacing ~ 'em;') if (el.letterSpacing is defined and el.letterSpacing is not none and el.letterSpacing != '') else '' %}
                 {% set custom_lh = ('line-height: ' ~ el.lineHeight ~ ';') if (el.lineHeight is defined and el.lineHeight is not none and el.lineHeight != '') else '' %}
@@ -88,7 +88,7 @@
                 {% set custom_box = ('background: ' ~ box_bg ~ '; padding: 8px 16px; border-radius: ' ~ box_radius ~ 'px; box-sizing: border-box; ' ~ (('backdrop-filter: blur(' ~ box_blur ~ 'px); -webkit-backdrop-filter: blur(' ~ box_blur ~ 'px); border: 1px solid rgba(255,255,255,0.18); ') if box_blur > 0 else '')) if box_bg else '' %}
                 <div class="slide-el slide-el-{{ el.style or 'body' }} align-{{ text_align }}"
                      data-raw-content="{{ el.content }}"
-                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}{% if el.bg_color %}width: fit-content; max-width: {{ el.w }}%;{% else %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %}{% endif %} text-wrap: balance; text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg) scale({{ text_zoom }}); transform-style: preserve-3d; transform-origin: center {{ origin_y }}; {{ custom_font }} {{ custom_weight }} {{ custom_spacing }} {{ custom_lh }} {{ custom_shadow }} {{ custom_box }}">{{ el.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
+                     style="left: calc(50% + {{ el.x or 0 }}%); top: calc(50% + {{ el.y or 0 }}%); {% if el.w %}width: {{ el.w }}%; max-width: {{ el.w }}%;{% endif %} text-align: {{ text_align }}; color: {{ el.color or '#ffffff' }}; transform: translate(-50%, {{ trans_y }}) perspective({{ pers }}px) rotateX({{ rot_x }}deg) rotateY({{ rot_y }}deg) rotateZ({{ rot_z }}deg) scale({{ text_zoom }}); transform-style: preserve-3d; transform-origin: center {{ origin_y }}; {{ custom_font }} {{ custom_weight }} {{ custom_spacing }} {{ custom_lh }} {{ custom_shadow }} {{ custom_box }}">{{ el.content | replace_guest_names(group_names, names_count, card_value, inv_names, res_names, inv_count, res_count) | trim | format_slide_text }}</div>
             {% elif el.type in ('location', 'link', 'copy') %}
                 {% set sticker_icon = el.icon or ('location' if el.type == 'location' else ('copy' if el.type == 'copy' else 'link')) %}
                 {% set sticker_color = el.color or ('#10b981' if el.type == 'copy' else '#0488db') %}
