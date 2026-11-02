@@ -4809,6 +4809,8 @@
         <span id="toastMsg">Cambios guardados con éxito</span>
     </div>
 
+    <!-- Presets Configuration (Single source of truth) -->
+    <script src="/assets/js/presets.js"></script>
     <script>
         // State
         let slidesData = {{ slides| tojson }};
@@ -7795,11 +7797,18 @@
                             const p = btn.dataset.preset;
                             let isMatch = false;
                             if (p === 'none' && !target.bg_color) isMatch = true;
-                            else if (p === 'glass-light' && target.bg_color === '#ffffff' && target.bg_opacity == 20 && target.bg_blur == 12) isMatch = true;
-                            else if (p === 'glass-dark' && target.bg_color === '#000000' && target.bg_opacity == 45 && target.bg_blur == 14) isMatch = true;
-                            else if (p === 'glass-gold' && target.bg_color === '#d4af37' && target.bg_opacity == 25 && target.bg_blur == 10) isMatch = true;
-                            else if (p === 'white' && target.bg_color === '#ffffff' && (target.bg_opacity === undefined || target.bg_opacity == 100) && (!target.bg_blur || target.bg_blur == 0)) isMatch = true;
-                            else if (p === 'black' && target.bg_color === '#000000' && (target.bg_opacity === undefined || target.bg_opacity == 100) && (!target.bg_blur || target.bg_blur == 0)) isMatch = true;
+                            else if (typeof BOX_PRESETS_CONFIG !== 'undefined' && BOX_PRESETS_CONFIG[p]) {
+                                const presetCfg = BOX_PRESETS_CONFIG[p];
+                                const curBg = (target.bg_color || '').toLowerCase();
+                                const expBg = (presetCfg.bg_color || '').toLowerCase();
+                                const curOp = target.bg_opacity !== undefined ? Number(target.bg_opacity) : 100;
+                                const expOp = Number(presetCfg.bg_opacity !== undefined ? presetCfg.bg_opacity : 100);
+                                const curBl = Number(target.bg_blur || 0);
+                                const expBl = Number(presetCfg.bg_blur || 0);
+                                if (curBg === expBg && curOp === expOp && curBl === expBl) {
+                                    isMatch = true;
+                                }
+                            }
                             btn.classList.toggle('active', isMatch);
                         });
                     }
@@ -7942,7 +7951,9 @@
                             recordHistorySnapshot();
                             const p = btn.dataset.preset;
                             const target = getTargetBox();
-                            if (p === 'none') {
+                            const presetCfg = (typeof BOX_PRESETS_CONFIG !== 'undefined' && BOX_PRESETS_CONFIG[p]) ? BOX_PRESETS_CONFIG[p] : null;
+
+                            if (p === 'none' || !presetCfg || !presetCfg.bg_color) {
                                 delete target.bg_color;
                                 delete target.bg_opacity;
                                 delete target.bg_blur;
@@ -7954,56 +7965,20 @@
                                 if (boxBlurBadge) boxBlurBadge.textContent = '0px';
                                 if (boxRadiusSlider) boxRadiusSlider.value = 12;
                                 if (boxRadiusBadge) boxRadiusBadge.textContent = '12px';
-                            } else if (p === 'glass-light') {
-                                target.bg_color = '#ffffff';
-                                target.bg_opacity = 20;
-                                target.bg_blur = 12;
-                                target.box_radius = target.box_radius || 16;
-                                if (boxBgInput) boxBgInput.value = '#ffffff';
-                                if (boxOpacitySlider) boxOpacitySlider.value = 20;
-                                if (boxOpacityBadge) boxOpacityBadge.textContent = '20%';
-                                if (boxBlurSlider) boxBlurSlider.value = 12;
-                                if (boxBlurBadge) boxBlurBadge.textContent = '12px';
-                            } else if (p === 'glass-dark') {
-                                target.bg_color = '#000000';
-                                target.bg_opacity = 45;
-                                target.bg_blur = 14;
-                                target.box_radius = target.box_radius || 16;
-                                if (boxBgInput) boxBgInput.value = '#000000';
-                                if (boxOpacitySlider) boxOpacitySlider.value = 45;
-                                if (boxOpacityBadge) boxOpacityBadge.textContent = '45%';
-                                if (boxBlurSlider) boxBlurSlider.value = 14;
-                                if (boxBlurBadge) boxBlurBadge.textContent = '14px';
-                            } else if (p === 'glass-gold') {
-                                target.bg_color = '#d4af37';
-                                target.bg_opacity = 25;
-                                target.bg_blur = 10;
-                                target.box_radius = target.box_radius || 16;
-                                if (boxBgInput) boxBgInput.value = '#d4af37';
-                                if (boxOpacitySlider) boxOpacitySlider.value = 25;
-                                if (boxOpacityBadge) boxOpacityBadge.textContent = '25%';
-                                if (boxBlurSlider) boxBlurSlider.value = 10;
-                                if (boxBlurBadge) boxBlurBadge.textContent = '10px';
-                            } else if (p === 'white') {
-                                target.bg_color = '#ffffff';
-                                target.bg_opacity = 100;
-                                target.bg_blur = 0;
-                                target.box_radius = target.box_radius || 16;
-                                if (boxBgInput) boxBgInput.value = '#ffffff';
-                                if (boxOpacitySlider) boxOpacitySlider.value = 100;
-                                if (boxOpacityBadge) boxOpacityBadge.textContent = '100%';
-                                if (boxBlurSlider) boxBlurSlider.value = 0;
-                                if (boxBlurBadge) boxBlurBadge.textContent = '0px';
-                            } else if (p === 'black') {
-                                target.bg_color = '#000000';
-                                target.bg_opacity = 100;
-                                target.bg_blur = 0;
-                                target.box_radius = target.box_radius || 16;
-                                if (boxBgInput) boxBgInput.value = '#000000';
-                                if (boxOpacitySlider) boxOpacitySlider.value = 100;
-                                if (boxOpacityBadge) boxOpacityBadge.textContent = '100%';
-                                if (boxBlurSlider) boxBlurSlider.value = 0;
-                                if (boxBlurBadge) boxBlurBadge.textContent = '0px';
+                            } else {
+                                target.bg_color = presetCfg.bg_color;
+                                target.bg_opacity = presetCfg.bg_opacity;
+                                target.bg_blur = presetCfg.bg_blur;
+                                target.box_radius = target.box_radius || presetCfg.box_radius || 16;
+                                if (boxBgInput) boxBgInput.value = presetCfg.bg_color;
+                                if (boxOpacitySlider) boxOpacitySlider.value = presetCfg.bg_opacity;
+                                if (boxOpacityBadge) boxOpacityBadge.textContent = `${presetCfg.bg_opacity}%`;
+                                if (boxBlurSlider) boxBlurSlider.value = presetCfg.bg_blur;
+                                if (boxBlurBadge) boxBlurBadge.textContent = `${presetCfg.bg_blur}px`;
+                                if (boxRadiusSlider && presetCfg.box_radius) {
+                                    boxRadiusSlider.value = target.box_radius;
+                                    if (boxRadiusBadge) boxRadiusBadge.textContent = `${target.box_radius}px`;
+                                }
                             }
                             syncBoxPresetUI();
                             refreshTypoOverrideState();

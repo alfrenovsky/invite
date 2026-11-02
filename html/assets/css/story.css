@@ -38,6 +38,16 @@
             --font-sticker: 'Aveny T', 'Barlow Condensed', sans-serif;
             /* Location Sticker */
             --sticker-rotate: -10deg;
+
+            /* RSVP Cards Parameters (governed by BOX_PRESETS_CONFIG) */
+            --rsvp-card-bg: rgba(212, 175, 55, 0.25);
+            --rsvp-card-border: 1px solid rgba(212, 175, 55, 0.35);
+            --rsvp-card-border-color: rgba(212, 175, 55, 0.35);
+            --rsvp-card-blur: 10px;
+            --rsvp-card-radius: 14px;
+            --rsvp-card-expanded-bg: rgba(145, 105, 18, 0.50);
+            --rsvp-card-expanded-border: 1px solid rgba(212, 175, 55, 0.65);
+            --rsvp-card-expanded-border-color: rgba(212, 175, 55, 0.65);
         }
 
 
@@ -585,11 +595,11 @@
         .rsvp-guest-card {
             display: flex;
             flex-direction: column;
-            border-radius: 14px;
-            background: rgba(212, 175, 55, 0.25);
-            border: 1px solid rgba(212, 175, 55, 0.35);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            border-radius: var(--rsvp-card-radius, 14px);
+            background: var(--rsvp-card-bg, rgba(212, 175, 55, 0.25));
+            border: var(--rsvp-card-border, 1px solid rgba(212, 175, 55, 0.35));
+            backdrop-filter: blur(var(--rsvp-card-blur, 10px));
+            -webkit-backdrop-filter: blur(var(--rsvp-card-blur, 10px));
             overflow: hidden;
             transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
         }
@@ -599,8 +609,8 @@
         }
 
         .rsvp-guest-card.expanded {
-            background: rgba(145, 105, 18, 0.50);
-            border-color: rgba(212, 175, 55, 0.65);
+            background: var(--rsvp-card-expanded-bg, rgba(145, 105, 18, 0.50));
+            border-color: var(--rsvp-card-expanded-border-color, rgba(212, 175, 55, 0.65));
             box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25);
         }
 
@@ -1526,11 +1536,11 @@
 
         .rsvp-card {
 
-            background: rgba(212, 175, 55, 0.25);
-            border: 1px solid rgba(212, 175, 55, 0.35);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 14px;
+            background: var(--rsvp-card-bg, rgba(212, 175, 55, 0.25));
+            border: var(--rsvp-card-border, 1px solid rgba(212, 175, 55, 0.35));
+            backdrop-filter: blur(var(--rsvp-card-blur, 10px));
+            -webkit-backdrop-filter: blur(var(--rsvp-card-blur, 10px));
+            border-radius: var(--rsvp-card-radius, 14px);
             margin-bottom: 7px;
             overflow: hidden;
             transition: all 0.25s ease;
@@ -1610,8 +1620,8 @@
         }
 
         .rsvp-card.expanded {
-            border-color: rgba(212, 175, 55, 0.65);
-            background: rgba(145, 105, 18, 0.50);
+            border-color: var(--rsvp-card-expanded-border-color, rgba(212, 175, 55, 0.65));
+            background: var(--rsvp-card-expanded-bg, rgba(145, 105, 18, 0.50));
             box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25);
         }
 
@@ -1791,11 +1801,11 @@
         }
 
         .rsvp-payment-card {
-            background: rgba(212, 175, 55, 0.25);
-            border: 1px solid rgba(212, 175, 55, 0.35);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 14px;
+            background: var(--rsvp-card-bg, rgba(212, 175, 55, 0.25));
+            border: var(--rsvp-card-border, 1px solid rgba(212, 175, 55, 0.35));
+            backdrop-filter: blur(var(--rsvp-card-blur, 10px));
+            -webkit-backdrop-filter: blur(var(--rsvp-card-blur, 10px));
+            border-radius: var(--rsvp-card-radius, 14px);
             padding: 8px 10px;
             box-shadow: none;
             display: flex;
@@ -1805,8 +1815,8 @@
         }
 
         .rsvp-payment-card.focused-highlight {
-            background: rgba(145, 105, 18, 0.50);
-            border-color: rgba(212, 175, 55, 0.65);
+            background: var(--rsvp-card-expanded-bg, rgba(145, 105, 18, 0.50));
+            border-color: var(--rsvp-card-expanded-border-color, rgba(212, 175, 55, 0.65));
             box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25);
         }
 
