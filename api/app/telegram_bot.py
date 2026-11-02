@@ -601,8 +601,15 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         )
         return
 
+    opened_invitations = {
+        str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+        for rec in records
+        if str(rec.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1")
+    }
+
     header = f"📤 <b>Invitaciones para enviar ({html.escape(display_orig)}) - {len(matching_guests)} pendientes:</b>"
     items = []
+    has_any_opened = False
     base_site = (BASE_URL or "https://nos.vamos.acas.ar").rstrip("/")
     for r in matching_guests:
         nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
@@ -611,7 +618,22 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         send_url = f"{base_site}/send/{clean_p}?id={gid}" if gid else f"{base_site}/send/{clean_p}"
         tel_display = str(r.get("telefono", "") or "").strip()
         tel_suffix = f" ({html.escape(tel_display)})" if tel_display else ""
-        items.append(f'👉 <a href="{send_url}"><b>{html.escape(nombre)}</b></a>{tel_suffix}')
+
+        inv_slug = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+        is_opened = (
+            str(r.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1")
+            or (inv_slug and inv_slug in opened_invitations)
+        )
+        if is_opened:
+            has_any_opened = True
+            opened_indicator = " 👀"
+        else:
+            opened_indicator = ""
+
+        items.append(f'👉 <a href="{send_url}"><b>{html.escape(nombre)}</b></a>{tel_suffix}{opened_indicator}')
+
+    if has_any_opened:
+        items.append("<i>(👀 = tarjeta ya abierta)</i>")
 
     _send_chunked_messages(chat_id, header, items)
 

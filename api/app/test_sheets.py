@@ -1771,12 +1771,14 @@ class TestGoogleSheetsTable(unittest.TestCase):
         import telegram_bot
         mock_tbl = MagicMock()
         mock_tbl.get_all.return_value = [
-            # 1. Matching, not sent, not opened -> should be listed
-            {"id": "g1", "nombre": "Pendiente", "apellido": "Uno", "dequien": "Celia Amigos", "telefono": "+54 9 11 1111-1111", "url": "http://test/1", "abierto": "", "enviado": ""},
-            # 2. Already sent (enviado='si') -> must be excluded
-            {"id": "g2", "nombre": "YaEnviado", "apellido": "Dos", "dequien": "Celia Amigos", "telefono": "+54 9 11 2222-2222", "url": "http://test/2", "abierto": "", "enviado": "si"},
-            # 3. No phone -> must be excluded
-            {"id": "g4", "nombre": "SinTel", "apellido": "Cuatro", "dequien": "Celia Amigos", "telefono": "", "url": "http://test/4", "abierto": "", "enviado": ""},
+            # 1. Matching, not sent, not opened -> should be listed WITHOUT 👀
+            {"id": "g1", "nombre": "Pendiente", "apellido": "Uno", "dequien": "Celia Amigos", "invitacion_id": "inv_1", "telefono": "+54 9 11 1111-1111", "url": "http://test/1", "abierto": "", "enviado": ""},
+            # 2. Matching, not sent, but card opened -> should be listed WITH 👀
+            {"id": "g2", "nombre": "AbiertoPorOtro", "apellido": "Dos", "dequien": "Celia Amigos", "invitacion_id": "inv_2", "telefono": "+54 9 11 2222-2222", "url": "http://test/2", "abierto": "si", "enviado": ""},
+            # 3. Already sent (enviado='si') -> must be excluded
+            {"id": "g3", "nombre": "YaEnviado", "apellido": "Tres", "dequien": "Celia Amigos", "invitacion_id": "inv_3", "telefono": "+54 9 11 3333-3333", "url": "http://test/3", "abierto": "", "enviado": "si"},
+            # 4. No phone -> must be excluded
+            {"id": "g4", "nombre": "SinTel", "apellido": "Cuatro", "dequien": "Celia Amigos", "invitacion_id": "inv_4", "telefono": "", "url": "http://test/4", "abierto": "", "enviado": ""},
         ]
 
         # A. /send without argument -> asks for "de quien" with inline options
@@ -1787,16 +1789,23 @@ class TestGoogleSheetsTable(unittest.TestCase):
             markup = called_kwargs.get("reply_markup") or {}
             self.assertIn("inline_keyboard", markup)
             buttons = markup["inline_keyboard"]
-            self.assertTrue(any("Celia Amigos (1)" in btn["text"] for row in buttons for btn in row))
+            self.assertTrue(any("Celia Amigos (2)" in btn["text"] for row in buttons for btn in row))
 
         # B. /send with argument -> lists only non-sent with /send/<phone> URL
         with patch("telegram_bot._send_chunked_messages") as mock_chunked:
             telegram_bot._handle_send_command(12345, "Celia Amigos", mock_tbl)
             self.assertTrue(mock_chunked.called)
             items = mock_chunked.call_args[0][2]
-            self.assertEqual(len(items), 1)
+            # 2 pending guests + 1 legend item
+            self.assertGreaterEqual(len(items), 2)
             self.assertIn("/send/5491111111111?id=g1", items[0])
             self.assertIn("Pendiente Uno", items[0])
+            self.assertNotIn("👀", items[0])
+
+            self.assertIn("/send/5491122222222?id=g2", items[1])
+            self.assertIn("AbiertoPorOtro Dos", items[1])
+            self.assertIn("👀", items[1])
+            self.assertIn("👀 = tarjeta ya abierta", items[-1])
 
         # C. callback_query update -> executes send command
         with patch("telegram_bot._handle_send_command") as mock_handle_send, \
