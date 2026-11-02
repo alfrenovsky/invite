@@ -26,7 +26,7 @@ FIELDNAMES = [
     "pa",
     "celiaco",
     "url",
-    "whatsapp",
+    "enviado",
     "comprobante",
     "pagado",
     "abierto",
@@ -366,7 +366,7 @@ class GoogleSheetsTable:
         else:
             item["url"] = url_val
 
-        # Check WhatsApp validity
+        # Check WhatsApp validity (kept internally in item)
         wa_val = str(rec.get("whatsapp", "") or "").strip()
         expected_wa = generate_whatsapp_url(phone_val, item["url"]) if (phone_val and item.get("url")) else ""
 
@@ -378,6 +378,10 @@ class GoogleSheetsTable:
                 item["whatsapp"] = wa_val
         else:
             item["whatsapp"] = "" if not phone_val else wa_val
+
+        # Sent status in Google Sheets: empty if none, "si" if yes
+        enviado_val = str(rec.get("enviado", "") or "").strip().lower()
+        item["enviado"] = "si" if enviado_val in ("si", "sí", "true", "1") else ""
 
         item["comprobante"] = str(rec.get("comprobante", "") or "")
         item["pagado"] = str(rec.get("pagado", "") or "").strip()
@@ -502,9 +506,9 @@ class GoogleSheetsTable:
                     id_missing = not rec.get("id")
                     inv_changed = (item.get("invitacion_id", "") != str(rec.get("invitacion_id", "") or "").strip())
                     url_changed = (item.get("url", "") != str(rec.get("url", "") or "").strip())
-                    wa_changed = (item.get("whatsapp", "") != str(rec.get("whatsapp", "") or "").strip())
+                    enviado_changed = (item.get("enviado", "") != str(rec.get("enviado", "") or "").strip())
                     monto_changed = (item.get("montotarjeta", "") != str(rec.get("montotarjeta", "") or "").strip())
-                    if id_missing or inv_changed or url_changed or wa_changed or monto_changed:
+                    if id_missing or inv_changed or url_changed or enviado_changed or monto_changed:
                         range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                         missing_updates.append({"range": range_name, "values": [row]})
 

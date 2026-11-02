@@ -554,7 +554,8 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         if fw == target_orig:
             phone = str(r.get("telefono", "") or "").strip()
             abierto = str(r.get("abierto", "") or "").strip().lower()
-            if phone and abierto not in ("si", "sí", "true", "1"):
+            enviado = str(r.get("enviado", "") or "").strip().lower()
+            if phone and abierto not in ("si", "sí", "true", "1") and enviado not in ("si", "sí", "true", "1"):
                 matching_guests.append(r)
 
     display_orig = arg.capitalize()
@@ -562,7 +563,7 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         send_message(
             chat_id,
             f"✅ No hay invitaciones pendientes con teléfono para <b>{display_orig}</b>\n"
-            f"(todas fueron abiertas o no tienen teléfono registrado)."
+            f"(todas fueron enviadas, abiertas o no tienen teléfono registrado)."
         )
         return
 

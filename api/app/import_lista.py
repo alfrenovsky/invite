@@ -189,6 +189,7 @@ def parse_csv_file(csv_path: str):
             "celiaco": celiaco,
             "url": url,
             "whatsapp": whatsapp,
+            "enviado": "",
             "comprobante": "",
             "pagado": "",
             "abierto": "",

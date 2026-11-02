@@ -1730,6 +1730,67 @@ class TestGoogleSheetsTable(unittest.TestCase):
         if os.path.exists(test_designs_dir):
             shutil.rmtree(test_designs_dir)
 
+    def test_enviado_column_and_internal_whatsapp(self):
+        # 1. FIELDNAMES must include 'enviado' and NOT 'whatsapp'
+        self.assertIn("enviado", FIELDNAMES)
+        self.assertNotIn("whatsapp", FIELDNAMES)
+        self.assertEqual(FIELDNAMES.index("enviado"), 14)  # Col O (0-indexed 14)
+
+        # 2. _map_record_to_row generates internal item['whatsapp'], but row stores 'enviado'
+        rec = {
+            "nombre": "Test",
+            "apellido": "User",
+            "telefono": "+54 9 11 1234-5678",
+            "invitacion_id": "test_inv",
+            "enviado": "si"
+        }
+        item, row = self.table._map_record_to_row(rec, "2026-11-02 12:00:00")
+
+        # Internal whatsapp link is kept
+        self.assertTrue(item["whatsapp"].startswith("https://wa.me/5491112345678?text="))
+        self.assertEqual(item["enviado"], "si")
+
+        # Sheet row contains 'enviado' and NOT whatsapp link
+        self.assertEqual(row[14], "si")
+        for cell in row:
+            self.assertFalse(str(cell).startswith("https://wa.me/"))
+
+        # 3. If enviado is empty or an old leftover WA link, it normalizes to ""
+        rec_empty = {
+            "nombre": "Empty",
+            "apellido": "User",
+            "telefono": "+54 9 11 1234-5678",
+            "invitacion_id": "test_inv",
+            "enviado": "https://wa.me/old_leftover_url"
+        }
+        item_empty, row_empty = self.table._map_record_to_row(rec_empty, "2026-11-02 12:00:00")
+        self.assertEqual(item_empty["enviado"], "")
+        self.assertEqual(row_empty[14], "")
+
+    def test_telegram_send_command_excludes_enviado(self):
+        import telegram_bot
+        mock_tbl = MagicMock()
+        mock_tbl.get_all.return_value = [
+            # 1. Matching, not sent, not opened -> should be listed
+            {"id": "g1", "nombre": "Pendiente", "apellido": "Uno", "dequien": "Celia Amigos", "telefono": "111", "url": "http://test/1", "abierto": "", "enviado": ""},
+            # 2. Already sent (enviado='si') -> must be excluded
+            {"id": "g2", "nombre": "YaEnviado", "apellido": "Dos", "dequien": "Celia Amigos", "telefono": "222", "url": "http://test/2", "abierto": "", "enviado": "si"},
+            # 3. Already opened (abierto='si') -> must be excluded
+            {"id": "g3", "nombre": "YaAbierto", "apellido": "Tres", "dequien": "Celia Amigos", "telefono": "333", "url": "http://test/3", "abierto": "si", "enviado": ""},
+            # 4. No phone -> must be excluded
+            {"id": "g4", "nombre": "SinTel", "apellido": "Cuatro", "dequien": "Celia Amigos", "telefono": "", "url": "http://test/4", "abierto": "", "enviado": ""},
+        ]
+
+        with patch("telegram_bot.send_message") as mock_send:
+            telegram_bot._handle_send_command(12345, "Celia", mock_tbl)
+            self.assertTrue(mock_send.called)
+            # The message should contain Pendiente Uno and NOT YaEnviado Dos or YaAbierto Tres
+            called_args = mock_send.call_args[0]
+            msg_text = called_args[1]
+            self.assertIn("Pendiente Uno", msg_text)
+            self.assertNotIn("YaEnviado Dos", msg_text)
+            self.assertNotIn("YaAbierto Tres", msg_text)
+
 
 if __name__ == "__main__":
     unittest.main()

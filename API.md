@@ -58,7 +58,7 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 | L | `pa` | `string` | Main dietary preference (`"general"`, `"vegetariano"`, `"vegano"`) | `"general"` |
 | M | `celiaco` | `string` | Celiac / Gluten-Free flag (`"si"`, `""`) | `"si"` |
 | N | `url` | `string` | Tamper-proof invitation URL with check code | `"http://nos.vamos.acas.ar/familia_perez_a1b2c3"` |
-| O | `whatsapp` | `string` | Direct WhatsApp invitation link (`wa.me`) | `"https://wa.me/5491112345678?text=http%3A%2F%2Fnos.vamos.acas.ar%2Ffamilia_perez_a1b2c3"` |
+| O | `enviado` | `string` | Invitation sent via WhatsApp flag (`"si"`, `""`) | `"si"` |
 | P | `comprobante` | `string` | Uploaded transfer receipt filename/URL | `"comprobante_a1b2c3d4.jpg"` |
 | Q | `pagado` | `string` | Payment received verification (`"si"`, `""`) | `"si"` |
 | R | `abierto` | `string` | Invitation opened by a human (`"si"`, `""`) | `"si"` |
@@ -66,7 +66,7 @@ The sheet model strictly respects the following column order defined in `FIELDNA
 
 
 
-> **Note**: There are **no mandatory fields**. Any payload field is optional. If an `id` is not specified on insert, a random 8-digit hex string is automatically generated.
+> **Note**: There are **no mandatory fields**. Any payload field is optional. If an `id` is not specified on insert, a random 8-digit hex string is automatically generated. The direct WhatsApp URL (`whatsapp`) is computed and preserved internally in API responses for quick sharing, but the Google Sheet column stores only the `enviado` status (`"si"` or `""`).
 
 ---
 
