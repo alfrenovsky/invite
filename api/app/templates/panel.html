@@ -6674,9 +6674,11 @@
                         ${escapeHtml(headerData.displayText)}
                     </span>
                 </div>
-                <div class="element-header-actions">
+                <div class="element-header-actions" style="display: flex; align-items: center; gap: 4px;">
+                    <button type="button" class="btn-ctrl btn-reorder-up" onclick="event.stopPropagation(); moveElement(${idx}, -1);" title="Subir orden" style="padding: 2px 7px; font-size: 0.72rem; line-height: 1;" ${idx === 0 ? 'disabled style="opacity: 0.3; cursor: default; padding: 2px 7px; font-size: 0.72rem; line-height: 1;"' : ''}>▲</button>
+                    <button type="button" class="btn-ctrl btn-reorder-down" onclick="event.stopPropagation(); moveElement(${idx}, 1);" title="Bajar orden" style="padding: 2px 7px; font-size: 0.72rem; line-height: 1;" ${idx === slide.elements.length - 1 ? 'disabled style="opacity: 0.3; cursor: default; padding: 2px 7px; font-size: 0.72rem; line-height: 1;"' : ''}>▼</button>
                     <button type="button" class="btn-del-el" onclick="event.stopPropagation(); removeElement(${idx});" title="Eliminar este elemento">
-                        🗑️ Eliminar
+                        🗑️
                     </button>
                 </div>
             `;
@@ -8920,6 +8922,22 @@
             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
         }
 
+        function moveElement(index, direction) {
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= slide.elements.length) return;
+
+            recordHistorySnapshot();
+            const temp = slide.elements[index];
+            slide.elements[index] = slide.elements[targetIndex];
+            slide.elements[targetIndex] = temp;
+
+            renderElementsList();
+            updateLivePreview();
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+        }
+
         function removeElement(index) {
             const slide = getCurrentSlide();
             if (!slide || !Array.isArray(slide.elements)) return;
@@ -9374,6 +9392,8 @@
                                 };
                             }
 
+                            let clickedChildId = null;
+
                             // Render all child items in order
                             childItems.forEach((child) => {
                                 const isChildSelected = selectedElementId === child.id;
@@ -9398,10 +9418,7 @@
                                 else childDiv.textContent = procText;
 
                                 childDiv.onpointerdown = (ce) => {
-                                    ce.stopPropagation();
-                                    if (selectedElementId !== child.id) {
-                                        selectElementForEditing(child.id);
-                                    }
+                                    clickedChildId = child.id;
                                 };
 
                                 boxDiv.appendChild(childDiv);
@@ -9413,6 +9430,8 @@
                             boxDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
+                                const activeTargetChildId = clickedChildId;
+                                clickedChildId = null;
                                 preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
@@ -9450,7 +9469,11 @@
                                         pushHistoryState(preDragSnapshot);
                                         renderElementsList();
                                     } else {
-                                        if (selectedElementId !== el.id && !childItems.some(c => c.id === selectedElementId)) selectElementForEditing(el.id);
+                                        if (activeTargetChildId) {
+                                            selectElementForEditing(activeTargetChildId);
+                                        } else if (selectedElementId !== el.id && !childItems.some(c => c.id === selectedElementId)) {
+                                            selectElementForEditing(el.id);
+                                        }
                                     }
                                 };
 
