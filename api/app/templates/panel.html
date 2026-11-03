@@ -1998,6 +1998,77 @@
             flex-shrink: 0;
         }
 
+        .element-lock-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            color: rgba(255, 255, 255, 0.35);
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .element-lock-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .element-lock-btn.is-locked {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .element-lock-btn.is-locked:hover {
+            background: rgba(245, 158, 11, 0.25);
+            color: #fbbf24;
+        }
+
+        @keyframes lockShakeFlash {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                box-shadow: none;
+            }
+            15% {
+                transform: scale(1.3) rotate(-12deg);
+                color: #ef4444;
+                border-color: #ef4444;
+                background: rgba(239, 68, 68, 0.35);
+                box-shadow: 0 0 14px rgba(239, 68, 68, 0.8);
+            }
+            30% {
+                transform: scale(1.3) rotate(12deg);
+                color: #ef4444;
+                border-color: #ef4444;
+                background: rgba(239, 68, 68, 0.35);
+                box-shadow: 0 0 14px rgba(239, 68, 68, 0.8);
+            }
+            45% {
+                transform: scale(1.25) rotate(-8deg);
+                color: #f59e0b;
+                box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+            }
+            60% {
+                transform: scale(1.2) rotate(8deg);
+                color: #ef4444;
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+            }
+            75% {
+                transform: scale(1.1) rotate(-4deg);
+            }
+        }
+
+        .element-lock-btn.lock-flash {
+            animation: lockShakeFlash 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+            z-index: 10;
+        }
+
         .element-type-badge {
             font-size: 0.75rem;
             font-weight: 700;
@@ -4094,11 +4165,14 @@
                                 </div>
 
                                 <!-- Background Element Card (Accordion Item #0) -->
-                                <div class="element-card collapsed" id="elCard_background" style="margin-bottom: 12px;" onclick="if (!event.target.closest('.element-header') && !event.target.closest('.btn-ctrl') && !event.target.closest('.custom-bg-dropdown') && selectedElementId !== 'background') selectElementForEditing('background');">
+                                <div class="element-card collapsed" id="elCard_background" style="margin-bottom: 12px;" onclick="if (!event.target.closest('.element-header') && !event.target.closest('.btn-ctrl') && !event.target.closest('.element-lock-btn') && !event.target.closest('.custom-bg-dropdown') && selectedElementId !== 'background') selectElementForEditing('background');">
                                     <div class="element-header" onclick="chooseElement('background', event)">
                                         <div class="element-header-left">
                                             <span class="element-collapse-icon" id="bgCollapseIcon">▶</span>
                                             <span class="element-index-badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8;">#0</span>
+                                            <button type="button" class="element-lock-btn" id="bgLockBtn" onclick="toggleBgLock(event)" title="Bloquear/desbloquear fondo">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                                            </button>
                                             <span class="element-type-badge type-badge-bg" id="bgTypeBadge">
                                                 <span id="bgTypeIcon">🖼️</span><span>Fondo</span>
                                             </span>
@@ -6700,6 +6774,88 @@
                 preview.textContent = `${filename} (${bgZoom}%)`;
                 preview.title = `${bg} (Zoom: ${bgZoom}%)`;
             }
+            updateBgLockUI();
+        }
+
+        function getLockIconSvg(isLocked) {
+            if (isLocked) {
+                return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+            } else {
+                return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`;
+            }
+        }
+
+        function toggleElementLock(elId, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const slide = getCurrentSlide();
+            if (!slide || !Array.isArray(slide.elements)) return;
+            const el = slide.elements.find(e => e.id === elId);
+            if (!el) return;
+
+            el.locked = !el.locked;
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+
+            const btn = document.querySelector(`.element-lock-btn[data-el-id="${elId}"]`);
+            if (btn) {
+                btn.classList.toggle('is-locked', !!el.locked);
+                btn.innerHTML = getLockIconSvg(!!el.locked);
+                btn.title = el.locked ? 'Desbloquear elemento (bloqueado)' : 'Bloquear elemento (desbloqueado)';
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(el.locked ? '🔒 Elemento bloqueado' : '🔓 Elemento desbloqueado');
+            }
+        }
+
+        function toggleBgLock(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const slide = getCurrentSlide();
+            if (!slide) return;
+
+            slide.bg_locked = !slide.bg_locked;
+            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+
+            updateBgLockUI();
+
+            if (typeof showToast === 'function') {
+                showToast(slide.bg_locked ? '🔒 Fondo bloqueado' : '🔓 Fondo desbloqueado');
+            }
+        }
+
+        function updateBgLockUI() {
+            const slide = getCurrentSlide();
+            const isLocked = !!(slide && slide.bg_locked);
+            const btn = document.getElementById('bgLockBtn');
+            if (btn) {
+                btn.classList.toggle('is-locked', isLocked);
+                btn.innerHTML = getLockIconSvg(isLocked);
+                btn.title = isLocked ? 'Desbloquear fondo (bloqueado)' : 'Bloquear fondo (desbloqueado)';
+            }
+        }
+
+        function flashLock(elId) {
+            let btn = null;
+            if (elId === 'background') {
+                btn = document.getElementById('bgLockBtn');
+            } else {
+                btn = document.querySelector(`.element-lock-btn[data-el-id="${elId}"]`);
+                if (!btn) {
+                    const card = document.getElementById('elCard_' + elId);
+                    if (card) btn = card.querySelector('.element-lock-btn');
+                }
+            }
+            if (btn) {
+                btn.classList.remove('lock-flash');
+                void btn.offsetWidth; // Force DOM reflow to retrigger CSS animation
+                btn.classList.add('lock-flash');
+                setTimeout(() => {
+                    if (btn) btn.classList.remove('lock-flash');
+                }, 650);
+            }
         }
 
         function autoResizeTextarea(ta) {
@@ -6741,7 +6897,7 @@
         }
 
         function chooseElement(elId, event) {
-            if (event && event.target && (event.target.closest('.btn-del-el') || event.target.closest('.btn-ctrl'))) return;
+            if (event && event.target && (event.target.closest('.btn-del-el') || event.target.closest('.btn-ctrl') || event.target.closest('.element-lock-btn'))) return;
             const isCurrentlyOpen = !collapsedElementIds.has(elId);
 
             if (isCurrentlyOpen) {
@@ -7056,6 +7212,9 @@
                 <div class="element-header-left">
                     <span class="element-collapse-icon">${isCollapsed ? '▶' : '▼'}</span>
                     <span class="element-index-badge">#${idx + 1}</span>
+                    <button type="button" class="element-lock-btn ${el.locked ? 'is-locked' : ''}" data-el-id="${el.id}" onclick="toggleElementLock('${el.id}', event)" title="${el.locked ? 'Desbloquear elemento (bloqueado)' : 'Bloquear elemento (desbloqueado)'}">
+                        ${getLockIconSvg(!!el.locked)}
+                    </button>
                     <span class="element-box-badge-slot">${headerData.boxBadgeHtml || ''}</span>
                     <span class="element-type-badge ${headerData.typeBadgeClass}">
                         <span>${headerData.typeIcon}</span><span>${headerData.typeText}</span>
@@ -9850,6 +10009,11 @@
 
                                 rotHandle.onpointerdown = (re) => {
                                     re.stopPropagation();
+                                    if (childItems.some(c => c.locked)) {
+                                        const lockedChild = (childItems.find(c => c.id === selectedElementId && c.locked) || childItems.find(c => c.locked));
+                                        flashLock(lockedChild ? lockedChild.id : el.id);
+                                        return;
+                                    }
                                     const preRotSnapshot = getHistorySnapshot();
                                     const rect = boxDiv.getBoundingClientRect();
                                     const centerX = rect.left + rect.width / 2;
@@ -9889,6 +10053,11 @@
                                 scaleHandle.onpointerdown = (se) => {
                                     se.stopPropagation();
                                     se.preventDefault();
+                                    if (childItems.some(c => c.locked)) {
+                                        const lockedChild = (childItems.find(c => c.id === selectedElementId && c.locked) || childItems.find(c => c.locked));
+                                        flashLock(lockedChild ? lockedChild.id : el.id);
+                                        return;
+                                    }
                                     const preScaleSnapshot = getHistorySnapshot();
                                     const rect = boxDiv.getBoundingClientRect();
                                     const centerX = rect.left + rect.width / 2;
@@ -9965,6 +10134,31 @@
                                 e.stopPropagation();
                                 const activeTargetChildId = clickedChildId;
                                 clickedChildId = null;
+
+                                if (childItems.some(c => c.locked)) {
+                                    const targetSelectId = activeTargetChildId || el.id;
+                                    if (selectedElementId !== targetSelectId) {
+                                        selectElementForEditing(targetSelectId);
+                                    }
+                                    const lockedChild = (childItems.find(c => c.id === targetSelectId && c.locked) || childItems.find(c => c.locked));
+                                    let flashed = false;
+                                    const startX = e.clientX;
+                                    const startY = e.clientY;
+                                    const onLockedMove = (me) => {
+                                        if (!flashed && Math.hypot(me.clientX - startX, me.clientY - startY) > 4) {
+                                            flashed = true;
+                                            flashLock(lockedChild ? lockedChild.id : el.id);
+                                        }
+                                    };
+                                    const onLockedUp = () => {
+                                        window.removeEventListener('pointermove', onLockedMove);
+                                        window.removeEventListener('pointerup', onLockedUp);
+                                    };
+                                    window.addEventListener('pointermove', onLockedMove);
+                                    window.addEventListener('pointerup', onLockedUp);
+                                    return;
+                                }
+
                                 preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
@@ -10019,6 +10213,11 @@
                             boxDiv.onwheel = (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                if (childItems.some(c => c.locked)) {
+                                    const lockedChild = (childItems.find(c => c.id === selectedElementId && c.locked) || childItems.find(c => c.locked));
+                                    flashLock(lockedChild ? lockedChild.id : el.id);
+                                    return;
+                                }
                                 if (e.shiftKey || e.altKey) {
                                     const step = e.deltaY < 0 ? -5 : 5;
                                     let newRot = (box.rotate || 0) + step;
@@ -10141,6 +10340,28 @@
                             let preDragSnapshot = null;
                             textDiv.onpointerdown = (e) => {
                                 e.stopPropagation();
+                                if (selectedElementId !== el.id) {
+                                    selectElementForEditing(el.id);
+                                }
+                                if (el.locked) {
+                                    let flashed = false;
+                                    const startX = e.clientX;
+                                    const startY = e.clientY;
+                                    const onLockedMove = (me) => {
+                                        if (!flashed && Math.hypot(me.clientX - startX, me.clientY - startY) > 4) {
+                                            flashed = true;
+                                            flashLock(el.id);
+                                        }
+                                    };
+                                    const onLockedUp = () => {
+                                        window.removeEventListener('pointermove', onLockedMove);
+                                        window.removeEventListener('pointerup', onLockedUp);
+                                    };
+                                    window.addEventListener('pointermove', onLockedMove);
+                                    window.addEventListener('pointerup', onLockedUp);
+                                    return;
+                                }
+
                                 preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
@@ -10196,6 +10417,10 @@
                             textDiv.onwheel = (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                if (el.locked) {
+                                    flashLock(el.id);
+                                    return;
+                                }
                                 const curZoom = (el.zoom !== undefined && el.zoom !== null) ? el.zoom : 100;
                                 const step = e.deltaY < 0 ? 5 : -5;
                                 const nextZoom = Math.max(30, Math.min(250, curZoom + step));
@@ -10257,6 +10482,28 @@
                             locDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
+                                if (selectedElementId !== el.id) {
+                                    selectElementForEditing(el.id);
+                                }
+                                if (el.locked) {
+                                    let flashed = false;
+                                    const startX = e.clientX;
+                                    const startY = e.clientY;
+                                    const onLockedMove = (me) => {
+                                        if (!flashed && Math.hypot(me.clientX - startX, me.clientY - startY) > 4) {
+                                            flashed = true;
+                                            flashLock(el.id);
+                                        }
+                                    };
+                                    const onLockedUp = () => {
+                                        window.removeEventListener('pointermove', onLockedMove);
+                                        window.removeEventListener('pointerup', onLockedUp);
+                                    };
+                                    window.addEventListener('pointermove', onLockedMove);
+                                    window.addEventListener('pointerup', onLockedUp);
+                                    return;
+                                }
+
                                 preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
@@ -10307,6 +10554,10 @@
                             locDiv.onwheel = (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                if (el.locked) {
+                                    flashLock(el.id);
+                                    return;
+                                }
                                 if (e.shiftKey || e.altKey) {
                                     const step = e.deltaY < 0 ? -5 : 5;
                                     let newRot = (el.rotate || 0) + step;
@@ -10331,6 +10582,10 @@
                                 rotHandle.onpointerdown = (re) => {
                                     re.stopPropagation();
                                     re.preventDefault();
+                                    if (el.locked) {
+                                        flashLock(el.id);
+                                        return;
+                                    }
                                     const preRotSnapshot = getHistorySnapshot();
                                     let hasRotated = false;
                                     const rect = locDiv.getBoundingClientRect();
@@ -10432,6 +10687,28 @@
                             cdDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
+                                if (selectedElementId !== el.id) {
+                                    selectElementForEditing(el.id);
+                                }
+                                if (el.locked) {
+                                    let flashed = false;
+                                    const startX = e.clientX;
+                                    const startY = e.clientY;
+                                    const onLockedMove = (me) => {
+                                        if (!flashed && Math.hypot(me.clientX - startX, me.clientY - startY) > 4) {
+                                            flashed = true;
+                                            flashLock(el.id);
+                                        }
+                                    };
+                                    const onLockedUp = () => {
+                                        window.removeEventListener('pointermove', onLockedMove);
+                                        window.removeEventListener('pointerup', onLockedUp);
+                                    };
+                                    window.addEventListener('pointermove', onLockedMove);
+                                    window.addEventListener('pointerup', onLockedUp);
+                                    return;
+                                }
+
                                 preDragSnapshot = getHistorySnapshot();
                                 startDragX = e.clientX;
                                 startDragY = e.clientY;
@@ -10482,6 +10759,10 @@
                             cdDiv.onwheel = (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                if (el.locked) {
+                                    flashLock(el.id);
+                                    return;
+                                }
                                 if (e.shiftKey || e.altKey) {
                                     const step = e.deltaY < 0 ? -5 : 5;
                                     let newRot = (el.rotate || 0) + step;
@@ -10506,6 +10787,10 @@
                                 rotHandle.onpointerdown = (re) => {
                                     re.stopPropagation();
                                     re.preventDefault();
+                                    if (el.locked) {
+                                        flashLock(el.id);
+                                        return;
+                                    }
                                     const preRotSnapshot = getHistorySnapshot();
                                     let hasRotated = false;
                                     const rect = cdDiv.getBoundingClientRect();
@@ -11016,6 +11301,10 @@
             function onPointerDown(e, mode) {
                 e.stopPropagation();
                 e.preventDefault();
+                if (el.locked) {
+                    flashLock(el.id);
+                    return;
+                }
                 preGizmoSnapshot = getHistorySnapshot();
                 hasGizmoMoved = false;
                 isDragging = true;
@@ -12344,6 +12633,26 @@
                 const slide = getCurrentSlide();
                 if (!slide || !slide.background) return;
 
+                if (slide.bg_locked) {
+                    let flashed = false;
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    const onLockedMove = (me) => {
+                        if (!flashed && Math.hypot(me.clientX - startX, me.clientY - startY) > 4) {
+                            flashed = true;
+                            flashLock('background');
+                        }
+                    };
+                    const onLockedUp = () => {
+                        window.removeEventListener('pointermove', onLockedMove);
+                        window.removeEventListener('pointerup', onLockedUp);
+                    };
+                    window.addEventListener('pointermove', onLockedMove);
+                    window.addEventListener('pointerup', onLockedUp);
+                    e.preventDefault();
+                    return;
+                }
+
                 preBgSnapshot = getHistorySnapshot();
                 hasMovedBg = false;
                 isDraggingBg = true;
@@ -12401,6 +12710,11 @@
             previewSlideViewport.addEventListener('wheel', (e) => {
                 const slide = getCurrentSlide();
                 if (!slide || !slide.background) return;
+                if (slide.bg_locked) {
+                    e.preventDefault();
+                    flashLock('background');
+                    return;
+                }
                 e.preventDefault();
 
                 const curZoom = (slide.bg_zoom !== undefined && slide.bg_zoom !== null) ? slide.bg_zoom : 100;
