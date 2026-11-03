@@ -7044,6 +7044,8 @@
                 const isForm = el.type === 'form';
                 const isTransformable = isLocation || isCountdown;
                 const is3dActive = (el.enable_3d !== undefined) ? !!el.enable_3d : (!!(el.rot_x || el.rot_y));
+                const isSharedBox = el.type === 'text' && !!el.box_id && slide && slide.boxes && !!slide.boxes[el.box_id];
+                const boxObj = isSharedBox ? slide.boxes[el.box_id] : null;
 
                 // Header
                 const headerData = getElementHeaderData(el, idx);
@@ -7819,7 +7821,6 @@
                     body.appendChild(aliasGroup);
                 } else {
                     // Text Content input with TinyMCE-style Toolbar
-                    const isSharedBoxText = el.type === 'text' && !!el.box_id && slide && slide.boxes && !!slide.boxes[el.box_id];
                     const currentStyle = el.style || 'body';
                     const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
                     const currentVAlign = (el.valign && ['top', 'center', 'bottom'].includes(el.valign)) ? el.valign : 'center';
@@ -7862,7 +7863,7 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
                         </button>
 
-                        ${!isSharedBoxText ? `
+                        ${!isSharedBox ? `
                         <div class="tb-divider"></div>
 
                         <!-- Vertical Alignment Square Buttons (Sólo textos individuales) -->
@@ -8639,7 +8640,7 @@
                     const btnCenterX = textGroup.querySelector('.tb-center-x-btn');
                     btnCenterX.onclick = () => {
                         recordHistorySnapshot();
-                        if (isSharedBoxText && slide.boxes && slide.boxes[el.box_id]) {
+                        if (isSharedBox && slide.boxes && slide.boxes[el.box_id]) {
                             slide.boxes[el.box_id].x = 0;
                             syncBoxSlidersAcrossCards(el.box_id);
                         } else {
@@ -8653,13 +8654,13 @@
                         if (badgeX) badgeX.textContent = '0%';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
-                        showToast(isSharedBoxText ? '↔ Caja centrada horizontalmente' : '↔ Elemento centrado horizontalmente');
+                        showToast(isSharedBox ? '↔ Caja centrada horizontalmente' : '↔ Elemento centrado horizontalmente');
                     };
 
                     const btnCenterY = textGroup.querySelector('.tb-center-y-btn');
                     btnCenterY.onclick = () => {
                         recordHistorySnapshot();
-                        if (isSharedBoxText && slide.boxes && slide.boxes[el.box_id]) {
+                        if (isSharedBox && slide.boxes && slide.boxes[el.box_id]) {
                             slide.boxes[el.box_id].y = 0;
                             syncBoxSlidersAcrossCards(el.box_id);
                         } else {
@@ -8673,7 +8674,7 @@
                         if (badgeY) badgeY.textContent = '0%';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
-                        showToast(isSharedBoxText ? '↕ Caja centrada verticalmente' : '↕ Elemento centrado verticalmente');
+                        showToast(isSharedBox ? '↕ Caja centrada verticalmente' : '↕ Elemento centrado verticalmente');
                     };
 
                     // 3D Toggle Button
@@ -8755,8 +8756,6 @@
                 const posRow = document.createElement('div');
                 posRow.className = 'pos-control-row';
 
-                const isSharedBox = el.type === 'text' && !!el.box_id && slide && slide.boxes && !!slide.boxes[el.box_id];
-                const boxObj = isSharedBox ? slide.boxes[el.box_id] : null;
                 const boxValign = boxObj ? (boxObj.valign || 'center') : 'center';
 
                 const currX = boxObj ? (boxObj.x !== undefined ? boxObj.x : 0) : (el.x !== undefined ? el.x : 0);
