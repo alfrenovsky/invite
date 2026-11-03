@@ -9247,6 +9247,8 @@
                 body.appendChild(posRow);
                 }
 
+                card.appendChild(body);
+
                 // Bind Box Valign buttons if element is in a shared box
                 if (isSharedBox) {
                     card.querySelectorAll('.box-valign-btn').forEach(btn => {
@@ -9261,11 +9263,11 @@
                             if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                             updateLivePreview();
                             updateDirtySlideChipsUI();
+                            showToast(chosenValign === 'top' ? '⬆️ Anclaje de caja: Arriba (crece hacia abajo)' : (chosenValign === 'bottom' ? '⬇️ Anclaje de caja: Abajo (crece hacia arriba)' : '⏺️ Anclaje de caja: Centro'));
                         };
                     });
                 }
 
-                card.appendChild(body);
                 container.appendChild(card);
             });
         }
