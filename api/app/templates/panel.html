@@ -4911,7 +4911,8 @@
                     <span class="preview-sim-label">🎭 Simular:</span>
                     <div class="preview-sim-presets">
                         <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="single" onclick="setSimulationPreset('single')" title="Simular 1 persona (Singular total)">👤 1 Persona</button>
-                        <button type="button" class="preview-sim-btn sim-preset-btn active" data-preset="plural" onclick="setSimulationPreset('plural')" title="Simular grupo (Plural total)">👥 Grupo</button>
+                        <button type="button" class="preview-sim-btn sim-preset-btn active" data-preset="plural" onclick="setSimulationPreset('plural')" title="Simular pareja (2 personas)">👥 Pareja (2)</button>
+                        <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="group4" onclick="setSimulationPreset('group4')" title="Simular grupo de 4 personas">👨‍👩‍👧‍👦 Grupo (4)</button>
                         <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="only_inv" onclick="setSimulationPreset('only_inv')" title="Simular solo invitados sin cargo (0 reservas)">🎟️ Solo Inv</button>
                         <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="only_res" onclick="setSimulationPreset('only_res')" title="Simular solo con tarjeta / reservas (0 invitados)">💳 Solo Res</button>
                         <button type="button" class="preview-sim-btn sim-preset-btn" data-preset="mixed" onclick="setSimulationPreset('mixed')" title="Simular mixto (1 invitado + 1 reserva)">🔀 Mixto</button>
@@ -4925,7 +4926,8 @@
                         <span class="sim-popover-label">Todos ({name}):</span>
                         <div class="sim-popover-buttons">
                             <button type="button" class="sim-scope-btn" data-scope="all" data-val="1" onclick="setSimulationCustom('all', 1)">1 (Singular)</button>
-                            <button type="button" class="sim-scope-btn active" data-scope="all" data-val="2" onclick="setSimulationCustom('all', 2)">2+ (Plural)</button>
+                            <button type="button" class="sim-scope-btn active" data-scope="all" data-val="2" onclick="setSimulationCustom('all', 2)">2 (Pareja)</button>
+                            <button type="button" class="sim-scope-btn" data-scope="all" data-val="4" onclick="setSimulationCustom('all', 4)">4 (Grupo)</button>
                         </div>
                     </div>
                     <div class="sim-popover-row">
@@ -4933,7 +4935,8 @@
                         <div class="sim-popover-buttons">
                             <button type="button" class="sim-scope-btn" data-scope="inv" data-val="0" onclick="setSimulationCustom('inv', 0)">0 (Ninguno)</button>
                             <button type="button" class="sim-scope-btn" data-scope="inv" data-val="1" onclick="setSimulationCustom('inv', 1)">1 (Singular)</button>
-                            <button type="button" class="sim-scope-btn active" data-scope="inv" data-val="2" onclick="setSimulationCustom('inv', 2)">2+ (Plural)</button>
+                            <button type="button" class="sim-scope-btn active" data-scope="inv" data-val="2" onclick="setSimulationCustom('inv', 2)">2 (Pareja)</button>
+                            <button type="button" class="sim-scope-btn" data-scope="inv" data-val="4" onclick="setSimulationCustom('inv', 4)">4 (Grupo)</button>
                         </div>
                     </div>
                     <div class="sim-popover-row">
@@ -4941,7 +4944,8 @@
                         <div class="sim-popover-buttons">
                             <button type="button" class="sim-scope-btn" data-scope="res" data-val="0" onclick="setSimulationCustom('res', 0)">0 (Ninguno)</button>
                             <button type="button" class="sim-scope-btn" data-scope="res" data-val="1" onclick="setSimulationCustom('res', 1)">1 (Singular)</button>
-                            <button type="button" class="sim-scope-btn active" data-scope="res" data-val="2" onclick="setSimulationCustom('res', 2)">2+ (Plural)</button>
+                            <button type="button" class="sim-scope-btn active" data-scope="res" data-val="2" onclick="setSimulationCustom('res', 2)">2 (Pareja)</button>
+                            <button type="button" class="sim-scope-btn" data-scope="res" data-val="4" onclick="setSimulationCustom('res', 4)">4 (Grupo)</button>
                         </div>
                     </div>
                 </div>
@@ -6686,7 +6690,11 @@
                 btn.classList.toggle('active', previewSimulation[scope] === val);
             });
             document.querySelectorAll('.tb-guest-mode-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === (previewSimulation.all === 1 ? 'single' : 'plural'));
+                const mode = btn.dataset.mode;
+                const isMatch = (mode === 'single' && previewSimulation.all === 1) ||
+                                (mode === 'plural' && previewSimulation.all === 2) ||
+                                (mode === 'group4' && previewSimulation.all === 4);
+                btn.classList.toggle('active', isMatch);
             });
         }
 
@@ -6702,6 +6710,11 @@
                 previewSimulation.inv = 2;
                 previewSimulation.res = 2;
                 previewGuestMode = 'plural';
+            } else if (preset === 'group4') {
+                previewSimulation.all = 4;
+                previewSimulation.inv = 4;
+                previewSimulation.res = 4;
+                previewGuestMode = 'group4';
             } else if (preset === 'only_inv') {
                 previewSimulation.all = 2;
                 previewSimulation.inv = 2;
@@ -6721,8 +6734,9 @@
             updateSimulationUI();
             updateLivePreview();
             const labels = {
-                single: '👤 1 Persona (Singular total)',
-                plural: '👥 Grupo (Plural total)',
+                single: '👤 1 Persona (Singular)',
+                plural: '👥 Pareja (2 personas)',
+                group4: '👨‍👩‍👧‍👦 Grupo de 4 Personas',
                 only_inv: '🎟️ Solo Invitados (0 reservas)',
                 only_res: '💳 Solo Reservas (0 invitados)',
                 mixed: '🔀 Mixto (1 inv + 1 res)'
@@ -6733,7 +6747,7 @@
         function setSimulationCustom(scope, val) {
             previewSimulation.mode = 'custom';
             previewSimulation[scope] = parseInt(val, 10);
-            previewGuestMode = previewSimulation.all === 1 ? 'single' : 'plural';
+            previewGuestMode = previewSimulation.all === 1 ? 'single' : (previewSimulation.all === 4 ? 'group4' : 'plural');
             updateSimulationUI();
             updateLivePreview();
         }
@@ -8089,8 +8103,11 @@
                         <button type="button" class="tb-btn-square tb-guest-mode-btn ${previewGuestMode === 'single' ? 'active' : ''}" data-mode="single" title="Simular 1 persona (singular)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </button>
-                        <button type="button" class="tb-btn-square tb-guest-mode-btn ${previewGuestMode === 'plural' ? 'active' : ''}" data-mode="plural" title="Simular grupo / varios invitados (plural)">
+                        <button type="button" class="tb-btn-square tb-guest-mode-btn ${previewGuestMode === 'plural' ? 'active' : ''}" data-mode="plural" title="Simular pareja / 2 personas (plural)">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </button>
+                        <button type="button" class="tb-btn-square tb-guest-mode-btn ${previewGuestMode === 'group4' ? 'active' : ''}" data-mode="group4" title="Simular grupo familiar (4 personas)" style="font-size: 0.72rem; font-weight: 700; width: auto; min-width: 26px; padding: 0 4px;">
+                            <span>👥⁴</span>
                         </button>
 
                         <div class="tb-divider"></div>
@@ -9885,9 +9902,30 @@
                 const countInv = (typeof previewSimulation !== 'undefined' && previewSimulation.inv !== undefined) ? previewSimulation.inv : (isSingle ? 1 : 2);
                 const countRes = (typeof previewSimulation !== 'undefined' && previewSimulation.res !== undefined) ? previewSimulation.res : (isSingle ? 1 : 2);
 
-                const nameVal = countAll === 1 ? 'Alejandro' : 'María y Alejandro';
-                const invVal = countInv === 0 ? '' : (countInv === 1 ? 'María' : 'María y Alejandro');
-                const resVal = countRes === 0 ? '' : (countRes === 1 ? 'Alejandro' : 'Alejandro y Pedro');
+                let nameVal = 'María y Alejandro';
+                if (countAll === 1) {
+                    nameVal = 'Alejandro';
+                } else if (countAll === 4) {
+                    nameVal = 'María, Alejandro, Lucas y Sofía';
+                }
+
+                let invVal = 'María y Alejandro';
+                if (countInv === 0) {
+                    invVal = '';
+                } else if (countInv === 1) {
+                    invVal = 'María';
+                } else if (countInv === 4) {
+                    invVal = 'María, Alejandro, Lucas y Sofía';
+                }
+
+                let resVal = 'Alejandro y Pedro';
+                if (countRes === 0) {
+                    resVal = '';
+                } else if (countRes === 1) {
+                    resVal = 'Alejandro';
+                } else if (countRes === 4) {
+                    resVal = 'Alejandro, Pedro, Lucas y Sofía';
+                }
                 const priceVal = (typeof previewSimulation !== 'undefined' && previewSimulation.value) ? previewSimulation.value : DEFAULT_CARD_VALUE;
 
                 return str
@@ -10137,9 +10175,6 @@
 
                                 if (childItems.some(c => c.locked)) {
                                     const targetSelectId = activeTargetChildId || el.id;
-                                    if (selectedElementId !== targetSelectId) {
-                                        selectElementForEditing(targetSelectId);
-                                    }
                                     const lockedChild = (childItems.find(c => c.id === targetSelectId && c.locked) || childItems.find(c => c.locked));
                                     let flashed = false;
                                     const startX = e.clientX;
@@ -10153,6 +10188,9 @@
                                     const onLockedUp = () => {
                                         window.removeEventListener('pointermove', onLockedMove);
                                         window.removeEventListener('pointerup', onLockedUp);
+                                        if (!flashed) {
+                                            selectElementForEditing(targetSelectId, true);
+                                        }
                                     };
                                     window.addEventListener('pointermove', onLockedMove);
                                     window.addEventListener('pointerup', onLockedUp);
@@ -10172,7 +10210,7 @@
                                     if (!hasDragged && Math.hypot(dx, dy) > 4) {
                                         hasDragged = true;
                                         if (selectedElementId !== el.id && !childItems.some(c => c.id === selectedElementId)) {
-                                            selectElementForEditing(el.id);
+                                            selectElementForEditing(el.id, false);
                                         }
                                     }
                                     if (hasDragged) {
@@ -10198,9 +10236,11 @@
                                         renderElementsList();
                                     } else {
                                         if (activeTargetChildId) {
-                                            selectElementForEditing(activeTargetChildId);
+                                            selectElementForEditing(activeTargetChildId, true);
                                         } else if (selectedElementId !== el.id && !childItems.some(c => c.id === selectedElementId)) {
-                                            selectElementForEditing(el.id);
+                                            selectElementForEditing(el.id, true);
+                                        } else {
+                                            selectElementForEditing(el.id, true);
                                         }
                                     }
                                 };
@@ -10340,9 +10380,6 @@
                             let preDragSnapshot = null;
                             textDiv.onpointerdown = (e) => {
                                 e.stopPropagation();
-                                if (selectedElementId !== el.id) {
-                                    selectElementForEditing(el.id);
-                                }
                                 if (el.locked) {
                                     let flashed = false;
                                     const startX = e.clientX;
@@ -10356,6 +10393,9 @@
                                     const onLockedUp = () => {
                                         window.removeEventListener('pointermove', onLockedMove);
                                         window.removeEventListener('pointerup', onLockedUp);
+                                        if (!flashed) {
+                                            selectElementForEditing(el.id, true);
+                                        }
                                     };
                                     window.addEventListener('pointermove', onLockedMove);
                                     window.addEventListener('pointerup', onLockedUp);
@@ -10375,7 +10415,7 @@
                                     if (!hasDragged && Math.hypot(dx, dy) > 4) {
                                         hasDragged = true;
                                         if (selectedElementId !== el.id) {
-                                            selectElementForEditing(el.id);
+                                            selectElementForEditing(el.id, false);
                                         }
                                     }
                                     if (hasDragged) {
@@ -10405,7 +10445,7 @@
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
-                                        selectElementForEditing(el.id);
+                                        selectElementForEditing(el.id, true);
                                     }
                                 };
 
@@ -10482,9 +10522,6 @@
                             locDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
-                                if (selectedElementId !== el.id) {
-                                    selectElementForEditing(el.id);
-                                }
                                 if (el.locked) {
                                     let flashed = false;
                                     const startX = e.clientX;
@@ -10498,6 +10535,9 @@
                                     const onLockedUp = () => {
                                         window.removeEventListener('pointermove', onLockedMove);
                                         window.removeEventListener('pointerup', onLockedUp);
+                                        if (!flashed) {
+                                            selectElementForEditing(el.id, true);
+                                        }
                                     };
                                     window.addEventListener('pointermove', onLockedMove);
                                     window.addEventListener('pointerup', onLockedUp);
@@ -10517,7 +10557,7 @@
                                     if (!hasDragged && Math.hypot(dx, dy) > 4) {
                                         hasDragged = true;
                                         if (selectedElementId !== el.id) {
-                                            selectElementForEditing(el.id);
+                                            selectElementForEditing(el.id, false);
                                         }
                                     }
                                     if (hasDragged) {
@@ -10542,7 +10582,7 @@
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
-                                        selectElementForEditing(el.id);
+                                        selectElementForEditing(el.id, true);
                                     }
                                 };
 
@@ -10687,9 +10727,6 @@
                             cdDiv.onpointerdown = (e) => {
                                 if (e.target.closest('.sticker-rot-handle')) return;
                                 e.stopPropagation();
-                                if (selectedElementId !== el.id) {
-                                    selectElementForEditing(el.id);
-                                }
                                 if (el.locked) {
                                     let flashed = false;
                                     const startX = e.clientX;
@@ -10703,6 +10740,9 @@
                                     const onLockedUp = () => {
                                         window.removeEventListener('pointermove', onLockedMove);
                                         window.removeEventListener('pointerup', onLockedUp);
+                                        if (!flashed) {
+                                            selectElementForEditing(el.id, true);
+                                        }
                                     };
                                     window.addEventListener('pointermove', onLockedMove);
                                     window.addEventListener('pointerup', onLockedUp);
@@ -10722,7 +10762,7 @@
                                     if (!hasDragged && Math.hypot(dx, dy) > 4) {
                                         hasDragged = true;
                                         if (selectedElementId !== el.id) {
-                                            selectElementForEditing(el.id);
+                                            selectElementForEditing(el.id, false);
                                         }
                                     }
                                     if (hasDragged) {
@@ -10747,7 +10787,7 @@
                                         updateLivePreview();
                                         updateDirtySlideChipsUI();
                                     } else {
-                                        selectElementForEditing(el.id);
+                                        selectElementForEditing(el.id, true);
                                     }
                                 };
 
@@ -10850,9 +10890,10 @@
                             formDiv.style.overflowY = 'auto';
                             formDiv.style.pointerEvents = 'auto';
 
-                            const showSecondGuest = (typeof previewSimulation !== 'undefined') ? (previewSimulation.all > 1) : true;
-                            const showPaymentCard = (typeof previewSimulation !== 'undefined') ? (previewSimulation.res > 0) : true;
-                            const cardAmountStr = (typeof previewSimulation !== 'undefined' && previewSimulation.res === 1) ? '$25.000 (1 tarjeta)' : '$50.000 (2 tarjetas)';
+                            const guestCount = (typeof previewSimulation !== 'undefined') ? previewSimulation.all : 2;
+                            const resCount = (typeof previewSimulation !== 'undefined') ? previewSimulation.res : 2;
+                            const showPaymentCard = resCount > 0;
+                            const cardAmountStr = resCount === 1 ? '$25.000 (1 tarjeta)' : (resCount === 4 ? '$100.000 (4 tarjetas)' : '$50.000 (2 tarjetas)');
 
                             formDiv.innerHTML = `
                             <div class="interactive-content rsvp-form-container" style="padding: 4px; box-sizing: border-box; width: 100%; font-family: 'Montserrat', sans-serif;">
@@ -10891,11 +10932,27 @@
                                             </div>
                                         </div>
                                     </div>
-                                    ${showSecondGuest ? `
+                                    ${guestCount >= 2 ? `
                                     <div class="rsvp-guest-card" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
                                         <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px;">
                                             <span class="rsvp-bullet bullet-pending" style="width: 14px; height: 14px; border-radius: 50%; background: #f1c40f; box-shadow: 0 0 8px rgba(241,196,15,0.7); display: inline-block;"></span>
                                             <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Alejandro Pérez</span>
+                                            <span style="margin-left: auto; color: rgba(255,255,255,0.6); font-size: 0.75rem;">▼</span>
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                    ${guestCount >= 4 ? `
+                                    <div class="rsvp-guest-card" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
+                                        <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px;">
+                                            <span class="rsvp-bullet bullet-si" style="width: 14px; height: 14px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.7); display: inline-block;"></span>
+                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Lucas Gómez</span>
+                                            <span style="margin-left: auto; color: rgba(255,255,255,0.6); font-size: 0.75rem;">▼</span>
+                                        </div>
+                                    </div>
+                                    <div class="rsvp-guest-card" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
+                                        <div class="rsvp-guest-row" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px;">
+                                            <span class="rsvp-bullet bullet-si" style="width: 14px; height: 14px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.7); display: inline-block;"></span>
+                                            <span class="rsvp-guest-name" style="color: #fff; font-weight: 600; font-size: 0.95rem; font-family: 'Montserrat', sans-serif;">Sofía Gómez</span>
                                             <span style="margin-left: auto; color: rgba(255,255,255,0.6); font-size: 0.75rem;">▼</span>
                                         </div>
                                     </div>
@@ -11050,7 +11107,7 @@
             });
         }
 
-        function selectElementForEditing(elId) {
+        function selectElementForEditing(elId, shouldFocus = true) {
             selectedElementId = elId;
             const slide = getCurrentSlide();
             collapsedElementIds.add('background');
@@ -11064,6 +11121,21 @@
                 document.querySelectorAll('.element-card.is-selected').forEach(c => c.classList.remove('is-selected'));
                 card.classList.add('is-selected');
                 scrollCardIntoView(card);
+
+                if (shouldFocus && elId !== 'background') {
+                    const textInput = card.querySelector('textarea.el-text-content, input.el-text-content, input.countdown-title-input, input[data-field="title"]');
+                    if (textInput) {
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                textInput.focus();
+                                if (typeof textInput.setSelectionRange === 'function') {
+                                    const len = textInput.value.length;
+                                    textInput.setSelectionRange(len, len);
+                                }
+                            }, 60);
+                        });
+                    }
+                }
             }
             updateLivePreview();
         }
