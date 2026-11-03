@@ -2036,37 +2036,104 @@
                 box-shadow: none;
             }
             15% {
-                transform: scale(1.3) rotate(-12deg);
-                color: #ef4444;
+                transform: scale(1.6) rotate(-18deg);
+                color: #ffffff;
                 border-color: #ef4444;
-                background: rgba(239, 68, 68, 0.35);
-                box-shadow: 0 0 14px rgba(239, 68, 68, 0.8);
+                background: #ef4444;
+                box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.4), 0 0 20px #ef4444;
             }
             30% {
-                transform: scale(1.3) rotate(12deg);
-                color: #ef4444;
+                transform: scale(1.6) rotate(18deg);
+                color: #ffffff;
                 border-color: #ef4444;
-                background: rgba(239, 68, 68, 0.35);
-                box-shadow: 0 0 14px rgba(239, 68, 68, 0.8);
+                background: #ef4444;
+                box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.45), 0 0 24px #ef4444;
             }
             45% {
-                transform: scale(1.25) rotate(-8deg);
-                color: #f59e0b;
-                box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+                transform: scale(1.5) rotate(-12deg);
+                color: #ffffff;
+                background: #f59e0b;
+                border-color: #f59e0b;
+                box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.4), 0 0 18px #f59e0b;
             }
             60% {
-                transform: scale(1.2) rotate(8deg);
-                color: #ef4444;
-                box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+                transform: scale(1.4) rotate(10deg);
+                color: #ffffff;
+                background: #ef4444;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.35), 0 0 16px #ef4444;
             }
             75% {
-                transform: scale(1.1) rotate(-4deg);
+                transform: scale(1.2) rotate(-5deg);
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
             }
         }
 
         .element-lock-btn.lock-flash {
-            animation: lockShakeFlash 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-            z-index: 10;
+            animation: lockShakeFlash 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+            z-index: 50;
+        }
+
+        @keyframes cardLockPulse {
+            0%, 100% {
+                border-color: rgba(255, 255, 255, 0.12);
+                box-shadow: none;
+            }
+            20%, 60% {
+                border-color: #ef4444 !important;
+                box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5), 0 0 18px rgba(239, 68, 68, 0.45) !important;
+            }
+        }
+
+        .element-card.card-lock-flash {
+            animation: cardLockPulse 0.7s ease-in-out both;
+        }
+
+        .canvas-lock-flash-el {
+            outline: 3px solid #ef4444 !important;
+            outline-offset: 4px !important;
+            box-shadow: 0 0 24px rgba(239, 68, 68, 0.9) !important;
+            transition: outline 0.1s ease, box-shadow 0.1s ease !important;
+        }
+
+        .canvas-lock-badge {
+            position: absolute;
+            pointer-events: none;
+            z-index: 99999;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.92);
+            border: 2.5px solid #ef4444;
+            box-shadow: 0 0 28px rgba(239, 68, 68, 0.9), inset 0 0 14px rgba(239, 68, 68, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transform: translate(-50%, -50%);
+            animation: canvasLockPop 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes canvasLockPop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3) rotate(-20deg);
+            }
+            25% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.28) rotate(14deg);
+            }
+            45% {
+                transform: translate(-50%, -50%) scale(1.1) rotate(-8deg);
+            }
+            70% {
+                opacity: 0.95;
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.75) translateY(-18px);
+            }
         }
 
         .element-type-badge {
@@ -6853,23 +6920,84 @@
 
         function flashLock(elId) {
             let btn = null;
+            let card = null;
             if (elId === 'background') {
                 btn = document.getElementById('bgLockBtn');
+                card = document.getElementById('elCard_background');
             } else {
                 btn = document.querySelector(`.element-lock-btn[data-el-id="${elId}"]`);
-                if (!btn) {
-                    const card = document.getElementById('elCard_' + elId);
-                    if (card) btn = card.querySelector('.element-lock-btn');
+                card = document.getElementById('elCard_' + elId);
+                if (!btn && card) {
+                    btn = card.querySelector('.element-lock-btn');
                 }
             }
+
+            // 1. Sidebar Lock Button & Card Pulse
             if (btn) {
                 btn.classList.remove('lock-flash');
                 void btn.offsetWidth; // Force DOM reflow to retrigger CSS animation
                 btn.classList.add('lock-flash');
                 setTimeout(() => {
                     if (btn) btn.classList.remove('lock-flash');
-                }, 650);
+                }, 750);
             }
+            if (card) {
+                card.classList.remove('card-lock-flash');
+                void card.offsetWidth;
+                card.classList.add('card-lock-flash');
+                setTimeout(() => {
+                    if (card) card.classList.remove('card-lock-flash');
+                }, 750);
+            }
+
+            // 2. Canvas Visual Feedback (Where the user's cursor / eyes are)
+            const phoneContainer = document.getElementById('storyContainer') || document.getElementById('storyPreviewViewport');
+            if (!phoneContainer) return;
+
+            // Remove any active floating lock badge
+            const prevBadges = phoneContainer.querySelectorAll('.canvas-lock-badge');
+            prevBadges.forEach(b => b.remove());
+
+            let targetEl = null;
+            let leftPos = '50%';
+            let topPos = '50%';
+
+            if (elId === 'background') {
+                targetEl = document.getElementById('previewBgImg') || document.getElementById('previewBgVideo') || document.getElementById('previewStorySlide');
+            } else {
+                targetEl = document.querySelector(`[data-el-id="${elId}"]`);
+            }
+
+            if (targetEl) {
+                targetEl.classList.remove('canvas-lock-flash-el');
+                void targetEl.offsetWidth;
+                targetEl.classList.add('canvas-lock-flash-el');
+                setTimeout(() => {
+                    if (targetEl) targetEl.classList.remove('canvas-lock-flash-el');
+                }, 600);
+
+                if (elId !== 'background') {
+                    const phoneRect = phoneContainer.getBoundingClientRect();
+                    const elRect = targetEl.getBoundingClientRect();
+                    if (phoneRect.width > 0 && phoneRect.height > 0) {
+                        const centerX = (elRect.left + elRect.width / 2) - phoneRect.left;
+                        const centerY = (elRect.top + elRect.height / 2) - phoneRect.top;
+                        leftPos = `${Math.round(centerX)}px`;
+                        topPos = `${Math.round(centerY)}px`;
+                    }
+                }
+            }
+
+            const badge = document.createElement('div');
+            badge.className = 'canvas-lock-badge';
+            badge.style.left = leftPos;
+            badge.style.top = topPos;
+            badge.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+
+            phoneContainer.appendChild(badge);
+            setTimeout(() => {
+                if (badge && badge.parentElement) badge.remove();
+            }, 700);
         }
 
         function autoResizeTextarea(ta) {
