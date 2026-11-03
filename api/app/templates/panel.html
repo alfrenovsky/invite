@@ -4083,6 +4083,9 @@
                                         </option>
                                         {% endfor %}
                                     </select>
+                                    <div id="autoSaveIndicator" class="autosave-status" style="font-size: 0.72rem; color: #10b981; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); white-space: nowrap; user-select: none; transition: all 0.2s ease;">
+                                        <span class="autosave-icon">☁️</span> <span id="autoSaveText">Guardado</span>
+                                    </div>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                     {% set is_initial_active = (active_design and active_design.slug) %}
@@ -5114,6 +5117,7 @@
         let savedSlidesSnapshot = JSON.parse(JSON.stringify(slidesData));
         let backgroundsData = {{ backgrounds| tojson }};
         let stylesData = {{ styles| tojson if styles else '{}' }};
+        let savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData || {}));
         let designsData = {{ designs| tojson if designs else '[]' }};
         let activeDesignData = {{ active_design| tojson if active_design else '{"slug":"","name":""}' }};
         let currentDesignSlug = activeDesignData ? (activeDesignData.slug || '') : '';
@@ -5124,6 +5128,149 @@
         }
         let currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
         let activeStyleKey = 'title'; // 'title' | 'tag' | 'body'
+
+        // -------------------------------------------------------------
+        // AUTOSAVE ENGINE & DIRTY TRACKING
+        // -------------------------------------------------------------
+        let autoSaveTimer = null;
+        let isAutoSaving = false;
+        let hasPendingSave = false;
+
+        function isStylesDirty() {
+            if (!stylesData || !savedStylesSnapshot) return false;
+            return JSON.stringify(stylesData) !== JSON.stringify(savedStylesSnapshot);
+        }
+
+        function setAutoSaveStatus(status, text) {
+            const indicator = document.getElementById('autoSaveIndicator');
+            const label = document.getElementById('autoSaveText');
+            const icon = indicator ? indicator.querySelector('.autosave-icon') : null;
+            if (!indicator || !label) return;
+
+            if (status === 'saving') {
+                indicator.style.color = '#3b82f6';
+                indicator.style.background = 'rgba(59, 130, 246, 0.12)';
+                indicator.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                if (icon) icon.textContent = '🔄';
+                label.textContent = text || 'Guardando...';
+            } else if (status === 'dirty') {
+                indicator.style.color = '#f59e0b';
+                indicator.style.background = 'rgba(245, 158, 11, 0.12)';
+                indicator.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                if (icon) icon.textContent = '⏳';
+                label.textContent = text || 'Cambios pendientes...';
+            } else if (status === 'saved') {
+                indicator.style.color = '#10b981';
+                indicator.style.background = 'rgba(16, 185, 129, 0.12)';
+                indicator.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                if (icon) icon.textContent = '☁️';
+                label.textContent = text || 'Guardado';
+            } else if (status === 'error') {
+                indicator.style.color = '#ef4444';
+                indicator.style.background = 'rgba(239, 68, 68, 0.12)';
+                indicator.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                if (icon) icon.textContent = '⚠️';
+                label.textContent = text || 'Error al guardar';
+            }
+        }
+
+        function scheduleAutoSave(delay = 1500) {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            setAutoSaveStatus('dirty');
+            autoSaveTimer = setTimeout(() => {
+                flushAutoSave();
+            }, delay);
+        }
+
+        async function flushAutoSave() {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+
+            const dirtySlideIds = slidesData.filter(s => isSlideDirty(s.id)).map(s => s.id);
+            const stylesDirty = isStylesDirty();
+
+            if (dirtySlideIds.length === 0 && !stylesDirty) {
+                setAutoSaveStatus('saved');
+                return true;
+            }
+
+            if (isAutoSaving) {
+                hasPendingSave = true;
+                return false;
+            }
+
+            isAutoSaving = true;
+            setAutoSaveStatus('saving');
+
+            try {
+                let success = true;
+
+                // 1. Save active slide first if dirty
+                if (currentSlideId && dirtySlideIds.includes(currentSlideId)) {
+                    const slideOk = await saveActiveSlide(true);
+                    if (!slideOk) success = false;
+                }
+
+                // 2. Save any other dirty slides in batch if needed
+                const remainingDirty = slidesData.filter(s => isSlideDirty(s.id));
+                if (remainingDirty.length > 0) {
+                    const cleanSlides = slidesData.map(s => {
+                        const c = { ...s };
+                        delete c._origId;
+                        return c;
+                    });
+                    const res = await fetch('/panel/slides', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ slides: cleanSlides, design_slug: currentDesignSlug })
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
+                    savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData));
+                    setAutoSaveStatus('saved');
+                        updateDirtySlideChipsUI();
+                    } else {
+                        success = false;
+                    }
+                }
+
+                // 3. Save styles if dirty
+                if (isStylesDirty()) {
+                    const res = await fetch('/panel/styles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...stylesData, design_slug: currentDesignSlug })
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData));
+                    } else {
+                        success = false;
+                    }
+                }
+
+                if (success) {
+                    setAutoSaveStatus('saved');
+                    return true;
+                } else {
+                    setAutoSaveStatus('error');
+                    return false;
+                }
+            } catch (err) {
+                console.error('Error during auto-save:', err);
+                setAutoSaveStatus('error');
+                return false;
+            } finally {
+                isAutoSaving = false;
+                if (hasPendingSave) {
+                    hasPendingSave = false;
+                    scheduleAutoSave(300);
+                }
+            }
+        }
 
         function getComparableSlide(slide) {
             if (!slide) return null;
@@ -5138,6 +5285,7 @@
 
         function markSlideDirty(slideId) {
             updateDirtySlideChipsUI();
+            scheduleAutoSave();
         }
 
         function isSlideDirty(slideId) {
@@ -5152,11 +5300,13 @@
 
         function updateDirtySlideChipsUI() {
             const chips = document.querySelectorAll('#slidesChipsContainer .slide-chip');
+            let anyDirty = false;
             chips.forEach(chip => {
                 const slideId = chip.dataset.slideId;
                 if (!slideId) return;
                 const dirty = isSlideDirty(slideId);
                 if (dirty) {
+                    anyDirty = true;
                     chip.classList.add('dirty');
                     if (!chip.querySelector('.slide-chip-dirty-dot')) {
                         const dot = document.createElement('span');
@@ -5181,6 +5331,10 @@
                     saveBtn.classList.remove('btn-save-dirty');
                     saveBtn.innerHTML = '<span>💾 Guardar</span>';
                 }
+            }
+
+            if (!anyDirty && !isStylesDirty() && !isAutoSaving) {
+                setAutoSaveStatus('saved');
             }
         }
 
@@ -5348,8 +5502,16 @@
             }
         });
 
-        // Global Keyboard Shortcuts (Undo / Redo)
+        // Global Keyboard Shortcuts (Undo / Redo / Save)
         document.addEventListener('keydown', (e) => {
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+            if (isCtrlOrCmd && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+                flushAutoSave();
+                showToast('💾 Cambios guardados');
+                return;
+            }
+
             const activeEl = document.activeElement;
             const isTextInput = activeEl && (
                 (activeEl.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button', 'submit'].includes(activeEl.type)) ||
@@ -5358,7 +5520,6 @@
             );
             if (isTextInput) return;
 
-            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
             if (isCtrlOrCmd) {
                 if ((e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
                     e.preventDefault();
@@ -5370,10 +5531,27 @@
             }
         });
 
+        // Lifecycle flush handlers
+        window.addEventListener('beforeunload', () => {
+            const hasDirtySlides = slidesData.some(s => isSlideDirty(s.id));
+            if (hasDirtySlides || isStylesDirty()) {
+                flushAutoSave();
+            }
+        });
+        window.addEventListener('pagehide', () => {
+            flushAutoSave();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                flushAutoSave();
+            }
+        });
+
         // -------------------------------------------------------------
         // TAB SWITCHING (Slides vs Backgrounds vs Styles)
         // -------------------------------------------------------------
         function switchTab(tabId) {
+            flushAutoSave();
             document.querySelectorAll('.nav-tab').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
             });
@@ -5733,11 +5911,14 @@
 
             // Live preview on 9:16 phone mockup also benefits directly from CSS root variables
             updateLivePreview();
+            if (typeof isStylesDirty === 'function' && isStylesDirty()) {
+                scheduleAutoSave();
+            }
         }
 
-        async function saveStyles() {
+        async function saveStyles(silent = false) {
             const btn = document.getElementById('btnSaveStyles');
-            if (btn) {
+            if (btn && !silent) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
             }
@@ -5749,13 +5930,20 @@
                     body: JSON.stringify({ ...stylesData, design_slug: currentDesignSlug })
                 });
                 const data = await res.json();
-                if (!data.ok) {
-                    showToast(data.error || 'Error al guardar estilos', true);
+                if (data.ok) {
+                    savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData));
+                    setAutoSaveStatus('saved');
+                    if (!silent) showToast('Estilos guardados');
+                    return true;
+                } else {
+                    if (!silent) showToast(data.error || 'Error al guardar estilos', true);
+                    return false;
                 }
             } catch (err) {
-                showToast('Error de red al guardar estilos', true);
+                if (!silent) showToast('Error de red al guardar estilos', true);
+                return false;
             } finally {
-                if (btn) {
+                if (btn && !silent) {
                     btn.disabled = false;
                     btn.innerHTML = '<span>💾 Guardar Estilos</span>';
                 }
@@ -5972,27 +6160,18 @@
             }
         }
 
-        async function saveHeaderStyles() {
+        async function saveHeaderStyles(silent = false) {
             const btn = document.getElementById('btnSaveHeader');
-            if (btn) {
+            if (btn && !silent) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
             }
-
             try {
-                const res = await fetch('/panel/styles', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...stylesData, design_slug: currentDesignSlug })
-                });
-                const data = await res.json();
-                if (!data.ok) {
-                    showToast(data.error || 'Error al guardar encabezado', true);
-                }
-            } catch (err) {
-                showToast('Error de red al guardar encabezado', true);
+                const ok = await saveStyles(silent);
+                if (ok && !silent) showToast('Encabezado guardado');
+                return ok;
             } finally {
-                if (btn) {
+                if (btn && !silent) {
                     btn.disabled = false;
                     btn.innerHTML = '<span>💾 Guardar Encabezado</span>';
                 }
@@ -6197,6 +6376,8 @@
                         activeDesignData = data.active_design;
                     }
                     savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
+                    savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData));
+                    setAutoSaveStatus('saved');
 
                     currentSlideId = slidesData.length > 0 ? slidesData[0].id : null;
 
@@ -6296,6 +6477,8 @@
                         activeDesignData = data.active_design;
                     }
                     savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
+                    savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData));
+                    setAutoSaveStatus('saved');
 
                     updateDesignsUI();
                     updateDirtySlideChipsUI();
@@ -6594,6 +6777,9 @@
         }
 
         function selectSlide(slideId) {
+            if (currentSlideId && currentSlideId !== slideId && isSlideDirty(currentSlideId)) {
+                flushAutoSave();
+            }
             deselectElement();
             currentSlideId = slideId;
             renderSlideChips();
@@ -11635,12 +11821,12 @@
         // -------------------------------------------------------------
         // SLIDE CRUD OPERATIONS
         // -------------------------------------------------------------
-        async function saveActiveSlide() {
+        async function saveActiveSlide(silent = false) {
             const slide = getCurrentSlide();
-            if (!slide) return;
+            if (!slide) return false;
 
             const btn = document.getElementById('btnSaveActiveSlide');
-            if (btn) {
+            if (btn && !silent) {
                 btn.disabled = true;
                 btn.innerHTML = '<span>Guardando...</span>';
             }
@@ -11665,13 +11851,17 @@
                         savedSlidesSnapshot.push(cleanSnap);
                     }
                     updateDirtySlideChipsUI();
+                    if (!silent) showToast(data.message || 'Slide guardado');
+                    return true;
                 } else {
-                    showToast(data.error || 'Error al guardar el slide', true);
+                    if (!silent) showToast(data.error || 'Error al guardar el slide', true);
+                    return false;
                 }
             } catch (err) {
-                showToast('Error de red al guardar el slide', true);
+                if (!silent) showToast('Error de red al guardar el slide', true);
+                return false;
             } finally {
-                if (btn) {
+                if (btn && !silent) {
                     btn.disabled = false;
                     updateDirtySlideChipsUI();
                 }
@@ -11705,6 +11895,8 @@
                 const data = await res.json();
                 if (data.ok) {
                     savedSlidesSnapshot = slidesData.map(s => getComparableSlide(s));
+                    savedStylesSnapshot = JSON.parse(JSON.stringify(stylesData));
+                    setAutoSaveStatus('saved');
                     updateDirtySlideChipsUI();
                     showToast('Orden de slides actualizado');
                 } else {
