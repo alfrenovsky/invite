@@ -50,9 +50,12 @@
                 {% set box_pad_y = box.pad_y if (box.pad_y is defined and box.pad_y is not none and box.pad_y != '') else 12 %}
                 {% set box_pad_x = box.pad_x if (box.pad_x is defined and box.pad_x is not none and box.pad_x != '') else 16 %}
                 {% set box_gap = box.gap if (box.gap is defined and box.gap is not none and box.gap != '') else 8 %}
+                {% set box_valign = box.valign if (box.valign in ('top', 'center', 'bottom')) else 'center' %}
+                {% set box_trans_y = '0%' if box_valign == 'top' else ('-100%' if box_valign == 'bottom' else '-50%') %}
+                {% set box_origin_y = 'top' if box_valign == 'top' else ('bottom' if box_valign == 'bottom' else 'center') %}
                 {% set box_glass_css = ('backdrop-filter: blur(' ~ box_blur ~ 'px); -webkit-backdrop-filter: blur(' ~ box_blur ~ 'px); border: 1px solid rgba(255,255,255,0.18);') if box_blur > 0 else '' %}
-                <div class="slide-el slide-el-box-group"
-                     style="left: calc(50% + {{ box_x }}%); top: calc(50% + {{ box_y }}%); width: {{ box_w }}%; max-width: {{ box_w }}%; transform: translate(-50%, -50%) rotate({{ box_rot }}deg) scale({{ box_zoom }}); transform-origin: center center; background: {{ box_bg }}; border-radius: {{ box_radius }}px; padding: {{ box_pad_y }}px {{ box_pad_x }}px; gap: {{ box_gap }}px; {{ box_glass_css }}">
+                <div class="slide-el slide-el-box-group valign-{{ box_valign }}"
+                     style="left: calc(50% + {{ box_x }}%); top: calc(50% + {{ box_y }}%); width: {{ box_w }}%; max-width: {{ box_w }}%; transform: translate(-50%, {{ box_trans_y }}) rotate({{ box_rot }}deg) scale({{ box_zoom }}); transform-origin: center {{ box_origin_y }}; background: {{ box_bg }}; border-radius: {{ box_radius }}px; padding: {{ box_pad_y }}px {{ box_pad_x }}px; gap: {{ box_gap }}px; {{ box_glass_css }}">
                     {% for item in (slide.elements if slide else []) or [] %}
                         {% if item.box_id == el.box_id and item.type == 'text' %}
                             {% set item_align = item.align if (item.align in ('left', 'center', 'right')) else 'center' %}

@@ -2123,11 +2123,13 @@
             box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
         }
 
-        .preview-text-el.is-selected.valign-top {
+        .preview-text-el.is-selected.valign-top,
+        .preview-box-group.is-selected.valign-top {
             box-shadow: 0 -4px 14px rgba(56, 189, 248, 0.7);
         }
 
-        .preview-text-el.is-selected.valign-bottom {
+        .preview-text-el.is-selected.valign-bottom,
+        .preview-box-group.is-selected.valign-bottom {
             box-shadow: 0 4px 14px rgba(56, 189, 248, 0.7);
         }
 
@@ -6970,6 +6972,12 @@
                     if (pySl && pySl.value != valPy) pySl.value = valPy;
                     if (pyBd) pyBd.textContent = `${valPy}px`;
 
+                    // Valign buttons for the box
+                    const valValign = boxObj.valign || 'center';
+                    card.querySelectorAll('.box-valign-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.valign === valValign);
+                    });
+
                     // Preset buttons
                     const boxPresetBtns = card.querySelectorAll('.box-preset-btn');
                     if (boxPresetBtns.length > 0 && typeof BOX_PRESETS_CONFIG !== 'undefined') {
@@ -7811,6 +7819,7 @@
                     body.appendChild(aliasGroup);
                 } else {
                     // Text Content input with TinyMCE-style Toolbar
+                    const isSharedBoxText = el.type === 'text' && !!el.box_id && slide && slide.boxes && !!slide.boxes[el.box_id];
                     const currentStyle = el.style || 'body';
                     const currentAlign = (el.align && ['left', 'center', 'right'].includes(el.align)) ? el.align : 'center';
                     const currentVAlign = (el.valign && ['top', 'center', 'bottom'].includes(el.valign)) ? el.valign : 'center';
@@ -7853,9 +7862,10 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
                         </button>
 
+                        ${!isSharedBoxText ? `
                         <div class="tb-divider"></div>
 
-                        <!-- Vertical Alignment Square Buttons -->
+                        <!-- Vertical Alignment Square Buttons (Sólo textos individuales) -->
                         <button type="button" class="tb-btn-square tb-valign-btn ${currentVAlign === 'top' ? 'active' : ''}" data-valign="top" title="Alinear desde arriba">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                                 <line x1="3" y1="4" x2="21" y2="4"/>
@@ -7877,6 +7887,7 @@
                                 <line x1="6" y1="14" x2="18" y2="14"/>
                             </svg>
                         </button>
+                        ` : ''}
 
                         <div class="tb-divider"></div>
 
@@ -8086,6 +8097,16 @@
                                     <span class="range-badge typo-box-pady-badge" id="typoBoxPadYBadge_${el.id}" style="min-width: 38px; text-align: center;">${(el.box_id && slide.boxes && slide.boxes[el.box_id] && slide.boxes[el.box_id].pad_y !== undefined) ? slide.boxes[el.box_id].pad_y : 12}px</span>
                                 </div>
                             </div>
+
+                            <!-- Anclaje vertical de la caja (Valign) - sólo cuando está en caja compartida -->
+                            <div class="typo-panel-row" id="rowBoxValign_${el.id}" style="display: ${el.box_id ? 'flex' : 'none'};">
+                                <label class="typo-panel-label">Anclaje vertical caja:</label>
+                                <div style="display: flex; gap: 4px; flex: 1;">
+                                    <button type="button" class="tb-btn-style box-valign-btn ${((slide.boxes && el.box_id && slide.boxes[el.box_id] && slide.boxes[el.box_id].valign) || 'center') === 'top' ? 'active' : ''}" data-valign="top" style="flex: 1; padding: 4px 6px; font-size: 0.74rem;">⬆️ Arriba</button>
+                                    <button type="button" class="tb-btn-style box-valign-btn ${((slide.boxes && el.box_id && slide.boxes[el.box_id] && slide.boxes[el.box_id].valign) || 'center') === 'center' ? 'active' : ''}" data-valign="center" style="flex: 1; padding: 4px 6px; font-size: 0.74rem;">⏺️ Centro</button>
+                                    <button type="button" class="tb-btn-style box-valign-btn ${((slide.boxes && el.box_id && slide.boxes[el.box_id] && slide.boxes[el.box_id].valign) || 'center') === 'bottom' ? 'active' : ''}" data-valign="bottom" style="flex: 1; padding: 4px 6px; font-size: 0.74rem;">⬇️ Abajo</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <textarea rows="2" class="form-input el-text-content" placeholder="Escribí el texto aquí...">${escapeHtml(el.content || '')}</textarea>
@@ -8221,7 +8242,8 @@
                                         x: el.x || 0,
                                         y: el.y || 0,
                                         rotate: el.rotate || 0,
-                                        zoom: el.zoom || 100
+                                        zoom: el.zoom || 100,
+                                        valign: el.valign || 'center'
                                     };
                                     el.box_id = newId;
                                 } else {
@@ -8258,7 +8280,8 @@
                                 x: 0,
                                 y: 0,
                                 rotate: 0,
-                                zoom: 100
+                                zoom: 100,
+                                valign: el.valign || 'center'
                             };
                             el.box_id = newId;
                             delete el.bg_color;
@@ -8616,7 +8639,12 @@
                     const btnCenterX = textGroup.querySelector('.tb-center-x-btn');
                     btnCenterX.onclick = () => {
                         recordHistorySnapshot();
-                        el.x = 0;
+                        if (isSharedBoxText && slide.boxes && slide.boxes[el.box_id]) {
+                            slide.boxes[el.box_id].x = 0;
+                            syncBoxSlidersAcrossCards(el.box_id);
+                        } else {
+                            el.x = 0;
+                        }
                         const sliderX = document.getElementById(`sliderX_${idx}`);
                         const numX = document.getElementById(`numX_${idx}`);
                         const badgeX = document.getElementById(`badgeX_${idx}`);
@@ -8625,13 +8653,18 @@
                         if (badgeX) badgeX.textContent = '0%';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
-                        showToast('↔ Elemento centrado horizontalmente');
+                        showToast(isSharedBoxText ? '↔ Caja centrada horizontalmente' : '↔ Elemento centrado horizontalmente');
                     };
 
                     const btnCenterY = textGroup.querySelector('.tb-center-y-btn');
                     btnCenterY.onclick = () => {
                         recordHistorySnapshot();
-                        el.y = 0;
+                        if (isSharedBoxText && slide.boxes && slide.boxes[el.box_id]) {
+                            slide.boxes[el.box_id].y = 0;
+                            syncBoxSlidersAcrossCards(el.box_id);
+                        } else {
+                            el.y = 0;
+                        }
                         const sliderY = document.getElementById(`sliderY_${idx}`);
                         const numY = document.getElementById(`numY_${idx}`);
                         const badgeY = document.getElementById(`badgeY_${idx}`);
@@ -8640,7 +8673,7 @@
                         if (badgeY) badgeY.textContent = '0%';
                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                         updateLivePreview();
-                        showToast('↕ Elemento centrado verticalmente');
+                        showToast(isSharedBoxText ? '↕ Caja centrada verticalmente' : '↕ Elemento centrado verticalmente');
                     };
 
                     // 3D Toggle Button
@@ -8724,6 +8757,7 @@
 
                 const isSharedBox = el.type === 'text' && !!el.box_id && slide && slide.boxes && !!slide.boxes[el.box_id];
                 const boxObj = isSharedBox ? slide.boxes[el.box_id] : null;
+                const boxValign = boxObj ? (boxObj.valign || 'center') : 'center';
 
                 const currX = boxObj ? (boxObj.x !== undefined ? boxObj.x : 0) : (el.x !== undefined ? el.x : 0);
                 const currY = boxObj ? (boxObj.y !== undefined ? boxObj.y : 0) : (el.y !== undefined ? el.y : 0);
@@ -8740,7 +8774,18 @@
                 ${isSharedBox ? `
                 <div style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 6px; padding: 5px 9px; margin-bottom: 8px;">
                     <span style="font-size: 0.74rem; font-weight: 600; color: #38bdf8;">📦 Posición & Tamaño de la Caja: ${escapeHtml(boxObj.title || el.box_id)}</span>
-                    <span style="font-size: 0.68rem; color: #94a3b8;">Afecta a todos los textos de esta caja</span>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 0.68rem; color: #94a3b8; margin-right: 2px;">Anclaje V:</span>
+                        <button type="button" class="tb-btn-square box-valign-btn ${boxValign === 'top' ? 'active' : ''}" data-valign="top" title="Anclar caja arriba (crece hacia abajo)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="4" x2="21" y2="4"/><line x1="6" y1="10" x2="18" y2="10"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
+                        </button>
+                        <button type="button" class="tb-btn-square box-valign-btn ${boxValign === 'center' ? 'active' : ''}" data-valign="center" title="Anclar caja al centro (crece hacia ambos lados)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="2 2"/><line x1="6" y1="6" x2="18" y2="6"/><line x1="6" y1="18" x2="18" y2="18"/></svg>
+                        </button>
+                        <button type="button" class="tb-btn-square box-valign-btn ${boxValign === 'bottom' ? 'active' : ''}" data-valign="bottom" title="Anclar caja abajo (crece hacia arriba)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="20" x2="21" y2="20"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="6" y1="14" x2="18" y2="14"/></svg>
+                        </button>
+                    </div>
                 </div>
                 ` : ''}
                 <div class="${el.type === 'text' ? 'pos-sliders-penta' : 'pos-sliders-trio'}">
@@ -9202,6 +9247,25 @@
 
                 body.appendChild(posRow);
                 }
+
+                // Bind Box Valign buttons if element is in a shared box
+                if (isSharedBox) {
+                    card.querySelectorAll('.box-valign-btn').forEach(btn => {
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            const chosenValign = btn.dataset.valign;
+                            if (!chosenValign || !el.box_id || !slide.boxes || !slide.boxes[el.box_id]) return;
+                            if ((slide.boxes[el.box_id].valign || 'center') === chosenValign) return;
+                            recordHistorySnapshot();
+                            slide.boxes[el.box_id].valign = chosenValign;
+                            syncBoxSlidersAcrossCards(el.box_id);
+                            if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
+                            updateLivePreview();
+                            updateDirtySlideChipsUI();
+                        };
+                    });
+                }
+
                 card.appendChild(body);
                 container.appendChild(card);
             });
@@ -9735,18 +9799,22 @@
                             const boxPadY = (box.pad_y !== undefined && box.pad_y !== null && box.pad_y !== '') ? Number(box.pad_y) : 12;
                             const boxPadX = (box.pad_x !== undefined && box.pad_x !== null && box.pad_x !== '') ? Number(box.pad_x) : 16;
                             const boxGap = (box.gap !== undefined && box.gap !== null && box.gap !== '') ? Number(box.gap) : 8;
+                            const boxValign = (box.valign && ['top', 'center', 'bottom'].includes(box.valign)) ? box.valign : 'center';
+                            const boxTransY = boxValign === 'top' ? '0%' : (boxValign === 'bottom' ? '-100%' : '-50%');
+                            const boxOriginY = boxValign === 'top' ? 'top' : (boxValign === 'bottom' ? 'bottom' : 'center');
 
                             const boxDiv = document.createElement('div');
                             const childItems = slide.elements.filter(item => item.box_id === boxId && item.type === 'text');
                             const isBoxSelected = selectedElementId === boxId || childItems.some(item => item.id === selectedElementId);
-                            boxDiv.className = `slide-el slide-el-box-group preview-box-group${isBoxSelected ? ' is-selected' : ''}`;
+                            boxDiv.className = `slide-el slide-el-box-group preview-box-group valign-${boxValign}${isBoxSelected ? ' is-selected' : ''}`;
                             boxDiv.dataset.boxId = boxId;
+                            boxDiv.dataset.valign = boxValign;
                             boxDiv.style.left = `calc(50% + ${boxX}%)`;
                             boxDiv.style.top = `calc(50% + ${boxY}%)`;
                             boxDiv.style.width = `${boxW}%`;
                             boxDiv.style.maxWidth = `${boxW}%`;
-                            boxDiv.style.transform = `translate(-50%, -50%) rotate(${boxRot}deg) scale(${boxZoom / 100})`;
-                            boxDiv.style.transformOrigin = 'center center';
+                            boxDiv.style.transform = `translate(-50%, ${boxTransY}) rotate(${boxRot}deg) scale(${boxZoom / 100})`;
+                            boxDiv.style.transformOrigin = `center ${boxOriginY}`;
                             boxDiv.style.background = hexToRgba(boxBgVal, boxOpVal);
                             boxDiv.style.borderRadius = `${boxRadius}px`;
                             boxDiv.style.padding = `${boxPadY}px ${boxPadX}px`;
@@ -9765,6 +9833,14 @@
                             }
 
                             if (isBoxSelected) {
+                                const anchorBadge = document.createElement('div');
+                                anchorBadge.className = 'preview-text-anchor-badge';
+                                anchorBadge.style.top = boxValign === 'top' ? '-12px' : (boxValign === 'bottom' ? 'calc(100% + 2px)' : '50%');
+                                anchorBadge.style.transform = boxValign === 'center' ? 'translateY(-50%)' : 'none';
+                                anchorBadge.style.right = '4px';
+                                anchorBadge.innerHTML = boxValign === 'top' ? '⬆️ Top' : (boxValign === 'bottom' ? '⬇️ Bottom' : '⏺️ Center');
+                                boxDiv.appendChild(anchorBadge);
+
                                 const rotHandle = document.createElement('div');
                                 rotHandle.className = 'sticker-rot-handle';
                                 rotHandle.title = 'Arrastrá para rotar la caja';
@@ -9787,7 +9863,7 @@
                                         let finalRot = ((initRot + diff) % 360);
                                         if (Math.abs(diff) > 2) hasRotated = true;
                                         box.rotate = finalRot;
-                                        boxDiv.style.transform = `translate(-50%, -50%) rotate(${finalRot}deg) scale(${(box.zoom || 100) / 100})`;
+                                        boxDiv.style.transform = `translate(-50%, ${boxTransY}) rotate(${finalRot}deg) scale(${(box.zoom || 100) / 100})`;
                                         syncBoxSlidersAcrossCards(boxId);
                                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                     };
@@ -9826,7 +9902,7 @@
                                         const newZoom = Math.max(30, Math.min(250, Math.round(initZoom * scaleRatio)));
                                         if (Math.abs(newZoom - initZoom) > 1) hasScaled = true;
                                         box.zoom = newZoom;
-                                        boxDiv.style.transform = `translate(-50%, -50%) rotate(${box.rotate || 0}deg) scale(${newZoom / 100})`;
+                                        boxDiv.style.transform = `translate(-50%, ${boxTransY}) rotate(${box.rotate || 0}deg) scale(${newZoom / 100})`;
                                         syncBoxSlidersAcrossCards(boxId);
                                         if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                     };
@@ -9955,7 +10031,7 @@
                                 }
                                 const curZ = (box.zoom !== undefined && box.zoom !== null) ? box.zoom : 100;
                                 const curR = box.rotate || 0;
-                                boxDiv.style.transform = `translate(-50%, -50%) rotate(${curR}deg) scale(${curZ / 100})`;
+                                boxDiv.style.transform = `translate(-50%, ${boxTransY}) rotate(${curR}deg) scale(${curZ / 100})`;
                                 syncBoxSlidersAcrossCards(boxId);
                                 if (typeof markSlideDirty === 'function') markSlideDirty(currentSlideId);
                                 updateDirtySlideChipsUI();
