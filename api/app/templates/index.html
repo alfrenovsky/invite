@@ -36,7 +36,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Archivo:ital,wght@0,300..900;1,300..900&family=Barlow+Condensed:wght@600;700&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Rosario:ital,wght@0,300..700;1,300..700&family=Saira:ital,wght@0,300..900;1,300..900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- Story Stylesheet & Fonts (no-cache with auto-versioning) -->
-    <link rel="stylesheet" href="/assets/fonts/fonts.css">
+    <link rel="stylesheet" href="/assets/fonts/fonts.css?v={{ config_version }}">
     <link rel="stylesheet" href="/assets/css/story.css?v={{ config_version }}">
 
     {% if styles %}
@@ -102,7 +102,7 @@
         {% else %}
         body.is-desktop-mode,
         body:not(.is-mobile-mode) {
-            background-image: url('/assets/backgrounds/{{ styles.desktop_background }}') !important;
+            background-image: url('/assets/backgrounds/{{ styles.desktop_background }}?v={{ config_version }}') !important;
         }
         {% endif %}
         {% endif %}
@@ -114,7 +114,7 @@
 <body>
     {% if styles and styles.desktop_background and styles.desktop_background.lower().endswith(('.mp4', '.webm', '.mov', '.m4v')) %}
     <video class="desktop-bg-video" id="desktopBgVideo" autoplay loop muted playsinline preload="auto">
-        <source src="/assets/backgrounds/{{ styles.desktop_background }}">
+        <source src="/assets/backgrounds/{{ styles.desktop_background }}?v={{ config_version }}">
     </video>
     {% endif %}
 

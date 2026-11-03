@@ -582,7 +582,9 @@
                     if (ptrLabel) ptrLabel.textContent = 'Recargando...';
                     ptrIndicator.style.transform = 'translate(-50%, 60px)';
                     setTimeout(() => {
-                        window.location.reload();
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('_t', Date.now());
+                        window.location.replace(url.toString());
                     }, 350);
                     return;
                 } else {
@@ -2254,6 +2256,13 @@
     // Page exit listeners
     window.addEventListener('beforeunload', handleFormSlideExit);
     window.addEventListener('pagehide', handleFormSlideExit);
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('_t', Date.now());
+            window.location.replace(url.toString());
+        }
+    });
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
             handleFormSlideExit();

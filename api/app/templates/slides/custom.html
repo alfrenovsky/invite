@@ -8,6 +8,10 @@
     {% else %}
         {% set bg_url = '/assets/backgrounds/' ~ slide.background %}
     {% endif %}
+    {% if config_version %}
+        {% set bg_sep = '&' if '?' in bg_url else '?' %}
+        {% set bg_url = bg_url ~ bg_sep ~ 'v=' ~ config_version %}
+    {% endif %}
 {% endif %}
 {% set bg_x = slide.bg_x if (slide and slide.bg_x is defined and slide.bg_x is not none) else 0 %}
 {% set bg_y = slide.bg_y if (slide and slide.bg_y is defined and slide.bg_y is not none) else 0 %}
