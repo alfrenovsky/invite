@@ -647,19 +647,19 @@
 
         /* Green if confirmed */
         .rsvp-bullet.bullet-si {
-            background-color: #16a34a;
+            background-color: #4ade80;
             box-shadow: none !important;
         }
 
         /* Red if confirmed not to go */
         .rsvp-bullet.bullet-no {
-            background-color: #dc2626;
+            background-color: #f87171;
             box-shadow: none !important;
         }
 
-        /* Orange if not / pending */
+        /* Gray if pending */
         .rsvp-bullet.bullet-pending {
-            background-color: #ea580c;
+            background-color: #94a3b8;
             box-shadow: none !important;
         }
 
@@ -792,29 +792,29 @@
             transform: scale(0.97);
         }
 
-        /* Selected Status Colors: Asiste=Green, No asiste=Red, Pendiente=Orange */
+        /* Selected Status Colors: Asiste=Light Green, No asiste=Light Red, Pendiente=Gray (Glassmorphism) */
         .rsvp-status-btn.btn-asiste.selected {
-            background: #16a34a !important;
-            color: #ffffff !important;
-            border: 1.5px solid #22c55e !important;
+            background: rgba(74, 222, 128, 0.22) !important;
+            color: #86efac !important;
+            border: 1.5px solid #4ade80 !important;
             box-shadow: none !important;
             text-shadow: none !important;
             font-weight: 700;
         }
 
         .rsvp-status-btn.btn-no.selected {
-            background: #dc2626 !important;
-            color: #ffffff !important;
-            border: 1.5px solid #ef4444 !important;
+            background: rgba(248, 113, 113, 0.22) !important;
+            color: #fca5a5 !important;
+            border: 1.5px solid #f87171 !important;
             box-shadow: none !important;
             text-shadow: none !important;
             font-weight: 700;
         }
 
         .rsvp-status-btn.btn-pendiente.selected {
-            background: #ea580c !important;
-            color: #ffffff !important;
-            border: 1.5px solid #f97316 !important;
+            background: rgba(148, 163, 184, 0.20) !important;
+            color: #cbd5e1 !important;
+            border: 1.5px solid #94a3b8 !important;
             box-shadow: none !important;
             text-shadow: none !important;
             font-weight: 700;
