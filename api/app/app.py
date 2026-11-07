@@ -852,6 +852,28 @@ def resolve_invitation_slide(slide):
     bg_dir = get_backgrounds_dir()
     temp_webp_name = f"{clean_slide_id}.webp"
     temp_path = os.path.join(bg_dir, "temp", temp_webp_name)
+
+    # Auto-recreate crop if temp WebP is missing or if source background image is newer
+    rebuild_needed = not os.path.isfile(temp_path)
+    if not rebuild_needed:
+        bg_name = os.path.basename(bg.replace("temp/", ""))
+        src_path = os.path.join(bg_dir, bg_name)
+        if os.path.isfile(src_path):
+            try:
+                if os.path.getmtime(src_path) > os.path.getmtime(temp_path):
+                    rebuild_needed = True
+            except OSError:
+                pass
+
+    if rebuild_needed:
+        crop_slide_image(
+            slide_id,
+            bg,
+            bg_x=slide_copy.get("bg_x", 0.0),
+            bg_y=slide_copy.get("bg_y", 0.0),
+            bg_zoom=slide_copy.get("bg_zoom", 100.0),
+        )
+
     if os.path.isfile(temp_path):
         slide_copy["background"] = f"temp/{temp_webp_name}"
         # Pre-cropped temp image already has crop and zoom applied:
