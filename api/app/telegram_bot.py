@@ -670,47 +670,75 @@ def _handle_sintelefono_command(chat_id: int | str, arg: str, table):
     no_phone_groups = {}
     for inv_id, recs in groups.items():
         if all(not str(r.get("telefono", "") or "").strip() for r in recs):
-            dq = str(recs[0].get("dequien", "") or "").strip()
-            fw = dq.split()[0].capitalize() if dq else "Sin definir"
-            no_phone_groups.setdefault(fw, []).append((inv_id, recs))
+            dq = str(recs[0].get("dequien", "") or "").strip() or "Sin definir"
+            no_phone_groups.setdefault(dq, []).append((inv_id, recs))
+
+    sorted_origins = sorted(no_phone_groups.keys())
+    total_no_phone = sum(len(g_list) for g_list in no_phone_groups.values())
 
     arg = (arg or "").strip().lower()
 
-    # If no argument, show counts by origin and usage
+    # If no argument, show counts by origin with inline menu buttons
     if not arg:
-        total_no_phone = sum(len(g_list) for g_list in no_phone_groups.values())
-        lines = []
-        for orig, g_list in sorted(no_phone_groups.items(), key=lambda x: -len(x[1])):
-            lines.append(f"• <b>{orig}:</b> <b>{len(g_list)}</b> tarjetas")
+        inline_keyboard = []
+        row = []
+        for orig in sorted_origins:
+            count = len(no_phone_groups[orig])
+            btn_text = f"{orig} ({count})" if count > 0 else f"{orig} (0)"
+            row.append({"text": btn_text, "callback_data": f"sintelefono:{orig}"})
+            if len(row) == 2:
+                inline_keyboard.append(row)
+                row = []
+        if row:
+            inline_keyboard.append(row)
 
-        origins_summary = "\n".join(lines) if lines else "Ninguna"
-        examples = "\n".join(f"• <code>/sintelefono {orig}</code>" for orig in sorted(no_phone_groups.keys()))
+        if total_no_phone > 0:
+            inline_keyboard.append([{"text": f"📋 Todas ({total_no_phone})", "callback_data": "sintelefono:todos"}])
+
+        lines = [f"• <code>/sintelefono {orig}</code> ({len(no_phone_groups[orig])} tarjetas)" for orig in sorted_origins]
+        cmd_list = "\n".join(lines) if lines else "Ninguna"
+
         send_message(
             chat_id,
-            f"📱 <b>Tarjetas sin teléfono ({total_no_phone} en total):</b>\n\n"
-            f"{origins_summary}\n\n"
-            f"Para ver los nombres y links de cada grupo:\n"
-            f"{examples}\n"
-            f"• <code>/sintelefono todos</code>"
+            f"📱 <b>¿De quién querés ver tarjetas sin teléfono? ({total_no_phone} en total)</b>\n\n"
+            f"Elegí una opción o usá los comandos:\n\n"
+            f"{cmd_list}\n"
+            f"• <code>/sintelefono todos</code>",
+            reply_markup={"inline_keyboard": inline_keyboard} if inline_keyboard else None
         )
         return
 
     selected_items = []
     if arg in ("todos", "all"):
-        for orig, g_list in sorted(no_phone_groups.items()):
-            selected_items.extend(g_list)
+        for orig in sorted_origins:
+            selected_items.extend(no_phone_groups[orig])
         title = "todas las tarjetas"
     else:
-        matched_orig = None
-        for orig, g_list in no_phone_groups.items():
+        matched_groups = []
+        # 1. Exact match on full dequien
+        for orig in sorted_origins:
             if orig.lower() == arg:
-                matched_orig = orig
-                selected_items.extend(g_list)
-                break
-        title = f"{matched_orig or arg.capitalize()}"
+                matched_groups.append((orig, no_phone_groups[orig]))
+        # 2. Prefix or first-word match (e.g. 'celia' -> Celia Familia, Celia Amigos, Celia Oficina)
+        if not matched_groups:
+            for orig in sorted_origins:
+                orig_lower = orig.lower()
+                first_word = orig_lower.split()[0] if orig_lower else ""
+                if orig_lower.startswith(arg) or first_word == arg:
+                    matched_groups.append((orig, no_phone_groups[orig]))
+
+        for orig, g_list in matched_groups:
+            selected_items.extend(g_list)
+
+        if len(matched_groups) == 1:
+            title = matched_groups[0][0]
+        elif len(matched_groups) > 1:
+            title = ", ".join(mg[0] for mg in matched_groups)
+        else:
+            title = arg
 
     if not selected_items:
-        send_message(chat_id, f"✅ No hay tarjetas sin teléfono para <b>{title}</b>.")
+        send_message(chat_id, f"✅ No hay tarjetas sin teléfono para <b>{html.escape(title)}</b>.")
         return
 
     header = f"📱 <b>Tarjetas sin teléfono ({title}) - {len(selected_items)} tarjetas:</b>"
@@ -752,6 +780,12 @@ def _handle_update(update: dict, table=None):
         if cq_data.startswith("send:"):
             target_dq = cq_data[len("send:"):].strip()
             _handle_send_command(cq_chat_id, target_dq, table or _table_ref)
+            return
+
+        if cq_data.startswith("sintelefono:"):
+            target_dq = cq_data[len("sintelefono:"):].strip()
+            _handle_sintelefono_command(cq_chat_id, target_dq, table or _table_ref)
+            return
         return
 
     msg = update.get("message") or update.get("edited_message")

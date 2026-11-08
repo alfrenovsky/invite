@@ -293,14 +293,21 @@ class TestTelegramBot(unittest.TestCase):
             {"id": "5", "invitacion_id": "amigos_rock", "nombre": "Diego", "apellido": "Torres", "dequien": "Amigos Banda", "telefono": "", "url": "http://test/i/amigos_rock_333"},
         ]
 
-        # 1. /sintelefono (summary)
+        # 1. /sintelefono (interactive menu with inline keyboard)
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono"}}, table=mock_table)
         summary_text = mock_send.call_args[0][1]
-        self.assertIn("Tarjetas sin teléfono", summary_text)
-        self.assertIn("Celia:", summary_text)
-        self.assertIn("Amigos:", summary_text)
+        reply_markup = mock_send.call_args[1].get("reply_markup") or {}
+        self.assertIn("tarjetas sin teléfono", summary_text.lower())
+        self.assertIn("Celia Familia", summary_text)
+        self.assertIn("Amigos Banda", summary_text)
+        self.assertIn("inline_keyboard", reply_markup)
+        # Check buttons contain Celia Familia and callback_data sintelefono:Celia Familia
+        buttons = [btn for row in reply_markup["inline_keyboard"] for btn in row]
+        self.assertTrue(any(b["callback_data"] == "sintelefono:Celia Familia" for b in buttons))
+        self.assertTrue(any(b["callback_data"] == "sintelefono:Amigos Banda" for b in buttons))
+        self.assertTrue(any(b["callback_data"] == "sintelefono:todos" for b in buttons))
 
-        # 2. /sintelefono Celia -> returns fam_garcia with URL and names
+        # 2. /sintelefono Celia -> prefix match returns fam_garcia with URL and names
         mock_send.reset_mock()
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono Celia"}}, table=mock_table)
         celia_text = mock_send.call_args[0][1]
@@ -310,6 +317,12 @@ class TestTelegramBot(unittest.TestCase):
         self.assertNotIn("amigos_rock", celia_text)
         self.assertNotIn("fam_perez", celia_text)
 
+        # 2b. /sintelefono Celia Familia -> exact full dequien match
+        mock_send.reset_mock()
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono Celia Familia"}}, table=mock_table)
+        celia_fam_text = mock_send.call_args[0][1]
+        self.assertIn("fam_garcia", celia_fam_text)
+
         # 3. /sintelefono todos -> includes both fam_garcia and amigos_rock, excludes fam_perez
         mock_send.reset_mock()
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono todos"}}, table=mock_table)
@@ -317,6 +330,21 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("fam_garcia", todos_text)
         self.assertIn("amigos_rock", todos_text)
         self.assertNotIn("fam_perez", todos_text)
+
+        # 4. callback_query tap on 'sintelefono:Amigos Banda'
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {
+                    "id": "cq_sin_1",
+                    "data": "sintelefono:Amigos Banda",
+                    "message": {"chat": {"id": 88888}}
+                }
+            }, table=mock_table)
+        cb_text = mock_send.call_args[0][1]
+        self.assertIn("amigos_rock", cb_text)
+        self.assertIn("Diego Torres", cb_text)
+        self.assertNotIn("fam_garcia", cb_text)
 
 
 if __name__ == "__main__":
