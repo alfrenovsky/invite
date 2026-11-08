@@ -1017,6 +1017,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
 
         # Scenario 3: Mixed group (Invitado + Reserva) with kids
         # Invitados come first, then Reservas, and in each group, adults first, kids last
+        # In mixed groups, {name} (group_names) should ONLY include invitados, while the RSVP guest list contains all
         mixed_guests = [
             {"id": "1", "nombre": "Cata", "apellido": "", "tipo": "Cena niño", "pa": "general", "nivel": "Invitado", "montotarjeta": ""},
             {"id": "2", "nombre": "Marcos", "apellido": "Perez", "tipo": "Cena", "pa": "general", "nivel": "Invitado", "montotarjeta": ""},
@@ -1028,7 +1029,11 @@ class TestGoogleSheetsTable(unittest.TestCase):
             ctx_mix = get_guest_context("familia_mix")
             self.assertEqual(ctx_mix["inv_names"], "Marcos y Cata")
             self.assertEqual(ctx_mix["res_names"], "Laura y Santi")
-            self.assertEqual(ctx_mix["group_names"], "Marcos, Cata, Laura y Santi")
+            # In mixta groups, group_names must ONLY be the invitados
+            self.assertEqual(ctx_mix["group_names"], "Marcos y Cata")
+            self.assertEqual(ctx_mix["names_count"], 2)
+            # But the RSVP guest list contains all 4, with invitados first
+            self.assertEqual([g["nombre"] for g in ctx_mix["guests"]], ["Marcos", "Cata", "Laura", "Santi"])
 
     def test_itinerary_two_column_formatting(self):
         from app import app, format_slide_text, replace_guest_names

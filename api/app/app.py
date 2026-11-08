@@ -917,22 +917,29 @@ def get_guest_context(validated_slug):
         # Put guests with lastname first, and kids or guests without lastname last
         guests = sorted(guests, key=lambda g: 1 if _is_secondary_guest(g) else 0)
 
-    names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
-    fallback_title = validated_slug.replace("_", " ").replace("-", " ").title() if validated_slug else "Familia / Pareja"
-    group_names = format_group_names(names, fallback=fallback_title or "Familia / Pareja")
-    if len(guests) > 0:
-        names_count = len(guests)
-    elif len(names) > 0:
-        names_count = len(names)
-    else:
-        names_count = 1 if (validated_slug and " y " not in validated_slug and "-y-" not in validated_slug and "_y_" not in validated_slug and "familia" not in validated_slug.lower() and "pareja" not in validated_slug.lower()) else 2
-
     inv_guests = [g for g in guests if not _is_reserva_guest(g)]
     res_guests = [g for g in guests if _is_reserva_guest(g)]
     inv_names = format_subgroup_names(inv_guests)
     res_names = format_subgroup_names(res_guests)
     inv_count = len(inv_guests)
     res_count = len(res_guests)
+
+    fallback_title = validated_slug.replace("_", " ").replace("-", " ").title() if validated_slug else "Familia / Pareja"
+
+    if group_type == "mixta":
+        target_name_guests = inv_guests
+        names = [g.get("nombre", "").strip() for g in target_name_guests if g.get("nombre")]
+        group_names = format_group_names(names, fallback=fallback_title or "Familia / Pareja")
+        names_count = len(inv_guests) if inv_guests else 1
+    else:
+        names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
+        group_names = format_group_names(names, fallback=fallback_title or "Familia / Pareja")
+        if len(guests) > 0:
+            names_count = len(guests)
+        elif len(names) > 0:
+            names_count = len(names)
+        else:
+            names_count = 1 if (validated_slug and " y " not in validated_slug and "-y-" not in validated_slug and "_y_" not in validated_slug and "familia" not in validated_slug.lower() and "pareja" not in validated_slug.lower()) else 2
 
     first_res_monto = next((g.get("montotarjeta") for g in guests if re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or "")) and int(re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))) > 0), None)
     card_value = format_currency_ar(first_res_monto or (guests[0].get("montotarjeta", "") if guests else ""))

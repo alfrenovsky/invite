@@ -1703,13 +1703,15 @@
                 return formatGuestNames(items);
             }
 
-            // 1. All guest names ({name})
-            const allNamed = allGuests.map(g => g.nombre).filter(Boolean);
+            // 1. Guest names ({name}) - for mixta groups, only include invitados
+            const isMixta = (invGuests.length > 0 && resGuests.length > 0);
+            const targetGuestsForName = isMixta ? invGuests : allGuests;
+            const targetNamed = targetGuestsForName.map(g => g.nombre).filter(Boolean);
             let formattedNames = '';
-            let count = guestCards.length || lastValidCount || 1;
+            let count = (isMixta ? invGuests.length : guestCards.length) || lastValidCount || 1;
 
-            if (allNamed.length > 0) {
-                formattedNames = formatGuestNames(allNamed);
+            if (targetNamed.length > 0) {
+                formattedNames = formatGuestNames(targetNamed);
                 lastValidGroupNames = formattedNames;
                 lastValidCount = count;
             } else if (guestCards.length > 0) {
