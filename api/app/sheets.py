@@ -332,15 +332,14 @@ class GoogleSheetsTable:
         item["dequien"] = str(rec.get("dequien", ""))
         item["tipo"] = str(rec.get("tipo", ""))
         nivel_val = str(rec.get("nivel", "") or "").strip()
-        monto_raw = str(rec.get("montotarjeta", "") or "").strip()
+        clean_monto = re.sub(r"[^\d]", "", str(rec.get("montotarjeta", "") or ""))
         if nivel_val.lower() == "reserva":
-            clean_digits = re.sub(r"[^\d]", "", monto_raw)
-            if not clean_digits or int(clean_digits) == 0:
-                monto_val = DEFAULT_RESERVA_MONTO
+            if not clean_monto or int(clean_monto) == 0:
+                monto_val = int(DEFAULT_RESERVA_MONTO)
             else:
-                monto_val = monto_raw
+                monto_val = int(clean_monto)
         else:
-            monto_val = monto_raw
+            monto_val = int(clean_monto) if (clean_monto and int(clean_monto) > 0) else ""
 
         item["nivel"] = nivel_val
         item["confirmacion"] = str(rec.get("confirmacion") or rec.get("asistencia", ""))
@@ -419,6 +418,12 @@ class GoogleSheetsTable:
                         row.append(int(clean_tel))
                     except ValueError:
                         row.append(str(val or ""))
+                else:
+                    row.append("")
+            elif col == "montotarjeta":
+                clean_m = re.sub(r"[^\d]", "", str(val or "").strip())
+                if clean_m and int(clean_m) > 0:
+                    row.append(int(clean_m))
                 else:
                     row.append("")
             else:
@@ -537,7 +542,9 @@ class GoogleSheetsTable:
                     inv_changed = (item.get("invitacion_id", "") != str(rec.get("invitacion_id", "") or "").strip())
                     url_changed = (item.get("url", "") != str(rec.get("url", "") or "").strip())
                     enviado_changed = (item.get("enviado", "") != str(rec.get("enviado", "") or "").strip())
-                    monto_changed = (item.get("montotarjeta", "") != str(rec.get("montotarjeta", "") or "").strip())
+                    clean_curr_monto = re.sub(r"[^\d]", "", str(item.get("montotarjeta", "") or ""))
+                    clean_rec_monto = re.sub(r"[^\d]", "", str(rec.get("montotarjeta", "") or ""))
+                    monto_changed = (clean_curr_monto != clean_rec_monto)
                     if id_missing or inv_changed or url_changed or enviado_changed or monto_changed:
                         range_name = f"{rowcol_to_a1(idx, 1)}:{rowcol_to_a1(idx, len(FIELDNAMES))}"
                         missing_updates.append({"range": range_name, "values": [row]})

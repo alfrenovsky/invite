@@ -1392,21 +1392,32 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 mock_mark_opened.assert_called_once_with("familia_perez")
 
     def test_default_reserva_monto_assignment(self):
-        # 1. Reserva without monto -> defaults to DEFAULT_RESERVA_MONTO
-        item1, _ = self.table._map_record_to_row({"nombre": "Lucas", "nivel": "Reserva", "montotarjeta": ""}, "2026-10-18")
-        self.assertEqual(item1["montotarjeta"], DEFAULT_RESERVA_MONTO)
+        # 1. Reserva without monto -> defaults to DEFAULT_RESERVA_MONTO (integer)
+        item1, row1 = self.table._map_record_to_row({"nombre": "Lucas", "nivel": "Reserva", "montotarjeta": ""}, "2026-10-18")
+        self.assertEqual(item1["montotarjeta"], int(DEFAULT_RESERVA_MONTO))
+        self.assertIsInstance(item1["montotarjeta"], int)
 
-        # 2. Reserva with monto "0" -> defaults to DEFAULT_RESERVA_MONTO
-        item2, _ = self.table._map_record_to_row({"nombre": "Martin", "nivel": "reserva", "montotarjeta": "0"}, "2026-10-18")
-        self.assertEqual(item2["montotarjeta"], DEFAULT_RESERVA_MONTO)
+        # 2. Reserva with monto "0" -> defaults to DEFAULT_RESERVA_MONTO (integer)
+        item2, row2 = self.table._map_record_to_row({"nombre": "Martin", "nivel": "reserva", "montotarjeta": "0"}, "2026-10-18")
+        self.assertEqual(item2["montotarjeta"], int(DEFAULT_RESERVA_MONTO))
+        self.assertIsInstance(item2["montotarjeta"], int)
 
-        # 3. Reserva with existing custom monto -> keeps existing custom monto
-        item3, _ = self.table._map_record_to_row({"nombre": "Sofia", "nivel": "Reserva", "montotarjeta": "50000"}, "2026-10-18")
-        self.assertEqual(item3["montotarjeta"], "50000")
+        # 3. Reserva with existing custom monto -> keeps existing custom monto (integer)
+        item3, row3 = self.table._map_record_to_row({"nombre": "Sofia", "nivel": "Reserva", "montotarjeta": "50000"}, "2026-10-18")
+        self.assertEqual(item3["montotarjeta"], 50000)
+        self.assertIsInstance(item3["montotarjeta"], int)
 
-        # 4. Invitado without monto -> keeps empty monto
-        item4, _ = self.table._map_record_to_row({"nombre": "Clara", "nivel": "Invitado", "montotarjeta": ""}, "2026-10-18")
+        # 4. Invitado without monto -> keeps empty monto (empty string)
+        item4, row4 = self.table._map_record_to_row({"nombre": "Clara", "nivel": "Invitado", "montotarjeta": ""}, "2026-10-18")
         self.assertEqual(item4["montotarjeta"], "")
+
+        # Verify row mapping for Google Sheets
+        from sheets import FIELDNAMES
+        monto_idx = FIELDNAMES.index("montotarjeta")
+        self.assertEqual(row1[monto_idx], int(DEFAULT_RESERVA_MONTO))
+        self.assertEqual(row2[monto_idx], int(DEFAULT_RESERVA_MONTO))
+        self.assertEqual(row3[monto_idx], 50000)
+        self.assertEqual(row4[monto_idx], "")
 
     def test_get_group_target_type(self):
         # 1. Pure Reserva: all guests are Reserva -> "reserva"
