@@ -1900,15 +1900,15 @@ class TestGoogleSheetsTable(unittest.TestCase):
             telegram_bot._handle_send_command(12345, "Celia Amigos", mock_tbl)
             self.assertTrue(mock_chunked.called)
             items = mock_chunked.call_args[0][2]
-            # 2 pending guests + 1 legend item
+            # 2 pending guests (sorted alphabetically: AbiertoPorOtro Dos, then Pendiente Uno) + 1 legend item
             self.assertGreaterEqual(len(items), 2)
-            self.assertIn("/send/5491111111111?id=g1", items[0])
-            self.assertIn("Pendiente Uno", items[0])
-            self.assertNotIn("👀", items[0])
+            self.assertIn("/send/5491122222222?id=g2", items[0])
+            self.assertIn("AbiertoPorOtro Dos", items[0])
+            self.assertIn("👀", items[0])
 
-            self.assertIn("/send/5491122222222?id=g2", items[1])
-            self.assertIn("AbiertoPorOtro Dos", items[1])
-            self.assertIn("👀", items[1])
+            self.assertIn("/send/5491111111111?id=g1", items[1])
+            self.assertIn("Pendiente Uno", items[1])
+            self.assertNotIn("👀", items[1])
             self.assertIn("👀 = tarjeta ya abierta", items[-1])
 
         # C. callback_query update -> executes send command

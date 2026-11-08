@@ -5,6 +5,7 @@ import os
 import re
 import threading
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -609,6 +610,14 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
             f"(todas fueron enviadas o no tienen teléfono registrado)."
         )
         return
+
+    # Sort matching guests alphabetically by display name (accent-insensitive)
+    def _sort_name_key(r):
+        full = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()
+        norm = unicodedata.normalize("NFKD", full).encode("ASCII", "ignore").decode("ASCII").lower()
+        return norm or "zzz"
+
+    matching_guests.sort(key=_sort_name_key)
 
     opened_invitations = {
         str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
