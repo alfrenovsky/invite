@@ -616,6 +616,13 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         if str(rec.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1")
     }
 
+    # Map invitation slug to all guests to identify companions
+    inv_all_guests = {}
+    for rec in records:
+        slug = str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+        if slug:
+            inv_all_guests.setdefault(slug, []).append(rec)
+
     header = f"📤 <b>Invitaciones para enviar ({html.escape(display_orig)}) - {len(matching_guests)} pendientes:</b>"
     items = []
     has_any_opened = False
@@ -629,6 +636,21 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         tel_suffix = f" ({html.escape(tel_display)})" if tel_display else ""
 
         inv_slug = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+
+        # Other guests belonging to the same invitation card
+        other_guests = [
+            o for o in inv_all_guests.get(inv_slug, [])
+            if str(o.get("id", "")).strip() != str(r.get("id", "")).strip()
+        ]
+        if other_guests:
+            other_names = [
+                html.escape(f"{o.get('nombre', '')} {o.get('apellido', '')}".strip() or "Acompañante")
+                for o in other_guests
+            ]
+            others_suffix = f" — {', '.join(other_names)}"
+        else:
+            others_suffix = ""
+
         is_opened = (
             str(r.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1")
             or (inv_slug and inv_slug in opened_invitations)
@@ -639,7 +661,7 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
         else:
             opened_indicator = ""
 
-        items.append(f'👉 <a href="{send_url}"><b>{html.escape(nombre)}</b></a>{tel_suffix}{opened_indicator}')
+        items.append(f'👉 <a href="{send_url}"><b>{html.escape(nombre)}</b></a>{tel_suffix}{others_suffix}{opened_indicator}')
 
     if has_any_opened:
         items.append("<i>(👀 = tarjeta ya abierta)</i>")

@@ -248,22 +248,24 @@ class TestTelegramBot(unittest.TestCase):
         telegram_bot.add_subscriber(88888)
         mock_table = MagicMock()
         mock_table.get_all.return_value = [
-            {"id": "1", "nombre": "Camila", "apellido": "Perez", "dequien": "Celia Familia", "telefono": "1111", "abierto": "", "url": "http://nos.vamos.acas.ar/i/camila_123"},
-            {"id": "2", "nombre": "Sofia", "apellido": "Gomez", "dequien": "Celia Amigos", "telefono": "2222", "abierto": "si", "url": "http://nos.vamos.acas.ar/i/sofia_123"},
-            {"id": "3", "nombre": "Lucia", "apellido": "Lopez", "dequien": "Celia Trabajo", "telefono": "", "abierto": "", "url": "http://nos.vamos.acas.ar/i/lucia_123"},
-            {"id": "4", "nombre": "Martin", "apellido": "Diaz", "dequien": "Alfredo Amigos", "telefono": "3333", "abierto": "", "url": "http://nos.vamos.acas.ar/i/martin_123"},
+            {"id": "1", "invitacion_id": "camila_123", "nombre": "Camila", "apellido": "Perez", "dequien": "Celia Familia", "telefono": "1111", "abierto": "", "url": "http://nos.vamos.acas.ar/i/camila_123"},
+            {"id": "1b", "invitacion_id": "camila_123", "nombre": "Mateo", "apellido": "Perez", "dequien": "Celia Familia", "telefono": "", "abierto": "", "url": "http://nos.vamos.acas.ar/i/camila_123"},
+            {"id": "2", "invitacion_id": "sofia_123", "nombre": "Sofia", "apellido": "Gomez", "dequien": "Celia Amigos", "telefono": "2222", "abierto": "si", "url": "http://nos.vamos.acas.ar/i/sofia_123"},
+            {"id": "3", "invitacion_id": "lucia_123", "nombre": "Lucia", "apellido": "Lopez", "dequien": "Celia Trabajo", "telefono": "", "abierto": "", "url": "http://nos.vamos.acas.ar/i/lucia_123"},
+            {"id": "4", "invitacion_id": "martin_123", "nombre": "Martin", "apellido": "Diaz", "dequien": "Alfredo Amigos", "telefono": "3333", "abierto": "", "url": "http://nos.vamos.acas.ar/i/martin_123"},
         ]
 
         # 1. /send with no argument -> interactive options
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send"}}, table=mock_table)
         self.assertIn("¿De quién querés enviar invitaciones?", mock_send.call_args[0][1])
 
-        # 2. /send Celia -> includes Camila and Sofia (Sofia with 👀 because opened but non-sent), excludes Lucia (no phone)
+        # 2. /send Celia -> includes Camila (with companion Mateo) and Sofia (Sofia with 👀 because opened but non-sent), excludes Lucia (no phone)
         mock_send.reset_mock()
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send Celia"}}, table=mock_table)
         call_text = mock_send.call_args[0][1]
         self.assertIn("Camila Perez", call_text)
         self.assertIn("/send/1111?id=1", call_text)
+        self.assertIn("— Mateo Perez", call_text)
         self.assertIn("Sofia Gomez", call_text)
         self.assertIn("👀", call_text)
         self.assertNotIn("Lucia Lopez", call_text)
