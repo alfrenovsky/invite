@@ -411,7 +411,18 @@ class GoogleSheetsTable:
         # Build row according to FIELDNAMES
         row = []
         for col in FIELDNAMES:
-            row.append(str(item.get(col, "")))
+            val = item.get(col, "")
+            if col == "telefono":
+                clean_tel = re.sub(r"[^\d]", "", str(val or "").strip())
+                if clean_tel:
+                    try:
+                        row.append(int(clean_tel))
+                    except ValueError:
+                        row.append(str(val or ""))
+                else:
+                    row.append("")
+            else:
+                row.append(str(val or ""))
 
         return item, row
 
@@ -457,7 +468,7 @@ class GoogleSheetsTable:
                     new_appends.append((rec, row))
 
             if batch_updates:
-                ws.batch_update(batch_updates)
+                ws.batch_update(batch_updates, value_input_option="USER_ENTERED")
 
 
             if new_appends:
@@ -532,7 +543,7 @@ class GoogleSheetsTable:
                         missing_updates.append({"range": range_name, "values": [row]})
 
             if missing_updates:
-                ws.batch_update(missing_updates)
+                ws.batch_update(missing_updates, value_input_option="USER_ENTERED")
                 self._log_event("SYNC", "REMOTE", f"Repaired {len(missing_updates)} records missing IDs/URLs/Montos on Google Sheets")
 
             new_cache = {

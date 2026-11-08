@@ -251,6 +251,28 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(self.mock_ws.batch_update.call_count, 1)
         update_call_args = self.mock_ws.batch_update.call_args[0][0]
         self.assertTrue(update_call_args[0]["range"].startswith("A5:"))
+        self.assertEqual(self.mock_ws.batch_update.call_args[1].get("value_input_option"), "USER_ENTERED")
+
+    def test_phone_number_mapped_as_integer_without_quote(self):
+        from sheets import FIELDNAMES
+        phone_idx = FIELDNAMES.index("telefono")
+
+        # 1. Phone with digits should map to integer
+        rec_num = {"nombre": "Juan", "apellido": "Perez", "telefono": "2615603946"}
+        _, row_num = self.table._map_record_to_row(rec_num, "2026-11-08 12:00:00")
+        self.assertIsInstance(row_num[phone_idx], int)
+        self.assertEqual(row_num[phone_idx], 2615603946)
+
+        # 2. Phone with dashes/spaces/plus should clean to integer
+        rec_formatted = {"nombre": "Juan", "apellido": "Perez", "telefono": "+54 9 261 560-3946"}
+        _, row_formatted = self.table._map_record_to_row(rec_formatted, "2026-11-08 12:00:00")
+        self.assertIsInstance(row_formatted[phone_idx], int)
+        self.assertEqual(row_formatted[phone_idx], 5492615603946)
+
+        # 3. Empty phone should map to empty string
+        rec_empty = {"nombre": "Juan", "apellido": "Perez", "telefono": ""}
+        _, row_empty = self.table._map_record_to_row(rec_empty, "2026-11-08 12:00:00")
+        self.assertEqual(row_empty[phone_idx], "")
 
 
     def test_delete_record(self):
