@@ -1351,20 +1351,35 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.mock_ws.get_all_records.return_value = sample_data
         self.table.get_all(force_remote=True)
 
-        # 1. Mark opened for the first time
-        updated = self.table.mark_opened("familia_abierta")
-        self.assertTrue(updated)
+        # 1. Mark opened for the first time -> count is 1
+        count1 = self.table.mark_opened("familia_abierta")
+        self.assertEqual(count1, 1)
 
         cache = self.table._load_cache()
         matched = [r for r in cache["records"] if r.get("invitacion_id") == "familia_abierta"]
         self.assertEqual(len(matched), 2)
         for r in matched:
-            self.assertEqual(r.get("abierto"), "si")
+            self.assertEqual(r.get("abierto"), 1)
             self.assertEqual(r.get("_sync_state"), "LOCAL")
 
-        # 2. Subsequent call does not mark again (returns False)
-        updated_again = self.table.mark_opened("familia_abierta")
-        self.assertFalse(updated_again)
+        # 2. Immediate subsequent call within 30s cooldown returns existing count (1) without incrementing
+        count_cooldown = self.table.mark_opened("familia_abierta")
+        self.assertEqual(count_cooldown, 1)
+
+        # 3. Subsequent call with cooldown_seconds=0 increments counter to 2
+        count2 = self.table.mark_opened("familia_abierta", cooldown_seconds=0)
+        self.assertEqual(count2, 2)
+        cache2 = self.table._load_cache()
+        matched2 = [r for r in cache2["records"] if r.get("invitacion_id") == "familia_abierta"]
+        for r in matched2:
+            self.assertEqual(r.get("abierto"), 2)
+
+        # 4. Verify row mapping for Google Sheets is a native integer
+        from sheets import FIELDNAMES
+        abierto_idx = FIELDNAMES.index("abierto")
+        _, row = self.table._map_record_to_row(matched2[0], "2026-11-08 12:00:00")
+        self.assertIsInstance(row[abierto_idx], int)
+        self.assertEqual(row[abierto_idx], 2)
 
     def test_index_page_marks_opened_for_human_not_crawler(self):
         from app import app

@@ -214,7 +214,7 @@ def broadcast_message(text: str, parse_mode: str = "HTML"):
 # 🎯 Notification Event Handlers
 # ==============================================================
 
-def notify_invitation_opened(invitacion_id: str, guest_records: list):
+def notify_invitation_opened(invitacion_id: str, guest_records: list, open_count: int = None):
     """
     Notifies when a guest opens the invitation.
     Respects a 1-minute cooldown per invitation_id to prevent spam.
@@ -240,9 +240,10 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list):
 
     names_str = ", ".join(names) if names else clean_id.replace("_", " ").title()
     group_title = clean_id.replace("_", " ").title()
+    count_suffix = f" (Visita #{open_count})" if (isinstance(open_count, (int, float)) and open_count > 1) else ""
 
     msg = (
-        f"💌 <b>Invitación abierta</b>\n"
+        f"💌 <b>Invitación abierta{count_suffix}</b>\n"
         f"👥 <b>Grupo:</b> {group_title}\n"
         f"👤 <b>Invitados:</b> {names_str}\n"
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
@@ -378,6 +379,11 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
 # 🤖 Telegram Bot Polling & Command Processing
 # ==============================================================
 
+def _is_record_opened(rec) -> bool:
+    val = str(rec.get("abierto", "") or "").strip().lower()
+    return val in ("si", "sí", "true") or (val.isdigit() and int(val) > 0)
+
+
 def _get_wedding_stats(table) -> str:
     tbl = table or _table_ref
     if not tbl:
@@ -430,7 +436,7 @@ def _get_wedding_stats(table) -> str:
             g_no = sum(1 for r in g if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
             g_pend = g_total - g_si - g_no
 
-            if any(str(r.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1") for r in g):
+            if any(_is_record_opened(r) for r in g):
                 tarjetas_abiertas += 1
 
             if g_si == g_total:
@@ -622,7 +628,7 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
     opened_invitations = {
         str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
         for rec in records
-        if str(rec.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1")
+        if _is_record_opened(rec)
     }
 
     # Map invitation slug to all guests to identify companions
@@ -661,7 +667,7 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
             others_suffix = ""
 
         is_opened = (
-            str(r.get("abierto", "")).strip().lower() in ("si", "sí", "true", "1")
+            _is_record_opened(r)
             or (inv_slug and inv_slug in opened_invitations)
         )
         if is_opened:

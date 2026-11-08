@@ -1071,13 +1071,14 @@ def index_page(token=None):
     if not context:
         return render_template("blank.html")
 
+    open_count = 1
     try:
-        table.mark_opened(validated_slug)
+        open_count = table.mark_opened(validated_slug) or 1
     except Exception as e:
         app.logger.warning(f"Error marking invitation as opened: {e}")
 
     try:
-        telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []))
+        telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []), open_count=open_count)
     except Exception as e:
         app.logger.warning(f"Error notifying invitation opened via Telegram: {e}")
 
@@ -1377,7 +1378,9 @@ def sanitize_stats_records(raw_records):
         pagado_raw = str(r.get("pagado", "") or "").strip().lower()
         pagado = bool(pagado_raw and pagado_raw not in ("no", "false", "0"))
         comprobante = bool(str(r.get("comprobante", "") or "").strip())
-        abierto = str(r.get("abierto", "") or "").strip().lower() in ("si", "sí", "true", "1")
+        ab_raw = str(r.get("abierto", "") or "").strip().lower()
+        abierto = ab_raw in ("si", "sí", "true") or (ab_raw.isdigit() and int(ab_raw) > 0)
+        open_count = int(ab_raw) if ab_raw.isdigit() else (1 if ab_raw in ("si", "sí", "true") else 0)
 
         clean.append({
             "id": rec_id,
@@ -1393,6 +1396,7 @@ def sanitize_stats_records(raw_records):
             "pagado": pagado,
             "comprobante": comprobante,
             "abierto": abierto,
+            "open_count": open_count,
         })
     return clean
 

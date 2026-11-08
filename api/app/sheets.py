@@ -158,6 +158,7 @@ class GoogleSheetsTable:
         self.cache_miss_min_age = cache_miss_min_age if cache_miss_min_age is not None else CACHE_MISS_MIN_AGE
         self.lock = threading.RLock()
         self._ws = None
+        self._last_opened_times = {}
         self._stop_watcher = threading.Event()
         self._watcher_thread = threading.Thread(target=self._file_watcher_loop, daemon=True)
         self._watcher_thread.start()
@@ -403,8 +404,15 @@ class GoogleSheetsTable:
 
         item["comprobante"] = str(rec.get("comprobante", "") or "")
         item["pagado"] = str(rec.get("pagado", "") or "").strip()
-        abierto_val = str(rec.get("abierto", "") or "").strip().lower()
-        item["abierto"] = "si" if abierto_val in ("si", "sí", "true", "1") else ""
+        abierto_val = rec.get("abierto", "")
+        if isinstance(abierto_val, int) and abierto_val > 0:
+            item["abierto"] = abierto_val
+        elif str(abierto_val).strip().isdigit() and int(str(abierto_val).strip()) > 0:
+            item["abierto"] = int(str(abierto_val).strip())
+        elif str(abierto_val).strip().lower() in ("si", "sí", "true"):
+            item["abierto"] = 1
+        else:
+            item["abierto"] = ""
 
 
         # Build row according to FIELDNAMES
@@ -420,7 +428,7 @@ class GoogleSheetsTable:
                         row.append(str(val or ""))
                 else:
                     row.append("")
-            elif col == "montotarjeta":
+            elif col in ("montotarjeta", "abierto"):
                 clean_m = re.sub(r"[^\d]", "", str(val or "").strip())
                 if clean_m and int(clean_m) > 0:
                     row.append(int(clean_m))
@@ -759,36 +767,62 @@ class GoogleSheetsTable:
             self._log_event("WRITE", "REMOTE", f"Deleted guest '{record_id}' (row {row_idx}) from Google Sheets and local cache")
             return True
 
-    def mark_opened(self, invitacion_id: str) -> bool:
+    def mark_opened(self, invitacion_id: str, cooldown_seconds: int = 30) -> int:
         """
-        Marks all guests in an invitation group as abierto='si' when visited by a human.
-        Updates cache locally and schedules an asynchronous flush to Google Sheets.
+        Increments the 'abierto' counter for all guests in an invitation group when visited by a human.
+        Respects a cooldown window (default 30s) per invitation to prevent double-counting rapid refreshes.
+        Returns the current open counter (>0 if opened, 0 on error).
         """
         if not invitacion_id:
-            return False
+            return 0
+
+        target = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
 
         with self.lock:
             cache = self._load_cache()
             if not cache or not cache.get("records"):
-                return False
+                return 0
 
-            target = str(invitacion_id).strip().lower().replace(" ", "_").replace("-", "_")
-            needs_update = False
-            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+            # Determine existing count for this invitation
+            existing_count = 0
             for rec in cache["records"]:
                 inv_slug = str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
                 if inv_slug == target:
-                    if str(rec.get("abierto", "")).strip().lower() != "si":
-                        rec["abierto"] = "si"
-                        rec["updated_at"] = now_str
-                        rec["_cached_at"] = time.time()
-                        rec["_sync_state"] = "LOCAL"
-                        needs_update = True
+                    val = rec.get("abierto", "")
+                    if isinstance(val, int):
+                        c = val
+                    elif str(val).strip().isdigit():
+                        c = int(str(val).strip())
+                    elif str(val).strip().lower() in ("si", "sí", "true"):
+                        c = 1
+                    else:
+                        c = 0
+                    if c > existing_count:
+                        existing_count = c
+
+            now = time.time()
+            last_opened = self._last_opened_times.get(target, 0)
+            if (now - last_opened) < cooldown_seconds and existing_count > 0:
+                # Inside cooldown window, do not increment again, return existing count
+                return existing_count
+
+            self._last_opened_times[target] = now
+            new_count = existing_count + 1
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            needs_update = False
+            for rec in cache["records"]:
+                inv_slug = str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+                if inv_slug == target:
+                    rec["abierto"] = new_count
+                    rec["updated_at"] = now_str
+                    rec["_cached_at"] = now
+                    rec["_sync_state"] = "LOCAL"
+                    needs_update = True
 
             if needs_update:
                 self._save_cache(cache)
-                self._log_event("WRITE", "CACHED", f"Marked invitation '{invitacion_id}' as abierto=si")
+                self._log_event("WRITE", "CACHED", f"Incremented invitation '{invitacion_id}' abierto count to {new_count}")
 
                 def _bg_flush():
                     try:
@@ -797,7 +831,7 @@ class GoogleSheetsTable:
                         self._log_event("WRITE", "ERROR", f"Error flushing abierto status to Google Sheets: {e}")
 
                 threading.Thread(target=_bg_flush, daemon=True).start()
-                return True
+                return new_count
 
-            return False
+            return 0
 
