@@ -900,9 +900,22 @@ def get_guest_context(validated_slug):
         raw_monto = re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))
         return bool(is_res or (raw_monto and int(raw_monto) > 0))
 
+    def _is_secondary_guest(g):
+        has_no_lastname = not bool(str(g.get("apellido", "") or "").strip())
+        tipo_val = str(g.get("tipo", "") or "").strip().lower()
+        pa_val = str(g.get("pa", "") or g.get("ap", "") or g.get("menu", "") or "").strip().lower()
+        is_nino = (
+            "niñ" in tipo_val or "nin" in tipo_val or
+            "niñ" in pa_val or "nin" in pa_val
+        )
+        return bool(has_no_lastname or is_nino)
+
     if group_type == "mixta":
-        # Put invitado first, then reservas
-        guests = sorted(guests, key=lambda g: 1 if _is_reserva_guest(g) else 0)
+        # Put invitado first, then reservas, with kids / no-lastname last in each tier
+        guests = sorted(guests, key=lambda g: (1 if _is_reserva_guest(g) else 0, 1 if _is_secondary_guest(g) else 0))
+    else:
+        # Put guests with lastname first, and kids or guests without lastname last
+        guests = sorted(guests, key=lambda g: 1 if _is_secondary_guest(g) else 0)
 
     names = [g.get("nombre", "").strip() for g in guests if g.get("nombre")]
     fallback_title = validated_slug.replace("_", " ").replace("-", " ").title() if validated_slug else "Familia / Pareja"

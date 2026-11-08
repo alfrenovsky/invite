@@ -965,6 +965,49 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 called_data = mock_update.call_args[0][1]
                 self.assertEqual(called_data["nombre"], "Carlos")
 
+    def test_guest_names_ordering_kids_and_no_lastname_last(self):
+        from app import get_guest_context
+
+        # Scenario 1: Group with a child having a lastname ('Alí Muzaber' with tipo='Cena niño')
+        # and parents ('Natalia Muzaber' and 'Raul Nahim')
+        family_guests = [
+            {"id": "1", "nombre": "Alí", "apellido": "Muzaber", "tipo": "Cena niño", "pa": "general", "nivel": "Cena"},
+            {"id": "2", "nombre": "Natalia", "apellido": "Muzaber", "tipo": "Cena", "pa": "general", "nivel": "Cena"},
+            {"id": "3", "nombre": "Raul", "apellido": "Nahim", "tipo": "Cena", "pa": "general", "nivel": "Cena"},
+        ]
+        with patch("app.table.get_by_invitacion", return_value=family_guests), \
+             patch("app.load_slides", return_value=[]):
+            ctx = get_guest_context("nati_y_negro")
+            self.assertIsNotNone(ctx)
+            # Parents first, child last
+            self.assertEqual(ctx["group_names"], "Natalia, Raul y Alí")
+
+        # Scenario 2: Group with guests without lastname (e.g. child 'Amparo' with no lastname, and parents with lastnames)
+        family_no_last = [
+            {"id": "1", "nombre": "Amparo", "apellido": "", "tipo": "Cena niño", "pa": "general", "nivel": "Cena"},
+            {"id": "2", "nombre": "Ana Lucía", "apellido": "Muzaber", "tipo": "Cena", "pa": "general", "nivel": "Cena"},
+            {"id": "3", "nombre": "Matías", "apellido": "Manresa", "tipo": "Cena", "pa": "general", "nivel": "Cena"},
+        ]
+        with patch("app.table.get_by_invitacion", return_value=family_no_last), \
+             patch("app.load_slides", return_value=[]):
+            ctx = get_guest_context("ana_lucia_y_matias")
+            self.assertEqual(ctx["group_names"], "Ana Lucía, Matías y Amparo")
+
+        # Scenario 3: Mixed group (Invitado + Reserva) with kids
+        # Invitados come first, then Reservas, and in each group, adults first, kids last
+        mixed_guests = [
+            {"id": "1", "nombre": "Cata", "apellido": "", "tipo": "Cena niño", "pa": "general", "nivel": "Invitado", "montotarjeta": ""},
+            {"id": "2", "nombre": "Marcos", "apellido": "Perez", "tipo": "Cena", "pa": "general", "nivel": "Invitado", "montotarjeta": ""},
+            {"id": "3", "nombre": "Santi", "apellido": "Perez", "tipo": "Cena niño", "pa": "general", "nivel": "Reserva", "montotarjeta": "50000"},
+            {"id": "4", "nombre": "Laura", "apellido": "Gomez", "tipo": "Cena", "pa": "general", "nivel": "Reserva", "montotarjeta": "50000"},
+        ]
+        with patch("app.table.get_by_invitacion", return_value=mixed_guests), \
+             patch("app.load_slides", return_value=[]):
+            ctx_mix = get_guest_context("familia_mix")
+            self.assertEqual(ctx_mix["inv_names"], "Marcos y Cata")
+            self.assertEqual(ctx_mix["res_names"], "Laura y Santi")
+            self.assertEqual(ctx_mix["group_names"], "Marcos, Cata, Laura y Santi")
+
     def test_itinerary_two_column_formatting(self):
         from app import app, format_slide_text, replace_guest_names
 

@@ -1659,14 +1659,22 @@
             guestCards.forEach(card => {
                 const nInput = card.querySelector('input[name^="nombre_"]');
                 const aInput = card.querySelector('input[name^="apellido_"]');
-                const nombreVal = (nInput ? nInput.value.trim() : '') || (aInput ? aInput.value.trim() : '');
+                const nombreVal = nInput ? nInput.value.trim() : '';
+                const apellidoVal = aInput ? aInput.value.trim() : '';
+                const displayName = nombreVal || apellidoVal;
 
                 const nivel = (card.getAttribute('data-nivel') || '').trim().toLowerCase();
                 const rawMonto = (card.getAttribute('data-monto') || '').replace(/[^\d]/g, '');
                 const monto = parseInt(rawMonto, 10) || 0;
                 const isReserva = (nivel === 'reserva' || monto > 0);
 
-                const item = { nombre: nombreVal, isReserva: isReserva };
+                const tipo = (card.getAttribute('data-tipo') || '').trim().toLowerCase();
+                const pa = (card.getAttribute('data-pa') || '').trim().toLowerCase();
+                const isNino = /niñ|nin/.test(tipo) || /niñ|nin/.test(pa);
+                const hasNoLastname = !apellidoVal;
+                const isSecondary = Boolean(hasNoLastname || isNino);
+
+                const item = { nombre: displayName, isReserva: isReserva, isSecondary: isSecondary };
                 allGuests.push(item);
                 if (isReserva) {
                     resGuests.push(item);
@@ -1674,6 +1682,11 @@
                     invGuests.push(item);
                 }
             });
+
+            // Put guests without lastname or with "menu niño" last (stable sort)
+            allGuests.sort((a, b) => (a.isSecondary ? 1 : 0) - (b.isSecondary ? 1 : 0));
+            invGuests.sort((a, b) => (a.isSecondary ? 1 : 0) - (b.isSecondary ? 1 : 0));
+            resGuests.sort((a, b) => (a.isSecondary ? 1 : 0) - (b.isSecondary ? 1 : 0));
 
             function formatSubgroup(subgroupList) {
                 if (!subgroupList || subgroupList.length === 0) return '';
