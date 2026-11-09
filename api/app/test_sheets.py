@@ -1740,6 +1740,158 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(res_refresh.status_code, 200)
                 self.assertTrue(res_refresh.get_json()["ok"])
 
+    def test_panel_stats2_auth_and_calculations(self):
+        from app import app
+        from test_sheets import get_panel_auth_headers
+        from unittest.mock import patch
+
+        fake_raw = [
+            {
+                "id": "rec1",
+                "invitacion_id": "familia_perez",
+                "nombre": "Juan",
+                "apellido": "Perez",
+                "dequien": "Alfredo Familia",
+                "tipo": "Cena",
+                "nivel": "Reserva",
+                "montotarjeta": "105000",
+                "confirmacion": "si",
+                "pa": "general",
+                "celiaco": "",
+                "pagado": "si",
+                "comprobante": "http://example.com/comp1.pdf",
+                "enviado": "si",
+                "abierto": 5,
+                "updated_at": "2026-11-09 14:00:00",
+            },
+            {
+                "id": "rec2",
+                "invitacion_id": "familia_perez",
+                "nombre": "Maria",
+                "apellido": "Gomez",
+                "dequien": "Alfredo Familia",
+                "tipo": "Baile",
+                "nivel": "Reserva",
+                "montotarjeta": "105000",
+                "confirmacion": "si",
+                "pa": "vegetariano",
+                "celiaco": "si",
+                "pagado": "si",
+                "comprobante": "http://example.com/comp1.pdf",
+                "enviado": "si",
+                "abierto": 5,
+                "updated_at": "2026-11-09 14:05:00",
+            },
+            {
+                "id": "rec3",
+                "invitacion_id": "amigos_celia",
+                "nombre": "Lucia",
+                "apellido": "Vazquez",
+                "dequien": "Celia Amigos",
+                "tipo": "Cena",
+                "nivel": "Invitado",
+                "montotarjeta": "",
+                "confirmacion": "no",
+                "pa": "",
+                "celiaco": "",
+                "pagado": "",
+                "comprobante": "",
+                "enviado": "si",
+                "abierto": 12,
+                "updated_at": "2026-11-09 15:30:00",
+            },
+            {
+                "id": "rec4",
+                "invitacion_id": "sin_abrir",
+                "nombre": "Carlos",
+                "apellido": "Sosa",
+                "dequien": "Alfredo Amigos",
+                "tipo": "Cena",
+                "nivel": "Invitado",
+                "montotarjeta": "",
+                "confirmacion": "",
+                "pa": "",
+                "celiaco": "",
+                "pagado": "",
+                "comprobante": "",
+                "enviado": "",
+                "abierto": 0,
+                "updated_at": "",
+            },
+        ]
+
+        with patch("app.table.get_all", return_value=fake_raw), \
+             patch("app.table.flush_local_to_remote", return_value=0):
+            with app.test_client() as client:
+                # 1. Reject unauthenticated access
+                self.assertEqual(client.get("/panel/stats2").status_code, 401)
+                self.assertEqual(client.post("/panel/stats2/refresh").status_code, 401)
+
+                auth_headers = get_panel_auth_headers("ari", "gato")
+
+                # 2. Panel includes link to Stats 2
+                res_panel = client.get("/panel", headers=auth_headers)
+                self.assertEqual(res_panel.status_code, 200)
+                self.assertIn(b'/panel/stats2', res_panel.data)
+
+                # 3. Authenticated GET /panel/stats2 HTML
+                res_html = client.get("/panel/stats2", headers=auth_headers)
+                self.assertEqual(res_html.status_code, 200)
+                self.assertIn(b'Stats 2: Flujo & Actividad', res_html.data)
+
+                # 4. Authenticated GET /panel/stats2?format=json
+                res_json = client.get("/panel/stats2?format=json", headers=auth_headers)
+                self.assertEqual(res_json.status_code, 200)
+                payload = res_json.get_json()
+                self.assertTrue(payload["ok"])
+                stats2 = payload["stats2"]
+
+                # Top 10 opened: amigos_celia (12) > familia_perez (5)
+                top = stats2["top_10_opened"]
+                self.assertEqual(len(top), 2)
+                self.assertEqual(top[0]["invitacion_id"], "amigos_celia")
+                self.assertEqual(top[0]["open_count"], 12)
+                self.assertEqual(top[0]["group_nivel"], "Invitado")
+                self.assertEqual(top[0]["group_tipo"], "Cena")
+                self.assertEqual(top[1]["invitacion_id"], "familia_perez")
+                self.assertEqual(top[1]["open_count"], 5)
+                self.assertEqual(top[1]["group_nivel"], "Reserva")
+                self.assertEqual(top[1]["group_tipo"], "Mixto")  # One Cena, one Baile
+
+                # Last 10 opened: amigos_celia (15:30) > familia_perez (14:05)
+                last_open = stats2["last_10_opened"]
+                self.assertEqual(len(last_open), 2)
+                self.assertEqual(last_open[0]["invitacion_id"], "amigos_celia")
+                self.assertEqual(last_open[1]["invitacion_id"], "familia_perez")
+
+                # Last 10 confirmed: Maria Gomez (14:05) > Juan Perez (14:00)
+                last_conf = stats2["last_10_confirmed"]
+                self.assertEqual(len(last_conf), 2)
+                self.assertEqual(last_conf[0]["name"], "Maria Gomez")
+                self.assertEqual(last_conf[0]["pa"], "vegetariano")
+                self.assertTrue(last_conf[0]["celiaco"])
+                self.assertEqual(last_conf[1]["name"], "Juan Perez")
+
+                # Sankey edges exist
+                sankey = stats2["sankey"]
+                self.assertIn("people_origin", sankey)
+                self.assertIn("people_detailed", sankey)
+                self.assertIn("cards_origin", sankey)
+                self.assertIn("cards_detailed", sankey)
+                self.assertTrue(len(sankey["people_origin"]) > 0)
+
+                # Metrics summary
+                m = stats2["metrics"]
+                self.assertEqual(m["total_people"], 4)
+                self.assertEqual(m["sent_people"], 3)
+                self.assertEqual(m["opened_people"], 3)
+                self.assertEqual(m["confirmed_people"], 2)
+
+                # 5. POST /panel/stats2/refresh
+                res_refresh = client.post("/panel/stats2/refresh", headers=auth_headers)
+                self.assertEqual(res_refresh.status_code, 200)
+                self.assertTrue(res_refresh.get_json()["ok"])
+
     def test_panel_designs_save_load_delete_and_asset_protection(self):
         from app import app, is_font_in_use, get_designs_dir
         import shutil

@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats 2: Flujo & Actividad — Panel de Control</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0f15;
+            --card-bg: rgba(22, 30, 42, 0.78);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover-border: rgba(255, 255, 255, 0.18);
+            --accent: #d4af37;
+            --accent-soft: rgba(212, 175, 55, 0.14);
+            --blue: #38bdf8;
+            --blue-soft: rgba(56, 189, 248, 0.14);
+            --green: #48bb78;
+            --green-soft: rgba(72, 187, 120, 0.14);
+            --purple: #a78bfa;
+            --purple-soft: rgba(167, 139, 250, 0.14);
+            --amber: #f6ad55;
+            --amber-soft: rgba(246, 173, 85, 0.14);
+            --danger: #f56565;
+            --danger-soft: rgba(245, 101, 101, 0.14);
+            --text-main: #f7fafc;
+            --text-muted: #94a3b8;
+            --radius: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.10) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(212, 175, 55, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            padding: 16px 20px 40px;
+        }
+
+        .stats-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .nav-tab-links {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 3px;
+        }
+
+        .nav-tab-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab-pill:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .nav-tab-pill.active {
+            color: #ffffff;
+            background: rgba(56, 189, 248, 0.22);
+            border: 1px solid rgba(56, 189, 248, 0.45);
+        }
+
+        .top-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-sync {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            background: var(--accent-soft);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sync:hover {
+            background: rgba(212, 175, 55, 0.24);
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* Metrics summary bar */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metric-label {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .metric-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Generic Panel Card */
+        .panel-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            font-size: 1.3rem;
+            line-height: 1;
+        }
+
+        .section-title {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .control-pill-box {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 9px;
+            padding: 2px;
+        }
+
+        .control-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .control-btn:hover {
+            color: var(--text-main);
+        }
+
+        .control-btn.active {
+            background: rgba(56, 189, 248, 0.22);
+            color: #ffffff;
+            border: 1px solid rgba(56, 189, 248, 0.45);
+        }
+
+        /* Sankey Chart Container */
+        #sankeyChartWrapper {
+            width: 100%;
+            min-height: 480px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 10px;
+        }
+
+        #sankey_chart {
+            width: 100%;
+            min-height: 460px;
+        }
+
+        .sankey-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(11, 15, 21, 0.7);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            gap: 10px;
+        }
+
+        /* 3-Column Rankings Layout */
+        .rankings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .ranking-col {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 520px;
+        }
+
+        .ranking-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .ranking-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ranking-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .ranking-count-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            max-height: 680px;
+            padding-right: 2px;
+        }
+
+        /* Card Row in Rankings */
+        .ranking-card-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .ranking-card-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--card-hover-border);
+            transform: translateY(-1px);
+        }
+
+        .ranking-item-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .rank-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .rank-number.rank-1 {
+            background: rgba(212, 175, 55, 0.3);
+            color: #f6e05e;
+            border: 1px solid rgba(212, 175, 55, 0.6);
+        }
+
+        .rank-number.rank-2 {
+            background: rgba(203, 213, 225, 0.25);
+            color: #f1f5f9;
+            border: 1px solid rgba(203, 213, 225, 0.5);
+        }
+
+        .rank-number.rank-3 {
+            background: rgba(205, 127, 50, 0.25);
+            color: #fed7aa;
+            border: 1px solid rgba(205, 127, 50, 0.5);
+        }
+
+        .ranking-names {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+
+        .open-counter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(246, 173, 85, 0.16);
+            border: 1px solid rgba(246, 173, 85, 0.45);
+            color: #fbd38d;
+            font-size: 0.74rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+
+        .ranking-badges-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.70rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+        }
+
+        .chip-reserva {
+            background: var(--accent-soft);
+            border-color: rgba(212, 175, 55, 0.4);
+            color: var(--accent);
+        }
+
+        .chip-invitado {
+            background: rgba(148, 163, 184, 0.15);
+            border-color: rgba(148, 163, 184, 0.3);
+            color: #cbd5e1;
+        }
+
+        .chip-mixta {
+            background: var(--purple-soft);
+            border-color: rgba(167, 139, 250, 0.35);
+            color: var(--purple);
+        }
+
+        .chip-cena {
+            background: var(--blue-soft);
+            border-color: rgba(56, 189, 248, 0.35);
+            color: var(--blue);
+        }
+
+        .chip-baile {
+            background: var(--green-soft);
+            border-color: rgba(72, 187, 120, 0.35);
+            color: var(--green);
+        }
+
+        .chip-origin {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+        }
+
+        .chip-confirmed {
+            background: var(--green-soft);
+            border-color: rgba(72, 187, 120, 0.4);
+            color: var(--green);
+        }
+
+        .chip-menu {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.16);
+            color: #f7fafc;
+        }
+
+        .ranking-timestamp {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        /* Empty state */
+        .empty-ranking {
+            text-align: center;
+            padding: 30px 10px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Mobile Tabs for rankings */
+        .mobile-ranking-tabs {
+            display: none;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .rankings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mobile-ranking-tabs {
+                display: flex;
+            }
+
+            .ranking-col.tab-hidden {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 12px 12px 30px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            #sankeyChartWrapper {
+                min-height: 380px;
+            }
+
+            #sankey_chart {
+                min-height: 360px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stats-container">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="top-nav-left">
+                <a href="/panel" class="btn-back" title="Volver al Panel de Control">
+                    <span>←</span>
+                    <span>Panel</span>
+                </a>
+                <nav class="nav-tab-links">
+                    <a href="/panel/stats" class="nav-tab-pill">📊 General</a>
+                    <a href="/panel/stats2" class="nav-tab-pill active">🌊 Flujo & Actividad</a>
+                </nav>
+            </div>
+            <div class="top-nav-right">
+                <button type="button" class="btn-sync" id="btnSyncSheets" onclick="refreshStats2()">
+                    <span id="syncIcon">🔄</span>
+                    <span id="syncLabel">Sincronizar Sheets</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Metrics Grid -->
+        <section class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">Invitados Totales</span>
+                <div class="metric-value-row">
+                    <span class="metric-value" style="color: var(--blue);" id="kpiTotalPeople">{{ stats2.metrics.total_people }}</span>
+                    <span class="metric-sub">en {{ stats2.metrics.total_cards }} tarjetas</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Invitaciones Enviadas</span>
+                <div class="metric-value-row">
+                    <span class="metric-value" style="color: var(--purple);" id="kpiSentPeople">{{ stats2.metrics.sent_people }}</span>
+                    <span class="metric-sub" id="kpiSentCards">({{ stats2.metrics.sent_cards }} tarjetas)</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Invitaciones Abiertas</span>
+                <div class="metric-value-row">
+                    <span class="metric-value" style="color: var(--amber);" id="kpiOpenedPeople">{{ stats2.metrics.opened_people }}</span>
+                    <span class="metric-sub" id="kpiOpenedCards">({{ stats2.metrics.opened_cards }} leídas 📖)</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Confirmados (Asisten)</span>
+                <div class="metric-value-row">
+                    <span class="metric-value" style="color: var(--green);" id="kpiConfirmedPeople">{{ stats2.metrics.confirmed_people }}</span>
+                    <span class="metric-sub" id="kpiConfirmedCards">({{ stats2.metrics.confirmed_cards }} tarjetas ✅)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 1: Sankey Funnel Diagram -->
+        <section class="panel-card">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <span class="section-icon">🌊</span>
+                    <div>
+                        <h2 class="section-title">Diagrama de Flujo y Conversión (Sankey)</h2>
+                        <p class="section-subtitle">Origen (De quién) ➔ Enviado ➔ Abierto ➔ Confirmación</p>
+                    </div>
+                </div>
+                <div class="controls-group">
+                    <div class="control-pill-box" role="group" aria-label="Métrica">
+                        <button type="button" class="control-btn active" id="btnModePeople" onclick="setMode('people')">👥 Personas</button>
+                        <button type="button" class="control-btn" id="btnModeCards" onclick="setMode('cards')">💌 Tarjetas</button>
+                    </div>
+                    <div class="control-pill-box" role="group" aria-label="Origen">
+                        <button type="button" class="control-btn active" id="btnOriginGeneral" onclick="setOriginLevel('origin')">👤 Origen General</button>
+                        <button type="button" class="control-btn" id="btnOriginDetailed" onclick="setOriginLevel('detailed')">📁 De Quién Detallado</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sankeyChartWrapper">
+                <div id="sankeyLoading" class="sankey-loading" style="display: none;">
+                    <span>⏳ Cargando diagrama...</span>
+                </div>
+                <div id="sankey_chart"></div>
+            </div>
+        </section>
+
+        <!-- Mobile Tabs Switcher for Rankings -->
+        <div class="mobile-ranking-tabs">
+            <button type="button" class="control-btn active" id="mTabTop" onclick="switchMobileTab('top')">🏆 Top 10</button>
+            <button type="button" class="control-btn" id="mTabLastOpen" onclick="switchMobileTab('lastOpen')">⏱️ Últimas Abiertas</button>
+            <button type="button" class="control-btn" id="mTabLastConf" onclick="switchMobileTab('lastConf')">🎉 Últimas Confirmadas</button>
+        </div>
+
+        <!-- Section 2: 3-Column Rankings -->
+        <section class="rankings-grid">
+            <!-- Col 1: Top 10 Opened -->
+            <div class="ranking-col" id="colTop">
+                <div class="ranking-header">
+                    <div class="ranking-title-row">
+                        <span>🏆</span>
+                        <h3 class="ranking-title">Top 10 Más Abiertas</h3>
+                    </div>
+                    <span class="ranking-countBadge ranking-count-badge">{{ stats2.top_10_opened|length }}</span>
+                </div>
+                <div class="ranking-list" id="listTopOpened">
+                    {% if stats2.top_10_opened %}
+                        {% for card in stats2.top_10_opened %}
+                        <div class="ranking-card-item">
+                            <div class="ranking-item-top">
+                                <span class="rank-number rank-{{ loop.index }}">{{ loop.index }}</span>
+                                <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
+                                <span class="open-counter-badge">🔥 {{ card.open_count }}</span>
+                            </div>
+                            <div class="ranking-badges-row">
+                                <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
+                                    {{ card.group_nivel }}
+                                </span>
+                                <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
+                                    {{ card.group_tipo }}
+                                </span>
+                                <span class="chip chip-origin" title="{{ card.dequien }}">
+                                    {{ card.origin }}
+                                </span>
+                                <span class="ranking-timestamp" style="font-weight: 600;">
+                                    {% if card.confirmados > 0 %}✅ {{ card.confirmados }}{% endif %}
+                                    {% if card.rechazados > 0 %}❌ {{ card.rechazados }}{% endif %}
+                                    {% if card.pendientes > 0 %}⏳ {{ card.pendientes }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-ranking">Aún no hay aperturas registradas.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Col 2: Last 10 Opened -->
+            <div class="ranking-col" id="colLastOpen">
+                <div class="ranking-header">
+                    <div class="ranking-title-row">
+                        <span>⏱️</span>
+                        <h3 class="ranking-title">Últimas 10 Abiertas</h3>
+                    </div>
+                    <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_opened|length }}</span>
+                </div>
+                <div class="ranking-list" id="listLastOpened">
+                    {% if stats2.last_10_opened %}
+                        {% for card in stats2.last_10_opened %}
+                        <div class="ranking-card-item">
+                            <div class="ranking-item-top">
+                                <span class="rank-number">{{ loop.index }}</span>
+                                <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
+                                <span class="open-counter-badge" style="background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.4); color: var(--blue);">
+                                    📖 {{ card.open_count }}
+                                </span>
+                            </div>
+                            <div class="ranking-badges-row">
+                                <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
+                                    {{ card.group_nivel }}
+                                </span>
+                                <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
+                                    {{ card.group_tipo }}
+                                </span>
+                                <span class="chip chip-origin" title="{{ card.dequien }}">
+                                    {{ card.origin }}
+                                </span>
+                                <span class="ranking-timestamp" title="{{ card.last_updated }}">
+                                    {{ card.last_updated[-8:-3] if card.last_updated|length >= 8 else card.last_updated }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-ranking">Aún no hay actividad de aperturas.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Col 3: Last 10 Confirmed -->
+            <div class="ranking-col" id="colLastConf">
+                <div class="ranking-header">
+                    <div class="ranking-title-row">
+                        <span>🎉</span>
+                        <h3 class="ranking-title">Últimas 10 Confirmadas</h3>
+                    </div>
+                    <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_confirmed|length }}</span>
+                </div>
+                <div class="ranking-list" id="listLastConfirmed">
+                    {% if stats2.last_10_confirmed %}
+                        {% for g in stats2.last_10_confirmed %}
+                        <div class="ranking-card-item">
+                            <div class="ranking-item-top">
+                                <span class="chip-confirmed chip">✓ Asiste</span>
+                                <span class="ranking-names" title="{{ g.name }}">{{ g.name }}</span>
+                                <span class="ranking-timestamp" title="{{ g.updated_at }}">
+                                    {{ g.updated_at[-8:-3] if g.updated_at|length >= 8 else g.updated_at }}
+                                </span>
+                            </div>
+                            <div class="ranking-badges-row">
+                                <span class="chip {% if g.nivel == 'Reserva' %}chip-reserva{% else %}chip-invitado{% endif %}">
+                                    {{ g.nivel }}
+                                </span>
+                                <span class="chip {% if g.tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
+                                    {{ g.tipo }}
+                                </span>
+                                {% if g.pa %}
+                                <span class="chip chip-menu">🍽️ {{ g.pa|capitalize }}</span>
+                                {% endif %}
+                                {% if g.celiaco %}
+                                <span class="chip chip-menu" style="border-color: rgba(246, 173, 85, 0.4); color: #fbd38d;">🌾 Sin gluten</span>
+                                {% endif %}
+                                <span class="chip chip-origin" title="{{ g.dequien }}">
+                                    {{ g.origin }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-ranking">Aún no hay confirmaciones registradas.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Live Data JSON injected by Jinja2 -->
+    <script>
+        const INITIAL_SANKEY = {{ stats2.sankey|tojson }};
+        let currentSankey = INITIAL_SANKEY;
+        let activeMode = 'people'; // 'people' or 'cards'
+        let activeOriginLevel = 'origin'; // 'origin' or 'detailed'
+
+        // Load Google Charts
+        google.charts.load('current', { 'packages': ['sankey'] });
+        google.charts.setOnLoadCallback(drawSankeyChart);
+
+        function getActiveKey() {
+            return `${activeMode}_${activeOriginLevel}`;
+        }
+
+        function drawSankeyChart() {
+            const chartDiv = document.getElementById('sankey_chart');
+            if (!chartDiv) return;
+
+            const key = getActiveKey();
+            const rows = currentSankey[key] || [];
+
+            if (!rows || rows.length === 0) {
+                chartDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--text-muted);">Sin datos disponibles para este filtro.</div>';
+                return;
+            }
+
+            const data = new google.visualization.DataTable();
+            data.addColumn('string', 'De');
+            data.addColumn('string', 'Hacia');
+            data.addColumn('number', 'Cantidad');
+            data.addRows(rows);
+
+            // Google Charts Sankey Color Options for dark theme
+            const colors = [
+                '#38bdf8', '#d4af37', '#a78bfa', '#f6ad55', '#48bb78',
+                '#f56565', '#94a3b8', '#ec4899', '#14b8a6', '#6366f1'
+            ];
+
+            const options = {
+                height: 460,
+                backgroundColor: 'transparent',
+                sankey: {
+                    node: {
+                        label: {
+                            fontName: 'Montserrat',
+                            fontSize: 12,
+                            color: '#f7fafc',
+                            bold: true
+                        },
+                        nodePadding: 24,
+                        width: 14,
+                        colors: colors
+                    },
+                    link: {
+                        colorMode: 'gradient',
+                        fillOpacity: 0.45
+                    }
+                }
+            };
+
+            const chart = new google.visualization.Sankey(chartDiv);
+            chart.draw(data, options);
+        }
+
+        // Window resize listener
+        window.addEventListener('resize', () => {
+            if (google.visualization && google.visualization.Sankey) {
+                drawSankeyChart();
+            }
+        });
+
+        // Mode Toggles
+        function setMode(mode) {
+            activeMode = mode;
+            document.getElementById('btnModePeople')?.classList.toggle('active', mode === 'people');
+            document.getElementById('btnModeCards')?.classList.toggle('active', mode === 'cards');
+            drawSankeyChart();
+        }
+
+        function setOriginLevel(level) {
+            activeOriginLevel = level;
+            document.getElementById('btnOriginGeneral')?.classList.toggle('active', level === 'origin');
+            document.getElementById('btnOriginDetailed')?.classList.toggle('active', level === 'detailed');
+            drawSankeyChart();
+        }
+
+        // Mobile Tabs Switcher
+        function switchMobileTab(tab) {
+            document.getElementById('mTabTop')?.classList.toggle('active', tab === 'top');
+            document.getElementById('mTabLastOpen')?.classList.toggle('active', tab === 'lastOpen');
+            document.getElementById('mTabLastConf')?.classList.toggle('active', tab === 'lastConf');
+
+            document.getElementById('colTop')?.classList.toggle('tab-hidden', tab !== 'top');
+            document.getElementById('colLastOpen')?.classList.toggle('tab-hidden', tab !== 'lastOpen');
+            document.getElementById('colLastConf')?.classList.toggle('tab-hidden', tab !== 'lastConf');
+        }
+
+        // Refresh stats from Google Sheets via AJAX
+        async function refreshStats2() {
+            const btn = document.getElementById('btnSyncSheets');
+            const icon = document.getElementById('syncIcon');
+            const label = document.getElementById('syncLabel');
+            if (!btn) return;
+
+            btn.disabled = true;
+            if (icon) icon.style.animation = 'spin 1s linear infinite';
+            if (label) label.textContent = 'Sincronizando...';
+
+            try {
+                const res = await fetch('/panel/stats2/refresh', { method: 'POST' });
+                const json = await res.json();
+                if (json.ok && json.stats2) {
+                    currentSankey = json.stats2.sankey;
+                    drawSankeyChart();
+
+                    // Update metrics
+                    const m = json.stats2.metrics;
+                    if (m) {
+                        const elTot = document.getElementById('kpiTotalPeople');
+                        if (elTot) elTot.textContent = m.total_people;
+                        const elSent = document.getElementById('kpiSentPeople');
+                        if (elSent) elSent.textContent = m.sent_people;
+                        const elOpen = document.getElementById('kpiOpenedPeople');
+                        if (elOpen) elOpen.textContent = m.opened_people;
+                        const elConf = document.getElementById('kpiConfirmedPeople');
+                        if (elConf) elConf.textContent = m.confirmed_people;
+                    }
+                    if (label) label.textContent = '¡Actualizado!';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 400);
+                } else {
+                    alert('Error: ' + (json.error || 'No se pudo actualizar'));
+                }
+            } catch (err) {
+                alert('Error al sincronizar con Sheets: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                if (icon) icon.style.animation = '';
+                if (label) label.textContent = 'Sincronizar Sheets';
+            }
+        }
+    </script>
+</body>
+
+</html>

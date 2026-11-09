@@ -1427,6 +1427,10 @@ def sanitize_stats_records(raw_records):
             "comprobante": comprobante,
             "abierto": abierto,
             "open_count": open_count,
+            "updated_at": str(r.get("updated_at", "") or "").strip(),
+            "enviado": bool(str(r.get("enviado", "") or "").strip().lower() in ("si", "sí", "true", "1")),
+            "pa": str(r.get("pa", "") or "").strip(),
+            "celiaco": bool(str(r.get("celiaco", "") or "").strip().lower() in ("si", "sí", "true", "1")),
         })
     return clean
 
@@ -1624,6 +1628,195 @@ def compute_stats_summary(clean_records):
     }
 
 
+def compute_stats2_data(clean_records):
+    from collections import Counter
+    records = clean_records or []
+
+    # Group records by invitation
+    groups = {}
+    for r in records:
+        groups.setdefault(r["invitacion_id"], []).append(r)
+
+    card_items = []
+    for inv, recs in groups.items():
+        max_opens = max((r.get("open_count", 0) for r in recs), default=0)
+        last_updated = max((r.get("updated_at", "") for r in recs), default="")
+
+        names = []
+        guests_info = []
+        for r in recs:
+            gn = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()
+            if gn and gn.lower() not in ("invitado", "acompañante", "acompaniante"):
+                names.append(gn)
+            guests_info.append({
+                "id": r.get("id"),
+                "name": gn or "Acompañante",
+                "nivel": r.get("nivel", "Invitado"),
+                "tipo": r.get("tipo", "Cena") or "Cena",
+                "confirmacion": r.get("confirmacion", ""),
+                "pa": r.get("pa", ""),
+                "celiaco": r.get("celiaco", False),
+            })
+
+        unnamed = sum(1 for r in recs if not r.get("has_name"))
+        if not names:
+            display_title = inv.replace("_", " ").title()
+        else:
+            if unnamed == 1:
+                names.append("1 acompañante")
+            elif unnamed > 1:
+                names.append(f"{unnamed} acompañantes")
+            display_title = ", ".join(names)
+
+        has_inv = any(r.get("nivel") == "Invitado" for r in recs)
+        has_res = any(r.get("nivel") == "Reserva" for r in recs)
+        if has_inv and has_res:
+            group_nivel = "Mixta"
+        elif has_res:
+            group_nivel = "Reserva"
+        else:
+            group_nivel = "Invitado"
+
+        tipos_set = set(str(r.get("tipo", "")).strip().lower() for r in recs if r.get("tipo"))
+        if "cena" in tipos_set and "baile" in tipos_set:
+            group_tipo = "Mixto"
+        elif "baile" in tipos_set:
+            group_tipo = "Baile"
+        else:
+            group_tipo = "Cena"
+
+        dequien = recs[0].get("dequien", "Sin definir") or "Sin definir"
+        origin = recs[0].get("origin", "Sin definir") or "Sin definir"
+        is_enviado = any(r.get("enviado") for r in recs)
+
+        si_c = sum(1 for r in recs if r.get("confirmacion") == "si")
+        no_c = sum(1 for r in recs if r.get("confirmacion") == "no")
+        pend_c = len(recs) - si_c - no_c
+
+        if si_c > 0:
+            card_status = "✅ Asiste"
+        elif no_c == len(recs) and len(recs) > 0:
+            card_status = "❌ No asiste"
+        else:
+            card_status = "⏳ Pendiente"
+
+        card_items.append({
+            "invitacion_id": inv,
+            "title": display_title,
+            "guests": guests_info,
+            "open_count": max_opens,
+            "last_updated": last_updated,
+            "group_nivel": group_nivel,
+            "group_tipo": group_tipo,
+            "dequien": dequien,
+            "origin": origin,
+            "is_enviado": is_enviado,
+            "total_guests": len(recs),
+            "confirmados": si_c,
+            "rechazados": no_c,
+            "pendientes": pend_c,
+            "card_status": card_status,
+        })
+
+    # 1. Top 10 opened (cards with open_count > 0, sorted by open_count DESC, total_guests DESC)
+    top_opened_pool = [c for c in card_items if c["open_count"] > 0]
+    top_opened_pool.sort(key=lambda x: (x["open_count"], x["total_guests"]), reverse=True)
+    top_10_opened = top_opened_pool[:10]
+
+    # 2. Last 10 opened (cards with open_count > 0 and last_updated, sorted by last_updated DESC)
+    last_opened_pool = [c for c in card_items if c["open_count"] > 0 and c["last_updated"]]
+    last_opened_pool.sort(key=lambda x: x["last_updated"], reverse=True)
+    last_10_opened = last_opened_pool[:10]
+
+    # 3. Last 10 confirmed (guests with confirmacion == 'si', sorted by updated_at DESC)
+    confirmed_guests = []
+    for r in records:
+        if r.get("confirmacion") == "si":
+            gn = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+            inv_title = r["invitacion_id"].replace("_", " ").title()
+            confirmed_guests.append({
+                "id": r.get("id"),
+                "name": gn,
+                "invitacion_id": r.get("invitacion_id"),
+                "invitacion_title": inv_title,
+                "nivel": r.get("nivel", "Invitado"),
+                "tipo": r.get("tipo", "Cena") or "Cena",
+                "confirmacion": "si",
+                "pa": r.get("pa", ""),
+                "celiaco": r.get("celiaco", False),
+                "dequien": r.get("dequien", "Sin definir"),
+                "origin": r.get("origin", "Sin definir"),
+                "updated_at": r.get("updated_at", ""),
+            })
+    confirmed_guests.sort(key=lambda x: x["updated_at"], reverse=True)
+    last_10_confirmed = confirmed_guests[:10]
+
+    # Sankey flows helper
+    def _build_sankey(items, origin_key, is_card=False):
+        f12 = Counter()
+        f23 = Counter()
+        f34 = Counter()
+        for item in items:
+            orig = item.get(origin_key) or "Sin definir"
+            orig_node = f"👤 {orig}" if origin_key == "origin" else f"📁 {orig}"
+
+            is_env = item.get("is_enviado") if is_card else item.get("enviado")
+            env_node = "📤 Enviada" if is_env else "⏳ Sin enviar"
+
+            is_op = (item.get("open_count", 0) > 0) if is_card else item.get("abierto")
+            open_node = "📖 Abierta" if is_op else "🔒 Sin abrir"
+
+            if is_card:
+                conf_node = item.get("card_status", "⏳ Pendiente")
+            else:
+                c = item.get("confirmacion", "")
+                if c == "si":
+                    conf_node = "✅ Asiste"
+                elif c == "no":
+                    conf_node = "❌ No asiste"
+                else:
+                    conf_node = "⏳ Pendiente"
+
+            f12[(orig_node, env_node)] += 1
+            f23[(env_node, open_node)] += 1
+            f34[(open_node, conf_node)] += 1
+
+        rows = []
+        for (s, d), w in f12.items():
+            if w > 0: rows.append([s, d, w])
+        for (s, d), w in f23.items():
+            if w > 0: rows.append([s, d, w])
+        for (s, d), w in f34.items():
+            if w > 0: rows.append([s, d, w])
+        return rows
+
+    sankey = {
+        "people_origin": _build_sankey(records, "origin", is_card=False),
+        "people_detailed": _build_sankey(records, "dequien", is_card=False),
+        "cards_origin": _build_sankey(card_items, "origin", is_card=True),
+        "cards_detailed": _build_sankey(card_items, "dequien", is_card=True),
+    }
+
+    metrics = {
+        "total_people": len(records),
+        "sent_people": sum(1 for r in records if r.get("enviado")),
+        "opened_people": sum(1 for r in records if r.get("abierto")),
+        "confirmed_people": sum(1 for r in records if r.get("confirmacion") == "si"),
+        "total_cards": len(card_items),
+        "sent_cards": sum(1 for c in card_items if c["is_enviado"]),
+        "opened_cards": sum(1 for c in card_items if c["open_count"] > 0),
+        "confirmed_cards": sum(1 for c in card_items if c["confirmados"] > 0),
+    }
+
+    return {
+        "top_10_opened": top_10_opened,
+        "last_10_opened": last_10_opened,
+        "last_10_confirmed": last_10_confirmed,
+        "sankey": sankey,
+        "metrics": metrics,
+    }
+
+
 @app.get("/panel/stats")
 @require_panel_auth
 def panel_stats_view():
@@ -1672,6 +1865,57 @@ def panel_stats_refresh():
             "ok": True,
             "records": clean_records,
             "stats": stats,
+            "message": "Estadísticas sincronizadas con Google Sheets",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.get("/panel/stats2")
+@require_panel_auth
+def panel_stats2_view():
+    force = request.args.get("refresh") == "1"
+    try:
+        if force:
+            try:
+                table.flush_local_to_remote()
+            except Exception:
+                pass
+            raw_records = table.get_all(force_remote=True)
+        else:
+            raw_records = table.get_all()
+    except Exception:
+        raw_records = []
+
+    clean_records = sanitize_stats_records(raw_records)
+    stats2 = compute_stats2_data(clean_records)
+
+    if request.args.get("format") == "json":
+        return jsonify({
+            "ok": True,
+            "stats2": stats2,
+        })
+
+    return render_template(
+        "stats2.html",
+        stats2=stats2,
+    )
+
+
+@app.post("/panel/stats2/refresh")
+@require_panel_auth
+def panel_stats2_refresh():
+    try:
+        try:
+            table.flush_local_to_remote()
+        except Exception:
+            pass
+        raw_records = table.get_all(force_remote=True)
+        clean_records = sanitize_stats_records(raw_records)
+        stats2 = compute_stats2_data(clean_records)
+        return jsonify({
+            "ok": True,
+            "stats2": stats2,
             "message": "Estadísticas sincronizadas con Google Sheets",
         })
     except Exception as e:
