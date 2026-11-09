@@ -358,10 +358,65 @@
     let lastNavTime = 0;
     const NAV_DEBOUNCE_MS = 380;
 
+    function validateRsvpFormCompletion() {
+        const currentSlide = slides[currentIndex];
+        const isFormSlide = currentSlide && (currentSlide.getAttribute('data-slide-id') === 'rsvp' || currentSlide.querySelector('.rsvp-form-container'));
+        if (!isFormSlide) return true;
+
+        const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
+        for (const card of cards) {
+            const status = card.getAttribute('data-status') || '';
+            if (status === 'si') {
+                const guestId = card.getAttribute('data-guest-id');
+                const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
+                const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
+                const n = inputNombre ? inputNombre.value.trim() : '';
+                const a = inputApellido ? inputApellido.value.trim() : '';
+                const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
+
+                if (!n || !a || !selectedMenuBtn) {
+                    cards.forEach(c => {
+                        if (c !== card) {
+                            c.classList.remove('expanded');
+                            const h = c.querySelector('.rsvp-card-header');
+                            if (h) h.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    card.classList.add('expanded');
+                    const header = card.querySelector('.rsvp-card-header');
+                    if (header) header.setAttribute('aria-expanded', 'true');
+                    setTimeout(() => centerElementInForm(card), 80);
+
+                    if (!n || !a) {
+                        const emptyInput = (!n) ? inputNombre : inputApellido;
+                        if (emptyInput) {
+                            emptyInput.focus();
+                            emptyInput.classList.add('input-flash-error');
+                            setTimeout(() => emptyInput.classList.remove('input-flash-error'), 1000);
+                        }
+                        showToast('Por favor completá nombre y apellido');
+                    } else if (!selectedMenuBtn) {
+                        const menuBox = card.querySelector('.rsvp-menu-buttons');
+                        if (menuBox) {
+                            menuBox.classList.add('menu-flash-error');
+                            setTimeout(() => menuBox.classList.remove('menu-flash-error'), 1000);
+                        }
+                        showToast('Por favor seleccioná una opción de menú');
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     function goToSlide(index) {
         if (slides.length === 0) return;
         if (index === currentIndex) {
             flushAutoSave();
+            return;
+        }
+        if (index > currentIndex && !validateRsvpFormCompletion()) {
             return;
         }
         if (isNavigating || (Date.now() - lastNavTime < NAV_DEBOUNCE_MS)) return;
@@ -810,7 +865,7 @@
             const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
             const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
             const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
-            const selectedMenu = selectedMenuBtn ? (selectedMenuBtn.getAttribute('data-menu') || 'general') : 'general';
+            const selectedMenu = selectedMenuBtn ? (selectedMenuBtn.getAttribute('data-menu') || '') : '';
             const celiacCheck = card.querySelector(`input[name="celiaco_${guestId}"]`);
             const isCeliac = celiacCheck ? celiacCheck.checked : false;
 
@@ -823,20 +878,20 @@
             if (inputApellido !== null) {
                 payload.apellido = inputApellido.value.trim();
             }
-            payload.pa = (conf === 'si') ? selectedMenu : '';
-            payload.ap = (conf === 'si') ? selectedMenu : '';
-            payload.pa_general = (conf === 'si' && selectedMenu === 'general') ? 'si' : '';
-            payload.pa_vegetariano = (conf === 'si' && selectedMenu === 'vegetariano') ? 'si' : '';
-            payload.pa_vegano = (conf === 'si' && selectedMenu === 'vegano') ? 'si' : '';
-            payload.celiaco = (conf === 'si' && isCeliac) ? 'si' : '';
-            payload.pa_celiaco = (conf === 'si' && isCeliac) ? 'si' : '';
+            payload.pa = (conf === 'no') ? '' : selectedMenu;
+            payload.ap = (conf === 'no') ? '' : selectedMenu;
+            payload.pa_general = (conf !== 'no' && selectedMenu === 'general') ? 'si' : '';
+            payload.pa_vegetariano = (conf !== 'no' && selectedMenu === 'vegetariano') ? 'si' : '';
+            payload.pa_vegano = (conf !== 'no' && selectedMenu === 'vegano') ? 'si' : '';
+            payload.celiaco = (conf !== 'no' && isCeliac) ? 'si' : '';
+            payload.pa_celiaco = (conf !== 'no' && isCeliac) ? 'si' : '';
 
             return payload;
         }
 
         const radioChecked = card.querySelector(`input[name="asistencia_${guestId}"]:checked`);
         const asistencia = radioChecked ? radioChecked.value : '';
-        const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || 'general';
+        const selectedMenu = card.querySelector(`input[name="menu_${guestId}"]:checked`)?.value || '';
         const isCeliac = card.querySelector(`input[name="celiaco_${guestId}"]`)?.checked;
         const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
         const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
@@ -845,13 +900,13 @@
             nombre: inputNombre ? inputNombre.value.trim() : '',
             apellido: inputApellido ? inputApellido.value.trim() : '',
             confirmacion: asistencia,
-            pa: (asistencia === 'si') ? selectedMenu : '',
-            ap: (asistencia === 'si') ? selectedMenu : '',
-            celiaco: (asistencia === 'si' && isCeliac) ? 'si' : '',
-            pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
-            pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
-            pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
-            pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
+            pa: (asistencia === 'no') ? '' : selectedMenu,
+            ap: (asistencia === 'no') ? '' : selectedMenu,
+            celiaco: (asistencia !== 'no' && isCeliac) ? 'si' : '',
+            pa_general: (asistencia !== 'no' && selectedMenu === 'general') ? 'si' : '',
+            pa_vegetariano: (asistencia !== 'no' && selectedMenu === 'vegetariano') ? 'si' : '',
+            pa_vegano: (asistencia !== 'no' && selectedMenu === 'vegano') ? 'si' : '',
+            pa_celiaco: (asistencia !== 'no' && isCeliac) ? 'si' : ''
         };
     }
 
@@ -1869,19 +1924,19 @@
 
             function updateMenuIconDisplay(status) {
                 if (!menuIcon) return;
-                if (status !== 'si') {
+                if (status === 'no') {
                     menuIcon.textContent = '';
                     return;
                 }
                 const selBtn = card.querySelector('.rsvp-menu-btn.selected');
-                const selMenu = selBtn ? (selBtn.getAttribute('data-menu') || 'general') : 'general';
-                menuIcon.textContent = MENU_ICONS[selMenu] || '🍽️';
+                const selMenu = selBtn ? selBtn.getAttribute('data-menu') : '';
+                menuIcon.textContent = MENU_ICONS[selMenu] || '';
             }
 
             function updateGlutenIconDisplay(status) {
                 if (!glutenIcon) return;
                 const isCeliac = celiacCheck ? celiacCheck.checked : false;
-                if (status === 'si' && isCeliac) {
+                if (status !== 'no' && isCeliac) {
                     glutenIcon.style.display = 'inline-flex';
                 } else {
                     glutenIcon.style.display = 'none';
@@ -1935,10 +1990,12 @@
 
                     const val = btn.getAttribute('data-val') || '';
 
-                    // Require both Nombre and Apellido to confirm ("si")
+                    // Require Nombre, Apellido, and Dietary Menu to confirm ("si")
                     if (val === 'si') {
                         const n = inputNombre ? inputNombre.value.trim() : '';
                         const a = inputApellido ? inputApellido.value.trim() : '';
+                        const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
+
                         if (!n || !a) {
                             btn.classList.add('btn-flash-error');
                             setTimeout(() => btn.classList.remove('btn-flash-error'), 600);
@@ -1966,6 +2023,37 @@
                                 emptyInput.classList.add('input-flash-error');
                                 setTimeout(() => emptyInput.classList.remove('input-flash-error'), 1000);
                             }
+                            showToast('Por favor completá nombre y apellido');
+                            return;
+                        }
+
+                        if (!selectedMenuBtn) {
+                            btn.classList.add('btn-flash-error');
+                            setTimeout(() => btn.classList.remove('btn-flash-error'), 600);
+
+                            guestCards.forEach(c => {
+                                if (c !== card) {
+                                    c.classList.remove('expanded');
+                                    const h = c.querySelector('.rsvp-card-header');
+                                    if (h) h.setAttribute('aria-expanded', 'false');
+                                }
+                            });
+                            const payCard = document.querySelector('.rsvp-payment-card');
+                            if (payCard) {
+                                payCard.classList.remove('focused-highlight');
+                            }
+                            card.classList.add('expanded');
+                            if (header) header.setAttribute('aria-expanded', 'true');
+                            setTimeout(() => {
+                                centerElementInForm(card);
+                            }, 80);
+
+                            const menuBox = card.querySelector('.rsvp-menu-buttons');
+                            if (menuBox) {
+                                menuBox.classList.add('menu-flash-error');
+                                setTimeout(() => menuBox.classList.remove('menu-flash-error'), 1000);
+                            }
+                            showToast('Por favor seleccioná una opción de menú');
                             return;
                         }
                     }
@@ -1988,17 +2076,13 @@
                         }
                     }
 
-                    // Toggle dietary menu section visibility
+                    // Toggle dietary menu section visibility (disappears only when 'no')
                     const menuSection = card.querySelector('.rsvp-menu-section');
                     if (menuSection) {
-                        if (val === 'si') {
-                            menuSection.style.display = 'flex';
-                            if (!menuSection.querySelector('.rsvp-menu-btn.selected')) {
-                                const defaultMenu = menuSection.querySelector('.rsvp-menu-btn[data-menu="general"]');
-                                if (defaultMenu) defaultMenu.classList.add('selected');
-                            }
-                        } else {
+                        if (val === 'no') {
                             menuSection.style.display = 'none';
+                        } else {
+                            menuSection.style.display = 'flex';
                         }
                     }
 
@@ -2032,6 +2116,8 @@
                     e.stopPropagation();
                     menuButtons.forEach(b => b.classList.remove('selected'));
                     mBtn.classList.add('selected');
+                    const menuBox = card.querySelector('.rsvp-menu-buttons');
+                    if (menuBox) menuBox.classList.remove('menu-flash-error');
                     updateMenuIconDisplay(card.getAttribute('data-status'));
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
                 });
@@ -2081,7 +2167,7 @@
 
                     const menuSection = card.querySelector('.rsvp-menu-section');
                     if (menuSection) {
-                        menuSection.style.display = 'none';
+                        menuSection.style.display = 'flex';
                     }
 
                     updateMenuIconDisplay('');
@@ -2134,13 +2220,6 @@
                             badge.className = 'guest-badge badge-si';
                             badge.textContent = '✓ Asiste';
                         }
-                        if (!card.querySelector(`input[name="menu_${guestId}"]:checked`)) {
-                            const genRadio = card.querySelector(`input[name="menu_${guestId}"][value="general"]`);
-                            if (genRadio) {
-                                genRadio.checked = true;
-                                genRadio.closest('.menu-radio-label')?.classList.add('selected');
-                            }
-                        }
                     } else if (radio.value === 'no') {
                         parentLabel?.classList.add('selected-no');
                         if (dietSection) dietSection.style.display = 'none';
@@ -2150,7 +2229,7 @@
                         }
                     } else {
                         parentLabel?.classList.add('selected-pending');
-                        if (dietSection) dietSection.style.display = 'none';
+                        if (dietSection) dietSection.style.display = 'block';
                         if (badge) {
                             badge.className = 'guest-badge badge-pending';
                             badge.textContent = '⏳ Pendiente';

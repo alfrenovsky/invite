@@ -956,6 +956,14 @@
             box-sizing: border-box;
         }
 
+        .rsvp-menu-buttons.menu-flash-error {
+            border: 1px solid #ef4444 !important;
+            border-radius: 9px;
+            padding: 2px;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
+            animation: btnErrorFlash 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+        }
+
         .rsvp-menu-btn {
             font-family: 'Montserrat', sans-serif !important;
             font-size: 0.78rem;

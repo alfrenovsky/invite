@@ -332,15 +332,18 @@ def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
     for g in guest_records or []:
         nombre = f"{g.get('nombre', '')} {g.get('apellido', '')}".strip() or "Acompañante"
         conf = str(g.get("confirmacion", "")).strip().lower()
-        menu = str(g.get("menu", "general")).strip().title() or "General"
+        menu = str(g.get("pa") or g.get("ap") or g.get("menu") or "").strip().title()
         celiaco = str(g.get("celiaco", "")).strip().lower() in ("si", "sí", "true", "1")
 
         if conf in ("si", "sí", "confirmado"):
             status_text = "✅ Asiste"
-            extras = [f"Menú: {menu}"]
+            extras = []
+            if menu:
+                extras.append(f"Menú: {menu}")
             if celiaco:
                 extras.append("🌾 Sin gluten")
-            lines.append(f"• <b>{nombre}</b>: {status_text} ({', '.join(extras)})")
+            extra_str = f" ({', '.join(extras)})" if extras else ""
+            lines.append(f"• <b>{nombre}</b>: {status_text}{extra_str}")
         elif conf in ("no", "rechazado"):
             status_text = "❌ No asiste"
             lines.append(f"• <b>{nombre}</b>: {status_text}")
