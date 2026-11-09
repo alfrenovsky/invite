@@ -1261,21 +1261,6 @@
             if (aliasBadge) aliasBadge.style.display = 'none';
             if (uploadWrapper) uploadWrapper.style.display = 'none';
             paymentSection.style.display = 'block';
-
-            if (wasHidden && isRsvpInitialized) {
-                const payCard = paymentSection.querySelector('.rsvp-payment-card');
-                if (payCard) {
-                    payCard.classList.add('focused-highlight');
-                    document.querySelectorAll('.rsvp-guest-card.expanded, .rsvp-card.expanded').forEach(c => {
-                        c.classList.remove('expanded');
-                        const h = c.querySelector('.rsvp-card-header');
-                        if (h) h.setAttribute('aria-expanded', 'false');
-                    });
-                    setTimeout(() => {
-                        centerElementInForm(payCard);
-                    }, 120);
-                }
-            }
             return;
         }
 
@@ -1307,21 +1292,6 @@
         if (aliasBadge) aliasBadge.style.display = '';
         if (uploadWrapper) uploadWrapper.style.display = '';
         paymentSection.style.display = 'block';
-
-        if (wasHidden && isRsvpInitialized) {
-            const payCard = paymentSection.querySelector('.rsvp-payment-card');
-            if (payCard) {
-                payCard.classList.add('focused-highlight');
-                document.querySelectorAll('.rsvp-guest-card.expanded, .rsvp-card.expanded').forEach(c => {
-                    c.classList.remove('expanded');
-                    const h = c.querySelector('.rsvp-card-header');
-                    if (h) h.setAttribute('aria-expanded', 'false');
-                });
-                setTimeout(() => {
-                    centerElementInForm(payCard);
-                }, 120);
-            }
-        }
     }
 
     function initComprobanteUploader() {
@@ -1908,6 +1878,77 @@
             'vegano': '🌱'
         };
 
+        function handleGuestStepAdvancement(currentCard, isAttending) {
+            const allCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
+            const isCardPending = (c) => {
+                const st = c.getAttribute('data-status') || '';
+                return st !== 'si' && st !== 'no';
+            };
+
+            const currentIdx = allCards.indexOf(currentCard);
+            let nextPending = null;
+            if (currentIdx !== -1) {
+                nextPending = allCards.slice(currentIdx + 1).find(isCardPending) ||
+                              allCards.slice(0, currentIdx).find(isCardPending);
+            }
+
+            const successBanner = document.getElementById('rsvpSuccessBanner');
+            const paymentSection = document.getElementById('rsvpPaymentSection');
+
+            if (nextPending) {
+                if (successBanner) successBanner.style.display = 'none';
+                setTimeout(() => {
+                    currentCard.classList.remove('expanded');
+                    const h = currentCard.querySelector('.rsvp-card-header');
+                    if (h) h.setAttribute('aria-expanded', 'false');
+
+                    allCards.forEach(c => {
+                        if (c !== nextPending) {
+                            c.classList.remove('expanded');
+                            c.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    nextPending.classList.add('expanded');
+                    nextPending.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'true');
+                    setTimeout(() => centerElementInForm(nextPending), 80);
+                }, 320);
+            } else {
+                // All guests have responded!
+                setTimeout(() => {
+                    currentCard.classList.remove('expanded');
+                    const h = currentCard.querySelector('.rsvp-card-header');
+                    if (h) h.setAttribute('aria-expanded', 'false');
+
+                    const anyAttending = allCards.some(c => c.getAttribute('data-status') === 'si');
+                    if (anyAttending) {
+                        showToast('🎉 ¡Confirmación registrada!');
+                        if (successBanner) {
+                            successBanner.style.display = 'flex';
+                        }
+                        flushAutoSave();
+
+                        const hasUnpaid = paymentSection &&
+                                          paymentSection.style.display !== 'none' &&
+                                          !paymentSection.querySelector('.payment-registered-card');
+
+                        if (hasUnpaid) {
+                            setTimeout(() => {
+                                const payCard = paymentSection.querySelector('.rsvp-payment-card');
+                                if (payCard) {
+                                    payCard.classList.add('focused-highlight');
+                                    centerElementInForm(payCard);
+                                }
+                            }, 600);
+                        } else {
+                            setTimeout(() => {
+                                centerElementInForm(successBanner || currentCard);
+                            }, 120);
+                        }
+                    }
+                }, 320);
+            }
+        }
+
         const guestCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
         guestCards.forEach(card => {
             const guestId = card.getAttribute('data-guest-id');
@@ -2105,6 +2146,14 @@
                         }
                     } else {
                         queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                        if (val === 'si') {
+                            handleGuestStepAdvancement(card, true);
+                        } else if (val === 'no') {
+                            handleGuestStepAdvancement(card, false);
+                        } else {
+                            const successBanner = document.getElementById('rsvpSuccessBanner');
+                            if (successBanner) successBanner.style.display = 'none';
+                        }
                     }
                 });
             });
@@ -2254,16 +2303,14 @@
                         }
                     } else {
                         queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
-                    }
-
-                    const nextCard = cards[cardIdx + 1];
-                    if (nextCard && !nextCard.querySelector('input[type="radio"]:checked')) {
-                        setTimeout(() => {
-                            flushAutoSave();
-                            cards.forEach(c => c.classList.remove('expanded'));
-                            nextCard.classList.add('expanded');
-                            centerElementInForm(nextCard);
-                        }, 320);
+                        if (radio.value === 'si') {
+                            handleGuestStepAdvancement(card, true);
+                        } else if (radio.value === 'no') {
+                            handleGuestStepAdvancement(card, false);
+                        } else {
+                            const successBanner = document.getElementById('rsvpSuccessBanner');
+                            if (successBanner) successBanner.style.display = 'none';
+                        }
                     }
                 };
             });

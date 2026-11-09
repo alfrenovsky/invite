@@ -111,6 +111,16 @@
             {% endfor %}
         </div>
 
+        <!-- Celebratory Completion Banner -->
+        <div id="rsvpSuccessBanner" class="rsvp-success-banner"
+            style="{% if any_confirmed and pending_count == 0 %}display: flex;{% else %}display: none;{% endif %}">
+            <span class="rsvp-success-badge-icon">🎉</span>
+            <div class="rsvp-success-text-col">
+                <span class="rsvp-success-title">¡Confirmación registrada!</span>
+                <span class="rsvp-success-desc">Muchas gracias por acompañarnos</span>
+            </div>
+        </div>
+
         <!-- Payment Section (Tarjeta de la fiesta & Comprobante) -->
         <div id="rsvpPaymentSection" class="rsvp-payment-section" style="display: none;">
             <div class="rsvp-payment-card">
