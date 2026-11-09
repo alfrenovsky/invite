@@ -2109,6 +2109,24 @@ class TestGoogleSheetsTable(unittest.TestCase):
             self.assertNotIn("s_baile", active_ids)
             self.assertNotIn("s_res_baile", active_ids)
 
+        # Case 3: Mixed group with Cena and Baile guests -> should be considered "cena"
+        mixed_guests = [
+            {"id": "m1", "invitacion_id": "pareja_mixta_tipo", "nombre": "Juan", "apellido": "Perez", "tipo": "Cena", "nivel": "Reserva", "montotarjeta": "105000"},
+            {"id": "m2", "invitacion_id": "pareja_mixta_tipo", "nombre": "Clara", "apellido": "Gomez", "tipo": "Baile", "nivel": "Reserva", "montotarjeta": "45000"}
+        ]
+        with patch("app.table.get_by_invitacion", return_value=mixed_guests), \
+             patch("app.load_slides", return_value=slides_config):
+            ctx_mixed = get_guest_context("pareja_mixta_tipo")
+            self.assertIsNotNone(ctx_mixed)
+            self.assertFalse(ctx_mixed["is_baile"])
+            self.assertEqual(ctx_mixed["event_type"], "cena")
+            active_ids = [s["id"] for s in ctx_mixed["active_slides"]]
+            self.assertIn("s_all", active_ids)
+            self.assertIn("s_cena", active_ids)
+            self.assertIn("s_res_cena", active_ids)
+            self.assertNotIn("s_baile", active_ids)
+            self.assertNotIn("s_res_baile", active_ids)
+
 
 if __name__ == "__main__":
     unittest.main()

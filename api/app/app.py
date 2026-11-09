@@ -957,7 +957,7 @@ def get_guest_context(validated_slug):
             invitation_url = g["url"]
             break
 
-    is_baile = any(str(g.get("tipo", "") or "").strip().lower() == "baile" for g in guests)
+    is_baile = bool(guests) and all(str(g.get("tipo", "") or "").strip().lower() == "baile" for g in guests)
     event_type = "baile" if is_baile else "cena"
 
     raw_slides = load_slides()
