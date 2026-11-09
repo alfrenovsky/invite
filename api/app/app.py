@@ -2,6 +2,7 @@ import os
 import time
 import json
 import re
+import copy
 import threading
 import urllib.parse
 import uuid
@@ -956,22 +957,39 @@ def get_guest_context(validated_slug):
             invitation_url = g["url"]
             break
 
+    is_baile = any(str(g.get("tipo", "") or "").strip().lower() == "baile" for g in guests)
+    event_type = "baile" if is_baile else "cena"
+
     raw_slides = load_slides()
     filtered_slides = []
     for s in raw_slides:
         if not s.get("enabled", True):
             continue
-        target = s.get("target") or s.get("target_audience") or "all"
-        if target == "all":
-            pass
-        elif isinstance(target, list):
-            norm_targets = [("invitacion" if t in ("invitados", "invitacion") else t) for t in target]
-            if "all" not in norm_targets and group_type not in norm_targets:
-                continue
-        elif isinstance(target, str):
-            norm_target = "invitacion" if target in ("invitados", "invitacion") else target
-            if norm_target != "all" and norm_target != group_type:
-                continue
+        raw_target = s.get("target") or s.get("target_audience") or "all"
+        if isinstance(raw_target, str):
+            target_list = [t.strip().lower() for t in raw_target.split(",") if t.strip()]
+        elif isinstance(raw_target, list):
+            target_list = [str(t).strip().lower() for t in raw_target if str(t).strip()]
+        else:
+            target_list = ["all"]
+
+        norm_targets = [("invitacion" if t in ("invitados", "invitacion") else t) for t in target_list]
+        if not norm_targets or "all" in norm_targets:
+            filtered_slides.append(s)
+            continue
+
+        # Check event type restrictions (cena vs baile)
+        event_opts = {"cena", "baile"}
+        event_targets = [t for t in norm_targets if t in event_opts]
+        if event_targets and event_type not in event_targets:
+            continue
+
+        # Check group type restrictions (invitacion, reserva, mixta)
+        group_opts = {"invitacion", "reserva", "mixta"}
+        group_targets = [t for t in norm_targets if t in group_opts]
+        if group_targets and group_type not in group_targets:
+            continue
+
         filtered_slides.append(s)
 
     active_slides = [resolve_invitation_slide(s) for s in filtered_slides]
@@ -1014,6 +1032,8 @@ def get_guest_context(validated_slug):
         "config_version": int(time.time()),
         "existing_comprobante": existing_comprobante,
         "alias_cbu": alias_cbu,
+        "is_baile": is_baile,
+        "event_type": event_type,
     }
 
 
@@ -2296,6 +2316,77 @@ def panel_create_slide():
         save_slides(slides)
 
     return jsonify({"ok": True, "slide": new_slide, "message": f"Slide '{slide_id}' creado correctamente"})
+
+
+@app.post("/panel/slide/<slide_id>/duplicate")
+@require_panel_auth
+def panel_duplicate_slide(slide_id):
+    data = (request.get_json(silent=True) or {}) if request.is_json else request.form.to_dict()
+    design_slug = str(data.get("design_slug", "")).strip() if isinstance(data, dict) else ""
+    active_slug = (get_active_design() or {}).get("slug", "")
+
+    design_record = None
+    design_fpath = None
+    if design_slug:
+        design_fpath = os.path.join(get_designs_dir(), f"{design_slug}.json")
+        if os.path.isfile(design_fpath):
+            try:
+                with open(design_fpath, "r", encoding="utf-8") as f:
+                    design_record = json.load(f)
+                slides = design_record.get("slides") or []
+            except Exception:
+                slides = load_slides()
+        else:
+            slides = load_slides()
+    else:
+        slides = load_slides()
+
+    target_idx = next((i for i, s in enumerate(slides) if s.get("id") == slide_id or s.get("title") == slide_id or s.get("_origId") == slide_id), None)
+    if target_idx is None:
+        return jsonify({"ok": False, "error": f"Slide '{slide_id}' no encontrado"}), 404
+
+    original_slide = slides[target_idx]
+    copied_slide = copy.deepcopy(original_slide)
+    copied_slide.pop("_origId", None)
+
+    base_id = original_slide.get("id", "slide")
+    new_id = f"{base_id}_copia"
+    counter = 2
+    while any(s.get("id") == new_id for s in slides):
+        new_id = f"{base_id}_copia_{counter}"
+        counter += 1
+
+    copied_slide["id"] = new_id
+    orig_title = original_slide.get("title") or base_id
+    copied_slide["title"] = f"{orig_title} (copia)"
+
+    # Give unique IDs to elements inside the copied slide
+    if isinstance(copied_slide.get("elements"), list):
+        now_ts = int(time.time() * 1000)
+        for idx, el in enumerate(copied_slide["elements"]):
+            if isinstance(el, dict):
+                el["id"] = f"el_{now_ts}_{idx}"
+
+    slides.insert(target_idx + 1, copied_slide)
+
+    if design_record and design_fpath:
+        design_record["slides"] = slides
+        design_record["updated_at"] = datetime.now(timezone.utc).isoformat()
+        try:
+            with open(design_fpath, "w", encoding="utf-8") as f:
+                json.dump(design_record, f, indent=2, ensure_ascii=False)
+            os.chmod(design_fpath, 0o666)
+        except Exception:
+            pass
+
+    if not design_slug or design_slug == active_slug:
+        save_slides(slides)
+
+    return jsonify({
+        "ok": True,
+        "slide": copied_slide,
+        "message": f"Slide copiado como '{new_id}'"
+    })
 
 
 @app.post("/panel/slide/<slide_id>/delete")

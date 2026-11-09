@@ -5,10 +5,11 @@
         <div id="rsvpCardsContainer" class="rsvp-guest-list">
             {% for guest in guests %}
             {% set conf = guest.confirmacion or '' %}
+            {% set is_guest_baile = ((guest.tipo or '')|lower == 'baile') %}
             {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
             {% set is_celiac = (guest.celiaco == 'si' or guest.pa_celiaco == 'si') %}
             {% set menu_icon = '' %}
-            {% if conf == 'si' %}
+            {% if conf == 'si' and not is_guest_baile %}
             {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
             {% elif current_menu == 'vegetariano' %}{% set menu_icon = '🥬' %}
             {% else %}{% set menu_icon = '🍽️' %}
@@ -27,11 +28,14 @@
                     <span class="rsvp-guest-name" id="name_display_{{ guest.id }}">{% if guest.nombre or guest.apellido
                         %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
                     <span class="rsvp-header-icons">
+                        {% if is_guest_baile %}
+                        <span class="rsvp-baile-chip" style="font-size: 0.68rem; font-weight: 700; color: #c084fc; background: rgba(192, 132, 252, 0.14); border: 1px solid rgba(192, 132, 252, 0.35); border-radius: 999px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 3px;">🎉 Baile</span>
+                        {% endif %}
                         <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}"
-                            style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
+                            style="{% if conf != 'si' or not is_celiac or is_guest_baile %}display: none;{% endif %}" title="Sin gluten">
                             <img src="/assets/sin_gluten.svg" alt="Sin gluten" class="rsvp-gluten-badge">
                         </span>
-                        <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{{ menu_icon }}</span>
+                        <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{% if not is_guest_baile %}{{ menu_icon }}{% endif %}</span>
                     </span>
                     <span class="rsvp-chevron" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
@@ -71,10 +75,16 @@
                         </div>
                     </div>
 
-                    <!-- Dietary Menu Buttons (Shown only if confirmed) -->
+                    {% if is_guest_baile %}
+                    <div style="font-size: 0.74rem; color: #cbd5e1; background: rgba(192, 132, 252, 0.08); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 6px; padding: 6px 10px; margin-top: 6px;">
+                        <span>🎉 <strong>Invitación de Fiesta / Baile:</strong> Ingreso posterior a la cena.</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- Dietary Menu Buttons (Shown only if confirmed and NOT baile) -->
                     {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
                     <div class="rsvp-menu-section" id="menu_section_{{ guest.id }}"
-                        style="{% if conf != 'si' %}display: none;{% endif %}">
+                        style="{% if conf != 'si' or is_guest_baile %}display: none;{% endif %}">
                         <label class="rsvp-menu-label">Menú</label>
                         <div class="rsvp-menu-buttons" role="group" aria-label="Menú">
                             <button type="button"

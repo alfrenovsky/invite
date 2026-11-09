@@ -4061,6 +4061,10 @@
                                         title="Mover slide hacia abajo en el orden">
                                         <span>▼ Bajar</span>
                                     </button>
+                                    <button type="button" class="btn-ctrl" id="btnDuplicateSlide" onclick="duplicateCurrentSlide()"
+                                        title="Duplicar / copiar slide actual">
+                                        <span>📋 Copiar</span>
+                                    </button>
                                     <button type="button" class="btn-ctrl btn-ctrl-primary" id="btnNewSlide"
                                         onclick="openNewSlideModal()" title="Crear nuevo slide">
                                         <span>+ Nuevo</span>
@@ -4169,8 +4173,14 @@
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">Mostrar para:</span>
                                         <div class="slide-target-group">
-                                            <button type="button" class="btn-target-opt active" data-target="all" onclick="toggleSlideTarget('all')" title="Visible para todos (habilita los 3)">
+                                            <button type="button" class="btn-target-opt active" data-target="all" onclick="toggleSlideTarget('all')" title="Visible para todos">
                                                 <span>🌐 Todos</span>
+                                            </button>
+                                            <button type="button" class="btn-target-opt" data-target="cena" onclick="toggleSlideTarget('cena')" title="Visible solo para invitados a la Cena">
+                                                <span>🍽️ Cena</span>
+                                            </button>
+                                            <button type="button" class="btn-target-opt" data-target="baile" onclick="toggleSlideTarget('baile')" title="Visible solo para invitados al Baile / Trasnoche">
+                                                <span>🎉 Baile</span>
                                             </button>
                                             <button type="button" class="btn-target-opt" data-target="invitacion" onclick="toggleSlideTarget('invitacion')" title="Visible para tarjetas de Invitación">
                                                 <span>💌 Invitados</span>
@@ -6691,42 +6701,36 @@
             const slide = getCurrentSlide();
             if (!slide) return;
 
-            const allOpts = ['invitacion', 'reserva', 'mixta'];
+            const allOpts = ['invitacion', 'reserva', 'mixta', 'cena', 'baile'];
             let current = slide.target;
 
             // Normalize current into a Set of specific targets
             let active = new Set();
             if (!current || current === 'all') {
-                allOpts.forEach(o => active.add(o));
+                // All is active
             } else if (Array.isArray(current)) {
                 current.forEach(o => {
-                    const norm = (o === 'invitados' ? 'invitacion' : o);
+                    const norm = (o === 'invitados' ? 'invitacion' : String(o).trim().toLowerCase());
                     if (allOpts.includes(norm)) active.add(norm);
                 });
             } else if (typeof current === 'string') {
-                const norm = (current === 'invitados' ? 'invitacion' : current);
-                if (allOpts.includes(norm)) active.add(norm);
+                current.split(',').forEach(part => {
+                    const norm = (part.trim() === 'invitados' ? 'invitacion' : part.trim().toLowerCase());
+                    if (allOpts.includes(norm)) active.add(norm);
+                });
             }
 
             if (opt === 'all') {
-                // Clicking "Todos" enables all 3
-                active = new Set(allOpts);
+                active.clear();
             } else {
-                if (!current || current === 'all') {
-                    active = new Set([opt]);
+                if (active.has(opt)) {
+                    active.delete(opt);
                 } else {
-                    if (active.has(opt)) {
-                        active.delete(opt);
-                        if (active.size === 0) {
-                            active = new Set(allOpts);
-                        }
-                    } else {
-                        active.add(opt);
-                    }
+                    active.add(opt);
                 }
             }
 
-            if (active.size === allOpts.length) {
+            if (active.size === 0 || active.size === allOpts.length) {
                 slide.target = 'all';
             } else if (active.size === 1) {
                 slide.target = Array.from(active)[0];
@@ -6743,27 +6747,23 @@
         window.setSlideTarget = toggleSlideTarget;
 
         function updateSlideTargetUI(target) {
-            const allOpts = ['invitacion', 'reserva', 'mixta'];
+            const allOpts = ['invitacion', 'reserva', 'mixta', 'cena', 'baile'];
             let active = new Set();
             if (!target || target === 'all') {
-                allOpts.forEach(o => active.add(o));
                 active.add('all');
             } else if (Array.isArray(target)) {
                 target.forEach(o => {
-                    const norm = (o === 'invitados' ? 'invitacion' : o);
+                    const norm = (o === 'invitados' ? 'invitacion' : String(o).trim().toLowerCase());
                     if (allOpts.includes(norm)) active.add(norm);
                 });
-                if (active.size === allOpts.length) {
-                    active.add('all');
-                }
             } else if (typeof target === 'string') {
-                const norm = (target === 'invitados' ? 'invitacion' : target);
-                if (norm === 'all') {
-                    allOpts.forEach(o => active.add(o));
-                    active.add('all');
-                } else if (allOpts.includes(norm)) {
-                    active.add(norm);
-                }
+                target.split(',').forEach(part => {
+                    const norm = (part.trim() === 'invitados' ? 'invitacion' : part.trim().toLowerCase());
+                    if (allOpts.includes(norm)) active.add(norm);
+                });
+            }
+            if (active.size === 0) {
+                active.add('all');
             }
 
             document.querySelectorAll('.btn-target-opt').forEach(btn => {
@@ -11943,6 +11943,38 @@
                 }
             } catch (err) {
                 showToast('Error de red al crear slide', true);
+            }
+        }
+
+        async function duplicateCurrentSlide() {
+            const slide = getCurrentSlide();
+            if (!slide) return;
+
+            // Save dirty form changes if any
+            if (isSlideDirty(slide.id)) {
+                await flushAutoSave();
+            }
+
+            try {
+                const res = await fetch(`/panel/slide/${encodeURIComponent(slide.id)}/duplicate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ design_slug: currentDesignSlug })
+                });
+                const data = await res.json();
+                if (data.ok && data.slide) {
+                    const currIdx = slidesData.findIndex(s => s.id === slide.id);
+                    const insertIdx = currIdx >= 0 ? currIdx + 1 : slidesData.length;
+                    slidesData.splice(insertIdx, 0, data.slide);
+                    savedSlidesSnapshot.splice(insertIdx, 0, getComparableSlide(data.slide));
+                    selectSlide(data.slide.id);
+                    updateDirtySlideChipsUI();
+                    showToast(`Slide copiado como "${data.slide.id}"`);
+                } else {
+                    showToast(data.error || 'Error al copiar slide', true);
+                }
+            } catch (err) {
+                showToast('Error de red al copiar slide', true);
             }
         }
 

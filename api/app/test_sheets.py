@@ -2033,6 +2033,82 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertTrue(res_crawler.headers.get("Location").startswith("https://wa.me/5491198765432?text="))
                 mock_update.assert_not_called()
 
+    def test_panel_duplicate_slide(self):
+        from app import app
+        auth_headers = get_panel_auth_headers("ari", "gato")
+
+        sample_slides = [
+            {"id": "slide1", "title": "Intro", "template": "slides/custom.html", "elements": [{"id": "el1", "type": "text", "content": "Hola"}]},
+            {"id": "slide2", "title": "Cronograma", "template": "slides/custom.html", "elements": [{"id": "el2", "type": "text", "content": "18:00"}]},
+        ]
+
+        with patch("app.load_slides", return_value=sample_slides), \
+             patch("app.save_slides") as mock_save:
+            with app.test_client() as client:
+                # 1. Unauthenticated request
+                self.assertEqual(client.post("/panel/slide/slide2/duplicate").status_code, 401)
+
+                # 2. Duplicate slide2
+                res = client.post("/panel/slide/slide2/duplicate", headers=auth_headers)
+                self.assertEqual(res.status_code, 200)
+                data = res.get_json()
+                self.assertTrue(data["ok"])
+                copied = data["slide"]
+                self.assertEqual(copied["id"], "slide2_copia")
+                self.assertEqual(copied["title"], "Cronograma (copia)")
+                # Element IDs must be regenerated
+                self.assertNotEqual(copied["elements"][0]["id"], "el2")
+                # save_slides must be called with the new slide inserted after slide2
+                mock_save.assert_called_once()
+                saved_slides = mock_save.call_args[0][0]
+                self.assertEqual(len(saved_slides), 3)
+                self.assertEqual([s["id"] for s in saved_slides], ["slide1", "slide2", "slide2_copia"])
+
+    def test_baile_audience_slide_filtering_and_rsvp_context(self):
+        from app import app, get_guest_context
+
+        slides_config = [
+            {"id": "s_all", "title": "Portada", "template": "slides/custom.html", "target": "all", "elements": []},
+            {"id": "s_cena", "title": "Cronograma Cena", "template": "slides/custom.html", "target": "cena", "elements": []},
+            {"id": "s_baile", "title": "Cronograma Baile", "template": "slides/custom.html", "target": "baile", "elements": []},
+            {"id": "s_res_baile", "title": "Reserva Baile", "template": "slides/custom.html", "target": ["reserva", "baile"], "elements": []},
+            {"id": "s_res_cena", "title": "Reserva Cena", "template": "slides/custom.html", "target": ["reserva", "cena"], "elements": []},
+        ]
+
+        # Case 1: Guest with tipo="Baile" and nivel="Reserva"
+        baile_guests = [
+            {"id": "b1", "invitacion_id": "amigos_baile", "nombre": "Lucas", "apellido": "Gomez", "tipo": "Baile", "nivel": "Reserva", "montotarjeta": "45000"}
+        ]
+        with patch("app.table.get_by_invitacion", return_value=baile_guests), \
+             patch("app.load_slides", return_value=slides_config):
+            ctx_baile = get_guest_context("amigos_baile")
+            self.assertIsNotNone(ctx_baile)
+            self.assertTrue(ctx_baile["is_baile"])
+            self.assertEqual(ctx_baile["event_type"], "baile")
+            active_ids = [s["id"] for s in ctx_baile["active_slides"]]
+            self.assertIn("s_all", active_ids)
+            self.assertIn("s_baile", active_ids)
+            self.assertIn("s_res_baile", active_ids)
+            self.assertNotIn("s_cena", active_ids)
+            self.assertNotIn("s_res_cena", active_ids)
+
+        # Case 2: Guest with tipo="Cena" and nivel="Reserva"
+        cena_guests = [
+            {"id": "c1", "invitacion_id": "familia_cena", "nombre": "Maria", "apellido": "Perez", "tipo": "Cena", "nivel": "Reserva", "montotarjeta": "105000"}
+        ]
+        with patch("app.table.get_by_invitacion", return_value=cena_guests), \
+             patch("app.load_slides", return_value=slides_config):
+            ctx_cena = get_guest_context("familia_cena")
+            self.assertIsNotNone(ctx_cena)
+            self.assertFalse(ctx_cena["is_baile"])
+            self.assertEqual(ctx_cena["event_type"], "cena")
+            active_ids = [s["id"] for s in ctx_cena["active_slides"]]
+            self.assertIn("s_all", active_ids)
+            self.assertIn("s_cena", active_ids)
+            self.assertIn("s_res_cena", active_ids)
+            self.assertNotIn("s_baile", active_ids)
+            self.assertNotIn("s_res_baile", active_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
