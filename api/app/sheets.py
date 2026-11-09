@@ -348,18 +348,23 @@ class GoogleSheetsTable:
         item["telefono"] = phone_val
 
         # Dietary preference mapping: general, vegetariano, vegano (single column pa/ap)
-        pa_val = str(rec.get("pa") or rec.get("ap") or rec.get("menu") or "").strip().lower()
-        if not pa_val:
-            if str(rec.get("pa_vegano", "")).lower() in ["si", "true", "1"] or "vegano" in alim_list:
-                pa_val = "vegano"
-            elif str(rec.get("pa_vegetariano", "")).lower() in ["si", "true", "1"] or "vegetariano" in alim_list:
-                pa_val = "vegetariano"
-            elif str(rec.get("pa_general", "")).lower() in ["si", "true", "1"] or "general" in alim_list:
-                pa_val = "general"
+        # Only confirmed guests ('si') should have dietary preferences loaded
+        if item["confirmacion"] == "si":
+            pa_val = str(rec.get("pa") or rec.get("ap") or rec.get("menu") or "").strip().lower()
+            if not pa_val:
+                if str(rec.get("pa_vegano", "")).lower() in ["si", "true", "1"] or "vegano" in alim_list:
+                    pa_val = "vegano"
+                elif str(rec.get("pa_vegetariano", "")).lower() in ["si", "true", "1"] or "vegetariano" in alim_list:
+                    pa_val = "vegetariano"
+                elif str(rec.get("pa_general", "")).lower() in ["si", "true", "1"] or "general" in alim_list:
+                    pa_val = "general"
 
-        celiaco_val = str(rec.get("celiaco") or rec.get("pa_celiaco") or "").strip().lower()
-        if not celiaco_val and "celiaco" in alim_list:
-            celiaco_val = "si"
+            celiaco_val = str(rec.get("celiaco") or rec.get("pa_celiaco") or "").strip().lower()
+            if not celiaco_val and "celiaco" in alim_list:
+                celiaco_val = "si"
+        else:
+            pa_val = ""
+            celiaco_val = ""
 
         item["pa"] = pa_val
         item["ap"] = pa_val
