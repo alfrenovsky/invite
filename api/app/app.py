@@ -897,6 +897,9 @@ def get_guest_context(validated_slug):
     group_type = get_group_target_type(guests)
 
     def _is_reserva_guest(g):
+        is_inv = (str(g.get("nivel", "") or "").strip().lower() in ("invitado", "invitados", "invitacion"))
+        if is_inv:
+            return False
         is_res = (str(g.get("nivel", "") or "").strip().lower() == "reserva")
         raw_monto = re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))
         return bool(is_res or (raw_monto and int(raw_monto) > 0))

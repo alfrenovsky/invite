@@ -1431,6 +1431,10 @@ class TestGoogleSheetsTable(unittest.TestCase):
         item4, row4 = self.table._map_record_to_row({"nombre": "Clara", "nivel": "Invitado", "montotarjeta": ""}, "2026-10-18")
         self.assertEqual(item4["montotarjeta"], "")
 
+        # 5. Invitado with existing monto -> removes monto (clears to empty string)
+        item5, row5 = self.table._map_record_to_row({"nombre": "Pedro", "nivel": "Invitado", "montotarjeta": "105000"}, "2026-10-18")
+        self.assertEqual(item5["montotarjeta"], "")
+
         # Verify row mapping for Google Sheets
         from sheets import FIELDNAMES
         monto_idx = FIELDNAMES.index("montotarjeta")
@@ -1438,6 +1442,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertEqual(row2[monto_idx], int(DEFAULT_RESERVA_MONTO))
         self.assertEqual(row3[monto_idx], 50000)
         self.assertEqual(row4[monto_idx], "")
+        self.assertEqual(row5[monto_idx], "")
 
     def test_get_group_target_type(self):
         # 1. Pure Reserva: all guests are Reserva -> "reserva"

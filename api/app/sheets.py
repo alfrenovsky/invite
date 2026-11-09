@@ -95,10 +95,11 @@ def get_group_target_type(guests: list[dict]) -> str:
     has_reserva = False
     has_invitado = False
     for g in (guests or []):
+        is_inv = (str(g.get("nivel", "") or "").strip().lower() in ("invitado", "invitados", "invitacion"))
         is_res = (str(g.get("nivel", "") or "").strip().lower() == "reserva")
         raw_monto = re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))
         has_monto = bool(raw_monto and int(raw_monto) > 0)
-        if is_res or has_monto:
+        if not is_inv and (is_res or has_monto):
             has_reserva = True
         else:
             has_invitado = True
@@ -339,6 +340,8 @@ class GoogleSheetsTable:
                 monto_val = int(DEFAULT_RESERVA_MONTO)
             else:
                 monto_val = int(clean_monto)
+        elif nivel_val.lower() in ("invitado", "invitados", "invitacion"):
+            monto_val = ""
         else:
             monto_val = int(clean_monto) if (clean_monto and int(clean_monto) > 0) else ""
 
