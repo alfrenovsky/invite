@@ -1530,6 +1530,61 @@ def compute_stats_summary(clean_records):
         else:
             inv_card_groups.append(g)
 
+    # Top opened cards
+    top_cards_list = []
+    for inv, recs in groups.items():
+        max_opens = max((r.get("open_count", 0) for r in recs), default=0)
+        if max_opens <= 0:
+            continue
+        names = []
+        for r in recs:
+            if r.get("has_name"):
+                n = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()
+                if n:
+                    names.append(n)
+        unnamed = sum(1 for r in recs if not r.get("has_name"))
+        if not names:
+            display_title = inv.replace("_", " ").title()
+        else:
+            if unnamed == 1:
+                names.append("1 acompañante")
+            elif unnamed > 1:
+                names.append(f"{unnamed} acompañantes")
+            display_title = ", ".join(names)
+
+        has_inv = any(r.get("nivel") == "Invitado" for r in recs)
+        has_res = any(r.get("nivel") == "Reserva" for r in recs)
+        if has_inv and has_res:
+            group_type = "Mixta"
+        elif has_res:
+            group_type = "Reserva"
+        else:
+            group_type = "Invitado"
+
+        dequien = recs[0].get("dequien", "Sin definir")
+        origin = recs[0].get("origin", "Sin definir")
+
+        si_c = sum(1 for r in recs if r.get("confirmacion") == "si")
+        no_c = sum(1 for r in recs if r.get("confirmacion") == "no")
+        pend_c = len(recs) - si_c - no_c
+
+        top_cards_list.append({
+            "invitacion_id": inv,
+            "title": display_title,
+            "group_title": inv.replace("_", " ").title(),
+            "open_count": max_opens,
+            "total_guests": len(recs),
+            "group_type": group_type,
+            "dequien": dequien,
+            "origin": origin,
+            "confirmados": si_c,
+            "rechazados": no_c,
+            "pendientes": pend_c,
+        })
+
+    top_cards_list.sort(key=lambda x: (x["open_count"], x["total_guests"]), reverse=True)
+    top_opened_cards = top_cards_list[:10]
+
     return {
         "people": {
             "all": _summarize_people(records),
@@ -1542,6 +1597,7 @@ def compute_stats_summary(clean_records):
             "reserva": _summarize_cards(res_card_groups),
             "mixta": _summarize_cards(mix_card_groups),
         },
+        "top_opened_cards": top_opened_cards,
     }
 
 

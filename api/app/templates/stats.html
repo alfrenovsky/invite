@@ -552,6 +552,122 @@
             white-space: nowrap;
         }
 
+        /* Top Opened Cards */
+        .top-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 10px;
+        }
+
+        .top-card-row {
+            display: grid;
+            grid-template-columns: 36px 1fr auto;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .top-card-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .rank-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .rank-gold {
+            background: rgba(212, 175, 55, 0.22);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+        }
+
+        .rank-silver {
+            background: rgba(148, 163, 184, 0.22);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+        }
+
+        .rank-bronze {
+            background: rgba(205, 127, 50, 0.22);
+            color: #e28743;
+            border: 1px solid rgba(205, 127, 50, 0.5);
+        }
+
+        .rank-default {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .top-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .top-card-title {
+            font-size: 0.83rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .top-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 0.69rem;
+            color: var(--text-muted);
+        }
+
+        .top-card-stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .top-card-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--blue);
+        }
+
+        .top-card-bar-track {
+            width: 75px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .top-card-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue), var(--accent));
+            border-radius: 999px;
+        }
+
         /* Subtotals Grid: Invitados vs Reserva */
         .subtotals-grid {
             display: grid;
@@ -1009,6 +1125,19 @@
                 </div>
             </div>
             <div class="dq-bars-grid" id="dqBarsChartContainer"></div>
+        </section>
+
+        <!-- Top 10 Tarjetas Más Abiertas -->
+        <section class="panel-card" id="topCardsSection">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="font-size: 0.95rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <span>🔥</span> Top 10 Tarjetas Más Abiertas
+                </h2>
+                <span style="font-size: 0.76rem; color: var(--text-muted);" id="topCardsFilterNote">
+                    Ranking según aperturas registradas
+                </span>
+            </div>
+            <div class="top-cards-grid" id="topCardsGridContainer"></div>
         </section>
 
         <!-- Subtotals Section: Invitados vs Reserva -->
@@ -1626,7 +1755,133 @@
             }
 
             renderCharts(st);
+            renderTopCards(filtered);
             renderBreakdownTable(filtered, st);
+        }
+
+        function escapeHtml(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function renderTopCards(filteredRecs) {
+            const container = document.getElementById("topCardsGridContainer");
+            if (!container) return;
+
+            const groups = new Map();
+            for (const r of filteredRecs) {
+                if (!r.invitacion_id) continue;
+                if (!groups.has(r.invitacion_id)) groups.set(r.invitacion_id, []);
+                groups.get(r.invitacion_id).push(r);
+            }
+
+            const cards = [];
+            for (const [invId, recs] of groups.entries()) {
+                const maxOpens = Math.max(...recs.map(r => r.open_count || 0), 0);
+                if (maxOpens <= 0) continue;
+
+                const named = recs
+                    .filter(r => r.has_name)
+                    .map(r => `${r.nombre || ""} ${r.apellido || ""}`.trim())
+                    .filter(Boolean);
+                const unnamed = recs.filter(r => !r.has_name).length;
+                let title = "";
+                if (named.length > 0) {
+                    if (unnamed === 1) named.push("1 acompañante");
+                    else if (unnamed > 1) named.push(`${unnamed} acompañantes`);
+                    title = named.join(", ");
+                } else {
+                    title = invId.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+                }
+
+                const hasInv = recs.some(r => r.nivel === "Invitado");
+                const hasRes = recs.some(r => r.nivel === "Reserva");
+                const groupType = (hasInv && hasRes) ? "Mixta" : (hasRes ? "Reserva" : "Invitado");
+                const typeClass = (hasInv && hasRes) ? "chip-purple" : (hasRes ? "chip-gold" : "");
+                const typeIcon = (hasInv && hasRes) ? "🔀" : (hasRes ? "💳" : "💌");
+
+                const dequien = recs[0].dequien || "Sin definir";
+                const siCount = recs.filter(r => r.confirmacion === "si").length;
+                const totGuests = recs.length;
+
+                cards.push({
+                    invitacion_id: invId,
+                    title: title,
+                    open_count: maxOpens,
+                    total_guests: totGuests,
+                    confirmados: siCount,
+                    group_type: groupType,
+                    type_class: typeClass,
+                    type_icon: typeIcon,
+                    dequien: dequien
+                });
+            }
+
+            cards.sort((a, b) => b.open_count - a.open_count || b.total_guests - a.total_guests);
+            const top10 = cards.slice(0, 10);
+
+            const note = document.getElementById("topCardsFilterNote");
+            if (note) {
+                if (selectedDequien !== "ALL") {
+                    note.textContent = `Filtro: ${selectedDequien} (${top10.length} con aperturas)`;
+                } else if (selectedOrigin !== "ALL") {
+                    note.textContent = `Filtro: ${selectedOrigin} (${top10.length} con aperturas)`;
+                } else {
+                    note.textContent = `Top 10 general (${cards.length} tarjetas abiertas en total)`;
+                }
+            }
+
+            if (top10.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.85rem; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.08);">
+                    🙈 No hay aperturas registradas para este filtro
+                </div>`;
+                return;
+            }
+
+            const maxVisitsInSet = top10[0].open_count || 1;
+            let html = "";
+            top10.forEach((c, idx) => {
+                const rank = idx + 1;
+                let rankClass = "rank-default";
+                let rankIcon = `#${rank}`;
+                if (rank === 1) { rankClass = "rank-gold"; rankIcon = "🥇 1"; }
+                else if (rank === 2) { rankClass = "rank-silver"; rankIcon = "🥈 2"; }
+                else if (rank === 3) { rankClass = "rank-bronze"; rankIcon = "🥉 3"; }
+
+                const barWidth = Math.round((c.open_count / maxVisitsInSet) * 100);
+                const confText = c.confirmados === c.total_guests && c.total_guests > 0
+                    ? `✅ ${c.confirmados}/${c.total_guests} asisten`
+                    : (c.confirmados > 0 ? `⚠️ ${c.confirmados}/${c.total_guests} conf.` : `⏳ ${c.total_guests} pend.`);
+
+                const escapedTitle = escapeHtml(c.title);
+                const escapedDq = escapeHtml(c.dequien);
+
+                html += `<div class="top-card-row">
+                    <div class="rank-badge ${rankClass}" title="Puesto #${rank}">${rankIcon}</div>
+                    <div class="top-card-info">
+                        <div class="top-card-title" title="${escapedTitle}">${escapedTitle}</div>
+                        <div class="top-card-meta">
+                            <span class="stat-chip ${c.type_class}" style="padding: 1px 6px; font-size: 0.65rem;">${c.type_icon} ${c.group_type}</span>
+                            <span class="origin-tag" style="font-size: 0.65rem; cursor: pointer;" onclick="selectDequien(\'${c.dequien.replace(/'/g, "\\'")}\')" title="Filtrar por ${escapedDq}">${escapedDq}</span>
+                            <span style="font-size: 0.68rem; color: #94a3b8;">${confText}</span>
+                        </div>
+                    </div>
+                    <div class="top-card-stats">
+                        <span class="top-card-count" title="${c.open_count} aperturas registradas">
+                            ${c.open_count} <span style="font-size: 0.72rem; font-weight: 600; color: #94a3b8;">aperturas</span>
+                        </span>
+                        <div class="top-card-bar-track" title="${c.open_count} de ${maxVisitsInSet}">
+                            <div class="top-card-bar-fill" style="width: ${barWidth}%;"></div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
         }
 
         function renderBreakdownTable(filteredRecs, totalSt) {

@@ -1724,6 +1724,12 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(stats["tarjetas"]["reserva"]["pagadas_completas"], 1)
                 self.assertEqual(stats["tarjetas"]["reserva"]["con_comprobante"], 1)
 
+                # Top opened cards
+                self.assertIn("top_opened_cards", stats)
+                self.assertIsInstance(stats["top_opened_cards"], list)
+                self.assertEqual(len(stats["top_opened_cards"]), 2)
+                self.assertTrue(stats["top_opened_cards"][0]["open_count"] >= stats["top_opened_cards"][1]["open_count"])
+
                 # 5. Authenticated POST /panel/stats/refresh
                 res_refresh = client.post("/panel/stats/refresh", headers=auth_headers)
                 self.assertEqual(res_refresh.status_code, 200)
