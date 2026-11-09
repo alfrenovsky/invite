@@ -9,7 +9,7 @@
             {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
             {% set is_celiac = (guest.celiaco == 'si' or guest.pa_celiaco == 'si') %}
             {% set menu_icon = '' %}
-            {% if conf == 'si' and not is_guest_baile %}
+            {% if conf == 'si' %}
             {% if current_menu == 'vegano' %}{% set menu_icon = '🌱' %}
             {% elif current_menu == 'vegetariano' %}{% set menu_icon = '🥬' %}
             {% else %}{% set menu_icon = '🍽️' %}
@@ -32,10 +32,10 @@
                         <span class="rsvp-baile-chip" style="font-size: 0.68rem; font-weight: 700; color: #c084fc; background: rgba(192, 132, 252, 0.14); border: 1px solid rgba(192, 132, 252, 0.35); border-radius: 999px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 3px;">🎉 Baile</span>
                         {% endif %}
                         <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}"
-                            style="{% if conf != 'si' or not is_celiac or is_guest_baile %}display: none;{% endif %}" title="Sin gluten">
+                            style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
                             <img src="/assets/sin_gluten.svg" alt="Sin gluten" class="rsvp-gluten-badge">
                         </span>
-                        <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{% if not is_guest_baile %}{{ menu_icon }}{% endif %}</span>
+                        <span class="rsvp-menu-icon" id="menu_icon_{{ guest.id }}">{{ menu_icon }}</span>
                     </span>
                     <span class="rsvp-chevron" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
@@ -81,10 +81,10 @@
                     </div>
                     {% endif %}
 
-                    <!-- Dietary Menu Buttons (Shown only if confirmed and NOT baile) -->
+                    <!-- Dietary Menu Buttons (Shown only if confirmed) -->
                     {% set current_menu = (guest.pa or guest.ap or 'general')|lower %}
                     <div class="rsvp-menu-section" id="menu_section_{{ guest.id }}"
-                        style="{% if conf != 'si' or is_guest_baile %}display: none;{% endif %}">
+                        style="{% if conf != 'si' %}display: none;{% endif %}">
                         <label class="rsvp-menu-label">Menú</label>
                         <div class="rsvp-menu-buttons" role="group" aria-label="Menú">
                             <button type="button"

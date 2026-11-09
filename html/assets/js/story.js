@@ -1990,9 +1990,8 @@
 
                     // Toggle dietary menu section visibility
                     const menuSection = card.querySelector('.rsvp-menu-section');
-                    const isBaile = (card.getAttribute('data-tipo') || '').trim().toLowerCase() === 'baile';
                     if (menuSection) {
-                        if (val === 'si' && !isBaile) {
+                        if (val === 'si') {
                             menuSection.style.display = 'flex';
                             if (!menuSection.querySelector('.rsvp-menu-btn.selected')) {
                                 const defaultMenu = menuSection.querySelector('.rsvp-menu-btn[data-menu="general"]');
