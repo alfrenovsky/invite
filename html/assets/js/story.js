@@ -388,20 +388,15 @@
                     setTimeout(() => centerElementInForm(card), 80);
 
                     if (!n || !a) {
+                        if (!n && inputNombre) inputNombre.classList.add('input-field-error');
+                        if (!a && inputApellido) inputApellido.classList.add('input-field-error');
                         const emptyInput = (!n) ? inputNombre : inputApellido;
                         if (emptyInput) {
                             emptyInput.focus();
-                            emptyInput.classList.add('input-flash-error');
-                            setTimeout(() => emptyInput.classList.remove('input-flash-error'), 1000);
                         }
-                        showToast('Por favor completá nombre y apellido');
                     } else if (!selectedMenuBtn) {
-                        const menuBox = card.querySelector('.rsvp-menu-buttons');
-                        if (menuBox) {
-                            menuBox.classList.add('menu-flash-error');
-                            setTimeout(() => menuBox.classList.remove('menu-flash-error'), 1000);
-                        }
-                        showToast('Por favor seleccioná una opción de menú');
+                        const mBtns = card.querySelectorAll('.rsvp-menu-btn');
+                        mBtns.forEach(b => b.classList.add('menu-btn-error'));
                     }
                     return false;
                 }
@@ -1921,9 +1916,11 @@
 
                     const anyAttending = allCards.some(c => c.getAttribute('data-status') === 'si');
                     if (anyAttending) {
-                        showToast('🎉 ¡Confirmación registrada!');
                         if (successBanner) {
                             successBanner.style.display = 'flex';
+                            successBanner.classList.remove('banner-flash');
+                            void successBanner.offsetWidth; // trigger reflow
+                            successBanner.classList.add('banner-flash');
                         }
                         flushAutoSave();
 
@@ -2058,13 +2055,12 @@
                                 centerElementInForm(card);
                             }, 80);
 
+                            if (!n && inputNombre) inputNombre.classList.add('input-field-error');
+                            if (!a && inputApellido) inputApellido.classList.add('input-field-error');
                             const emptyInput = (!n) ? inputNombre : inputApellido;
                             if (emptyInput) {
                                 emptyInput.focus();
-                                emptyInput.classList.add('input-flash-error');
-                                setTimeout(() => emptyInput.classList.remove('input-flash-error'), 1000);
                             }
-                            showToast('Por favor completá nombre y apellido');
                             return;
                         }
 
@@ -2089,12 +2085,8 @@
                                 centerElementInForm(card);
                             }, 80);
 
-                            const menuBox = card.querySelector('.rsvp-menu-buttons');
-                            if (menuBox) {
-                                menuBox.classList.add('menu-flash-error');
-                                setTimeout(() => menuBox.classList.remove('menu-flash-error'), 1000);
-                            }
-                            showToast('Por favor seleccioná una opción de menú');
+                            const mBtns = card.querySelectorAll('.rsvp-menu-btn');
+                            mBtns.forEach(b => b.classList.add('menu-btn-error'));
                             return;
                         }
                     }
@@ -2163,7 +2155,9 @@
                 mBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    menuButtons.forEach(b => b.classList.remove('selected'));
+                    menuButtons.forEach(b => {
+                        b.classList.remove('selected', 'menu-btn-error');
+                    });
                     mBtn.classList.add('selected');
                     const menuBox = card.querySelector('.rsvp-menu-buttons');
                     if (menuBox) menuBox.classList.remove('menu-flash-error');
@@ -2230,11 +2224,21 @@
             }
 
             if (inputNombre) {
-                inputNombre.addEventListener('input', syncGuestName);
+                inputNombre.addEventListener('input', () => {
+                    if (inputNombre.value.trim()) {
+                        inputNombre.classList.remove('input-field-error', 'input-flash-error');
+                    }
+                    syncGuestName();
+                });
                 inputNombre.addEventListener('blur', () => flushAutoSave());
             }
             if (inputApellido) {
-                inputApellido.addEventListener('input', syncGuestName);
+                inputApellido.addEventListener('input', () => {
+                    if (inputApellido.value.trim()) {
+                        inputApellido.classList.remove('input-field-error', 'input-flash-error');
+                    }
+                    syncGuestName();
+                });
                 inputApellido.addEventListener('blur', () => flushAutoSave());
             }
 
