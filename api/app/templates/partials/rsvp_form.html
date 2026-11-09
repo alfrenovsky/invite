@@ -29,7 +29,7 @@
                         %}{{ guest.nombre }} {{ guest.apellido }}{% else %}Acompañante{% endif %}</span>
                     <span class="rsvp-header-icons">
                         {% if is_guest_baile %}
-                        <span class="rsvp-baile-chip" style="font-size: 0.68rem; font-weight: 700; color: #c084fc; background: rgba(192, 132, 252, 0.14); border: 1px solid rgba(192, 132, 252, 0.35); border-radius: 999px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 3px;">🎉 Baile</span>
+                        <span class="rsvp-baile-chip" style="font-size: 0.68rem; font-weight: 700; color: #ffffff; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 999px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 3px;">🎉 Baile</span>
                         {% endif %}
                         <span class="rsvp-gluten-icon" id="gluten_icon_{{ guest.id }}"
                             style="{% if conf != 'si' or not is_celiac %}display: none;{% endif %}" title="Sin gluten">
