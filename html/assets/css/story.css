@@ -802,6 +802,49 @@
             font-weight: 700;
         }
 
+        @keyframes confirmGreenPulse {
+            0% {
+                transform: scale(0.97);
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+                border-color: #4ade80;
+            }
+            35% {
+                transform: scale(1.02);
+                background: rgba(74, 222, 128, 0.40) !important;
+                box-shadow: 0 0 16px rgba(74, 222, 128, 0.65);
+                border-color: #86efac;
+            }
+            100% {
+                transform: scale(1);
+                background: rgba(74, 222, 128, 0.22) !important;
+                box-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+                border-color: #4ade80;
+            }
+        }
+
+        .rsvp-status-btn.btn-asiste.confirm-flash {
+            animation: confirmGreenPulse 0.75s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+        }
+
+        @keyframes cardConfirmGreenPulse {
+            0% {
+                border-color: rgba(74, 222, 128, 0.3);
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+            35% {
+                border-color: rgba(74, 222, 128, 0.85);
+                box-shadow: 0 0 18px rgba(74, 222, 128, 0.4);
+            }
+            100% {
+                border-color: var(--rsvp-card-border-color, rgba(255, 255, 255, 0.15));
+                box-shadow: none;
+            }
+        }
+
+        .rsvp-guest-card.card-confirm-flash {
+            animation: cardConfirmGreenPulse 0.75s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+        }
+
         .rsvp-status-btn.btn-no.selected {
             background: rgba(248, 113, 113, 0.22) !important;
             color: #fca5a5 !important;

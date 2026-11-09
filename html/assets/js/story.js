@@ -1890,6 +1890,20 @@
             const successBanner = document.getElementById('rsvpSuccessBanner');
             const paymentSection = document.getElementById('rsvpPaymentSection');
 
+            const delay = isAttending ? 750 : 320;
+
+            if (isAttending) {
+                const asisteBtn = currentCard.querySelector('.btn-asiste');
+                if (asisteBtn) {
+                    asisteBtn.classList.remove('confirm-flash');
+                    void asisteBtn.offsetWidth;
+                    asisteBtn.classList.add('confirm-flash');
+                }
+                currentCard.classList.remove('card-confirm-flash');
+                void currentCard.offsetWidth;
+                currentCard.classList.add('card-confirm-flash');
+            }
+
             if (nextPending) {
                 if (successBanner) successBanner.style.display = 'none';
                 setTimeout(() => {
@@ -1906,7 +1920,7 @@
                     nextPending.classList.add('expanded');
                     nextPending.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'true');
                     setTimeout(() => centerElementInForm(nextPending), 80);
-                }, 320);
+                }, delay);
             } else {
                 // All guests have responded!
                 setTimeout(() => {
@@ -1942,7 +1956,7 @@
                             }, 120);
                         }
                     }
-                }, 320);
+                }, delay);
             }
         }
 
