@@ -843,15 +843,17 @@
                 </div>
             </div>
 
-            <div id="sankeyFilterBanner" style="display: none; align-items: center; justify-content: space-between; padding: 10px 16px; margin: 14px 0 10px 0; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px;">
+            <div id="sankeyFilterBanner" style="display: none; align-items: center; justify-content: space-between; padding: 10px 16px; margin: 14px 0 10px 0; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <span style="font-size: 1.05rem;">🌊</span>
-                    <span style="font-weight: 600; color: #ffffff; font-size: 0.88rem;">Filtrando por rama: <span id="sankeyFilterText" style="color: var(--blue); font-weight: 700;"></span></span>
+                    <span style="font-weight: 700; color: #38bdf8; font-size: 0.88rem; display: flex; align-items: center; gap: 4px;">
+                        <span>🌊</span> Filtros activos:
+                    </span>
+                    <div id="sankeyFilterPills" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;"></div>
                     <span id="sankeyFilterCount" class="chip chip-invitado" style="background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.4); color: var(--blue); font-weight: 700;"></span>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <button type="button" class="btn-sync" style="padding: 6px 14px; font-size: 0.8rem; background: var(--blue); color: #0f172a; font-weight: 700;" onclick="scrollToDetailSection()">⬇ Ver en lista</button>
-                    <button type="button" class="filter-clear-btn" onclick="clearSankeyFilter(event)" title="Quitar filtro" style="padding: 6px 10px; font-size: 0.8rem;">✕ Quitar</button>
+                    <button type="button" class="filter-clear-btn" onclick="clearAllSankeyFilters(event)" title="Quitar todos los filtros" style="padding: 6px 10px; font-size: 0.8rem;">✕ Restablecer</button>
                 </div>
             </div>
 
@@ -928,16 +930,171 @@
         let activeMode = 'people'; // 'people' or 'cards'
         let activeOriginLevel = 'origin'; // 'origin' or 'detailed'
 
+        let activeSankeyFilters = {
+            origin: null,
+            tier: null,
+            enviado: null,
+            abierto: null,
+            confirmacion: null
+        };
+
+        function hasActiveSankeyFilters() {
+            return activeSankeyFilters.origin !== null ||
+                   activeSankeyFilters.tier !== null ||
+                   activeSankeyFilters.enviado !== null ||
+                   activeSankeyFilters.abierto !== null ||
+                   activeSankeyFilters.confirmacion !== null;
+        }
+
+        function getNodeDimension(nodeStr) {
+            if (!nodeStr) return null;
+            const str = nodeStr.trim();
+            if (str.startsWith("👤 ") || str.startsWith("📁 ")) {
+                return { dim: "origin", value: str.replace(/^[👤📁]\s*/u, "").trim(), label: str };
+            }
+            if (str.includes("Invitación Cena Niño") || str.includes("Cena Niño")) {
+                return { dim: "tier", value: "👶 Invitación Cena Niño", label: "👶 Invitación Cena Niño" };
+            }
+            if (str.includes("Invitación Cena") || (str.includes("Invitación") && str.includes("Cena"))) {
+                return { dim: "tier", value: "🍽️ Invitación Cena", label: "🍽️ Invitación Cena" };
+            }
+            if (str.includes("Reserva Baile") || (str.includes("Reserva") && str.includes("Baile"))) {
+                return { dim: "tier", value: "🎉 Reserva Baile", label: "🎉 Reserva Baile" };
+            }
+            if (str.includes("Reserva Cena") || (str.includes("Reserva") && str.includes("Cena"))) {
+                return { dim: "tier", value: "🎫 Reserva Cena", label: "🎫 Reserva Cena" };
+            }
+            if (str.includes("Enviada")) return { dim: "enviado", value: true, label: "📤 Enviada" };
+            if (str.includes("Sin enviar")) return { dim: "enviado", value: false, label: "⏳ Sin enviar" };
+            if (str.includes("Abierta")) return { dim: "abierto", value: true, label: "📖 Abierta" };
+            if (str.includes("Sin abrir")) return { dim: "abierto", value: false, label: "🔒 Sin abrir" };
+            if (str.includes("Asiste") && !str.includes("No asiste")) return { dim: "confirmacion", value: "si", label: "✅ Asiste" };
+            if (str.includes("No asiste")) return { dim: "confirmacion", value: "no", label: "❌ No asiste" };
+            if (str.includes("Pendiente")) return { dim: "confirmacion", value: "pend", label: "⏳ Pendiente" };
+            return null;
+        }
+
+        function itemMatchesFilters(item, filters, isCard) {
+            if (!item) return false;
+
+            if (filters.origin !== null) {
+                const key = activeOriginLevel === 'origin' ? (item.origin || 'Sin definir') : (item.dequien || 'Sin definir');
+                if (key.trim().toLowerCase() !== filters.origin.trim().toLowerCase()) return false;
+            }
+
+            if (filters.tier !== null) {
+                if (item.tier !== filters.tier) return false;
+            }
+
+            if (filters.enviado !== null) {
+                const isEnv = isCard ? !!item.is_enviado : !!item.enviado;
+                if (isEnv !== filters.enviado) return false;
+            }
+
+            if (filters.abierto !== null) {
+                const isOp = isCard ? (item.open_count > 0) : !!item.abierto;
+                if (isOp !== filters.abierto) return false;
+            }
+
+            if (filters.confirmacion !== null) {
+                if (isCard) {
+                    if (filters.confirmacion === 'si' && item.card_status !== '✅ Asiste') return false;
+                    if (filters.confirmacion === 'no' && item.card_status !== '❌ No asiste') return false;
+                    if (filters.confirmacion === 'pend' && item.card_status !== '⏳ Pendiente') return false;
+                } else {
+                    if (filters.confirmacion === 'si' && item.confirmacion !== 'si') return false;
+                    if (filters.confirmacion === 'no' && item.confirmacion !== 'no') return false;
+                    if (filters.confirmacion === 'pend' && (item.confirmacion === 'si' || item.confirmacion === 'no')) return false;
+                }
+            }
+
+            return true;
+        }
+
+        function buildSankeyRows(items, originLevel, isCard) {
+            if (!items || items.length === 0) return [];
+
+            const f12 = {};
+            const f23 = {};
+            const f34 = {};
+            const f45 = {};
+
+            items.forEach(item => {
+                const origVal = (originLevel === 'origin' ? item.origin : item.dequien) || 'Sin definir';
+                const origNode = (originLevel === 'origin' ? '👤 ' : '📁 ') + origVal;
+                const tierNode = item.tier || '🍽️ Invitación Cena';
+                const isEnv = isCard ? !!item.is_enviado : !!item.enviado;
+                const envNode = isEnv ? '📤 Enviada' : '⏳ Sin enviar';
+                const isOp = isCard ? (item.open_count > 0) : !!item.abierto;
+                const openNode = isOp ? '📖 Abierta' : '🔒 Sin abrir';
+
+                let confNode;
+                if (isCard) {
+                    confNode = item.card_status || '⏳ Pendiente';
+                } else {
+                    const c = item.confirmacion;
+                    if (c === 'si') confNode = '✅ Asiste';
+                    else if (c === 'no') confNode = '❌ No asiste';
+                    else confNode = '⏳ Pendiente';
+                }
+
+                const k12 = `${origNode}:::${tierNode}`;
+                f12[k12] = (f12[k12] || 0) + 1;
+
+                const k23 = `${tierNode}:::${envNode}`;
+                f23[k23] = (f23[k23] || 0) + 1;
+
+                const k34 = `${envNode}:::${openNode}`;
+                f34[k34] = (f34[k34] || 0) + 1;
+
+                const k45 = `${openNode}:::${confNode}`;
+                f45[k45] = (f45[k45] || 0) + 1;
+            });
+
+            const TIER_ORDER = {
+                '🍽️ Invitación Cena': 1,
+                '👶 Invitación Cena Niño': 2,
+                '🎫 Reserva Cena': 3,
+                '🎉 Reserva Baile': 4
+            };
+            const ENV_ORDER = { '📤 Enviada': 1, '⏳ Sin enviar': 2 };
+            const OPEN_ORDER = { '📖 Abierta': 1, '🔒 Sin abrir': 2 };
+            const CONF_ORDER = { '✅ Asiste': 1, '❌ No asiste': 2, '⏳ Pendiente': 3 };
+
+            function sortAndCollect(freqMap, getDOrder, getSOrder) {
+                const entries = Object.keys(freqMap).map(k => {
+                    const parts = k.split(':::');
+                    return [parts[0], parts[1], freqMap[k]];
+                });
+                entries.sort((a, b) => {
+                    const dOrdA = getDOrder[a[1]] || 9;
+                    const dOrdB = getDOrder[b[1]] || 9;
+                    if (dOrdA !== dOrdB) return dOrdA - dOrdB;
+                    if (b[2] !== a[2]) return b[2] - a[2];
+                    return a[0].localeCompare(b[0]);
+                });
+                return entries;
+            }
+
+            return [
+                ...sortAndCollect(f12, TIER_ORDER, {}),
+                ...sortAndCollect(f23, ENV_ORDER, TIER_ORDER),
+                ...sortAndCollect(f34, OPEN_ORDER, ENV_ORDER),
+                ...sortAndCollect(f45, CONF_ORDER, OPEN_ORDER)
+            ];
+        }
+
         // Detail section state
         let currentViewMode = 'all'; // 'all', 'branch', 'top', 'lastOpen', 'lastConf'
         let currentDetailType = 'people'; // 'people' or 'cards'
-        let currentSankeyFilter = null; // { type: 'branch', source, target, weight } or { type: 'node', nodeName }
         let currentFilteredPeople = [];
         let currentFilteredCards = [];
 
         // Load Google Charts
         google.charts.load('current', { 'packages': ['sankey'] });
         google.charts.setOnLoadCallback(() => {
+            currentFilteredPeople = ALL_RECORDS.slice();
+            currentFilteredCards = ALL_CARDS.slice();
             drawSankeyChart();
             updateSingleViewData();
         });
@@ -953,12 +1110,19 @@
             const chartDiv = document.getElementById('sankey_chart');
             if (!chartDiv) return;
 
-            const key = getActiveKey();
-            const rows = currentSankey[key] || [];
+            let rows;
+            if (hasActiveSankeyFilters()) {
+                const pool = activeMode === 'cards' ? currentFilteredCards : currentFilteredPeople;
+                rows = buildSankeyRows(pool, activeOriginLevel, activeMode === 'cards');
+            } else {
+                const key = getActiveKey();
+                rows = currentSankey[key] || [];
+            }
             currentDrawnRows = rows;
 
             if (!rows || rows.length === 0) {
-                chartDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--text-muted);">Sin datos disponibles para este filtro.</div>';
+                chartDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--text-muted);flex-direction:column;gap:14px;"><span>Sin datos disponibles para esta combinación de filtros.</span><button type="button" class="btn-sync" onclick="clearAllSankeyFilters(event)">✕ Restablecer Filtros</button></div>';
+                updateFilterBannerUI();
                 return;
             }
 
@@ -1002,14 +1166,17 @@
 
             google.visualization.events.addListener(chart, 'ready', () => {
                 attachSankeyInteractivity(chartDiv, rows);
+                highlightActiveFilters();
             });
 
             chart.draw(data, options);
 
             // Redundant triggers to ensure SVG interactivity is applied even if ready fired early
-            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 50);
-            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 200);
-            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 500);
+            setTimeout(() => { attachSankeyInteractivity(chartDiv, rows); highlightActiveFilters(); }, 50);
+            setTimeout(() => { attachSankeyInteractivity(chartDiv, rows); highlightActiveFilters(); }, 200);
+            setTimeout(() => { attachSankeyInteractivity(chartDiv, rows); highlightActiveFilters(); }, 500);
+
+            updateFilterBannerUI();
         }
 
         function resolveSankeyClickTarget(target, svg) {
@@ -1126,7 +1293,7 @@
             }, true);
         }
 
-        function highlightSankeySelection(filter) {
+        function highlightActiveFilters() {
             const chartDiv = document.getElementById('sankey_chart');
             const svg = chartDiv ? chartDiv.querySelector('svg') : null;
             if (!chartDiv || !svg) return;
@@ -1146,7 +1313,7 @@
                 return { name, rx, ry, rw, rh, rightX: rx + rw, bottomY: ry + rh };
             });
 
-            if (!filter) {
+            if (!hasActiveSankeyFilters()) {
                 chartDiv.classList.remove('has-filter');
                 paths.forEach(p => p.removeAttribute('data-selected'));
                 rects.forEach(r => r.removeAttribute('data-selected'));
@@ -1155,55 +1322,44 @@
 
             chartDiv.classList.add('has-filter');
 
-            if (filter.type === 'branch') {
-                paths.forEach((p) => {
-                    const d = p.getAttribute('d') || '';
-                    const m = d.match(/M\s*([\d.]+)[,\s]+([\d.]+).*?([\d.]+)[,\s]+([\d.]+)L/);
-                    let isSelected = false;
-                    if (m) {
-                        const x1 = parseFloat(m[1]);
-                        const y1 = parseFloat(m[2]);
-                        const x2 = parseFloat(m[3]);
-                        const y2 = parseFloat(m[4]);
-                        const srcNode = nodes.find(n => Math.abs(n.rightX - x1) < 4 && y1 >= n.ry - 2 && y1 <= n.bottomY + 2);
-                        const tgtNode = nodes.find(n => Math.abs(n.rx - x2) < 4 && y2 >= n.ry - 2 && y2 <= n.bottomY + 2);
-                        isSelected = srcNode && tgtNode && (srcNode.name === filter.source && tgtNode.name === filter.target);
+            // Highlight nodes matching active filters
+            rects.forEach((r, i) => {
+                const name = texts[i] ? texts[i].textContent.trim() : '';
+                const dimInfo = getNodeDimension(name);
+                if (dimInfo && activeSankeyFilters[dimInfo.dim] === dimInfo.value) {
+                    r.setAttribute('data-selected', 'true');
+                } else {
+                    r.removeAttribute('data-selected');
+                }
+            });
+
+            // Highlight branches matching active filters
+            paths.forEach((p) => {
+                const d = p.getAttribute('d') || '';
+                const m = d.match(/M\s*([\d.]+)[,\s]+([\d.]+).*?([\d.]+)[,\s]+([\d.]+)L/);
+                let isMatch = false;
+                if (m) {
+                    const x1 = parseFloat(m[1]);
+                    const y1 = parseFloat(m[2]);
+                    const x2 = parseFloat(m[3]);
+                    const y2 = parseFloat(m[4]);
+                    const srcNode = nodes.find(n => Math.abs(n.rightX - x1) < 4 && y1 >= n.ry - 2 && y1 <= n.bottomY + 2);
+                    const tgtNode = nodes.find(n => Math.abs(n.rx - x2) < 4 && y2 >= n.ry - 2 && y2 <= n.bottomY + 2);
+
+                    if (srcNode && tgtNode) {
+                        const sInfo = getNodeDimension(srcNode.name);
+                        const tInfo = getNodeDimension(tgtNode.name);
+                        const sMatch = sInfo && activeSankeyFilters[sInfo.dim] === sInfo.value;
+                        const tMatch = tInfo && activeSankeyFilters[tInfo.dim] === tInfo.value;
+                        isMatch = sMatch || tMatch;
                     }
-                    if (isSelected) {
-                        p.setAttribute('data-selected', 'true');
-                    } else {
-                        p.removeAttribute('data-selected');
-                    }
-                });
-                rects.forEach(r => r.removeAttribute('data-selected'));
-            } else if (filter.type === 'node') {
-                paths.forEach((p) => {
-                    const d = p.getAttribute('d') || '';
-                    const m = d.match(/M\s*([\d.]+)[,\s]+([\d.]+).*?([\d.]+)[,\s]+([\d.]+)L/);
-                    let isConnected = false;
-                    if (m) {
-                        const x1 = parseFloat(m[1]);
-                        const y1 = parseFloat(m[2]);
-                        const x2 = parseFloat(m[3]);
-                        const y2 = parseFloat(m[4]);
-                        const srcNode = nodes.find(n => Math.abs(n.rightX - x1) < 4 && y1 >= n.ry - 2 && y1 <= n.bottomY + 2);
-                        const tgtNode = nodes.find(n => Math.abs(n.rx - x2) < 4 && y2 >= n.ry - 2 && y2 <= n.bottomY + 2);
-                        isConnected = (srcNode && srcNode.name === filter.nodeName) || (tgtNode && tgtNode.name === filter.nodeName);
-                    }
-                    if (isConnected) {
-                        p.setAttribute('data-selected', 'true');
-                    } else {
-                        p.removeAttribute('data-selected');
-                    }
-                });
-                rects.forEach((r, i) => {
-                    if (texts[i] && texts[i].textContent.trim() === filter.nodeName) {
-                        r.setAttribute('data-selected', 'true');
-                    } else {
-                        r.removeAttribute('data-selected');
-                    }
-                });
-            }
+                }
+                if (isMatch) {
+                    p.setAttribute('data-selected', 'true');
+                } else {
+                    p.removeAttribute('data-selected');
+                }
+            });
         }
 
         function scrollToDetailSection() {
@@ -1213,131 +1369,126 @@
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
 
-        function matchNodeCondition(item, nodeStr, isCard) {
-            if (!nodeStr) return true;
-            const str = nodeStr.trim();
-
-            // 1. Origin / De quién
-            if (str.startsWith("👤 ")) {
-                const val = str.replace("👤 ", "").trim().toLowerCase();
-                const itemOrigin = (item.origin || "Sin definir").trim().toLowerCase();
-                return itemOrigin === val;
-            }
-            if (str.startsWith("📁 ")) {
-                const val = str.replace("📁 ", "").trim().toLowerCase();
-                const itemDequien = (item.dequien || "Sin definir").trim().toLowerCase();
-                return itemDequien === val;
-            }
-
-            // 2. Enviado
-            if (str.includes("Enviada")) {
-                return isCard ? !!item.is_enviado : !!item.enviado;
-            }
-            if (str.includes("Sin enviar")) {
-                return isCard ? !item.is_enviado : !item.enviado;
-            }
-
-            // 3. Abierto
-            if (str.includes("Abierta")) {
-                return isCard ? (item.open_count > 0) : !!item.abierto;
-            }
-            if (str.includes("Sin abrir")) {
-                return isCard ? (!item.open_count || item.open_count === 0) : !item.abierto;
-            }
-
-            // 4. Tipo de Invitación / Nivel
-            if (str.includes("Invitación Cena Niño") || str.includes("Cena Niño")) {
-                if (item.tier) return item.tier.includes("Cena Niño");
-                if (isCard) return item.guests && item.guests.some(g => (g.tipo || '').toLowerCase().includes('niño'));
-                const tipo = (item.tipo || '').toLowerCase();
-                return tipo.includes('niño') || tipo.includes('nino');
-            }
-            if (str.includes("Invitación Cena") || (str.includes("Invitación") && str.includes("Cena"))) {
-                if (item.tier) return item.tier.includes("Invitación Cena") && !item.tier.includes("Niño");
-                if (isCard) return item.group_nivel === 'Invitado' && item.group_tipo === 'Cena';
-                const nivel = (item.nivel || '').toLowerCase();
-                const tipo = (item.tipo || '').toLowerCase();
-                return nivel !== 'reserva' && !item.montotarjeta && tipo.includes('cena') && !tipo.includes('niño');
-            }
-            if (str.includes("Reserva Baile") || (str.includes("Reserva") && str.includes("Baile"))) {
-                if (item.tier) return item.tier.includes("Reserva Baile");
-                if (isCard) return item.group_tipo === 'Baile' || (item.guests && item.guests.some(g => (g.tipo || '').toLowerCase().includes('baile')));
-                const tipo = (item.tipo || '').toLowerCase();
-                return tipo.includes('baile');
-            }
-            if (str.includes("Reserva Cena") || (str.includes("Reserva") && str.includes("Cena"))) {
-                if (item.tier) return item.tier.includes("Reserva Cena");
-                if (isCard) return item.group_nivel === 'Reserva' && item.group_tipo === 'Cena';
-                const nivel = (item.nivel || '').toLowerCase();
-                const tipo = (item.tipo || '').toLowerCase();
-                const isRes = (nivel === 'reserva' || !!item.montotarjeta);
-                return isRes && tipo.includes('cena');
-            }
-
-            // 5. Confirmación
-            if (isCard) {
-                if (str.includes("Asiste") && !str.includes("No asiste")) {
-                    return item.card_status === "✅ Asiste";
-                }
-                if (str.includes("No asiste")) {
-                    return item.card_status === "❌ No asiste";
-                }
-                if (str.includes("Pendiente")) {
-                    return item.card_status === "⏳ Pendiente";
-                }
-            } else {
-                if (str.includes("Asiste") && !str.includes("No asiste")) {
-                    return item.confirmacion === "si";
-                }
-                if (str.includes("No asiste")) {
-                    return item.confirmacion === "no";
-                }
-                if (str.includes("Pendiente")) {
-                    return item.confirmacion !== "si" && item.confirmacion !== "no";
-                }
-            }
-
-            return true;
-        }
-
         function onSankeySelect(filter) {
-            currentSankeyFilter = filter;
             currentDetailType = activeMode;
 
-            // 1. Highlight the selected ribbon/node directly on the Sankey
-            highlightSankeySelection(filter);
-
-            // 2. Update and show Sankey filter banner
-            const banner = document.getElementById('sankeyFilterBanner');
-            const bText = document.getElementById('sankeyFilterText');
-            const bCount = document.getElementById('sankeyFilterCount');
-            if (banner && bText) {
-                const label = filter.type === 'branch'
-                    ? `${filter.source} ➔ ${filter.target}`
-                    : `${filter.nodeName}`;
-                bText.textContent = label;
-                const countUnit = activeMode === 'cards' ? 'tarjetas' : 'invitados';
-                const countVal = filter.weight || '';
-                if (bCount) bCount.textContent = countVal ? `${countVal} ${countUnit}` : '';
-                banner.style.display = 'flex';
+            if (filter.type === 'node') {
+                const info = getNodeDimension(filter.nodeName);
+                if (info) {
+                    if (activeSankeyFilters[info.dim] === info.value) {
+                        activeSankeyFilters[info.dim] = null; // Toggle OFF
+                    } else {
+                        activeSankeyFilters[info.dim] = info.value;
+                    }
+                }
+            } else if (filter.type === 'branch') {
+                const srcInfo = getNodeDimension(filter.source);
+                const tgtInfo = getNodeDimension(filter.target);
+                if (srcInfo && tgtInfo) {
+                    if (activeSankeyFilters[srcInfo.dim] === srcInfo.value && activeSankeyFilters[tgtInfo.dim] === tgtInfo.value) {
+                        activeSankeyFilters[srcInfo.dim] = null; // Toggle OFF
+                        activeSankeyFilters[tgtInfo.dim] = null;
+                    } else {
+                        activeSankeyFilters[srcInfo.dim] = srcInfo.value;
+                        activeSankeyFilters[tgtInfo.dim] = tgtInfo.value;
+                    }
+                }
             }
 
-            // 3. Update view mode and table
-            setViewMode('branch');
+            applySankeyFilters();
+        }
 
-            // 4. Scroll smoothly to detail section
-            scrollToDetailSection();
+        function applySankeyFilters() {
+            if (hasActiveSankeyFilters()) {
+                currentFilteredPeople = ALL_RECORDS.filter(r => itemMatchesFilters(r, activeSankeyFilters, false));
+                currentFilteredCards = ALL_CARDS.filter(c => itemMatchesFilters(c, activeSankeyFilters, true));
+                setViewMode('branch');
+            } else {
+                currentFilteredPeople = ALL_RECORDS.slice();
+                currentFilteredCards = ALL_CARDS.slice();
+                setViewMode('all');
+            }
+            drawSankeyChart();
+        }
+
+        function removeSingleSankeyFilter(dim, e) {
+            if (e) e.stopPropagation();
+            activeSankeyFilters[dim] = null;
+            applySankeyFilters();
+        }
+
+        function clearAllSankeyFilters(e) {
+            if (e) e.stopPropagation();
+            activeSankeyFilters = {
+                origin: null,
+                tier: null,
+                enviado: null,
+                abierto: null,
+                confirmacion: null
+            };
+            applySankeyFilters();
         }
 
         function clearSankeyFilter(e) {
-            if (e) e.stopPropagation();
-            currentSankeyFilter = null;
-            highlightSankeySelection(null);
+            clearAllSankeyFilters(e);
+        }
 
+        function getFilterSummaryText() {
+            const parts = [];
+            if (activeSankeyFilters.origin) parts.push(activeSankeyFilters.origin);
+            if (activeSankeyFilters.tier) parts.push(activeSankeyFilters.tier);
+            if (activeSankeyFilters.enviado !== null) parts.push(activeSankeyFilters.enviado ? 'Enviada' : 'Sin enviar');
+            if (activeSankeyFilters.abierto !== null) parts.push(activeSankeyFilters.abierto ? 'Abierta' : 'Sin abrir');
+            if (activeSankeyFilters.confirmacion !== null) {
+                const cMap = { 'si': 'Asiste', 'no': 'No asiste', 'pend': 'Pendiente' };
+                parts.push(cMap[activeSankeyFilters.confirmacion]);
+            }
+            return parts.join(' ➔ ') || 'Selección';
+        }
+
+        function updateFilterBannerUI() {
             const banner = document.getElementById('sankeyFilterBanner');
-            if (banner) banner.style.display = 'none';
+            const pillsContainer = document.getElementById('sankeyFilterPills');
+            const countBadge = document.getElementById('sankeyFilterCount');
+            if (!banner || !pillsContainer) return;
 
-            setViewMode('all');
+            if (!hasActiveSankeyFilters()) {
+                banner.style.display = 'none';
+                pillsContainer.innerHTML = '';
+                return;
+            }
+
+            banner.style.display = 'flex';
+
+            const pills = [];
+            if (activeSankeyFilters.origin) {
+                const prefix = activeOriginLevel === 'origin' ? '👤 ' : '📁 ';
+                pills.push({ dim: 'origin', label: `${prefix}${activeSankeyFilters.origin}` });
+            }
+            if (activeSankeyFilters.tier) {
+                pills.push({ dim: 'tier', label: activeSankeyFilters.tier });
+            }
+            if (activeSankeyFilters.enviado !== null) {
+                pills.push({ dim: 'enviado', label: activeSankeyFilters.enviado ? '📤 Enviada' : '⏳ Sin enviar' });
+            }
+            if (activeSankeyFilters.abierto !== null) {
+                pills.push({ dim: 'abierto', label: activeSankeyFilters.abierto ? '📖 Abierta' : '🔒 Sin abrir' });
+            }
+            if (activeSankeyFilters.confirmacion !== null) {
+                const cMap = { 'si': '✅ Asiste', 'no': '❌ No asiste', 'pend': '⏳ Pendiente' };
+                pills.push({ dim: 'confirmacion', label: cMap[activeSankeyFilters.confirmacion] || activeSankeyFilters.confirmacion });
+            }
+
+            pillsContainer.innerHTML = pills.map(p => `
+                <span class="chip" style="background: rgba(56, 189, 248, 0.22); border: 1px solid var(--blue); color: #ffffff; padding: 3px 10px; border-radius: 999px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;">
+                    <span>${p.label}</span>
+                    <button type="button" onclick="removeSingleSankeyFilter('${p.dim}', event)" style="background:none; border:none; color: #94a3b8; font-size: 0.82rem; cursor:pointer; padding:0; line-height: 1;" title="Quitar filtro">✕</button>
+                </span>
+            `).join('');
+
+            const countVal = activeMode === 'cards' ? currentFilteredCards.length : currentFilteredPeople.length;
+            const countUnit = activeMode === 'cards' ? 'tarjetas' : 'invitados';
+            if (countBadge) countBadge.textContent = `${countVal} ${countUnit}`;
         }
 
         function setViewMode(mode) {
@@ -1352,17 +1503,17 @@
             // Update badge & branch button
             const badge = document.getElementById('activeFilterBadge');
             const btnBranch = document.getElementById('btnView_branch');
-            if (currentSankeyFilter) {
-                const txt = currentSankeyFilter.type === 'branch'
-                    ? `${currentSankeyFilter.source} ➔ ${currentSankeyFilter.target}`
-                    : `${currentSankeyFilter.nodeName}`;
+            if (hasActiveSankeyFilters()) {
+                const countVal = activeMode === 'cards' ? currentFilteredCards.length : currentFilteredPeople.length;
+                const countUnit = activeMode === 'cards' ? 'tarjetas' : 'invitados';
+                const summaryTxt = getFilterSummaryText();
                 if (badge) {
-                    document.getElementById('activeFilterText').textContent = txt;
+                    document.getElementById('activeFilterText').textContent = `${summaryTxt} (${countVal} ${countUnit})`;
                     badge.style.display = 'inline-flex';
                 }
                 if (btnBranch) {
                     btnBranch.style.display = 'inline-block';
-                    btnBranch.textContent = `🌊 Rama (${txt})`;
+                    btnBranch.textContent = `🌊 Filtro (${countVal})`;
                 }
             } else {
                 if (badge) badge.style.display = 'none';
@@ -1370,7 +1521,7 @@
             }
 
             let sub = 'Listado completo de todas las tarjetas e invitados';
-            if (mode === 'branch') sub = 'Registros que coinciden con la selección del diagrama Sankey';
+            if (mode === 'branch') sub = 'Registros que coinciden con los filtros del diagrama Sankey';
             else if (mode === 'all') sub = 'Listado completo de todas las tarjetas e invitados';
             else if (mode === 'top') sub = 'Top 10 tarjetas con mayor cantidad de lecturas / aperturas';
             else if (mode === 'lastOpen') sub = 'Últimas 10 tarjetas abiertas recientemente';
@@ -1388,12 +1539,7 @@
             document.getElementById('detailTabPeople')?.classList.toggle('active', mode === 'people');
             document.getElementById('detailTabCards')?.classList.toggle('active', mode === 'cards');
 
-            currentSankeyFilter = null;
-            const banner = document.getElementById('sankeyFilterBanner');
-            if (banner) banner.style.display = 'none';
-
-            drawSankeyChart();
-            setViewMode('all');
+            applySankeyFilters();
         }
 
         function switchDetailType(type) {
@@ -1402,14 +1548,9 @@
 
         function updateSingleViewData() {
             if (currentViewMode === 'branch') {
-                if (currentSankeyFilter) {
-                    if (currentSankeyFilter.type === 'branch') {
-                        currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, currentSankeyFilter.source, false) && matchNodeCondition(r, currentSankeyFilter.target, false));
-                        currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, currentSankeyFilter.source, true) && matchNodeCondition(c, currentSankeyFilter.target, true));
-                    } else {
-                        currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, currentSankeyFilter.nodeName, false));
-                        currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, currentSankeyFilter.nodeName, true));
-                    }
+                if (hasActiveSankeyFilters()) {
+                    currentFilteredPeople = ALL_RECORDS.filter(r => itemMatchesFilters(r, activeSankeyFilters, false));
+                    currentFilteredCards = ALL_CARDS.filter(c => itemMatchesFilters(c, activeSankeyFilters, true));
                 } else {
                     currentFilteredPeople = ALL_RECORDS.slice();
                     currentFilteredCards = ALL_CARDS.slice();
@@ -1702,12 +1843,9 @@
             document.getElementById('btnOriginGeneral')?.classList.toggle('active', level === 'origin');
             document.getElementById('btnOriginDetailed')?.classList.toggle('active', level === 'detailed');
 
-            currentSankeyFilter = null;
-            const banner = document.getElementById('sankeyFilterBanner');
-            if (banner) banner.style.display = 'none';
-
-            drawSankeyChart();
-            setViewMode('all');
+            // Reset origin filter if switching origin level
+            activeSankeyFilters.origin = null;
+            applySankeyFilters();
         }
 
         // Mobile Tabs Switcher
