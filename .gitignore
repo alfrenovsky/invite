@@ -35,8 +35,10 @@ docker-compose.override.yml
 api/app/slides.json
 api/app/styles.json
 
-
-
-
+# Backups and archive files
+*.tar
+*.tar.gz
+*.tgz
+/backups/
 
 api/app/match_contacts.py
