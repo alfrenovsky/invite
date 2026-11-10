@@ -1779,7 +1779,7 @@ def compute_stats2_data(clean_records):
     confirmed_guests.sort(key=lambda x: x["updated_at"], reverse=True)
     last_10_confirmed = confirmed_guests[:10]
 
-    # Sankey flows helper (Option B: Origen ➔ Enviado ➔ Abierto ➔ Tipo/Nivel ➔ Confirmación)
+    # Sankey flows helper (Option A: Origen ➔ Tipo/Nivel ➔ Enviado ➔ Abierto ➔ Confirmación)
     def _build_sankey(items, origin_key, is_card=False):
         f12 = Counter()
         f23 = Counter()
@@ -1789,13 +1789,13 @@ def compute_stats2_data(clean_records):
             orig = item.get(origin_key) or "Sin definir"
             orig_node = f"👤 {orig}" if origin_key == "origin" else f"📁 {orig}"
 
+            tier_node = item.get("tier") or "🍽️ Invitación Cena"
+
             is_env = item.get("is_enviado") if is_card else item.get("enviado")
             env_node = "📤 Enviada" if is_env else "⏳ Sin enviar"
 
             is_op = (item.get("open_count", 0) > 0) if is_card else item.get("abierto")
             open_node = "📖 Abierta" if is_op else "🔒 Sin abrir"
-
-            tier_node = item.get("tier") or "🍽️ Invitación Cena"
 
             if is_card:
                 conf_node = item.get("card_status", "⏳ Pendiente")
@@ -1808,25 +1808,25 @@ def compute_stats2_data(clean_records):
                 else:
                     conf_node = "⏳ Pendiente"
 
-            f12[(orig_node, env_node)] += 1
-            f23[(env_node, open_node)] += 1
-            f34[(open_node, tier_node)] += 1
-            f45[(tier_node, conf_node)] += 1
+            f12[(orig_node, tier_node)] += 1
+            f23[(tier_node, env_node)] += 1
+            f34[(env_node, open_node)] += 1
+            f45[(open_node, conf_node)] += 1
 
-        ENV_ORDER = {"📤 Enviada": 1, "⏳ Sin enviar": 2}
-        OPEN_ORDER = {"📖 Abierta": 1, "🔒 Sin abrir": 2}
         TIER_ORDER = {
             "🍽️ Invitación Cena": 1,
             "👶 Invitación Cena Niño": 2,
             "🎫 Reserva Cena": 3,
             "🎉 Reserva Baile": 4,
         }
+        ENV_ORDER = {"📤 Enviada": 1, "⏳ Sin enviar": 2}
+        OPEN_ORDER = {"📖 Abierta": 1, "🔒 Sin abrir": 2}
         CONF_ORDER = {"✅ Asiste": 1, "❌ No asiste": 2, "⏳ Pendiente": 3}
 
-        f12_sorted = sorted(f12.items(), key=lambda x: (ENV_ORDER.get(x[0][1], 9), -x[1], x[0][0]))
-        f23_sorted = sorted(f23.items(), key=lambda x: (OPEN_ORDER.get(x[0][1], 9), ENV_ORDER.get(x[0][0], 9)))
-        f34_sorted = sorted(f34.items(), key=lambda x: (TIER_ORDER.get(x[0][1], 9), OPEN_ORDER.get(x[0][0], 9)))
-        f45_sorted = sorted(f45.items(), key=lambda x: (CONF_ORDER.get(x[0][1], 9), TIER_ORDER.get(x[0][0], 9)))
+        f12_sorted = sorted(f12.items(), key=lambda x: (TIER_ORDER.get(x[0][1], 9), -x[1], x[0][0]))
+        f23_sorted = sorted(f23.items(), key=lambda x: (ENV_ORDER.get(x[0][1], 9), TIER_ORDER.get(x[0][0], 9)))
+        f34_sorted = sorted(f34.items(), key=lambda x: (OPEN_ORDER.get(x[0][1], 9), ENV_ORDER.get(x[0][0], 9)))
+        f45_sorted = sorted(f45.items(), key=lambda x: (CONF_ORDER.get(x[0][1], 9), OPEN_ORDER.get(x[0][0], 9)))
 
         rows = []
         for (s, d), w in f12_sorted:
