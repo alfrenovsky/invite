@@ -580,6 +580,26 @@
             }
         }
 
+        /* Sankey Chart Click Interactivity */
+        #sankey_chart svg path,
+        #sankey_chart svg rect,
+        #sankey_chart svg text {
+            pointer-events: all !important;
+            cursor: pointer !important;
+        }
+
+        #sankey_chart svg path:hover {
+            fill-opacity: 0.85 !important;
+        }
+
+        #sankey_chart svg rect:hover {
+            opacity: 0.9 !important;
+        }
+
+        #sankey_chart svg text:hover {
+            fill: #38bdf8 !important;
+        }
+
         /* Detail & Filter Table Section */
         .filter-badge-flow {
             display: inline-flex;
@@ -798,20 +818,20 @@
             </div>
         </section>
 
-        <!-- Section 2: Detalle y Rankings dinámicos -->
+        <!-- Section 2: Detalle y Lista Dinámica -->
         <section class="panel-card" id="detailSection" style="margin-top: 24px;">
             <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
                 <div class="section-title-wrap">
                     <span class="section-icon" id="detailSectionIcon">📋</span>
                     <div>
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <h2 class="section-title" id="detailSectionTitle">Detalle y Rankings</h2>
+                            <h2 class="section-title" id="detailSectionTitle">Detalle de Invitaciones</h2>
                             <span id="activeFilterBadge" class="filter-badge-flow" style="display: none;">
                                 <span id="activeFilterText"></span>
                                 <button type="button" class="filter-clear-btn" onclick="clearSankeyFilter(event)" title="Quitar filtro">✕</button>
                             </span>
                         </div>
-                        <p class="section-subtitle" id="detailSectionSubtitle">Top 10 más abiertas, últimas abiertas y confirmadas recientemente</p>
+                        <p class="section-subtitle" id="detailSectionSubtitle">Listado completo de todas las tarjetas e invitados</p>
                     </div>
                 </div>
 
@@ -819,9 +839,8 @@
                 <div class="controls-group" style="flex-wrap: wrap; gap: 8px;">
                     <div class="control-pill-box" role="group" aria-label="Modo de vista">
                         <button type="button" class="control-btn" id="btnView_branch" onclick="setViewMode('branch')" style="display: none;">🌊 Rama seleccionada</button>
-                        <button type="button" class="control-btn active" id="btnView_rankings3" onclick="setViewMode('rankings3')">📊 3 Columnas</button>
-                        <button type="button" class="control-btn" id="btnView_all" onclick="setViewMode('all')">🌐 Todo</button>
-                        <button type="button" class="control-btn" id="btnView_top" onclick="setViewMode('top')">🏆 Top 10 abiertos</button>
+                        <button type="button" class="control-btn active" id="btnView_all" onclick="setViewMode('all')">🌐 Todo</button>
+                        <button type="button" class="control-btn" id="btnView_top" onclick="setViewMode('top')">🏆 Top 10 más abiertos</button>
                         <button type="button" class="control-btn" id="btnView_lastOpen" onclick="setViewMode('lastOpen')">⏱️ Últimas abiertas</button>
                         <button type="button" class="control-btn" id="btnView_lastConf" onclick="setViewMode('lastConf')">🎉 Últimas confirmadas</button>
                     </div>
@@ -829,7 +848,7 @@
             </div>
 
             <!-- Single View Container (Dynamic Table) -->
-            <div id="singleViewWrapper" style="display: none;">
+            <div id="singleViewWrapper">
                 <div class="detail-toolbar">
                     <div class="control-pill-box">
                         <button type="button" class="control-btn active" id="detailTabPeople" onclick="switchDetailType('people')">👥 Invitados (<span id="detailCountPeople">0</span>)</button>
@@ -851,148 +870,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 3-Column Rankings Container -->
-            <div id="rankings3Wrapper">
-                <!-- Mobile Tabs Switcher for Rankings -->
-                <div class="mobile-ranking-tabs">
-                    <button type="button" class="control-btn active" id="mTabTop" onclick="switchMobileTab('top')">🏆 Top 10</button>
-                    <button type="button" class="control-btn" id="mTabLastOpen" onclick="switchMobileTab('lastOpen')">⏱️ Últimas Abiertas</button>
-                    <button type="button" class="control-btn" id="mTabLastConf" onclick="switchMobileTab('lastConf')">🎉 Últimas Confirmadas</button>
-                </div>
-
-                <!-- Rankings Grid -->
-                <div class="rankings-grid">
-                    <!-- Col 1: Top 10 Opened -->
-                    <div class="ranking-col" id="colTop">
-                        <div class="ranking-header">
-                            <div class="ranking-title-row">
-                                <span>🏆</span>
-                                <h3 class="ranking-title">Top 10 Más Abiertas</h3>
-                            </div>
-                            <span class="ranking-countBadge ranking-count-badge">{{ stats2.top_10_opened|length }}</span>
-                        </div>
-                        <div class="ranking-list" id="listTopOpened">
-                            {% if stats2.top_10_opened %}
-                                {% for card in stats2.top_10_opened %}
-                                <div class="ranking-card-item">
-                                    <div class="ranking-item-top">
-                                        <span class="rank-number rank-{{ loop.index }}">{{ loop.index }}</span>
-                                        <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
-                                        <span class="open-counter-badge">🔥 {{ card.open_count }}</span>
-                                    </div>
-                                    <div class="ranking-badges-row">
-                                        <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
-                                            {{ card.group_nivel }}
-                                        </span>
-                                        <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
-                                            {{ card.group_tipo }}
-                                        </span>
-                                        <span class="chip chip-origin" title="{{ card.dequien }}">
-                                            {{ card.origin }}
-                                        </span>
-                                        <span class="ranking-timestamp" style="font-weight: 600;">
-                                            {% if card.confirmados > 0 %}✅ {{ card.confirmados }}{% endif %}
-                                            {% if card.rechazados > 0 %}❌ {{ card.rechazados }}{% endif %}
-                                            {% if card.pendientes > 0 %}⏳ {{ card.pendientes }}{% endif %}
-                                        </span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="empty-ranking">Aún no hay aperturas registradas.</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Col 2: Last 10 Opened -->
-                    <div class="ranking-col" id="colLastOpen">
-                        <div class="ranking-header">
-                            <div class="ranking-title-row">
-                                <span>⏱️</span>
-                                <h3 class="ranking-title">Últimas 10 Abiertas</h3>
-                            </div>
-                            <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_opened|length }}</span>
-                        </div>
-                        <div class="ranking-list" id="listLastOpened">
-                            {% if stats2.last_10_opened %}
-                                {% for card in stats2.last_10_opened %}
-                                <div class="ranking-card-item">
-                                    <div class="ranking-item-top">
-                                        <span class="rank-number">{{ loop.index }}</span>
-                                        <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
-                                        <span class="open-counter-badge" style="background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.4); color: var(--blue);">
-                                            📖 {{ card.open_count }}
-                                        </span>
-                                    </div>
-                                    <div class="ranking-badges-row">
-                                        <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
-                                            {{ card.group_nivel }}
-                                        </span>
-                                        <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
-                                            {{ card.group_tipo }}
-                                        </span>
-                                        <span class="chip chip-origin" title="{{ card.dequien }}">
-                                            {{ card.origin }}
-                                        </span>
-                                        <span class="ranking-timestamp" title="{{ card.last_updated }}">
-                                            {{ card.last_updated[-8:-3] if card.last_updated|length >= 8 else card.last_updated }}
-                                        </span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="empty-ranking">Aún no hay actividad de aperturas.</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Col 3: Last 10 Confirmed -->
-                    <div class="ranking-col" id="colLastConf">
-                        <div class="ranking-header">
-                            <div class="ranking-title-row">
-                                <span>🎉</span>
-                                <h3 class="ranking-title">Últimas 10 Confirmadas</h3>
-                            </div>
-                            <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_confirmed|length }}</span>
-                        </div>
-                        <div class="ranking-list" id="listLastConfirmed">
-                            {% if stats2.last_10_confirmed %}
-                                {% for g in stats2.last_10_confirmed %}
-                                <div class="ranking-card-item">
-                                    <div class="ranking-item-top">
-                                        <span class="chip-confirmed chip">✓ Asiste</span>
-                                        <span class="ranking-names" title="{{ g.name }}">{{ g.name }}</span>
-                                        <span class="ranking-timestamp" title="{{ g.updated_at }}">
-                                            {{ g.updated_at[-8:-3] if g.updated_at|length >= 8 else g.updated_at }}
-                                        </span>
-                                    </div>
-                                    <div class="ranking-badges-row">
-                                        <span class="chip {% if g.nivel == 'Reserva' %}chip-reserva{% else %}chip-invitado{% endif %}">
-                                            {{ g.nivel }}
-                                        </span>
-                                        <span class="chip {% if g.tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
-                                            {{ g.tipo }}
-                                        </span>
-                                        {% if g.pa %}
-                                        <span class="chip chip-menu">🍽️ {{ g.pa|capitalize }}</span>
-                                        {% endif %}
-                                        {% if g.celiaco %}
-                                        <span class="chip chip-menu" style="border-color: rgba(246, 173, 85, 0.4); color: #fbd38d;">🌾 Sin gluten</span>
-                                        {% endif %}
-                                        <span class="chip chip-origin" title="{{ g.dequien }}">
-                                            {{ g.origin }}
-                                        </span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="empty-ranking">Aún no hay confirmaciones registradas.</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
         </section>
     </div>
 
@@ -1007,7 +884,7 @@
         let activeOriginLevel = 'origin'; // 'origin' or 'detailed'
 
         // Detail section state
-        let currentViewMode = 'rankings3'; // 'rankings3', 'branch', 'all', 'top', 'lastOpen', 'lastConf'
+        let currentViewMode = 'all'; // 'all', 'branch', 'top', 'lastOpen', 'lastConf'
         let currentDetailType = 'people'; // 'people' or 'cards'
         let currentSankeyFilter = null; // { type: 'branch', source, target, weight } or { type: 'node', nodeName }
         let currentFilteredPeople = [];
@@ -1015,7 +892,10 @@
 
         // Load Google Charts
         google.charts.load('current', { 'packages': ['sankey'] });
-        google.charts.setOnLoadCallback(drawSankeyChart);
+        google.charts.setOnLoadCallback(() => {
+            drawSankeyChart();
+            updateSingleViewData();
+        });
 
         function getActiveKey() {
             return `${activeMode}_${activeOriginLevel}`;
@@ -1079,55 +959,92 @@
                 attachSankeyInteractivity(chartDiv, rows);
             });
 
-            google.visualization.events.addListener(chart, 'select', () => {
-                const sel = chart.getSelection();
-                if (sel && sel.length > 0 && sel[0].name) {
-                    const nodeName = sel[0].name;
-                    onSankeySelect({ type: 'node', nodeName });
-                    chart.setSelection([]);
-                }
-            });
-
             chart.draw(data, options);
-            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 60);
+
+            // Redundant triggers to ensure SVG interactivity is applied even if ready fired early
+            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 50);
+            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 200);
+            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 500);
         }
 
         function attachSankeyInteractivity(chartDiv, rows) {
             const svg = chartDiv.querySelector('svg');
             if (!svg) return;
 
-            // Link branches (<path>)
-            const paths = svg.querySelectorAll('path');
+            // Enforce pointer-events on all clickable SVG shapes
+            svg.querySelectorAll('path, rect, text').forEach(el => {
+                el.style.setProperty('pointer-events', 'all', 'important');
+                el.style.setProperty('cursor', 'pointer', 'important');
+            });
+
+            const paths = Array.from(svg.querySelectorAll('path'));
             paths.forEach((path, idx) => {
-                path.style.cursor = 'pointer';
                 if (idx < rows.length) {
                     const row = rows[idx];
-                    path.setAttribute('title', `Clic para filtrar lista: ${row[0]} ➔ ${row[1]} (${row[2]})`);
+                    path.setAttribute('title', `Filtrar: ${row[0]} ➔ ${row[1]} (${row[2]})`);
                     path.onclick = (e) => {
                         e.stopPropagation();
                         onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
                     };
                 }
-                path.onmouseenter = () => { path.style.fillOpacity = '0.75'; };
+                path.onmouseenter = () => { path.style.fillOpacity = '0.85'; };
                 path.onmouseleave = () => { path.style.fillOpacity = '0.45'; };
             });
 
-            // Node rectangles (<rect>) and text (<text>)
-            const rects = svg.querySelectorAll('rect');
-            rects.forEach(rect => {
-                rect.style.cursor = 'pointer';
-            });
+            const texts = Array.from(svg.querySelectorAll('text'));
+            const rects = Array.from(svg.querySelectorAll('rect'));
 
-            const texts = svg.querySelectorAll('text');
             texts.forEach(text => {
-                text.style.cursor = 'pointer';
                 text.onclick = (e) => {
                     e.stopPropagation();
                     const name = text.textContent.trim();
-                    if (name) {
-                        onSankeySelect({ type: 'node', nodeName: name });
-                    }
+                    if (name) onSankeySelect({ type: 'node', nodeName: name });
                 };
+            });
+
+            rects.forEach((rect, idx) => {
+                if (idx < texts.length) {
+                    const nodeName = texts[idx].textContent.trim();
+                    rect.setAttribute('title', `Filtrar: ${nodeName}`);
+                    rect.onclick = (e) => {
+                        e.stopPropagation();
+                        if (nodeName) onSankeySelect({ type: 'node', nodeName });
+                    };
+                }
+            });
+        }
+
+        // Global Chart Event Delegation as bulletproof fallback
+        const chartWrapper = document.getElementById('sankeyChartWrapper');
+        if (chartWrapper) {
+            chartWrapper.addEventListener('click', (e) => {
+                const target = e.target;
+                if (!target || !target.tagName) return;
+                const tag = target.tagName.toLowerCase();
+
+                if (tag === 'path') {
+                    const svg = chartWrapper.querySelector('svg');
+                    if (!svg) return;
+                    const paths = Array.from(svg.querySelectorAll('path'));
+                    const idx = paths.indexOf(target);
+                    if (idx !== -1 && idx < currentDrawnRows.length) {
+                        const row = currentDrawnRows[idx];
+                        onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
+                    }
+                } else if (tag === 'text') {
+                    const name = target.textContent.trim();
+                    if (name) onSankeySelect({ type: 'node', nodeName: name });
+                } else if (tag === 'rect') {
+                    const svg = chartWrapper.querySelector('svg');
+                    if (!svg) return;
+                    const rects = Array.from(svg.querySelectorAll('rect'));
+                    const texts = Array.from(svg.querySelectorAll('text'));
+                    const idx = rects.indexOf(target);
+                    if (idx !== -1 && idx < texts.length) {
+                        const name = texts[idx].textContent.trim();
+                        if (name) onSankeySelect({ type: 'node', nodeName: name });
+                    }
+                }
             });
         }
 
@@ -1193,14 +1110,14 @@
         function clearSankeyFilter(e) {
             if (e) e.stopPropagation();
             currentSankeyFilter = null;
-            setViewMode('rankings3');
+            setViewMode('all');
         }
 
         function setViewMode(mode) {
             currentViewMode = mode;
 
             // Update buttons
-            ['rankings3', 'branch', 'all', 'top', 'lastOpen', 'lastConf'].forEach(m => {
+            ['branch', 'all', 'top', 'lastOpen', 'lastConf'].forEach(m => {
                 const btn = document.getElementById('btnView_' + m);
                 if (btn) btn.classList.toggle('active', m === mode);
             });
@@ -1225,27 +1142,15 @@
                 if (btnBranch) btnBranch.style.display = 'none';
             }
 
-            const singleWrap = document.getElementById('singleViewWrapper');
-            const rankings3Wrap = document.getElementById('rankings3Wrapper');
+            let sub = 'Listado completo de todas las tarjetas e invitados';
+            if (mode === 'branch') sub = 'Registros que coinciden con la selección del diagrama Sankey';
+            else if (mode === 'all') sub = 'Listado completo de todas las tarjetas e invitados';
+            else if (mode === 'top') sub = 'Top 10 tarjetas con mayor cantidad de lecturas / aperturas';
+            else if (mode === 'lastOpen') sub = 'Últimas 10 tarjetas abiertas recientemente';
+            else if (mode === 'lastConf') sub = 'Últimos 10 invitados que confirmaron asistencia';
+            document.getElementById('detailSectionSubtitle').textContent = sub;
 
-            if (mode === 'rankings3') {
-                if (singleWrap) singleWrap.style.display = 'none';
-                if (rankings3Wrap) rankings3Wrap.style.display = 'block';
-                document.getElementById('detailSectionSubtitle').textContent = 'Top 10 más abiertas, últimas abiertas y confirmadas recientemente';
-            } else {
-                if (rankings3Wrap) rankings3Wrap.style.display = 'none';
-                if (singleWrap) singleWrap.style.display = 'block';
-
-                let sub = 'Detalle de registros filtrados';
-                if (mode === 'branch') sub = 'Registros que coinciden con la selección del diagrama Sankey';
-                else if (mode === 'all') sub = 'Listado completo de todas las tarjetas e invitados';
-                else if (mode === 'top') sub = 'Top 10 tarjetas con mayor cantidad de lecturas / aperturas';
-                else if (mode === 'lastOpen') sub = 'Últimas 10 tarjetas abiertas recientemente';
-                else if (mode === 'lastConf') sub = 'Últimos 10 invitados que confirmaron asistencia';
-                document.getElementById('detailSectionSubtitle').textContent = sub;
-
-                updateSingleViewData();
-            }
+            updateSingleViewData();
         }
 
         function switchDetailType(type) {
