@@ -1398,6 +1398,15 @@ def sanitize_stats_records(raw_records):
         has_monto = bool(raw_monto and int(raw_monto) > 0)
         nivel = "Reserva" if (is_res_level or has_monto) else "Invitado"
 
+        tipo_clean = str(r.get("tipo", "") or "").strip()
+        tipo_lower = tipo_clean.lower()
+        if "baile" in tipo_lower:
+            tier = "🎉 Reserva Baile" if nivel == "Reserva" else "🎉 Invitación Baile"
+        elif "niño" in tipo_lower or "nino" in tipo_lower:
+            tier = "👶 Reserva Cena Niño" if nivel == "Reserva" else "👶 Invitación Cena Niño"
+        else:
+            tier = "🎫 Reserva Cena" if nivel == "Reserva" else "🍽️ Invitación Cena"
+
         conf_raw = str(r.get("confirmacion", "") or "").strip().lower()
         if conf_raw in ("si", "sí", "confirmado"):
             confirmacion = "si"
@@ -1421,8 +1430,9 @@ def sanitize_stats_records(raw_records):
             "has_name": has_name,
             "dequien": dq,
             "origin": origin,
-            "tipo": str(r.get("tipo", "") or "").strip(),
+            "tipo": tipo_clean,
             "nivel": nivel,
+            "tier": tier,
             "confirmacion": confirmacion,
             "pagado": pagado,
             "comprobante": comprobante,
@@ -1702,6 +1712,19 @@ def compute_stats2_data(clean_records):
         else:
             card_status = "⏳ Pendiente"
 
+        # Determine card tier based on guest composition
+        tiers = [r.get("tier") for r in recs]
+        if any("Baile" in (t or "") for t in tiers):
+            card_tier = "🎉 Reserva Baile"
+        elif sum(1 for t in tiers if "Reserva Cena" in (t or "")) > len(recs) / 2:
+            card_tier = "🎫 Reserva Cena"
+        elif any("Niño" in (t or "") for t in tiers):
+            card_tier = "👶 Invitación Cena Niño"
+        elif any("Reserva Cena" in (t or "") for t in tiers):
+            card_tier = "🎫 Reserva Cena"
+        else:
+            card_tier = "🍽️ Invitación Cena"
+
         card_items.append({
             "invitacion_id": inv,
             "title": display_title,
@@ -1710,6 +1733,7 @@ def compute_stats2_data(clean_records):
             "last_updated": last_updated,
             "group_nivel": group_nivel,
             "group_tipo": group_tipo,
+            "tier": card_tier,
             "dequien": dequien,
             "origin": origin,
             "is_enviado": is_enviado,
@@ -1744,6 +1768,7 @@ def compute_stats2_data(clean_records):
                 "invitacion_title": inv_title,
                 "nivel": r.get("nivel", "Invitado"),
                 "tipo": r.get("tipo", "Cena") or "Cena",
+                "tier": r.get("tier", "🍽️ Invitación Cena"),
                 "confirmacion": "si",
                 "pa": r.get("pa", ""),
                 "celiaco": r.get("celiaco", False),
@@ -1754,11 +1779,12 @@ def compute_stats2_data(clean_records):
     confirmed_guests.sort(key=lambda x: x["updated_at"], reverse=True)
     last_10_confirmed = confirmed_guests[:10]
 
-    # Sankey flows helper
+    # Sankey flows helper (Option B: Origen ➔ Enviado ➔ Abierto ➔ Tipo/Nivel ➔ Confirmación)
     def _build_sankey(items, origin_key, is_card=False):
         f12 = Counter()
         f23 = Counter()
         f34 = Counter()
+        f45 = Counter()
         for item in items:
             orig = item.get(origin_key) or "Sin definir"
             orig_node = f"👤 {orig}" if origin_key == "origin" else f"📁 {orig}"
@@ -1768,6 +1794,8 @@ def compute_stats2_data(clean_records):
 
             is_op = (item.get("open_count", 0) > 0) if is_card else item.get("abierto")
             open_node = "📖 Abierta" if is_op else "🔒 Sin abrir"
+
+            tier_node = item.get("tier") or "🍽️ Invitación Cena"
 
             if is_card:
                 conf_node = item.get("card_status", "⏳ Pendiente")
@@ -1782,15 +1810,23 @@ def compute_stats2_data(clean_records):
 
             f12[(orig_node, env_node)] += 1
             f23[(env_node, open_node)] += 1
-            f34[(open_node, conf_node)] += 1
+            f34[(open_node, tier_node)] += 1
+            f45[(tier_node, conf_node)] += 1
 
         ENV_ORDER = {"📤 Enviada": 1, "⏳ Sin enviar": 2}
         OPEN_ORDER = {"📖 Abierta": 1, "🔒 Sin abrir": 2}
+        TIER_ORDER = {
+            "🍽️ Invitación Cena": 1,
+            "👶 Invitación Cena Niño": 2,
+            "🎫 Reserva Cena": 3,
+            "🎉 Reserva Baile": 4,
+        }
         CONF_ORDER = {"✅ Asiste": 1, "❌ No asiste": 2, "⏳ Pendiente": 3}
 
         f12_sorted = sorted(f12.items(), key=lambda x: (ENV_ORDER.get(x[0][1], 9), -x[1], x[0][0]))
         f23_sorted = sorted(f23.items(), key=lambda x: (OPEN_ORDER.get(x[0][1], 9), ENV_ORDER.get(x[0][0], 9)))
-        f34_sorted = sorted(f34.items(), key=lambda x: (CONF_ORDER.get(x[0][1], 9), OPEN_ORDER.get(x[0][0], 9)))
+        f34_sorted = sorted(f34.items(), key=lambda x: (TIER_ORDER.get(x[0][1], 9), OPEN_ORDER.get(x[0][0], 9)))
+        f45_sorted = sorted(f45.items(), key=lambda x: (CONF_ORDER.get(x[0][1], 9), TIER_ORDER.get(x[0][0], 9)))
 
         rows = []
         for (s, d), w in f12_sorted:
@@ -1798,6 +1834,8 @@ def compute_stats2_data(clean_records):
         for (s, d), w in f23_sorted:
             if w > 0: rows.append([s, d, w])
         for (s, d), w in f34_sorted:
+            if w > 0: rows.append([s, d, w])
+        for (s, d), w in f45_sorted:
             if w > 0: rows.append([s, d, w])
         return rows
 

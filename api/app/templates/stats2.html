@@ -827,7 +827,7 @@
                     <span class="section-icon">🌊</span>
                     <div>
                         <h2 class="section-title">Diagrama de Flujo y Conversión (Sankey)</h2>
-                        <p class="section-subtitle">Origen (De quién) ➔ Enviado ➔ Abierto ➔ Confirmación</p>
+                        <p class="section-subtitle">Origen (De quién) ➔ Enviado ➔ Abierto ➔ Tipo de Invitación ➔ Confirmación</p>
                         <div class="sankey-hint-text">💡 Haz clic en cualquier rama o columna para ver el detalle de invitados y tarjetas</div>
                     </div>
                 </div>
@@ -975,7 +975,7 @@
             ];
 
             const options = {
-                height: 460,
+                height: 480,
                 backgroundColor: 'transparent',
                 sankey: {
                     iterations: 0,
@@ -986,7 +986,7 @@
                             color: '#f7fafc',
                             bold: true
                         },
-                        nodePadding: 24,
+                        nodePadding: 20,
                         width: 14,
                         colors: colors
                     },
@@ -1245,7 +1245,36 @@
                 return isCard ? (!item.open_count || item.open_count === 0) : !item.abierto;
             }
 
-            // 4. Confirmación
+            // 4. Tipo de Invitación / Nivel
+            if (str.includes("Invitación Cena Niño") || str.includes("Cena Niño")) {
+                if (item.tier) return item.tier.includes("Cena Niño");
+                if (isCard) return item.guests && item.guests.some(g => (g.tipo || '').toLowerCase().includes('niño'));
+                const tipo = (item.tipo || '').toLowerCase();
+                return tipo.includes('niño') || tipo.includes('nino');
+            }
+            if (str.includes("Invitación Cena") || (str.includes("Invitación") && str.includes("Cena"))) {
+                if (item.tier) return item.tier.includes("Invitación Cena") && !item.tier.includes("Niño");
+                if (isCard) return item.group_nivel === 'Invitado' && item.group_tipo === 'Cena';
+                const nivel = (item.nivel || '').toLowerCase();
+                const tipo = (item.tipo || '').toLowerCase();
+                return nivel !== 'reserva' && !item.montotarjeta && tipo.includes('cena') && !tipo.includes('niño');
+            }
+            if (str.includes("Reserva Baile") || (str.includes("Reserva") && str.includes("Baile"))) {
+                if (item.tier) return item.tier.includes("Reserva Baile");
+                if (isCard) return item.group_tipo === 'Baile' || (item.guests && item.guests.some(g => (g.tipo || '').toLowerCase().includes('baile')));
+                const tipo = (item.tipo || '').toLowerCase();
+                return tipo.includes('baile');
+            }
+            if (str.includes("Reserva Cena") || (str.includes("Reserva") && str.includes("Cena"))) {
+                if (item.tier) return item.tier.includes("Reserva Cena");
+                if (isCard) return item.group_nivel === 'Reserva' && item.group_tipo === 'Cena';
+                const nivel = (item.nivel || '').toLowerCase();
+                const tipo = (item.tipo || '').toLowerCase();
+                const isRes = (nivel === 'reserva' || !!item.montotarjeta);
+                return isRes && tipo.includes('cena');
+            }
+
+            // 5. Confirmación
             if (isCard) {
                 if (str.includes("Asiste") && !str.includes("No asiste")) {
                     return item.card_status === "✅ Asiste";
@@ -1460,7 +1489,8 @@
                         const deq = (r.dequien || '').toLowerCase();
                         const tipo = (r.tipo || '').toLowerCase();
                         const nivel = (r.nivel || '').toLowerCase();
-                        return name.includes(query) || inv.includes(query) || orig.includes(query) || deq.includes(query) || tipo.includes(query) || nivel.includes(query);
+                        const tier = (r.tier || '').toLowerCase();
+                        return name.includes(query) || inv.includes(query) || orig.includes(query) || deq.includes(query) || tipo.includes(query) || nivel.includes(query) || tier.includes(query);
                     });
                 }
 
@@ -1544,8 +1574,9 @@
                         const deq = (c.dequien || '').toLowerCase();
                         const tipo = (c.group_tipo || '').toLowerCase();
                         const nivel = (c.group_nivel || '').toLowerCase();
+                        const tier = (c.tier || '').toLowerCase();
                         const guestsStr = (c.guests || []).map(g => g.name).join(' ').toLowerCase();
-                        return title.includes(query) || inv.includes(query) || orig.includes(query) || deq.includes(query) || tipo.includes(query) || nivel.includes(query) || guestsStr.includes(query);
+                        return title.includes(query) || inv.includes(query) || orig.includes(query) || deq.includes(query) || tipo.includes(query) || nivel.includes(query) || tier.includes(query) || guestsStr.includes(query);
                     });
                 }
 
