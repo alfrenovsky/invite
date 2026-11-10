@@ -21,6 +21,7 @@ from sheets import (
     slugify,
     clean_phone_number,
     generate_whatsapp_url,
+    generate_invitation_url,
 )
 import telegram_bot
 try:
@@ -1431,6 +1432,7 @@ def sanitize_stats_records(raw_records):
             "enviado": bool(str(r.get("enviado", "") or "").strip().lower() in ("si", "sí", "true", "1")),
             "pa": str(r.get("pa", "") or "").strip(),
             "celiaco": bool(str(r.get("celiaco", "") or "").strip().lower() in ("si", "sí", "true", "1")),
+            "invitation_url": generate_invitation_url(inv_id),
         })
     return clean
 
@@ -1716,6 +1718,7 @@ def compute_stats2_data(clean_records):
             "rechazados": no_c,
             "pendientes": pend_c,
             "card_status": card_status,
+            "invitation_url": generate_invitation_url(inv),
         })
 
     # 1. Top 10 opened (cards with open_count > 0, sorted by open_count DESC, total_guests DESC)
@@ -1822,6 +1825,7 @@ def compute_stats2_data(clean_records):
         "last_10_confirmed": last_10_confirmed,
         "sankey": sankey,
         "metrics": metrics,
+        "cards": card_items,
     }
 
 
@@ -1902,11 +1906,13 @@ def panel_stats2_view():
         return jsonify({
             "ok": True,
             "stats2": stats2,
+            "records": clean_records,
         })
 
     return render_template(
         "stats2.html",
         stats2=stats2,
+        records=clean_records,
     )
 
 
@@ -1924,6 +1930,7 @@ def panel_stats2_refresh():
         return jsonify({
             "ok": True,
             "stats2": stats2,
+            "records": clean_records,
             "message": "Estadísticas sincronizadas con Google Sheets",
         })
     except Exception as e:

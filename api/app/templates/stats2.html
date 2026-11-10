@@ -579,6 +579,211 @@
                 min-height: 360px;
             }
         }
+
+        /* Sankey Drill-Down Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(4, 7, 12, 0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-dialog {
+            background: #111722;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: var(--radius, 14px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 1100px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--card-border);
+            gap: 12px;
+        }
+
+        .modal-header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .modal-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .modal-badge-flow {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: var(--blue);
+        }
+
+        .modal-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .modal-close-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+        }
+
+        .modal-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .modal-search-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 7px 12px;
+            color: var(--text-main);
+            font-size: 0.82rem;
+            font-family: inherit;
+            width: 280px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .modal-search-input:focus {
+            border-color: var(--blue);
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            max-height: 60vh;
+        }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .modal-table th {
+            position: sticky;
+            top: 0;
+            background: #141b27;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--card-border);
+            z-index: 10;
+        }
+
+        .modal-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .modal-table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .btn-open-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.74rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-open-link:hover {
+            background: var(--blue-soft);
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .sankey-hint-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 
@@ -644,6 +849,7 @@
                     <div>
                         <h2 class="section-title">Diagrama de Flujo y Conversión (Sankey)</h2>
                         <p class="section-subtitle">Origen (De quién) ➔ Enviado ➔ Abierto ➔ Confirmación</p>
+                        <div class="sankey-hint-text">💡 Haz clic en cualquier rama o columna para ver el detalle de invitados y tarjetas</div>
                     </div>
                 </div>
                 <div class="controls-group">
@@ -806,12 +1012,56 @@
         </section>
     </div>
 
+    <!-- Sankey Drill-Down Modal -->
+    <div id="sankeyModalOverlay" class="modal-overlay" onclick="closeSankeyModal(event)">
+        <div class="modal-dialog" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <div class="modal-title-row">
+                        <span class="modal-title" id="modalTitle">Detalle de Flujo</span>
+                        <span class="modal-badge-flow" id="modalFlowBadge">Rama</span>
+                    </div>
+                    <div class="modal-subtitle" id="modalSubtitle">Listado filtrado por selección</div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeSankeyModal()" title="Cerrar (Esc)">✕</button>
+            </div>
+            <div class="modal-toolbar">
+                <div class="control-pill-box">
+                    <button type="button" class="control-btn active" id="modalTabPeople" onclick="switchModalView('people')">👥 Invitados (<span id="modalCountPeople">0</span>)</button>
+                    <button type="button" class="control-btn" id="modalTabCards" onclick="switchModalView('cards')">💌 Tarjetas (<span id="modalCountCards">0</span>)</button>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-end;">
+                    <input type="text" id="modalSearchInput" class="modal-search-input" placeholder="🔍 Buscar nombre, tarjeta, tipo..." oninput="onModalSearch()">
+                    <button type="button" class="btn-sync" id="btnCopyModal" style="padding: 7px 12px; font-size: 0.78rem;" onclick="copyModalList()" title="Copiar nombres al portapapeles">📋 Copiar</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <table class="modal-table" id="modalTable">
+                    <thead id="modalTableHead"></thead>
+                    <tbody id="modalTableBody"></tbody>
+                </table>
+                <div id="modalEmptyState" style="display: none; padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                    No se encontraron registros para esta selección o búsqueda.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Live Data JSON injected by Jinja2 -->
     <script>
         const INITIAL_SANKEY = {{ stats2.sankey|tojson }};
+        let ALL_RECORDS = {{ records|tojson if records is defined else [] }};
+        let ALL_CARDS = {{ stats2.cards|tojson if stats2.cards is defined else [] }};
+
         let currentSankey = INITIAL_SANKEY;
         let activeMode = 'people'; // 'people' or 'cards'
         let activeOriginLevel = 'origin'; // 'origin' or 'detailed'
+
+        // Modal drill-down state
+        let currentModalFilter = null; // { type: 'branch', source, target } or { type: 'node', nodeName }
+        let currentModalView = 'people'; // 'people' or 'cards'
+        let currentFilteredPeople = [];
+        let currentFilteredCards = [];
 
         // Load Google Charts
         google.charts.load('current', { 'packages': ['sankey'] });
@@ -821,12 +1071,16 @@
             return `${activeMode}_${activeOriginLevel}`;
         }
 
+        let currentChart = null;
+        let currentDrawnRows = [];
+
         function drawSankeyChart() {
             const chartDiv = document.getElementById('sankey_chart');
             if (!chartDiv) return;
 
             const key = getActiveKey();
             const rows = currentSankey[key] || [];
+            currentDrawnRows = rows;
 
             if (!rows || rows.length === 0) {
                 chartDiv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:380px;color:var(--text-muted);">Sin datos disponibles para este filtro.</div>';
@@ -869,7 +1123,391 @@
             };
 
             const chart = new google.visualization.Sankey(chartDiv);
+            currentChart = chart;
+
+            google.visualization.events.addListener(chart, 'ready', () => {
+                attachSankeyInteractivity(chartDiv, rows);
+            });
+
+            google.visualization.events.addListener(chart, 'select', () => {
+                const sel = chart.getSelection();
+                if (sel && sel.length > 0 && sel[0].name) {
+                    const nodeName = sel[0].name;
+                    openSankeyDetailModal({ type: 'node', nodeName });
+                    chart.setSelection([]);
+                }
+            });
+
             chart.draw(data, options);
+            setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 60);
+        }
+
+        function attachSankeyInteractivity(chartDiv, rows) {
+            const svg = chartDiv.querySelector('svg');
+            if (!svg) return;
+
+            // Link branches (<path>)
+            const paths = svg.querySelectorAll('path');
+            paths.forEach((path, idx) => {
+                path.style.cursor = 'pointer';
+                if (idx < rows.length) {
+                    const row = rows[idx];
+                    path.setAttribute('title', `Clic para ver detalle: ${row[0]} ➔ ${row[1]} (${row[2]})`);
+                    path.onclick = (e) => {
+                        e.stopPropagation();
+                        openSankeyDetailModal({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
+                    };
+                }
+                path.onmouseenter = () => { path.style.fillOpacity = '0.75'; };
+                path.onmouseleave = () => { path.style.fillOpacity = '0.45'; };
+            });
+
+            // Node rectangles (<rect>) and text (<text>)
+            const rects = svg.querySelectorAll('rect');
+            rects.forEach(rect => {
+                rect.style.cursor = 'pointer';
+            });
+
+            const texts = svg.querySelectorAll('text');
+            texts.forEach(text => {
+                text.style.cursor = 'pointer';
+                text.onclick = (e) => {
+                    e.stopPropagation();
+                    const name = text.textContent.trim();
+                    if (name) {
+                        openSankeyDetailModal({ type: 'node', nodeName: name });
+                    }
+                };
+            });
+        }
+
+        function matchNodeCondition(item, nodeStr, isCard) {
+            if (!nodeStr) return true;
+            const str = nodeStr.trim();
+
+            // 1. Origin / De quién
+            if (str.startsWith("👤 ")) {
+                const val = str.replace("👤 ", "").trim().toLowerCase();
+                const itemOrigin = (item.origin || "Sin definir").trim().toLowerCase();
+                return itemOrigin === val;
+            }
+            if (str.startsWith("📁 ")) {
+                const val = str.replace("📁 ", "").trim().toLowerCase();
+                const itemDequien = (item.dequien || "Sin definir").trim().toLowerCase();
+                return itemDequien === val;
+            }
+
+            // 2. Enviado
+            if (str.includes("Enviada")) {
+                return isCard ? !!item.is_enviado : !!item.enviado;
+            }
+            if (str.includes("Sin enviar")) {
+                return isCard ? !item.is_enviado : !item.enviado;
+            }
+
+            // 3. Abierto
+            if (str.includes("Abierta")) {
+                return isCard ? (item.open_count > 0) : (item.open_count > 0 || !!item.abierto);
+            }
+            if (str.includes("Sin abrir")) {
+                return isCard ? (item.open_count === 0) : (!item.abierto && (!item.open_count || item.open_count === 0));
+            }
+
+            // 4. Confirmación
+            if (str.includes("Asiste") && !str.includes("No asiste")) {
+                return isCard ? (item.card_status === "✅ Asiste" || item.confirmados > 0) : (item.confirmacion === "si");
+            }
+            if (str.includes("No asiste")) {
+                return isCard ? (item.card_status === "❌ No asiste" || (item.rechazados === item.total_guests && item.total_guests > 0)) : (item.confirmacion === "no");
+            }
+            if (str.includes("Pendiente")) {
+                return isCard ? (item.card_status === "⏳ Pendiente" || item.pendientes > 0) : (item.confirmacion !== "si" && item.confirmacion !== "no");
+            }
+
+            return true;
+        }
+
+        function openSankeyDetailModal(filter) {
+            currentModalFilter = filter;
+            currentModalView = activeMode;
+
+            if (filter.type === 'branch') {
+                document.getElementById('modalTitle').textContent = 'Detalle de Rama (Flujo)';
+                document.getElementById('modalFlowBadge').textContent = `${filter.source} ➔ ${filter.target}`;
+                document.getElementById('modalSubtitle').textContent = `Conexión entre "${filter.source}" y "${filter.target}"`;
+                currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, filter.source, false) && matchNodeCondition(r, filter.target, false));
+                currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, filter.source, true) && matchNodeCondition(c, filter.target, true));
+            } else {
+                document.getElementById('modalTitle').textContent = 'Detalle de Nodo';
+                document.getElementById('modalFlowBadge').textContent = `${filter.nodeName}`;
+                document.getElementById('modalSubtitle').textContent = `Registros que pasan por "${filter.nodeName}"`;
+                currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, filter.nodeName, false));
+                currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, filter.nodeName, true));
+            }
+
+            document.getElementById('modalCountPeople').textContent = currentFilteredPeople.length;
+            document.getElementById('modalCountCards').textContent = currentFilteredCards.length;
+
+            const searchInput = document.getElementById('modalSearchInput');
+            if (searchInput) searchInput.value = '';
+
+            switchModalView(currentModalView);
+
+            const overlay = document.getElementById('sankeyModalOverlay');
+            if (overlay) overlay.classList.add('active');
+        }
+
+        function closeSankeyModal(e) {
+            if (e && e.target && e.target !== document.getElementById('sankeyModalOverlay') && !e.target.classList.contains('modal-close-btn')) {
+                return;
+            }
+            const overlay = document.getElementById('sankeyModalOverlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeSankeyModal();
+            }
+        });
+
+        function switchModalView(mode) {
+            currentModalView = mode;
+            document.getElementById('modalTabPeople')?.classList.toggle('active', mode === 'people');
+            document.getElementById('modalTabCards')?.classList.toggle('active', mode === 'cards');
+            renderModalTable();
+        }
+
+        function onModalSearch() {
+            renderModalTable();
+        }
+
+        function renderModalTable() {
+            const thead = document.getElementById('modalTableHead');
+            const tbody = document.getElementById('modalTableBody');
+            const empty = document.getElementById('modalEmptyState');
+            const query = (document.getElementById('modalSearchInput')?.value || '').trim().toLowerCase();
+
+            if (!thead || !tbody) return;
+
+            if (currentModalView === 'people') {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 40px; text-align: center;">#</th>
+                        <th>Nombre y Apellido</th>
+                        <th>Tarjeta / Grupo</th>
+                        <th>Nivel</th>
+                        <th>Tipo</th>
+                        <th>Origen</th>
+                        <th>Confirmación</th>
+                        <th>Menú / Dieta</th>
+                        <th>Enviada</th>
+                        <th>Aperturas</th>
+                        <th style="text-align: center;">Acción</th>
+                    </tr>
+                `;
+
+                let list = currentFilteredPeople;
+                if (query) {
+                    list = list.filter(r => {
+                        const name = `${r.nombre || ''} ${r.apellido || ''}`.toLowerCase();
+                        const inv = (r.invitacion_id || '').toLowerCase();
+                        const orig = (r.origin || '').toLowerCase();
+                        const deq = (r.dequien || '').toLowerCase();
+                        const tipo = (r.tipo || '').toLowerCase();
+                        const nivel = (r.nivel || '').toLowerCase();
+                        return name.includes(query) || inv.includes(query) || orig.includes(query) || deq.includes(query) || tipo.includes(query) || nivel.includes(query);
+                    });
+                }
+
+                if (list.length === 0) {
+                    tbody.innerHTML = '';
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+                if (empty) empty.style.display = 'none';
+
+                tbody.innerHTML = list.map((r, idx) => {
+                    const fullName = r.has_name ? `${r.nombre || ''} ${r.apellido || ''}`.trim() : `<span style="color:var(--text-muted);font-style:italic;">Acompañante</span>`;
+                    const invTitle = (r.invitacion_id || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const nivelClass = r.nivel === 'Reserva' ? 'chip-reserva' : 'chip-invitado';
+                    const tipoClass = r.tipo === 'Baile' ? 'chip-baile' : 'chip-cena';
+
+                    let confHtml = '<span class="chip" style="background: rgba(246, 173, 85, 0.15); border-color: rgba(246, 173, 85, 0.35); color: #f6ad55;">⏳ Pend.</span>';
+                    if (r.confirmacion === 'si') {
+                        confHtml = '<span class="chip chip-confirmed">✓ Asiste</span>';
+                    } else if (r.confirmacion === 'no') {
+                        confHtml = '<span class="chip" style="background: rgba(245, 101, 101, 0.15); border-color: rgba(245, 101, 101, 0.35); color: #f56565;">✕ No</span>';
+                    }
+
+                    const menuBadges = [];
+                    if (r.pa) menuBadges.push(`<span class="chip chip-menu">🍽️ ${r.pa.charAt(0).toUpperCase() + r.pa.slice(1)}</span>`);
+                    if (r.celiaco) menuBadges.push(`<span class="chip chip-menu" style="border-color: rgba(246, 173, 85, 0.4); color: #fbd38d;">🌾 Sin gluten</span>`);
+                    const menuHtml = menuBadges.length > 0 ? menuBadges.join(' ') : '<span style="color:var(--text-muted);">-</span>';
+
+                    const envHtml = r.enviado
+                        ? '<span style="color: #a78bfa; font-weight: 600;">📤 Sí</span>'
+                        : '<span style="color: var(--text-muted);">⏳ No</span>';
+
+                    const openHtml = r.open_count > 0
+                        ? `<span style="color: var(--blue); font-weight: 700;">📖 ${r.open_count}</span>`
+                        : `<span style="color: var(--text-muted);">🔒 0</span>`;
+
+                    const linkUrl = r.invitation_url || `/i/${r.invitacion_id}`;
+
+                    return `
+                        <tr>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.76rem;">${idx + 1}</td>
+                            <td style="font-weight: 600;">${fullName}</td>
+                            <td style="color: var(--text-muted);">${invTitle}</td>
+                            <td><span class="chip ${nivelClass}">${r.nivel || 'Invitado'}</span></td>
+                            <td><span class="chip ${tipoClass}">${r.tipo || 'Cena'}</span></td>
+                            <td><span class="chip chip-origin" title="${r.dequien || ''}">${r.origin || 'Sin definir'}</span></td>
+                            <td>${confHtml}</td>
+                            <td>${menuHtml}</td>
+                            <td>${envHtml}</td>
+                            <td>${openHtml}</td>
+                            <td style="text-align: center;">
+                                <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="btn-open-link">Abrir ↗</a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } else {
+                // Cards view
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 40px; text-align: center;">#</th>
+                        <th>Tarjeta / Título</th>
+                        <th>Integrantes</th>
+                        <th>Nivel</th>
+                        <th>Tipo</th>
+                        <th>Origen</th>
+                        <th>Confirmación</th>
+                        <th>Enviada</th>
+                        <th>Aperturas</th>
+                        <th style="text-align: center;">Acción</th>
+                    </tr>
+                `;
+
+                let list = currentFilteredCards;
+                if (query) {
+                    list = list.filter(c => {
+                        const title = (c.title || '').toLowerCase();
+                        const inv = (c.invitacion_id || '').toLowerCase();
+                        const orig = (c.origin || '').toLowerCase();
+                        const deq = (c.dequien || '').toLowerCase();
+                        const tipo = (c.group_tipo || '').toLowerCase();
+                        const nivel = (c.group_nivel || '').toLowerCase();
+                        const guestsStr = (c.guests || []).map(g => g.name).join(' ').toLowerCase();
+                        return title.includes(query) || inv.includes(query) || orig.includes(query) || deq.includes(query) || tipo.includes(query) || nivel.includes(query) || guestsStr.includes(query);
+                    });
+                }
+
+                if (list.length === 0) {
+                    tbody.innerHTML = '';
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+                if (empty) empty.style.display = 'none';
+
+                tbody.innerHTML = list.map((c, idx) => {
+                    const guestsHtml = (c.guests || []).map(g => {
+                        let cIcon = '⏳';
+                        if (g.confirmacion === 'si') cIcon = '✅';
+                        else if (g.confirmacion === 'no') cIcon = '❌';
+                        return `<span style="font-size: 0.78rem;">${cIcon} ${g.name}</span>`;
+                    }).join(', ') || '<span style="color:var(--text-muted);">-</span>';
+
+                    let nivelClass = 'chip-invitado';
+                    if (c.group_nivel === 'Reserva') nivelClass = 'chip-reserva';
+                    else if (c.group_nivel === 'Mixta') nivelClass = 'chip-mixta';
+
+                    let tipoClass = 'chip-cena';
+                    if (c.group_tipo === 'Baile') tipoClass = 'chip-baile';
+
+                    const confParts = [];
+                    if (c.confirmados > 0) confParts.push(`<span style="color: var(--green); font-weight: 700;">✅ ${c.confirmados}</span>`);
+                    if (c.rechazados > 0) confParts.push(`<span style="color: #f56565; font-weight: 700;">❌ ${c.rechazados}</span>`);
+                    if (c.pendientes > 0) confParts.push(`<span style="color: #f6ad55; font-weight: 700;">⏳ ${c.pendientes}</span>`);
+                    const confHtml = confParts.join(' ') || '<span style="color:var(--text-muted);">-</span>';
+
+                    const envHtml = c.is_enviado
+                        ? '<span style="color: #a78bfa; font-weight: 600;">📤 Sí</span>'
+                        : '<span style="color: var(--text-muted);">⏳ No</span>';
+
+                    const openHtml = c.open_count > 0
+                        ? `<span class="open-counter-badge" style="background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.4); color: var(--blue);">📖 ${c.open_count}</span>`
+                        : `<span style="color: var(--text-muted);">🔒 0</span>`;
+
+                    const linkUrl = c.invitation_url || `/i/${c.invitacion_id}`;
+
+                    return `
+                        <tr>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.76rem;">${idx + 1}</td>
+                            <td style="font-weight: 700; color: #ffffff;">${c.title}</td>
+                            <td style="max-width: 240px; line-height: 1.4;">${guestsHtml}</td>
+                            <td><span class="chip ${nivelClass}">${c.group_nivel || 'Invitado'}</span></td>
+                            <td><span class="chip ${tipoClass}">${c.group_tipo || 'Cena'}</span></td>
+                            <td><span class="chip chip-origin" title="${c.dequien || ''}">${c.origin || 'Sin definir'}</span></td>
+                            <td><div style="display: flex; gap: 6px;">${confHtml}</div></td>
+                            <td>${envHtml}</td>
+                            <td>${openHtml}</td>
+                            <td style="text-align: center;">
+                                <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="btn-open-link">Abrir ↗</a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function copyModalList() {
+            const query = (document.getElementById('modalSearchInput')?.value || '').trim().toLowerCase();
+            let textToCopy = '';
+
+            if (currentModalView === 'people') {
+                let list = currentFilteredPeople;
+                if (query) {
+                    list = list.filter(r => {
+                        const name = `${r.nombre || ''} ${r.apellido || ''}`.toLowerCase();
+                        const inv = (r.invitacion_id || '').toLowerCase();
+                        return name.includes(query) || inv.includes(query);
+                    });
+                }
+                textToCopy = list.map(r => {
+                    const n = r.has_name ? `${r.nombre || ''} ${r.apellido || ''}`.trim() : `Acompañante de ${r.invitacion_id}`;
+                    const conf = r.confirmacion === 'si' ? ' (Asiste)' : (r.confirmacion === 'no' ? ' (No asiste)' : ' (Pendiente)');
+                    return `${n}${conf}`;
+                }).join('\n');
+            } else {
+                let list = currentFilteredCards;
+                if (query) {
+                    list = list.filter(c => (c.title || '').toLowerCase().includes(query));
+                }
+                textToCopy = list.map(c => {
+                    const gList = (c.guests || []).map(g => g.name).join(', ');
+                    return `${c.title} [${gList}]`;
+                }).join('\n');
+            }
+
+            if (!textToCopy) return;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = document.getElementById('btnCopyModal');
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '✓ ¡Copiado!';
+                    btn.style.color = '#48bb78';
+                    setTimeout(() => {
+                        btn.innerHTML = orig;
+                        btn.style.color = '';
+                    }, 1500);
+                }
+            }).catch(err => {
+                alert('No se pudo copiar: ' + err);
+            });
         }
 
         // Window resize listener
@@ -921,6 +1559,9 @@
                 const json = await res.json();
                 if (json.ok && json.stats2) {
                     currentSankey = json.stats2.sankey;
+                    if (json.records) ALL_RECORDS = json.records;
+                    if (json.stats2.cards) ALL_CARDS = json.stats2.cards;
+
                     drawSankeyChart();
 
                     // Update metrics
