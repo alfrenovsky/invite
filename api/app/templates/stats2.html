@@ -800,8 +800,8 @@
                 </div>
                 <div class="controls-group">
                     <div class="control-pill-box" role="group" aria-label="Métrica">
-                        <button type="button" class="control-btn active" id="btnModePeople" onclick="setMode('people')">👥 Personas</button>
-                        <button type="button" class="control-btn" id="btnModeCards" onclick="setMode('cards')">💌 Tarjetas</button>
+                        <button type="button" class="control-btn active" id="btnModePeople" onclick="setUnifiedMode('people')">👥 Personas</button>
+                        <button type="button" class="control-btn" id="btnModeCards" onclick="setUnifiedMode('cards')">💌 Tarjetas</button>
                     </div>
                     <div class="control-pill-box" role="group" aria-label="Origen">
                         <button type="button" class="control-btn active" id="btnOriginGeneral" onclick="setOriginLevel('origin')">👤 Origen General</button>
@@ -851,8 +851,8 @@
             <div id="singleViewWrapper">
                 <div class="detail-toolbar">
                     <div class="control-pill-box">
-                        <button type="button" class="control-btn active" id="detailTabPeople" onclick="switchDetailType('people')">👥 Invitados (<span id="detailCountPeople">0</span>)</button>
-                        <button type="button" class="control-btn" id="detailTabCards" onclick="switchDetailType('cards')">💌 Tarjetas (<span id="detailCountCards">0</span>)</button>
+                        <button type="button" class="control-btn active" id="detailTabPeople" onclick="setUnifiedMode('people')">👥 Invitados (<span id="detailCountPeople">0</span>)</button>
+                        <button type="button" class="control-btn" id="detailTabCards" onclick="setUnifiedMode('cards')">💌 Tarjetas (<span id="detailCountCards">0</span>)</button>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-end;">
                         <input type="text" id="detailSearchInput" class="detail-search-input" placeholder="🔍 Buscar nombre, tarjeta, tipo..." oninput="onDetailSearch()">
@@ -977,7 +977,8 @@
                 el.style.setProperty('cursor', 'pointer', 'important');
             });
 
-            const paths = Array.from(svg.querySelectorAll('path'));
+            const pathGroup = svg.querySelectorAll('g')[0] || svg;
+            const paths = Array.from(pathGroup.querySelectorAll('path'));
             paths.forEach((path, idx) => {
                 if (idx < rows.length) {
                     const row = rows[idx];
@@ -991,8 +992,9 @@
                 path.onmouseleave = () => { path.style.fillOpacity = '0.45'; };
             });
 
-            const texts = Array.from(svg.querySelectorAll('text'));
-            const rects = Array.from(svg.querySelectorAll('rect'));
+            const nodeGroup = svg.querySelectorAll('g')[1] || svg;
+            const texts = Array.from(nodeGroup.querySelectorAll('text'));
+            const rects = Array.from(nodeGroup.querySelectorAll('rect'));
 
             texts.forEach(text => {
                 text.onclick = (e) => {
@@ -1025,7 +1027,8 @@
                 if (tag === 'path') {
                     const svg = chartWrapper.querySelector('svg');
                     if (!svg) return;
-                    const paths = Array.from(svg.querySelectorAll('path'));
+                    const pathGroup = svg.querySelectorAll('g')[0] || svg;
+                    const paths = Array.from(pathGroup.querySelectorAll('path'));
                     const idx = paths.indexOf(target);
                     if (idx !== -1 && idx < currentDrawnRows.length) {
                         const row = currentDrawnRows[idx];
@@ -1037,8 +1040,9 @@
                 } else if (tag === 'rect') {
                     const svg = chartWrapper.querySelector('svg');
                     if (!svg) return;
-                    const rects = Array.from(svg.querySelectorAll('rect'));
-                    const texts = Array.from(svg.querySelectorAll('text'));
+                    const nodeGroup = svg.querySelectorAll('g')[1] || svg;
+                    const rects = Array.from(nodeGroup.querySelectorAll('rect'));
+                    const texts = Array.from(nodeGroup.querySelectorAll('text'));
                     const idx = rects.indexOf(target);
                     if (idx !== -1 && idx < texts.length) {
                         const name = texts[idx].textContent.trim();
@@ -1074,21 +1078,33 @@
 
             // 3. Abierto
             if (str.includes("Abierta")) {
-                return isCard ? (item.open_count > 0) : (item.open_count > 0 || !!item.abierto);
+                return isCard ? (item.open_count > 0) : !!item.abierto;
             }
             if (str.includes("Sin abrir")) {
-                return isCard ? (item.open_count === 0) : (!item.abierto && (!item.open_count || item.open_count === 0));
+                return isCard ? (!item.open_count || item.open_count === 0) : !item.abierto;
             }
 
             // 4. Confirmación
-            if (str.includes("Asiste") && !str.includes("No asiste")) {
-                return isCard ? (item.card_status === "✅ Asiste" || item.confirmados > 0) : (item.confirmacion === "si");
-            }
-            if (str.includes("No asiste")) {
-                return isCard ? (item.card_status === "❌ No asiste" || (item.rechazados === item.total_guests && item.total_guests > 0)) : (item.confirmacion === "no");
-            }
-            if (str.includes("Pendiente")) {
-                return isCard ? (item.card_status === "⏳ Pendiente" || item.pendientes > 0) : (item.confirmacion !== "si" && item.confirmacion !== "no");
+            if (isCard) {
+                if (str.includes("Asiste") && !str.includes("No asiste")) {
+                    return item.card_status === "✅ Asiste";
+                }
+                if (str.includes("No asiste")) {
+                    return item.card_status === "❌ No asiste";
+                }
+                if (str.includes("Pendiente")) {
+                    return item.card_status === "⏳ Pendiente";
+                }
+            } else {
+                if (str.includes("Asiste") && !str.includes("No asiste")) {
+                    return item.confirmacion === "si";
+                }
+                if (str.includes("No asiste")) {
+                    return item.confirmacion === "no";
+                }
+                if (str.includes("Pendiente")) {
+                    return item.confirmacion !== "si" && item.confirmacion !== "no";
+                }
             }
 
             return true;
@@ -1153,11 +1169,19 @@
             updateSingleViewData();
         }
 
+        function setUnifiedMode(mode) {
+            activeMode = mode;
+            currentDetailType = mode;
+            document.getElementById('btnModePeople')?.classList.toggle('active', mode === 'people');
+            document.getElementById('btnModeCards')?.classList.toggle('active', mode === 'cards');
+            document.getElementById('detailTabPeople')?.classList.toggle('active', mode === 'people');
+            document.getElementById('detailTabCards')?.classList.toggle('active', mode === 'cards');
+            drawSankeyChart();
+            updateSingleViewData();
+        }
+
         function switchDetailType(type) {
-            currentDetailType = type;
-            document.getElementById('detailTabPeople')?.classList.toggle('active', type === 'people');
-            document.getElementById('detailTabCards')?.classList.toggle('active', type === 'cards');
-            renderDetailTable();
+            setUnifiedMode(type);
         }
 
         function updateSingleViewData() {
@@ -1452,10 +1476,7 @@
 
         // Mode Toggles
         function setMode(mode) {
-            activeMode = mode;
-            document.getElementById('btnModePeople')?.classList.toggle('active', mode === 'people');
-            document.getElementById('btnModeCards')?.classList.toggle('active', mode === 'cards');
-            drawSankeyChart();
+            setUnifiedMode(mode);
         }
 
         function setOriginLevel(level) {
