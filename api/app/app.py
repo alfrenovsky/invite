@@ -1781,12 +1781,20 @@ def compute_stats2_data(clean_records):
             f23[(env_node, open_node)] += 1
             f34[(open_node, conf_node)] += 1
 
+        ENV_ORDER = {"📤 Enviada": 1, "⏳ Sin enviar": 2}
+        OPEN_ORDER = {"📖 Abierta": 1, "🔒 Sin abrir": 2}
+        CONF_ORDER = {"✅ Asiste": 1, "❌ No asiste": 2, "⏳ Pendiente": 3}
+
+        f12_sorted = sorted(f12.items(), key=lambda x: (ENV_ORDER.get(x[0][1], 9), -x[1], x[0][0]))
+        f23_sorted = sorted(f23.items(), key=lambda x: (OPEN_ORDER.get(x[0][1], 9), ENV_ORDER.get(x[0][0], 9)))
+        f34_sorted = sorted(f34.items(), key=lambda x: (CONF_ORDER.get(x[0][1], 9), OPEN_ORDER.get(x[0][0], 9)))
+
         rows = []
-        for (s, d), w in f12.items():
+        for (s, d), w in f12_sorted:
             if w > 0: rows.append([s, d, w])
-        for (s, d), w in f23.items():
+        for (s, d), w in f23_sorted:
             if w > 0: rows.append([s, d, w])
-        for (s, d), w in f34.items():
+        for (s, d), w in f34_sorted:
             if w > 0: rows.append([s, d, w])
         return rows
 
