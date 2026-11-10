@@ -937,6 +937,7 @@
             abierto: null,
             confirmacion: null
         };
+        let currentSankeyFilter = null;
 
         function hasActiveSankeyFilters() {
             return activeSankeyFilters.origin !== null ||
@@ -1271,13 +1272,7 @@
         }
 
         function attachSankeyInteractivity(chartDiv, rows) {
-            const svg = chartDiv.querySelector('svg');
-            if (!svg) return;
-
-            // Re-apply visual highlight if filter is active
-            if (currentSankeyFilter) {
-                highlightSankeySelection(currentSankeyFilter);
-            }
+            highlightActiveFilters();
         }
 
         // Global Chart Event Delegation: capture click before anything else
