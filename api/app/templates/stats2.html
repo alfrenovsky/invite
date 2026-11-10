@@ -299,6 +299,26 @@
             min-height: 460px;
         }
 
+        #sankey_chart.has-filter svg path {
+            fill-opacity: 0.12 !important;
+            opacity: 0.25 !important;
+            transition: opacity 0.2s ease, fill-opacity 0.2s ease;
+        }
+
+        #sankey_chart.has-filter svg path[data-selected="true"] {
+            fill-opacity: 0.95 !important;
+            opacity: 1 !important;
+            stroke: #38bdf8 !important;
+            stroke-width: 3px !important;
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.9)) !important;
+        }
+
+        #sankey_chart.has-filter svg rect[data-selected="true"] {
+            stroke: #ffffff !important;
+            stroke-width: 2.5px !important;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) !important;
+        }
+
         .sankey-loading {
             position: absolute;
             top: 0;
@@ -810,6 +830,18 @@
                 </div>
             </div>
 
+            <div id="sankeyFilterBanner" style="display: none; align-items: center; justify-content: space-between; padding: 10px 16px; margin: 14px 0 10px 0; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 1.05rem;">🌊</span>
+                    <span style="font-weight: 600; color: #ffffff; font-size: 0.88rem;">Filtrando por rama: <span id="sankeyFilterText" style="color: var(--blue); font-weight: 700;"></span></span>
+                    <span id="sankeyFilterCount" class="chip chip-invitado" style="background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.4); color: var(--blue); font-weight: 700;"></span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button type="button" class="btn-sync" style="padding: 6px 14px; font-size: 0.8rem; background: var(--blue); color: #0f172a; font-weight: 700;" onclick="scrollToDetailSection()">⬇ Ver en lista</button>
+                    <button type="button" class="filter-clear-btn" onclick="clearSankeyFilter(event)" title="Quitar filtro" style="padding: 6px 10px; font-size: 0.8rem;">✕ Quitar</button>
+                </div>
+            </div>
+
             <div id="sankeyChartWrapper">
                 <div id="sankeyLoading" class="sankey-loading" style="display: none;">
                     <span>⏳ Cargando diagrama...</span>
@@ -977,29 +1009,34 @@
                 el.style.setProperty('cursor', 'pointer', 'important');
             });
 
-            const pathGroup = svg.querySelectorAll('g')[0] || svg;
-            const paths = Array.from(pathGroup.querySelectorAll('path'));
+            const paths = Array.from(svg.querySelectorAll('path'));
             paths.forEach((path, idx) => {
                 if (idx < rows.length) {
                     const row = rows[idx];
                     path.setAttribute('title', `Filtrar: ${row[0]} ➔ ${row[1]} (${row[2]})`);
-                    path.onclick = (e) => {
-                        e.stopPropagation();
+                    path.setAttribute('data-source', row[0]);
+                    path.setAttribute('data-target', row[1]);
+                    path.setAttribute('data-weight', row[2]);
+                    path.setAttribute('data-path-index', idx);
+                    path.onclick = () => {
                         onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
                     };
                 }
-                path.onmouseenter = () => { path.style.fillOpacity = '0.85'; };
-                path.onmouseleave = () => { path.style.fillOpacity = '0.45'; };
+                path.onmouseenter = () => {
+                    if (!currentSankeyFilter) path.style.fillOpacity = '0.85';
+                };
+                path.onmouseleave = () => {
+                    if (!currentSankeyFilter) path.style.fillOpacity = '0.45';
+                };
             });
 
-            const nodeGroup = svg.querySelectorAll('g')[1] || svg;
-            const texts = Array.from(nodeGroup.querySelectorAll('text'));
-            const rects = Array.from(nodeGroup.querySelectorAll('rect'));
+            const texts = Array.from(svg.querySelectorAll('text'));
+            const rects = Array.from(svg.querySelectorAll('rect'));
 
             texts.forEach(text => {
-                text.onclick = (e) => {
-                    e.stopPropagation();
-                    const name = text.textContent.trim();
+                const name = text.textContent.trim();
+                text.setAttribute('data-node-name', name);
+                text.onclick = () => {
                     if (name) onSankeySelect({ type: 'node', nodeName: name });
                 };
             });
@@ -1008,12 +1045,17 @@
                 if (idx < texts.length) {
                     const nodeName = texts[idx].textContent.trim();
                     rect.setAttribute('title', `Filtrar: ${nodeName}`);
-                    rect.onclick = (e) => {
-                        e.stopPropagation();
+                    rect.setAttribute('data-node-name', nodeName);
+                    rect.onclick = () => {
                         if (nodeName) onSankeySelect({ type: 'node', nodeName });
                     };
                 }
             });
+
+            // Re-apply visual highlight if filter is active
+            if (currentSankeyFilter) {
+                highlightSankeySelection(currentSankeyFilter);
+            }
         }
 
         // Global Chart Event Delegation as bulletproof fallback
@@ -1025,31 +1067,103 @@
                 const tag = target.tagName.toLowerCase();
 
                 if (tag === 'path') {
+                    const src = target.getAttribute('data-source');
+                    const tgt = target.getAttribute('data-target');
+                    if (src && tgt) {
+                        onSankeySelect({
+                            type: 'branch',
+                            source: src,
+                            target: tgt,
+                            weight: parseInt(target.getAttribute('data-weight'), 10) || 0
+                        });
+                        return;
+                    }
                     const svg = chartWrapper.querySelector('svg');
                     if (!svg) return;
-                    const pathGroup = svg.querySelectorAll('g')[0] || svg;
-                    const paths = Array.from(pathGroup.querySelectorAll('path'));
+                    const paths = Array.from(svg.querySelectorAll('path'));
                     const idx = paths.indexOf(target);
                     if (idx !== -1 && idx < currentDrawnRows.length) {
                         const row = currentDrawnRows[idx];
                         onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
                     }
                 } else if (tag === 'text') {
-                    const name = target.textContent.trim();
+                    const name = target.getAttribute('data-node-name') || target.textContent.trim();
                     if (name) onSankeySelect({ type: 'node', nodeName: name });
                 } else if (tag === 'rect') {
+                    const name = target.getAttribute('data-node-name');
+                    if (name) {
+                        onSankeySelect({ type: 'node', nodeName: name });
+                        return;
+                    }
                     const svg = chartWrapper.querySelector('svg');
                     if (!svg) return;
-                    const nodeGroup = svg.querySelectorAll('g')[1] || svg;
-                    const rects = Array.from(nodeGroup.querySelectorAll('rect'));
-                    const texts = Array.from(nodeGroup.querySelectorAll('text'));
+                    const rects = Array.from(svg.querySelectorAll('rect'));
+                    const texts = Array.from(svg.querySelectorAll('text'));
                     const idx = rects.indexOf(target);
                     if (idx !== -1 && idx < texts.length) {
-                        const name = texts[idx].textContent.trim();
-                        if (name) onSankeySelect({ type: 'node', nodeName: name });
+                        const n = texts[idx].getAttribute('data-node-name') || texts[idx].textContent.trim();
+                        if (n) onSankeySelect({ type: 'node', nodeName: n });
                     }
                 }
             });
+        }
+
+        function highlightSankeySelection(filter) {
+            const chartDiv = document.getElementById('sankey_chart');
+            const svg = chartDiv ? chartDiv.querySelector('svg') : null;
+            if (!chartDiv || !svg) return;
+
+            const paths = Array.from(svg.querySelectorAll('path'));
+            const rects = Array.from(svg.querySelectorAll('rect'));
+            const rows = currentDrawnRows;
+
+            if (!filter) {
+                chartDiv.classList.remove('has-filter');
+                paths.forEach(p => p.removeAttribute('data-selected'));
+                rects.forEach(r => r.removeAttribute('data-selected'));
+                return;
+            }
+
+            chartDiv.classList.add('has-filter');
+
+            if (filter.type === 'branch') {
+                paths.forEach((p, idx) => {
+                    const src = p.getAttribute('data-source') || (rows[idx] ? rows[idx][0] : null);
+                    const tgt = p.getAttribute('data-target') || (rows[idx] ? rows[idx][1] : null);
+                    const isSelected = (src === filter.source && tgt === filter.target);
+                    if (isSelected) {
+                        p.setAttribute('data-selected', 'true');
+                    } else {
+                        p.removeAttribute('data-selected');
+                    }
+                });
+                rects.forEach(r => r.removeAttribute('data-selected'));
+            } else if (filter.type === 'node') {
+                paths.forEach((p, idx) => {
+                    const src = p.getAttribute('data-source') || (rows[idx] ? rows[idx][0] : null);
+                    const tgt = p.getAttribute('data-target') || (rows[idx] ? rows[idx][1] : null);
+                    const isConnected = (src === filter.nodeName || tgt === filter.nodeName);
+                    if (isConnected) {
+                        p.setAttribute('data-selected', 'true');
+                    } else {
+                        p.removeAttribute('data-selected');
+                    }
+                });
+                rects.forEach(r => {
+                    if (r.getAttribute('data-node-name') === filter.nodeName) {
+                        r.setAttribute('data-selected', 'true');
+                    } else {
+                        r.removeAttribute('data-selected');
+                    }
+                });
+            }
+        }
+
+        function scrollToDetailSection() {
+            const sec = document.getElementById('detailSection');
+            if (!sec) return;
+            const y = sec.getBoundingClientRect().top + window.pageYOffset - 16;
+            window.scrollTo({ top: y, behavior: 'smooth' });
         }
 
         function matchNodeCondition(item, nodeStr, isCard) {
@@ -1114,18 +1228,39 @@
             currentSankeyFilter = filter;
             currentDetailType = activeMode;
 
+            // 1. Highlight the selected ribbon/node directly on the Sankey
+            highlightSankeySelection(filter);
+
+            // 2. Update and show Sankey filter banner
+            const banner = document.getElementById('sankeyFilterBanner');
+            const bText = document.getElementById('sankeyFilterText');
+            const bCount = document.getElementById('sankeyFilterCount');
+            if (banner && bText) {
+                const label = filter.type === 'branch'
+                    ? `${filter.source} ➔ ${filter.target}`
+                    : `${filter.nodeName}`;
+                bText.textContent = label;
+                const countUnit = activeMode === 'cards' ? 'tarjetas' : 'invitados';
+                const countVal = filter.weight || '';
+                if (bCount) bCount.textContent = countVal ? `${countVal} ${countUnit}` : '';
+                banner.style.display = 'flex';
+            }
+
+            // 3. Update view mode and table
             setViewMode('branch');
 
-            // Smooth scroll down to detail section
-            const sec = document.getElementById('detailSection');
-            if (sec) {
-                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            // 4. Scroll smoothly to detail section
+            scrollToDetailSection();
         }
 
         function clearSankeyFilter(e) {
             if (e) e.stopPropagation();
             currentSankeyFilter = null;
+            highlightSankeySelection(null);
+
+            const banner = document.getElementById('sankeyFilterBanner');
+            if (banner) banner.style.display = 'none';
+
             setViewMode('all');
         }
 
@@ -1176,8 +1311,13 @@
             document.getElementById('btnModeCards')?.classList.toggle('active', mode === 'cards');
             document.getElementById('detailTabPeople')?.classList.toggle('active', mode === 'people');
             document.getElementById('detailTabCards')?.classList.toggle('active', mode === 'cards');
+
+            currentSankeyFilter = null;
+            const banner = document.getElementById('sankeyFilterBanner');
+            if (banner) banner.style.display = 'none';
+
             drawSankeyChart();
-            updateSingleViewData();
+            setViewMode('all');
         }
 
         function switchDetailType(type) {
@@ -1483,7 +1623,13 @@
             activeOriginLevel = level;
             document.getElementById('btnOriginGeneral')?.classList.toggle('active', level === 'origin');
             document.getElementById('btnOriginDetailed')?.classList.toggle('active', level === 'detailed');
+
+            currentSankeyFilter = null;
+            const banner = document.getElementById('sankeyFilterBanner');
+            if (banner) banner.style.display = 'none';
+
             drawSankeyChart();
+            setViewMode('all');
         }
 
         // Mobile Tabs Switcher
