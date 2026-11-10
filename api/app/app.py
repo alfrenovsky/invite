@@ -1379,6 +1379,16 @@ def panel_view():
 
 
 def sanitize_stats_records(raw_records):
+    # Pass 1: Identify all invitation cards that have been sent (at least one recipient marked enviado)
+    sent_card_ids = set()
+    for r in (raw_records or []):
+        env_raw = str(r.get("enviado", "") or "").strip().lower()
+        if env_raw in ("si", "sí", "true", "1"):
+            rec_id = str(r.get("id", "") or "").strip()
+            inv_id = str(r.get("invitacion_id") or r.get("invitacion") or rec_id or "").strip().lower().replace(" ", "_").replace("-", "_")
+            if inv_id:
+                sent_card_ids.add(inv_id)
+
     clean = []
     for r in (raw_records or []):
         rec_id = str(r.get("id", "") or "").strip()
@@ -1422,6 +1432,11 @@ def sanitize_stats_records(raw_records):
         abierto = ab_raw in ("si", "sí", "true") or (ab_raw.isdigit() and int(ab_raw) > 0)
         open_count = int(ab_raw) if ab_raw.isdigit() else (1 if ab_raw in ("si", "sí", "true") else 0)
 
+        # Count person as enviado if their individual record was sent OR if their card was sent
+        is_card_sent = bool(inv_id in sent_card_ids)
+        is_ind_sent = bool(str(r.get("enviado", "") or "").strip().lower() in ("si", "sí", "true", "1"))
+        enviado = is_card_sent or is_ind_sent
+
         clean.append({
             "id": rec_id,
             "invitacion_id": inv_id,
@@ -1439,7 +1454,7 @@ def sanitize_stats_records(raw_records):
             "abierto": abierto,
             "open_count": open_count,
             "updated_at": str(r.get("updated_at", "") or "").strip(),
-            "enviado": bool(str(r.get("enviado", "") or "").strip().lower() in ("si", "sí", "true", "1")),
+            "enviado": enviado,
             "pa": str(r.get("pa", "") or "").strip(),
             "celiaco": bool(str(r.get("celiaco", "") or "").strip().lower() in ("si", "sí", "true", "1")),
             "invitation_url": generate_invitation_url(inv_id),
