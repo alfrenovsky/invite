@@ -580,76 +580,8 @@
             }
         }
 
-        /* Sankey Drill-Down Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(4, 7, 12, 0.78);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-            animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .modal-dialog {
-            background: #111722;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: var(--radius, 14px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            width: 100%;
-            max-width: 1100px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--card-border);
-            gap: 12px;
-        }
-
-        .modal-header-left {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .modal-title-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .modal-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: var(--text-main);
-        }
-
-        .modal-badge-flow {
+        /* Detail & Filter Table Section */
+        .filter-badge-flow {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -662,43 +594,37 @@
             color: var(--blue);
         }
 
-        .modal-subtitle {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .modal-close-btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid var(--card-border);
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .filter-clear-btn {
+            background: none;
+            border: none;
+            color: inherit;
             cursor: pointer;
-            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            line-height: 1;
+            padding: 0 0 0 4px;
+            font-weight: bold;
+            opacity: 0.8;
+            transition: opacity 0.2s;
         }
 
-        .modal-close-btn:hover {
-            background: rgba(255, 255, 255, 0.14);
-            color: #ffffff;
+        .filter-clear-btn:hover {
+            opacity: 1;
         }
 
-        .modal-toolbar {
+        .detail-toolbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 12px 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--card-border);
+            gap: 12px;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.22);
+            border-radius: var(--radius-sm, 10px);
+            border: 1px solid var(--card-border);
+            margin-bottom: 16px;
         }
 
-        .modal-search-input {
+        .detail-search-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--card-border);
             border-radius: 8px;
@@ -711,28 +637,28 @@
             transition: border-color 0.2s ease;
         }
 
-        .modal-search-input:focus {
+        .detail-search-input:focus {
             border-color: var(--blue);
         }
 
-        .modal-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-            max-height: 60vh;
+        .detail-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm, 10px);
+            border: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.15);
         }
 
-        .modal-table {
+        .detail-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.82rem;
         }
 
-        .modal-table th {
+        .detail-table th {
             position: sticky;
             top: 0;
             background: #141b27;
-            padding: 10px 14px;
+            padding: 11px 14px;
             text-align: left;
             font-size: 0.72rem;
             font-weight: 700;
@@ -740,18 +666,18 @@
             text-transform: uppercase;
             letter-spacing: 0.04em;
             border-bottom: 1px solid var(--card-border);
-            z-index: 10;
+            z-index: 5;
         }
 
-        .modal-table td {
-            padding: 10px 14px;
+        .detail-table td {
+            padding: 11px 14px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             color: var(--text-main);
             vertical-align: middle;
         }
 
-        .modal-table tr:hover td {
-            background: rgba(255, 255, 255, 0.03);
+        .detail-table tr:hover td {
+            background: rgba(255, 255, 255, 0.035);
         }
 
         .btn-open-link {
@@ -872,179 +798,202 @@
             </div>
         </section>
 
-        <!-- Mobile Tabs Switcher for Rankings -->
-        <div class="mobile-ranking-tabs">
-            <button type="button" class="control-btn active" id="mTabTop" onclick="switchMobileTab('top')">🏆 Top 10</button>
-            <button type="button" class="control-btn" id="mTabLastOpen" onclick="switchMobileTab('lastOpen')">⏱️ Últimas Abiertas</button>
-            <button type="button" class="control-btn" id="mTabLastConf" onclick="switchMobileTab('lastConf')">🎉 Últimas Confirmadas</button>
-        </div>
-
-        <!-- Section 2: 3-Column Rankings -->
-        <section class="rankings-grid">
-            <!-- Col 1: Top 10 Opened -->
-            <div class="ranking-col" id="colTop">
-                <div class="ranking-header">
-                    <div class="ranking-title-row">
-                        <span>🏆</span>
-                        <h3 class="ranking-title">Top 10 Más Abiertas</h3>
-                    </div>
-                    <span class="ranking-countBadge ranking-count-badge">{{ stats2.top_10_opened|length }}</span>
-                </div>
-                <div class="ranking-list" id="listTopOpened">
-                    {% if stats2.top_10_opened %}
-                        {% for card in stats2.top_10_opened %}
-                        <div class="ranking-card-item">
-                            <div class="ranking-item-top">
-                                <span class="rank-number rank-{{ loop.index }}">{{ loop.index }}</span>
-                                <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
-                                <span class="open-counter-badge">🔥 {{ card.open_count }}</span>
-                            </div>
-                            <div class="ranking-badges-row">
-                                <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
-                                    {{ card.group_nivel }}
-                                </span>
-                                <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
-                                    {{ card.group_tipo }}
-                                </span>
-                                <span class="chip chip-origin" title="{{ card.dequien }}">
-                                    {{ card.origin }}
-                                </span>
-                                <span class="ranking-timestamp" style="font-weight: 600;">
-                                    {% if card.confirmados > 0 %}✅ {{ card.confirmados }}{% endif %}
-                                    {% if card.rechazados > 0 %}❌ {{ card.rechazados }}{% endif %}
-                                    {% if card.pendientes > 0 %}⏳ {{ card.pendientes }}{% endif %}
-                                </span>
-                            </div>
+        <!-- Section 2: Detalle y Rankings dinámicos -->
+        <section class="panel-card" id="detailSection" style="margin-top: 24px;">
+            <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
+                <div class="section-title-wrap">
+                    <span class="section-icon" id="detailSectionIcon">📋</span>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <h2 class="section-title" id="detailSectionTitle">Detalle y Rankings</h2>
+                            <span id="activeFilterBadge" class="filter-badge-flow" style="display: none;">
+                                <span id="activeFilterText"></span>
+                                <button type="button" class="filter-clear-btn" onclick="clearSankeyFilter(event)" title="Quitar filtro">✕</button>
+                            </span>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-ranking">Aún no hay aperturas registradas.</div>
-                    {% endif %}
+                        <p class="section-subtitle" id="detailSectionSubtitle">Top 10 más abiertas, últimas abiertas y confirmadas recientemente</p>
+                    </div>
+                </div>
+
+                <!-- View Mode Buttons -->
+                <div class="controls-group" style="flex-wrap: wrap; gap: 8px;">
+                    <div class="control-pill-box" role="group" aria-label="Modo de vista">
+                        <button type="button" class="control-btn" id="btnView_branch" onclick="setViewMode('branch')" style="display: none;">🌊 Rama seleccionada</button>
+                        <button type="button" class="control-btn active" id="btnView_rankings3" onclick="setViewMode('rankings3')">📊 3 Columnas</button>
+                        <button type="button" class="control-btn" id="btnView_all" onclick="setViewMode('all')">🌐 Todo</button>
+                        <button type="button" class="control-btn" id="btnView_top" onclick="setViewMode('top')">🏆 Top 10 abiertos</button>
+                        <button type="button" class="control-btn" id="btnView_lastOpen" onclick="setViewMode('lastOpen')">⏱️ Últimas abiertas</button>
+                        <button type="button" class="control-btn" id="btnView_lastConf" onclick="setViewMode('lastConf')">🎉 Últimas confirmadas</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Col 2: Last 10 Opened -->
-            <div class="ranking-col" id="colLastOpen">
-                <div class="ranking-header">
-                    <div class="ranking-title-row">
-                        <span>⏱️</span>
-                        <h3 class="ranking-title">Últimas 10 Abiertas</h3>
+            <!-- Single View Container (Dynamic Table) -->
+            <div id="singleViewWrapper" style="display: none;">
+                <div class="detail-toolbar">
+                    <div class="control-pill-box">
+                        <button type="button" class="control-btn active" id="detailTabPeople" onclick="switchDetailType('people')">👥 Invitados (<span id="detailCountPeople">0</span>)</button>
+                        <button type="button" class="control-btn" id="detailTabCards" onclick="switchDetailType('cards')">💌 Tarjetas (<span id="detailCountCards">0</span>)</button>
                     </div>
-                    <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_opened|length }}</span>
+                    <div style="display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-end;">
+                        <input type="text" id="detailSearchInput" class="detail-search-input" placeholder="🔍 Buscar nombre, tarjeta, tipo..." oninput="onDetailSearch()">
+                        <button type="button" class="btn-sync" id="btnCopyDetail" style="padding: 7px 12px; font-size: 0.78rem;" onclick="copyDetailList()" title="Copiar lista visible">📋 Copiar Lista</button>
+                    </div>
                 </div>
-                <div class="ranking-list" id="listLastOpened">
-                    {% if stats2.last_10_opened %}
-                        {% for card in stats2.last_10_opened %}
-                        <div class="ranking-card-item">
-                            <div class="ranking-item-top">
-                                <span class="rank-number">{{ loop.index }}</span>
-                                <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
-                                <span class="open-counter-badge" style="background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.4); color: var(--blue);">
-                                    📖 {{ card.open_count }}
-                                </span>
-                            </div>
-                            <div class="ranking-badges-row">
-                                <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
-                                    {{ card.group_nivel }}
-                                </span>
-                                <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
-                                    {{ card.group_tipo }}
-                                </span>
-                                <span class="chip chip-origin" title="{{ card.dequien }}">
-                                    {{ card.origin }}
-                                </span>
-                                <span class="ranking-timestamp" title="{{ card.last_updated }}">
-                                    {{ card.last_updated[-8:-3] if card.last_updated|length >= 8 else card.last_updated }}
-                                </span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-ranking">Aún no hay actividad de aperturas.</div>
-                    {% endif %}
+
+                <div class="detail-table-wrap">
+                    <table class="detail-table" id="detailTable">
+                        <thead id="detailTableHead"></thead>
+                        <tbody id="detailTableBody"></tbody>
+                    </table>
+                    <div id="detailEmptyState" style="display: none; padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                        No se encontraron registros para esta selección o búsqueda.
+                    </div>
                 </div>
             </div>
 
-            <!-- Col 3: Last 10 Confirmed -->
-            <div class="ranking-col" id="colLastConf">
-                <div class="ranking-header">
-                    <div class="ranking-title-row">
-                        <span>🎉</span>
-                        <h3 class="ranking-title">Últimas 10 Confirmadas</h3>
-                    </div>
-                    <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_confirmed|length }}</span>
+            <!-- 3-Column Rankings Container -->
+            <div id="rankings3Wrapper">
+                <!-- Mobile Tabs Switcher for Rankings -->
+                <div class="mobile-ranking-tabs">
+                    <button type="button" class="control-btn active" id="mTabTop" onclick="switchMobileTab('top')">🏆 Top 10</button>
+                    <button type="button" class="control-btn" id="mTabLastOpen" onclick="switchMobileTab('lastOpen')">⏱️ Últimas Abiertas</button>
+                    <button type="button" class="control-btn" id="mTabLastConf" onclick="switchMobileTab('lastConf')">🎉 Últimas Confirmadas</button>
                 </div>
-                <div class="ranking-list" id="listLastConfirmed">
-                    {% if stats2.last_10_confirmed %}
-                        {% for g in stats2.last_10_confirmed %}
-                        <div class="ranking-card-item">
-                            <div class="ranking-item-top">
-                                <span class="chip-confirmed chip">✓ Asiste</span>
-                                <span class="ranking-names" title="{{ g.name }}">{{ g.name }}</span>
-                                <span class="ranking-timestamp" title="{{ g.updated_at }}">
-                                    {{ g.updated_at[-8:-3] if g.updated_at|length >= 8 else g.updated_at }}
-                                </span>
+
+                <!-- Rankings Grid -->
+                <div class="rankings-grid">
+                    <!-- Col 1: Top 10 Opened -->
+                    <div class="ranking-col" id="colTop">
+                        <div class="ranking-header">
+                            <div class="ranking-title-row">
+                                <span>🏆</span>
+                                <h3 class="ranking-title">Top 10 Más Abiertas</h3>
                             </div>
-                            <div class="ranking-badges-row">
-                                <span class="chip {% if g.nivel == 'Reserva' %}chip-reserva{% else %}chip-invitado{% endif %}">
-                                    {{ g.nivel }}
-                                </span>
-                                <span class="chip {% if g.tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
-                                    {{ g.tipo }}
-                                </span>
-                                {% if g.pa %}
-                                <span class="chip chip-menu">🍽️ {{ g.pa|capitalize }}</span>
-                                {% endif %}
-                                {% if g.celiaco %}
-                                <span class="chip chip-menu" style="border-color: rgba(246, 173, 85, 0.4); color: #fbd38d;">🌾 Sin gluten</span>
-                                {% endif %}
-                                <span class="chip chip-origin" title="{{ g.dequien }}">
-                                    {{ g.origin }}
-                                </span>
-                            </div>
+                            <span class="ranking-countBadge ranking-count-badge">{{ stats2.top_10_opened|length }}</span>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-ranking">Aún no hay confirmaciones registradas.</div>
-                    {% endif %}
+                        <div class="ranking-list" id="listTopOpened">
+                            {% if stats2.top_10_opened %}
+                                {% for card in stats2.top_10_opened %}
+                                <div class="ranking-card-item">
+                                    <div class="ranking-item-top">
+                                        <span class="rank-number rank-{{ loop.index }}">{{ loop.index }}</span>
+                                        <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
+                                        <span class="open-counter-badge">🔥 {{ card.open_count }}</span>
+                                    </div>
+                                    <div class="ranking-badges-row">
+                                        <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
+                                            {{ card.group_nivel }}
+                                        </span>
+                                        <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
+                                            {{ card.group_tipo }}
+                                        </span>
+                                        <span class="chip chip-origin" title="{{ card.dequien }}">
+                                            {{ card.origin }}
+                                        </span>
+                                        <span class="ranking-timestamp" style="font-weight: 600;">
+                                            {% if card.confirmados > 0 %}✅ {{ card.confirmados }}{% endif %}
+                                            {% if card.rechazados > 0 %}❌ {{ card.rechazados }}{% endif %}
+                                            {% if card.pendientes > 0 %}⏳ {{ card.pendientes }}{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-ranking">Aún no hay aperturas registradas.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Col 2: Last 10 Opened -->
+                    <div class="ranking-col" id="colLastOpen">
+                        <div class="ranking-header">
+                            <div class="ranking-title-row">
+                                <span>⏱️</span>
+                                <h3 class="ranking-title">Últimas 10 Abiertas</h3>
+                            </div>
+                            <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_opened|length }}</span>
+                        </div>
+                        <div class="ranking-list" id="listLastOpened">
+                            {% if stats2.last_10_opened %}
+                                {% for card in stats2.last_10_opened %}
+                                <div class="ranking-card-item">
+                                    <div class="ranking-item-top">
+                                        <span class="rank-number">{{ loop.index }}</span>
+                                        <span class="ranking-names" title="{{ card.title }}">{{ card.title }}</span>
+                                        <span class="open-counter-badge" style="background: rgba(56, 189, 248, 0.16); border-color: rgba(56, 189, 248, 0.4); color: var(--blue);">
+                                            📖 {{ card.open_count }}
+                                        </span>
+                                    </div>
+                                    <div class="ranking-badges-row">
+                                        <span class="chip {% if card.group_nivel == 'Reserva' %}chip-reserva{% elif card.group_nivel == 'Mixta' %}chip-mixta{% else %}chip-invitado{% endif %}">
+                                            {{ card.group_nivel }}
+                                        </span>
+                                        <span class="chip {% if card.group_tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
+                                            {{ card.group_tipo }}
+                                        </span>
+                                        <span class="chip chip-origin" title="{{ card.dequien }}">
+                                            {{ card.origin }}
+                                        </span>
+                                        <span class="ranking-timestamp" title="{{ card.last_updated }}">
+                                            {{ card.last_updated[-8:-3] if card.last_updated|length >= 8 else card.last_updated }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-ranking">Aún no hay actividad de aperturas.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Col 3: Last 10 Confirmed -->
+                    <div class="ranking-col" id="colLastConf">
+                        <div class="ranking-header">
+                            <div class="ranking-title-row">
+                                <span>🎉</span>
+                                <h3 class="ranking-title">Últimas 10 Confirmadas</h3>
+                            </div>
+                            <span class="ranking-countBadge ranking-count-badge">{{ stats2.last_10_confirmed|length }}</span>
+                        </div>
+                        <div class="ranking-list" id="listLastConfirmed">
+                            {% if stats2.last_10_confirmed %}
+                                {% for g in stats2.last_10_confirmed %}
+                                <div class="ranking-card-item">
+                                    <div class="ranking-item-top">
+                                        <span class="chip-confirmed chip">✓ Asiste</span>
+                                        <span class="ranking-names" title="{{ g.name }}">{{ g.name }}</span>
+                                        <span class="ranking-timestamp" title="{{ g.updated_at }}">
+                                            {{ g.updated_at[-8:-3] if g.updated_at|length >= 8 else g.updated_at }}
+                                        </span>
+                                    </div>
+                                    <div class="ranking-badges-row">
+                                        <span class="chip {% if g.nivel == 'Reserva' %}chip-reserva{% else %}chip-invitado{% endif %}">
+                                            {{ g.nivel }}
+                                        </span>
+                                        <span class="chip {% if g.tipo == 'Baile' %}chip-baile{% else %}chip-cena{% endif %}">
+                                            {{ g.tipo }}
+                                        </span>
+                                        {% if g.pa %}
+                                        <span class="chip chip-menu">🍽️ {{ g.pa|capitalize }}</span>
+                                        {% endif %}
+                                        {% if g.celiaco %}
+                                        <span class="chip chip-menu" style="border-color: rgba(246, 173, 85, 0.4); color: #fbd38d;">🌾 Sin gluten</span>
+                                        {% endif %}
+                                        <span class="chip chip-origin" title="{{ g.dequien }}">
+                                            {{ g.origin }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-ranking">Aún no hay confirmaciones registradas.</div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
-    </div>
-
-    <!-- Sankey Drill-Down Modal -->
-    <div id="sankeyModalOverlay" class="modal-overlay" onclick="closeSankeyModal(event)">
-        <div class="modal-dialog" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <div class="modal-header-left">
-                    <div class="modal-title-row">
-                        <span class="modal-title" id="modalTitle">Detalle de Flujo</span>
-                        <span class="modal-badge-flow" id="modalFlowBadge">Rama</span>
-                    </div>
-                    <div class="modal-subtitle" id="modalSubtitle">Listado filtrado por selección</div>
-                </div>
-                <button type="button" class="modal-close-btn" onclick="closeSankeyModal()" title="Cerrar (Esc)">✕</button>
-            </div>
-            <div class="modal-toolbar">
-                <div class="control-pill-box">
-                    <button type="button" class="control-btn active" id="modalTabPeople" onclick="switchModalView('people')">👥 Invitados (<span id="modalCountPeople">0</span>)</button>
-                    <button type="button" class="control-btn" id="modalTabCards" onclick="switchModalView('cards')">💌 Tarjetas (<span id="modalCountCards">0</span>)</button>
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-end;">
-                    <input type="text" id="modalSearchInput" class="modal-search-input" placeholder="🔍 Buscar nombre, tarjeta, tipo..." oninput="onModalSearch()">
-                    <button type="button" class="btn-sync" id="btnCopyModal" style="padding: 7px 12px; font-size: 0.78rem;" onclick="copyModalList()" title="Copiar nombres al portapapeles">📋 Copiar</button>
-                </div>
-            </div>
-            <div class="modal-body">
-                <table class="modal-table" id="modalTable">
-                    <thead id="modalTableHead"></thead>
-                    <tbody id="modalTableBody"></tbody>
-                </table>
-                <div id="modalEmptyState" style="display: none; padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
-                    No se encontraron registros para esta selección o búsqueda.
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Live Data JSON injected by Jinja2 -->
@@ -1057,9 +1006,10 @@
         let activeMode = 'people'; // 'people' or 'cards'
         let activeOriginLevel = 'origin'; // 'origin' or 'detailed'
 
-        // Modal drill-down state
-        let currentModalFilter = null; // { type: 'branch', source, target } or { type: 'node', nodeName }
-        let currentModalView = 'people'; // 'people' or 'cards'
+        // Detail section state
+        let currentViewMode = 'rankings3'; // 'rankings3', 'branch', 'all', 'top', 'lastOpen', 'lastConf'
+        let currentDetailType = 'people'; // 'people' or 'cards'
+        let currentSankeyFilter = null; // { type: 'branch', source, target, weight } or { type: 'node', nodeName }
         let currentFilteredPeople = [];
         let currentFilteredCards = [];
 
@@ -1133,7 +1083,7 @@
                 const sel = chart.getSelection();
                 if (sel && sel.length > 0 && sel[0].name) {
                     const nodeName = sel[0].name;
-                    openSankeyDetailModal({ type: 'node', nodeName });
+                    onSankeySelect({ type: 'node', nodeName });
                     chart.setSelection([]);
                 }
             });
@@ -1152,10 +1102,10 @@
                 path.style.cursor = 'pointer';
                 if (idx < rows.length) {
                     const row = rows[idx];
-                    path.setAttribute('title', `Clic para ver detalle: ${row[0]} ➔ ${row[1]} (${row[2]})`);
+                    path.setAttribute('title', `Clic para filtrar lista: ${row[0]} ➔ ${row[1]} (${row[2]})`);
                     path.onclick = (e) => {
                         e.stopPropagation();
-                        openSankeyDetailModal({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
+                        onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
                     };
                 }
                 path.onmouseenter = () => { path.style.fillOpacity = '0.75'; };
@@ -1175,7 +1125,7 @@
                     e.stopPropagation();
                     const name = text.textContent.trim();
                     if (name) {
-                        openSankeyDetailModal({ type: 'node', nodeName: name });
+                        onSankeySelect({ type: 'node', nodeName: name });
                     }
                 };
             });
@@ -1227,70 +1177,148 @@
             return true;
         }
 
-        function openSankeyDetailModal(filter) {
-            currentModalFilter = filter;
-            currentModalView = activeMode;
+        function onSankeySelect(filter) {
+            currentSankeyFilter = filter;
+            currentDetailType = activeMode;
 
-            if (filter.type === 'branch') {
-                document.getElementById('modalTitle').textContent = 'Detalle de Rama (Flujo)';
-                document.getElementById('modalFlowBadge').textContent = `${filter.source} ➔ ${filter.target}`;
-                document.getElementById('modalSubtitle').textContent = `Conexión entre "${filter.source}" y "${filter.target}"`;
-                currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, filter.source, false) && matchNodeCondition(r, filter.target, false));
-                currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, filter.source, true) && matchNodeCondition(c, filter.target, true));
+            setViewMode('branch');
+
+            // Smooth scroll down to detail section
+            const sec = document.getElementById('detailSection');
+            if (sec) {
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function clearSankeyFilter(e) {
+            if (e) e.stopPropagation();
+            currentSankeyFilter = null;
+            setViewMode('rankings3');
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+
+            // Update buttons
+            ['rankings3', 'branch', 'all', 'top', 'lastOpen', 'lastConf'].forEach(m => {
+                const btn = document.getElementById('btnView_' + m);
+                if (btn) btn.classList.toggle('active', m === mode);
+            });
+
+            // Update badge & branch button
+            const badge = document.getElementById('activeFilterBadge');
+            const btnBranch = document.getElementById('btnView_branch');
+            if (currentSankeyFilter) {
+                const txt = currentSankeyFilter.type === 'branch'
+                    ? `${currentSankeyFilter.source} ➔ ${currentSankeyFilter.target}`
+                    : `${currentSankeyFilter.nodeName}`;
+                if (badge) {
+                    document.getElementById('activeFilterText').textContent = txt;
+                    badge.style.display = 'inline-flex';
+                }
+                if (btnBranch) {
+                    btnBranch.style.display = 'inline-block';
+                    btnBranch.textContent = `🌊 Rama (${txt})`;
+                }
             } else {
-                document.getElementById('modalTitle').textContent = 'Detalle de Nodo';
-                document.getElementById('modalFlowBadge').textContent = `${filter.nodeName}`;
-                document.getElementById('modalSubtitle').textContent = `Registros que pasan por "${filter.nodeName}"`;
-                currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, filter.nodeName, false));
-                currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, filter.nodeName, true));
+                if (badge) badge.style.display = 'none';
+                if (btnBranch) btnBranch.style.display = 'none';
             }
 
-            document.getElementById('modalCountPeople').textContent = currentFilteredPeople.length;
-            document.getElementById('modalCountCards').textContent = currentFilteredCards.length;
+            const singleWrap = document.getElementById('singleViewWrapper');
+            const rankings3Wrap = document.getElementById('rankings3Wrapper');
 
-            const searchInput = document.getElementById('modalSearchInput');
+            if (mode === 'rankings3') {
+                if (singleWrap) singleWrap.style.display = 'none';
+                if (rankings3Wrap) rankings3Wrap.style.display = 'block';
+                document.getElementById('detailSectionSubtitle').textContent = 'Top 10 más abiertas, últimas abiertas y confirmadas recientemente';
+            } else {
+                if (rankings3Wrap) rankings3Wrap.style.display = 'none';
+                if (singleWrap) singleWrap.style.display = 'block';
+
+                let sub = 'Detalle de registros filtrados';
+                if (mode === 'branch') sub = 'Registros que coinciden con la selección del diagrama Sankey';
+                else if (mode === 'all') sub = 'Listado completo de todas las tarjetas e invitados';
+                else if (mode === 'top') sub = 'Top 10 tarjetas con mayor cantidad de lecturas / aperturas';
+                else if (mode === 'lastOpen') sub = 'Últimas 10 tarjetas abiertas recientemente';
+                else if (mode === 'lastConf') sub = 'Últimos 10 invitados que confirmaron asistencia';
+                document.getElementById('detailSectionSubtitle').textContent = sub;
+
+                updateSingleViewData();
+            }
+        }
+
+        function switchDetailType(type) {
+            currentDetailType = type;
+            document.getElementById('detailTabPeople')?.classList.toggle('active', type === 'people');
+            document.getElementById('detailTabCards')?.classList.toggle('active', type === 'cards');
+            renderDetailTable();
+        }
+
+        function updateSingleViewData() {
+            if (currentViewMode === 'branch') {
+                if (currentSankeyFilter) {
+                    if (currentSankeyFilter.type === 'branch') {
+                        currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, currentSankeyFilter.source, false) && matchNodeCondition(r, currentSankeyFilter.target, false));
+                        currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, currentSankeyFilter.source, true) && matchNodeCondition(c, currentSankeyFilter.target, true));
+                    } else {
+                        currentFilteredPeople = ALL_RECORDS.filter(r => matchNodeCondition(r, currentSankeyFilter.nodeName, false));
+                        currentFilteredCards = ALL_CARDS.filter(c => matchNodeCondition(c, currentSankeyFilter.nodeName, true));
+                    }
+                } else {
+                    currentFilteredPeople = ALL_RECORDS.slice();
+                    currentFilteredCards = ALL_CARDS.slice();
+                }
+            } else if (currentViewMode === 'all') {
+                currentFilteredPeople = ALL_RECORDS.slice();
+                currentFilteredCards = ALL_CARDS.slice();
+            } else if (currentViewMode === 'top') {
+                const topCards = ALL_CARDS.filter(c => c.open_count > 0)
+                    .sort((a, b) => b.open_count - a.open_count || b.total_guests - a.total_guests)
+                    .slice(0, 10);
+                const topCardIds = new Set(topCards.map(c => c.invitacion_id));
+                currentFilteredCards = topCards;
+                currentFilteredPeople = ALL_RECORDS.filter(r => topCardIds.has(r.invitacion_id))
+                    .sort((a, b) => (b.open_count || 0) - (a.open_count || 0));
+            } else if (currentViewMode === 'lastOpen') {
+                const lastCards = ALL_CARDS.filter(c => c.open_count > 0 && c.last_updated)
+                    .sort((a, b) => (b.last_updated > a.last_updated ? 1 : -1))
+                    .slice(0, 10);
+                const lastCardIds = new Set(lastCards.map(c => c.invitacion_id));
+                currentFilteredCards = lastCards;
+                currentFilteredPeople = ALL_RECORDS.filter(r => lastCardIds.has(r.invitacion_id))
+                    .sort((a, b) => (b.updated_at > a.updated_at ? 1 : -1));
+            } else if (currentViewMode === 'lastConf') {
+                const confPeople = ALL_RECORDS.filter(r => r.confirmacion === 'si')
+                    .sort((a, b) => (b.updated_at > a.updated_at ? 1 : -1))
+                    .slice(0, 10);
+                const confCardIds = new Set(confPeople.map(r => r.invitacion_id));
+                currentFilteredPeople = confPeople;
+                currentFilteredCards = ALL_CARDS.filter(c => confCardIds.has(c.invitacion_id));
+            }
+
+            document.getElementById('detailCountPeople').textContent = currentFilteredPeople.length;
+            document.getElementById('detailCountCards').textContent = currentFilteredCards.length;
+
+            const searchInput = document.getElementById('detailSearchInput');
             if (searchInput) searchInput.value = '';
 
-            switchModalView(currentModalView);
-
-            const overlay = document.getElementById('sankeyModalOverlay');
-            if (overlay) overlay.classList.add('active');
+            renderDetailTable();
         }
 
-        function closeSankeyModal(e) {
-            if (e && e.target && e.target !== document.getElementById('sankeyModalOverlay') && !e.target.classList.contains('modal-close-btn')) {
-                return;
-            }
-            const overlay = document.getElementById('sankeyModalOverlay');
-            if (overlay) overlay.classList.remove('active');
+        function onDetailSearch() {
+            renderDetailTable();
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeSankeyModal();
-            }
-        });
-
-        function switchModalView(mode) {
-            currentModalView = mode;
-            document.getElementById('modalTabPeople')?.classList.toggle('active', mode === 'people');
-            document.getElementById('modalTabCards')?.classList.toggle('active', mode === 'cards');
-            renderModalTable();
-        }
-
-        function onModalSearch() {
-            renderModalTable();
-        }
-
-        function renderModalTable() {
-            const thead = document.getElementById('modalTableHead');
-            const tbody = document.getElementById('modalTableBody');
-            const empty = document.getElementById('modalEmptyState');
-            const query = (document.getElementById('modalSearchInput')?.value || '').trim().toLowerCase();
+        function renderDetailTable() {
+            const thead = document.getElementById('detailTableHead');
+            const tbody = document.getElementById('detailTableBody');
+            const empty = document.getElementById('detailEmptyState');
+            const query = (document.getElementById('detailSearchInput')?.value || '').trim().toLowerCase();
 
             if (!thead || !tbody) return;
 
-            if (currentModalView === 'people') {
+            if (currentDetailType === 'people') {
                 thead.innerHTML = `
                     <tr>
                         <th style="width: 40px; text-align: center;">#</th>
@@ -1463,11 +1491,11 @@
             }
         }
 
-        function copyModalList() {
-            const query = (document.getElementById('modalSearchInput')?.value || '').trim().toLowerCase();
+        function copyDetailList() {
+            const query = (document.getElementById('detailSearchInput')?.value || '').trim().toLowerCase();
             let textToCopy = '';
 
-            if (currentModalView === 'people') {
+            if (currentDetailType === 'people') {
                 let list = currentFilteredPeople;
                 if (query) {
                     list = list.filter(r => {
@@ -1495,7 +1523,7 @@
             if (!textToCopy) return;
 
             navigator.clipboard.writeText(textToCopy).then(() => {
-                const btn = document.getElementById('btnCopyModal');
+                const btn = document.getElementById('btnCopyDetail');
                 if (btn) {
                     const orig = btn.innerHTML;
                     btn.innerHTML = '✓ ¡Copiado!';
