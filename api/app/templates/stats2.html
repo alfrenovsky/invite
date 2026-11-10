@@ -299,13 +299,26 @@
             min-height: 460px;
         }
 
-        #sankey_chart.has-filter svg path {
+        /* Ribbons in g[0] and Nodes in g[1] are interactive */
+        #sankey_chart svg > g:nth-of-type(1) path,
+        #sankey_chart svg > g:nth-of-type(2) rect,
+        #sankey_chart svg > g:nth-of-type(2) text {
+            cursor: pointer !important;
+        }
+
+        /* Tooltip balloons and overlay texts must NEVER intercept mouse clicks */
+        #sankey_chart svg > g:nth-of-type(n+3),
+        #sankey_chart svg > g:nth-of-type(n+3) * {
+            pointer-events: none !important;
+        }
+
+        #sankey_chart.has-filter svg > g:nth-of-type(1) path {
             fill-opacity: 0.12 !important;
             opacity: 0.25 !important;
             transition: opacity 0.2s ease, fill-opacity 0.2s ease;
         }
 
-        #sankey_chart.has-filter svg path[data-selected="true"] {
+        #sankey_chart.has-filter svg > g:nth-of-type(1) path[data-selected="true"] {
             fill-opacity: 0.95 !important;
             opacity: 1 !important;
             stroke: #38bdf8 !important;
@@ -313,7 +326,7 @@
             filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.9)) !important;
         }
 
-        #sankey_chart.has-filter svg rect[data-selected="true"] {
+        #sankey_chart.has-filter svg > g:nth-of-type(2) rect[data-selected="true"] {
             stroke: #ffffff !important;
             stroke-width: 2.5px !important;
             filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) !important;
@@ -999,58 +1012,100 @@
             setTimeout(() => attachSankeyInteractivity(chartDiv, rows), 500);
         }
 
+        function resolveSankeyClickTarget(target, svg) {
+            if (!target || !svg) return null;
+            const tag = target.tagName ? target.tagName.toLowerCase() : '';
+
+            const g1 = svg.querySelectorAll('g')[1];
+
+            // Build node geometry map from g1 (nodes rect & text)
+            const rects = g1 ? Array.from(g1.querySelectorAll('rect')) : [];
+            const texts = g1 ? Array.from(g1.querySelectorAll('text')) : [];
+            const nodes = rects.map((r, i) => {
+                const rx = parseFloat(r.getAttribute('x'));
+                const ry = parseFloat(r.getAttribute('y'));
+                const rw = parseFloat(r.getAttribute('width'));
+                const rh = parseFloat(r.getAttribute('height'));
+                const name = texts[i] ? texts[i].textContent.trim() : '';
+                return { name, rx, ry, rw, rh, rightX: rx + rw, bottomY: ry + rh };
+            });
+
+            // 1. Target is a path (ribbon)
+            if (tag === 'path') {
+                const d = target.getAttribute('d') || '';
+                const m = d.match(/M\s*([\d.]+)[,\s]+([\d.]+).*?([\d.]+)[,\s]+([\d.]+)L/);
+                if (m) {
+                    const x1 = parseFloat(m[1]);
+                    const y1 = parseFloat(m[2]);
+                    const x2 = parseFloat(m[3]);
+                    const y2 = parseFloat(m[4]);
+
+                    const srcNode = nodes.find(n => Math.abs(n.rightX - x1) < 4 && y1 >= n.ry - 2 && y1 <= n.bottomY + 2);
+                    const tgtNode = nodes.find(n => Math.abs(n.rx - x2) < 4 && y2 >= n.ry - 2 && y2 <= n.bottomY + 2);
+
+                    if (srcNode && tgtNode) {
+                        const row = currentDrawnRows.find(r => r[0] === srcNode.name && r[1] === tgtNode.name);
+                        return {
+                            type: 'branch',
+                            source: srcNode.name,
+                            target: tgtNode.name,
+                            weight: row ? row[2] : 0
+                        };
+                    }
+                }
+            }
+
+            // 2. Target is text (node label or tooltip text)
+            if (tag === 'text') {
+                const textContent = target.textContent.trim();
+                if (textContent.includes(' -> ')) {
+                    const parts = textContent.split(' -> ');
+                    const row = currentDrawnRows.find(r => r[0] === parts[0].trim() && r[1] === parts[1].trim());
+                    return {
+                        type: 'branch',
+                        source: parts[0].trim(),
+                        target: parts[1].trim(),
+                        weight: row ? row[2] : 0
+                    };
+                }
+                const node = nodes.find(n => n.name === textContent);
+                if (node) {
+                    return { type: 'node', nodeName: node.name };
+                }
+            }
+
+            // 3. Target is rect (node bar)
+            if (tag === 'rect') {
+                const rx = parseFloat(target.getAttribute('x'));
+                const ry = parseFloat(target.getAttribute('y'));
+                const node = nodes.find(n => Math.abs(n.rx - rx) < 2 && Math.abs(n.ry - ry) < 2);
+                if (node && node.name) {
+                    return { type: 'node', nodeName: node.name };
+                }
+            }
+
+            // 4. Fallback: check if hovering tooltip is present
+            const ttText = svg.querySelector('g:nth-of-type(n+3) text');
+            if (ttText) {
+                const t = ttText.textContent.trim();
+                if (t.includes(' -> ')) {
+                    const parts = t.split(' -> ');
+                    const row = currentDrawnRows.find(r => r[0] === parts[0].trim() && r[1] === parts[1].trim());
+                    return {
+                        type: 'branch',
+                        source: parts[0].trim(),
+                        target: parts[1].trim(),
+                        weight: row ? row[2] : 0
+                    };
+                }
+            }
+
+            return null;
+        }
+
         function attachSankeyInteractivity(chartDiv, rows) {
             const svg = chartDiv.querySelector('svg');
             if (!svg) return;
-
-            // Enforce pointer-events on all clickable SVG shapes
-            svg.querySelectorAll('path, rect, text').forEach(el => {
-                el.style.setProperty('pointer-events', 'all', 'important');
-                el.style.setProperty('cursor', 'pointer', 'important');
-            });
-
-            const paths = Array.from(svg.querySelectorAll('path'));
-            paths.forEach((path, idx) => {
-                if (idx < rows.length) {
-                    const row = rows[idx];
-                    path.setAttribute('title', `Filtrar: ${row[0]} ➔ ${row[1]} (${row[2]})`);
-                    path.setAttribute('data-source', row[0]);
-                    path.setAttribute('data-target', row[1]);
-                    path.setAttribute('data-weight', row[2]);
-                    path.setAttribute('data-path-index', idx);
-                    path.onclick = () => {
-                        onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
-                    };
-                }
-                path.onmouseenter = () => {
-                    if (!currentSankeyFilter) path.style.fillOpacity = '0.85';
-                };
-                path.onmouseleave = () => {
-                    if (!currentSankeyFilter) path.style.fillOpacity = '0.45';
-                };
-            });
-
-            const texts = Array.from(svg.querySelectorAll('text'));
-            const rects = Array.from(svg.querySelectorAll('rect'));
-
-            texts.forEach(text => {
-                const name = text.textContent.trim();
-                text.setAttribute('data-node-name', name);
-                text.onclick = () => {
-                    if (name) onSankeySelect({ type: 'node', nodeName: name });
-                };
-            });
-
-            rects.forEach((rect, idx) => {
-                if (idx < texts.length) {
-                    const nodeName = texts[idx].textContent.trim();
-                    rect.setAttribute('title', `Filtrar: ${nodeName}`);
-                    rect.setAttribute('data-node-name', nodeName);
-                    rect.onclick = () => {
-                        if (nodeName) onSankeySelect({ type: 'node', nodeName });
-                    };
-                }
-            });
 
             // Re-apply visual highlight if filter is active
             if (currentSankeyFilter) {
@@ -1058,54 +1113,17 @@
             }
         }
 
-        // Global Chart Event Delegation as bulletproof fallback
+        // Global Chart Event Delegation: capture click before anything else
         const chartWrapper = document.getElementById('sankeyChartWrapper');
         if (chartWrapper) {
             chartWrapper.addEventListener('click', (e) => {
-                const target = e.target;
-                if (!target || !target.tagName) return;
-                const tag = target.tagName.toLowerCase();
-
-                if (tag === 'path') {
-                    const src = target.getAttribute('data-source');
-                    const tgt = target.getAttribute('data-target');
-                    if (src && tgt) {
-                        onSankeySelect({
-                            type: 'branch',
-                            source: src,
-                            target: tgt,
-                            weight: parseInt(target.getAttribute('data-weight'), 10) || 0
-                        });
-                        return;
-                    }
-                    const svg = chartWrapper.querySelector('svg');
-                    if (!svg) return;
-                    const paths = Array.from(svg.querySelectorAll('path'));
-                    const idx = paths.indexOf(target);
-                    if (idx !== -1 && idx < currentDrawnRows.length) {
-                        const row = currentDrawnRows[idx];
-                        onSankeySelect({ type: 'branch', source: row[0], target: row[1], weight: row[2] });
-                    }
-                } else if (tag === 'text') {
-                    const name = target.getAttribute('data-node-name') || target.textContent.trim();
-                    if (name) onSankeySelect({ type: 'node', nodeName: name });
-                } else if (tag === 'rect') {
-                    const name = target.getAttribute('data-node-name');
-                    if (name) {
-                        onSankeySelect({ type: 'node', nodeName: name });
-                        return;
-                    }
-                    const svg = chartWrapper.querySelector('svg');
-                    if (!svg) return;
-                    const rects = Array.from(svg.querySelectorAll('rect'));
-                    const texts = Array.from(svg.querySelectorAll('text'));
-                    const idx = rects.indexOf(target);
-                    if (idx !== -1 && idx < texts.length) {
-                        const n = texts[idx].getAttribute('data-node-name') || texts[idx].textContent.trim();
-                        if (n) onSankeySelect({ type: 'node', nodeName: n });
-                    }
+                const svg = chartWrapper.querySelector('svg');
+                if (!svg) return;
+                const filter = resolveSankeyClickTarget(e.target, svg);
+                if (filter) {
+                    onSankeySelect(filter);
                 }
-            });
+            }, true);
         }
 
         function highlightSankeySelection(filter) {
@@ -1113,9 +1131,20 @@
             const svg = chartDiv ? chartDiv.querySelector('svg') : null;
             if (!chartDiv || !svg) return;
 
-            const paths = Array.from(svg.querySelectorAll('path'));
-            const rects = Array.from(svg.querySelectorAll('rect'));
-            const rows = currentDrawnRows;
+            const g0 = svg.querySelectorAll('g')[0];
+            const g1 = svg.querySelectorAll('g')[1];
+            const paths = g0 ? Array.from(g0.querySelectorAll('path')) : [];
+            const rects = g1 ? Array.from(g1.querySelectorAll('rect')) : [];
+            const texts = g1 ? Array.from(g1.querySelectorAll('text')) : [];
+
+            const nodes = rects.map((r, i) => {
+                const rx = parseFloat(r.getAttribute('x'));
+                const ry = parseFloat(r.getAttribute('y'));
+                const rw = parseFloat(r.getAttribute('width'));
+                const rh = parseFloat(r.getAttribute('height'));
+                const name = texts[i] ? texts[i].textContent.trim() : '';
+                return { name, rx, ry, rw, rh, rightX: rx + rw, bottomY: ry + rh };
+            });
 
             if (!filter) {
                 chartDiv.classList.remove('has-filter');
@@ -1127,10 +1156,19 @@
             chartDiv.classList.add('has-filter');
 
             if (filter.type === 'branch') {
-                paths.forEach((p, idx) => {
-                    const src = p.getAttribute('data-source') || (rows[idx] ? rows[idx][0] : null);
-                    const tgt = p.getAttribute('data-target') || (rows[idx] ? rows[idx][1] : null);
-                    const isSelected = (src === filter.source && tgt === filter.target);
+                paths.forEach((p) => {
+                    const d = p.getAttribute('d') || '';
+                    const m = d.match(/M\s*([\d.]+)[,\s]+([\d.]+).*?([\d.]+)[,\s]+([\d.]+)L/);
+                    let isSelected = false;
+                    if (m) {
+                        const x1 = parseFloat(m[1]);
+                        const y1 = parseFloat(m[2]);
+                        const x2 = parseFloat(m[3]);
+                        const y2 = parseFloat(m[4]);
+                        const srcNode = nodes.find(n => Math.abs(n.rightX - x1) < 4 && y1 >= n.ry - 2 && y1 <= n.bottomY + 2);
+                        const tgtNode = nodes.find(n => Math.abs(n.rx - x2) < 4 && y2 >= n.ry - 2 && y2 <= n.bottomY + 2);
+                        isSelected = srcNode && tgtNode && (srcNode.name === filter.source && tgtNode.name === filter.target);
+                    }
                     if (isSelected) {
                         p.setAttribute('data-selected', 'true');
                     } else {
@@ -1139,18 +1177,27 @@
                 });
                 rects.forEach(r => r.removeAttribute('data-selected'));
             } else if (filter.type === 'node') {
-                paths.forEach((p, idx) => {
-                    const src = p.getAttribute('data-source') || (rows[idx] ? rows[idx][0] : null);
-                    const tgt = p.getAttribute('data-target') || (rows[idx] ? rows[idx][1] : null);
-                    const isConnected = (src === filter.nodeName || tgt === filter.nodeName);
+                paths.forEach((p) => {
+                    const d = p.getAttribute('d') || '';
+                    const m = d.match(/M\s*([\d.]+)[,\s]+([\d.]+).*?([\d.]+)[,\s]+([\d.]+)L/);
+                    let isConnected = false;
+                    if (m) {
+                        const x1 = parseFloat(m[1]);
+                        const y1 = parseFloat(m[2]);
+                        const x2 = parseFloat(m[3]);
+                        const y2 = parseFloat(m[4]);
+                        const srcNode = nodes.find(n => Math.abs(n.rightX - x1) < 4 && y1 >= n.ry - 2 && y1 <= n.bottomY + 2);
+                        const tgtNode = nodes.find(n => Math.abs(n.rx - x2) < 4 && y2 >= n.ry - 2 && y2 <= n.bottomY + 2);
+                        isConnected = (srcNode && srcNode.name === filter.nodeName) || (tgtNode && tgtNode.name === filter.nodeName);
+                    }
                     if (isConnected) {
                         p.setAttribute('data-selected', 'true');
                     } else {
                         p.removeAttribute('data-selected');
                     }
                 });
-                rects.forEach(r => {
-                    if (r.getAttribute('data-node-name') === filter.nodeName) {
+                rects.forEach((r, i) => {
+                    if (texts[i] && texts[i].textContent.trim() === filter.nodeName) {
                         r.setAttribute('data-selected', 'true');
                     } else {
                         r.removeAttribute('data-selected');
