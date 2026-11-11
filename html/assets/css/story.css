@@ -901,11 +901,26 @@
             animation: btnErrorFlash 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
         }
 
+        @keyframes pulseErrorFlash {
+            0%, 100% {
+                border-color: #ef4444 !important;
+                box-shadow: 0 0 4px rgba(239, 68, 68, 0.4) !important;
+                background: rgba(239, 68, 68, 0.1) !important;
+            }
+            50% {
+                border-color: #f87171 !important;
+                box-shadow: 0 0 14px rgba(239, 68, 68, 0.85) !important;
+                background: rgba(239, 68, 68, 0.25) !important;
+            }
+        }
+
         .input-flash-error,
-        .input-field-error {
+        .input-field-error,
+        .input-pulse-error {
             border-color: #ef4444 !important;
             box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) !important;
             background: rgba(239, 68, 68, 0.14) !important;
+            animation: pulseErrorFlash 1.1s infinite ease-in-out !important;
             transition: border-color 0.25s, box-shadow 0.25s, background 0.25s !important;
         }
 
@@ -1029,10 +1044,12 @@
             white-space: nowrap;
         }
 
+        .rsvp-menu-btn.menu-pulse-error,
         .rsvp-menu-btn.menu-btn-error {
             border: 1.5px solid #ef4444 !important;
             background: rgba(239, 68, 68, 0.18) !important;
             box-shadow: 0 0 10px rgba(239, 68, 68, 0.5) !important;
+            animation: pulseErrorFlash 1.1s infinite ease-in-out !important;
             color: #ffffff !important;
         }
 

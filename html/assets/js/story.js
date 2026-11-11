@@ -1877,7 +1877,17 @@
             const allCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
             const isCardPending = (c) => {
                 const st = c.getAttribute('data-status') || '';
-                return st !== 'si' && st !== 'no';
+                if (st !== 'si' && st !== 'no') return true;
+                if (st === 'si') {
+                    const gid = c.getAttribute('data-guest-id');
+                    const inpN = c.querySelector(`input[name="nombre_${gid}"]`);
+                    const inpA = c.querySelector(`input[name="apellido_${gid}"]`);
+                    const n = inpN ? inpN.value.trim() : '';
+                    const a = inpA ? inpA.value.trim() : '';
+                    const selMenu = c.querySelector('.rsvp-menu-btn.selected');
+                    if (!n || !a || !selMenu) return true;
+                }
+                return false;
             };
 
             const currentIdx = allCards.indexOf(currentCard);
@@ -2034,6 +2044,35 @@
                 });
             }
 
+            function clearCardErrors() {
+                if (inputNombre) inputNombre.classList.remove('input-pulse-error', 'input-field-error', 'input-flash-error');
+                if (inputApellido) inputApellido.classList.remove('input-pulse-error', 'input-field-error', 'input-flash-error');
+                const mBtns = card.querySelectorAll('.rsvp-menu-btn');
+                mBtns.forEach(b => b.classList.remove('menu-pulse-error', 'menu-btn-error'));
+                const menuBox = card.querySelector('.rsvp-menu-buttons');
+                if (menuBox) menuBox.classList.remove('menu-flash-error');
+            }
+
+            function isCardFull() {
+                const n = inputNombre ? inputNombre.value.trim() : '';
+                const a = inputApellido ? inputApellido.value.trim() : '';
+                const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
+                return Boolean(n && a && selectedMenuBtn);
+            }
+
+            function checkAndAdvanceIfComplete() {
+                const status = card.getAttribute('data-status') || '';
+                if (status !== 'si') return false;
+
+                if (isCardFull()) {
+                    clearCardErrors();
+                    queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                    handleGuestStepAdvancement(card, true);
+                    return true;
+                }
+                return false;
+            }
+
             // 2. Status Buttons Click Handlers ("Asiste", "No asiste", "Pendiente")
             statusButtons.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -2042,69 +2081,7 @@
 
                     const val = btn.getAttribute('data-val') || '';
 
-                    // Require Nombre, Apellido, and Dietary Menu to confirm ("si")
-                    if (val === 'si') {
-                        const n = inputNombre ? inputNombre.value.trim() : '';
-                        const a = inputApellido ? inputApellido.value.trim() : '';
-                        const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
-
-                        if (!n || !a) {
-                            btn.classList.add('btn-flash-error');
-                            setTimeout(() => btn.classList.remove('btn-flash-error'), 600);
-
-                            guestCards.forEach(c => {
-                                if (c !== card) {
-                                    c.classList.remove('expanded');
-                                    const h = c.querySelector('.rsvp-card-header');
-                                    if (h) h.setAttribute('aria-expanded', 'false');
-                                }
-                            });
-                            const payCard = document.querySelector('.rsvp-payment-card');
-                            if (payCard) {
-                                payCard.classList.remove('focused-highlight');
-                            }
-                            card.classList.add('expanded');
-                            if (header) header.setAttribute('aria-expanded', 'true');
-                            setTimeout(() => {
-                                centerElementInForm(card);
-                            }, 80);
-
-                            if (!n && inputNombre) inputNombre.classList.add('input-field-error');
-                            if (!a && inputApellido) inputApellido.classList.add('input-field-error');
-                            const emptyInput = (!n) ? inputNombre : inputApellido;
-                            if (emptyInput) {
-                                emptyInput.focus();
-                            }
-                            return;
-                        }
-
-                        if (!selectedMenuBtn) {
-                            btn.classList.add('btn-flash-error');
-                            setTimeout(() => btn.classList.remove('btn-flash-error'), 600);
-
-                            guestCards.forEach(c => {
-                                if (c !== card) {
-                                    c.classList.remove('expanded');
-                                    const h = c.querySelector('.rsvp-card-header');
-                                    if (h) h.setAttribute('aria-expanded', 'false');
-                                }
-                            });
-                            const payCard = document.querySelector('.rsvp-payment-card');
-                            if (payCard) {
-                                payCard.classList.remove('focused-highlight');
-                            }
-                            card.classList.add('expanded');
-                            if (header) header.setAttribute('aria-expanded', 'true');
-                            setTimeout(() => {
-                                centerElementInForm(card);
-                            }, 80);
-
-                            const mBtns = card.querySelectorAll('.rsvp-menu-btn');
-                            mBtns.forEach(b => b.classList.add('menu-btn-error'));
-                            return;
-                        }
-                    }
-
+                    // Always set the selected status and styling
                     card.setAttribute('data-status', val);
 
                     // Update button styling
@@ -2138,6 +2115,59 @@
                     updateSlideList();
                     updatePaymentSection();
 
+                    // When status is "si": validate required fields
+                    if (val === 'si') {
+                        const n = inputNombre ? inputNombre.value.trim() : '';
+                        const a = inputApellido ? inputApellido.value.trim() : '';
+                        const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
+                        const isComplete = Boolean(n && a && selectedMenuBtn);
+
+                        if (!isComplete) {
+                            // Expand card to show inputs and menu
+                            guestCards.forEach(c => {
+                                if (c !== card) {
+                                    c.classList.remove('expanded');
+                                    const h = c.querySelector('.rsvp-card-header');
+                                    if (h) h.setAttribute('aria-expanded', 'false');
+                                }
+                            });
+                            const payCard = document.querySelector('.rsvp-payment-card');
+                            if (payCard) {
+                                payCard.classList.remove('focused-highlight');
+                            }
+                            card.classList.add('expanded');
+                            if (header) header.setAttribute('aria-expanded', 'true');
+                            setTimeout(() => {
+                                centerElementInForm(card);
+                            }, 80);
+
+                            // Flash missing fields red until user interacts
+                            if (!n && inputNombre) inputNombre.classList.add('input-pulse-error');
+                            if (!a && inputApellido) inputApellido.classList.add('input-pulse-error');
+                            if (!selectedMenuBtn) {
+                                const mBtns = card.querySelectorAll('.rsvp-menu-btn');
+                                mBtns.forEach(b => b.classList.add('menu-pulse-error'));
+                            }
+
+                            const emptyInput = (!n) ? inputNombre : ((!a) ? inputApellido : null);
+                            if (emptyInput) {
+                                emptyInput.focus();
+                            }
+
+                            queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                            return;
+                        }
+
+                        // If already complete, clear errors and advance!
+                        clearCardErrors();
+                        queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+                        handleGuestStepAdvancement(card, true);
+                        return;
+                    }
+
+                    // For "no" or "pendiente": clear any flashing errors
+                    clearCardErrors();
+
                     if (checkAllRejected()) {
                         document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-guest-row[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
                             const gid = c.getAttribute('data-guest-id');
@@ -2152,9 +2182,7 @@
                         }
                     } else {
                         queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
-                        if (val === 'si') {
-                            handleGuestStepAdvancement(card, true);
-                        } else if (val === 'no') {
+                        if (val === 'no') {
                             handleGuestStepAdvancement(card, false);
                         } else {
                             const successBanner = document.getElementById('rsvpSuccessBanner');
@@ -2170,13 +2198,16 @@
                     e.preventDefault();
                     e.stopPropagation();
                     menuButtons.forEach(b => {
-                        b.classList.remove('selected', 'menu-btn-error');
+                        b.classList.remove('selected', 'menu-btn-error', 'menu-pulse-error');
                     });
                     mBtn.classList.add('selected');
                     const menuBox = card.querySelector('.rsvp-menu-buttons');
                     if (menuBox) menuBox.classList.remove('menu-flash-error');
                     updateMenuIconDisplay(card.getAttribute('data-status'));
                     queueAutoSave(guestId, AUTOSAVE_CONFIG.CLICK_DEBOUNCE_MS);
+
+                    // If card is marked as "Asiste" and now is full, auto-save and advance!
+                    checkAndAdvanceIfComplete();
                 });
             });
 
@@ -2204,34 +2235,6 @@
                     card.dataset.lastValidNombre = n;
                 }
 
-                // If currently confirmed ("si") and either nombre or apellido is removed, revert to "pendiente"
-                const currentStatus = card.getAttribute('data-status') || '';
-                if (currentStatus === 'si' && (!n || !a)) {
-                    card.setAttribute('data-status', '');
-
-                    statusButtons.forEach(b => {
-                        if (b.getAttribute('data-val') === '') {
-                            b.classList.add('selected');
-                        } else {
-                            b.classList.remove('selected');
-                        }
-                    });
-
-                    if (bullet) {
-                        bullet.classList.remove('bullet-si', 'bullet-no');
-                        bullet.classList.add('bullet-pending');
-                    }
-
-                    const menuSection = card.querySelector('.rsvp-menu-section');
-                    if (menuSection) {
-                        menuSection.style.display = 'flex';
-                    }
-
-                    updateMenuIconDisplay('');
-                    updateGlutenIconDisplay('');
-                    updateSlideList();
-                }
-
                 updateStoryGuestNames();
                 updatePaymentSection();
                 queueAutoSave(guestId, AUTOSAVE_CONFIG.INPUT_DEBOUNCE_MS);
@@ -2239,21 +2242,43 @@
 
             if (inputNombre) {
                 inputNombre.addEventListener('input', () => {
-                    if (inputNombre.value.trim()) {
-                        inputNombre.classList.remove('input-field-error', 'input-flash-error');
+                    if (inputNombre.value.trim().length > 0) {
+                        inputNombre.classList.remove('input-field-error', 'input-flash-error', 'input-pulse-error');
                     }
                     syncGuestName();
                 });
-                inputNombre.addEventListener('blur', () => flushAutoSave());
+                inputNombre.addEventListener('blur', () => {
+                    flushAutoSave();
+                    checkAndAdvanceIfComplete();
+                });
+                inputNombre.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (inputApellido && !inputApellido.value.trim()) {
+                            inputApellido.focus();
+                        } else {
+                            checkAndAdvanceIfComplete();
+                        }
+                    }
+                });
             }
             if (inputApellido) {
                 inputApellido.addEventListener('input', () => {
-                    if (inputApellido.value.trim()) {
-                        inputApellido.classList.remove('input-field-error', 'input-flash-error');
+                    if (inputApellido.value.trim().length > 0) {
+                        inputApellido.classList.remove('input-field-error', 'input-flash-error', 'input-pulse-error');
                     }
                     syncGuestName();
                 });
-                inputApellido.addEventListener('blur', () => flushAutoSave());
+                inputApellido.addEventListener('blur', () => {
+                    flushAutoSave();
+                    checkAndAdvanceIfComplete();
+                });
+                inputApellido.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        checkAndAdvanceIfComplete();
+                    }
+                });
             }
 
             // Initial Menu & Gluten Icon State
