@@ -1900,7 +1900,7 @@
             const successBanner = document.getElementById('rsvpSuccessBanner');
             const paymentSection = document.getElementById('rsvpPaymentSection');
 
-            const delay = isAttending ? 600 : 320;
+            const delay = isAttending ? 1000 : 320;
 
             if (isAttending) {
                 const asisteBtn = currentCard.querySelector('.btn-asiste');
