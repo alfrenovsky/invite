@@ -1917,13 +1917,17 @@
             if (nextPending) {
                 if (successBanner) successBanner.style.display = 'none';
                 setTimeout(() => {
+                    currentCard.classList.remove('card-confirm-flash');
+                    const asisteBtn = currentCard.querySelector('.btn-asiste');
+                    if (asisteBtn) asisteBtn.classList.remove('confirm-flash');
+
                     currentCard.classList.remove('expanded');
                     const h = currentCard.querySelector('.rsvp-card-header');
                     if (h) h.setAttribute('aria-expanded', 'false');
 
                     allCards.forEach(c => {
                         if (c !== nextPending) {
-                            c.classList.remove('expanded');
+                            c.classList.remove('expanded', 'card-confirm-flash');
                             c.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'false');
                         }
                     });
@@ -1934,6 +1938,10 @@
             } else {
                 // All guests have responded!
                 setTimeout(() => {
+                    currentCard.classList.remove('card-confirm-flash');
+                    const asisteBtn = currentCard.querySelector('.btn-asiste');
+                    if (asisteBtn) asisteBtn.classList.remove('confirm-flash');
+
                     currentCard.classList.remove('expanded');
                     const h = currentCard.querySelector('.rsvp-card-header');
                     if (h) h.setAttribute('aria-expanded', 'false');
