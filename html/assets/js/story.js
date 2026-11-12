@@ -43,8 +43,8 @@
 
     // Auto-Save Configuration
     const AUTOSAVE_CONFIG = {
-        CLICK_DEBOUNCE_MS: 10000,
-        INPUT_DEBOUNCE_MS: 10000,
+        CLICK_DEBOUNCE_MS: 400,
+        INPUT_DEBOUNCE_MS: 1200,
         RETRY_DELAY_MS: 4000
     };
 
@@ -1019,7 +1019,8 @@
                 const res = await fetch(`/invitados/${item.guestId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(item.payload)
+                    body: JSON.stringify(item.payload),
+                    keepalive: true
                 });
                 if (res.ok) {
                     savedGuestStates[item.guestId] = item.currentStr;
@@ -1124,13 +1125,19 @@
         } catch (e) { }
     }
 
-    async function handleFormSlideExit() {
-        const currentSlide = slides[currentIndex];
-        const isFormSlide = currentSlide && (currentSlide.getAttribute('data-slide-id') === 'rsvp' || currentSlide.querySelector('.rsvp-form-container'));
-        if (!isFormSlide) return;
+    function handleFormSlideExit() {
+        // Capture active input if user is still typing in one
+        const activeInput = document.activeElement;
+        if (activeInput && activeInput.tagName === 'INPUT') {
+            const card = activeInput.closest('.rsvp-guest-card[data-guest-id]');
+            if (card) {
+                const gid = card.getAttribute('data-guest-id');
+                if (gid) dirtyGuests.add(gid);
+            }
+        }
 
         if (dirtyGuests.size > 0 || isSaving) {
-            await flushAutoSave();
+            flushAutoSave();
         }
         flushGoogleSheetsCache();
     }
