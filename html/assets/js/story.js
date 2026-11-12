@@ -379,6 +379,43 @@
         }, 2000);
     }
 
+    function isGuestHalfReady(card) {
+        if (!card) return false;
+        const status = card.getAttribute('data-status') || '';
+        if (status !== 'si') return false;
+        const gid = card.getAttribute('data-guest-id');
+        const inpN = card.querySelector(`input[name="nombre_${gid}"]`);
+        const inpA = card.querySelector(`input[name="apellido_${gid}"]`);
+        const n = inpN ? inpN.value.trim() : '';
+        const a = inpA ? inpA.value.trim() : '';
+        const selMenu = card.querySelector('.rsvp-menu-btn.selected');
+        return (!n || !a || !selMenu);
+    }
+
+    function highlightHalfReadyCard(card) {
+        if (!card) return;
+        const gid = card.getAttribute('data-guest-id');
+        const inpN = card.querySelector(`input[name="nombre_${gid}"]`);
+        const inpA = card.querySelector(`input[name="apellido_${gid}"]`);
+        const n = inpN ? inpN.value.trim() : '';
+        const a = inpA ? inpA.value.trim() : '';
+        const selMenu = card.querySelector('.rsvp-menu-btn.selected');
+
+        if (!n && inpN) inpN.classList.add('input-pulse-error');
+        if (!a && inpA) inpA.classList.add('input-pulse-error');
+        if (!selMenu) {
+            const mBtns = card.querySelectorAll('.rsvp-menu-btn');
+            mBtns.forEach(b => b.classList.add('menu-pulse-error'));
+            flashCeliacBox(card);
+        }
+
+        const emptyInput = (!n) ? inpN : ((!a) ? inpA : null);
+        if (emptyInput) {
+            emptyInput.focus();
+        }
+        centerElementInForm(card);
+    }
+
     function validateRsvpFormCompletion() {
         const currentSlide = slides[currentIndex];
         const isFormSlide = currentSlide && (currentSlide.getAttribute('data-slide-id') === 'rsvp' || currentSlide.querySelector('.rsvp-form-container'));
@@ -386,42 +423,19 @@
 
         const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
         for (const card of cards) {
-            const status = card.getAttribute('data-status') || '';
-            if (status === 'si') {
-                const guestId = card.getAttribute('data-guest-id');
-                const inputNombre = card.querySelector(`input[name="nombre_${guestId}"]`);
-                const inputApellido = card.querySelector(`input[name="apellido_${guestId}"]`);
-                const n = inputNombre ? inputNombre.value.trim() : '';
-                const a = inputApellido ? inputApellido.value.trim() : '';
-                const selectedMenuBtn = card.querySelector('.rsvp-menu-btn.selected');
-
-                if (!n || !a || !selectedMenuBtn) {
-                    cards.forEach(c => {
-                        if (c !== card) {
-                            c.classList.remove('expanded');
-                            const h = c.querySelector('.rsvp-card-header');
-                            if (h) h.setAttribute('aria-expanded', 'false');
-                        }
-                    });
-                    card.classList.add('expanded');
-                    const header = card.querySelector('.rsvp-card-header');
-                    if (header) header.setAttribute('aria-expanded', 'true');
-                    setTimeout(() => centerElementInForm(card), 80);
-
-                    if (!n || !a) {
-                        if (!n && inputNombre) inputNombre.classList.add('input-field-error');
-                        if (!a && inputApellido) inputApellido.classList.add('input-field-error');
-                        const emptyInput = (!n) ? inputNombre : inputApellido;
-                        if (emptyInput) {
-                            emptyInput.focus();
-                        }
-                    } else if (!selectedMenuBtn) {
-                        const mBtns = card.querySelectorAll('.rsvp-menu-btn');
-                        mBtns.forEach(b => b.classList.add('menu-btn-error'));
-                        flashCeliacBox(card);
+            if (isGuestHalfReady(card)) {
+                cards.forEach(c => {
+                    if (c !== card) {
+                        c.classList.remove('expanded');
+                        const h = c.querySelector('.rsvp-card-header');
+                        if (h) h.setAttribute('aria-expanded', 'false');
                     }
-                    return false;
-                }
+                });
+                card.classList.add('expanded');
+                const header = card.querySelector('.rsvp-card-header');
+                if (header) header.setAttribute('aria-expanded', 'true');
+                highlightHalfReadyCard(card);
+                return false;
             }
         }
         return true;
@@ -2032,6 +2046,18 @@
                     e.stopPropagation();
                     flushAutoSave();
                     const isExpanded = card.classList.contains('expanded');
+
+                    if (isExpanded && isGuestHalfReady(card)) {
+                        highlightHalfReadyCard(card);
+                        return;
+                    }
+
+                    const otherExpandedHalfReady = guestCards.find(c => c !== card && c.classList.contains('expanded') && isGuestHalfReady(c));
+                    if (otherExpandedHalfReady) {
+                        highlightHalfReadyCard(otherExpandedHalfReady);
+                        return;
+                    }
+
                     // Close other cards for clean accordion
                     guestCards.forEach(c => {
                         if (c !== card) {
@@ -2471,7 +2497,15 @@
     document.addEventListener('click', handleOutsideFormClick, { passive: true });
 
     // Page exit listeners
-    window.addEventListener('beforeunload', handleFormSlideExit);
+    window.addEventListener('beforeunload', (e) => {
+        handleFormSlideExit();
+        const cards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
+        if (cards.some(isGuestHalfReady)) {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+        }
+    });
     window.addEventListener('pagehide', handleFormSlideExit);
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
