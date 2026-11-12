@@ -1873,6 +1873,31 @@
             'vegano': '🌱'
         };
 
+        function triggerCardShockwave(card) {
+            if (!card) return;
+            const storyContainer = document.getElementById('storyContainer') || document.body;
+            const cRect = card.getBoundingClientRect();
+            const sRect = storyContainer.getBoundingClientRect();
+
+            const shockwave = document.createElement('div');
+            shockwave.className = 'rsvp-card-shockwave-layer';
+            shockwave.style.cssText = `
+                position: absolute;
+                top: ${cRect.top - sRect.top}px;
+                left: ${cRect.left - sRect.left}px;
+                width: ${cRect.width}px;
+                height: ${cRect.height}px;
+                border-radius: 14px;
+                pointer-events: none;
+                z-index: 999999 !important;
+            `;
+            storyContainer.appendChild(shockwave);
+
+            setTimeout(() => {
+                shockwave.remove();
+            }, 1000);
+        }
+
         function handleGuestStepAdvancement(currentCard, isAttending) {
             const allCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
             const isCardPending = (c) => {
@@ -1909,9 +1934,7 @@
                     void asisteBtn.offsetWidth;
                     asisteBtn.classList.add('confirm-flash');
                 }
-                currentCard.classList.remove('card-confirm-flash');
-                void currentCard.offsetWidth;
-                currentCard.classList.add('card-confirm-flash');
+                triggerCardShockwave(currentCard);
             }
 
             if (nextPending) {
