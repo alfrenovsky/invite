@@ -85,7 +85,17 @@
                     {% set current_menu = (guest.pa or guest.ap or '')|lower %}
                     <div class="rsvp-menu-section" id="menu_section_{{ guest.id }}"
                         style="{% if conf == 'no' %}display: none;{% endif %}">
-                        <label class="rsvp-menu-label">Menú</label>
+                        <div class="rsvp-menu-header-row">
+                            <label class="rsvp-menu-label">Menú</label>
+                            <div class="rsvp-celiac-wrapper">
+                                <label class="rsvp-celiac-label" for="celiaco_{{ guest.id }}">
+                                    <input type="checkbox" id="celiaco_{{ guest.id }}" name="celiaco_{{ guest.id }}"
+                                        class="rsvp-celiac-checkbox" value="si" {% if is_celiac %}checked{% endif %}>
+                                    <span class="rsvp-celiac-custom-box" aria-hidden="true"></span>
+                                    <span class="rsvp-celiac-text">Sin gluten</span>
+                                </label>
+                            </div>
+                        </div>
                         <div class="rsvp-menu-buttons" role="group" aria-label="Menú">
                             <button type="button"
                                 class="rsvp-menu-btn {% if current_menu == 'general' %}selected{% endif %}"
@@ -96,14 +106,6 @@
                             <button type="button"
                                 class="rsvp-menu-btn {% if current_menu == 'vegano' %}selected{% endif %}"
                                 data-menu="vegano">Vegano</button>
-                        </div>
-                        <div class="rsvp-celiac-wrapper">
-                            <label class="rsvp-celiac-label" for="celiaco_{{ guest.id }}">
-                                <input type="checkbox" id="celiaco_{{ guest.id }}" name="celiaco_{{ guest.id }}"
-                                    class="rsvp-celiac-checkbox" value="si" {% if is_celiac %}checked{% endif %}>
-                                <span class="rsvp-celiac-custom-box" aria-hidden="true"></span>
-                                <span class="rsvp-celiac-text">Sin gluten</span>
-                            </label>
                         </div>
                     </div>
                 </div>

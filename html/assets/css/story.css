@@ -986,6 +986,14 @@
             }
         }
 
+        .rsvp-menu-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 2px;
+        }
+
         .rsvp-menu-label {
             font-family: 'Montserrat', sans-serif !important;
             font-size: 0.68rem;
@@ -1062,7 +1070,7 @@
         }
 
         .rsvp-celiac-wrapper {
-            margin-top: 6px;
+            margin-top: 0;
             display: flex;
             align-items: center;
         }
@@ -1070,12 +1078,12 @@
         .rsvp-celiac-label {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             color: #ffffff !important;
             font-weight: 500;
             text-shadow: none !important;
@@ -1090,9 +1098,9 @@
         }
 
         .rsvp-celiac-custom-box {
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
             border: 1.5px solid rgba(255, 255, 255, 0.35);
             background: rgba(255, 255, 255, 0.08);
             display: inline-flex;
@@ -1115,8 +1123,8 @@
 
         .rsvp-celiac-checkbox:checked + .rsvp-celiac-custom-box::after {
             content: "";
-            width: 5px;
-            height: 9px;
+            width: 4px;
+            height: 8px;
             border: solid white;
             border-width: 0 2px 2px 0;
             transform: rotate(45deg);
