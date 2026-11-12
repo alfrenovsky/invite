@@ -1131,6 +1131,12 @@
             margin-bottom: 2px;
         }
 
+        .rsvp-celiac-custom-box.celiac-pulse-highlight {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.7) !important;
+            animation: pulseErrorFlash 1s ease-in-out infinite !important;
+        }
+
         .rsvp-celiac-text {
             line-height: 1.2;
         }
