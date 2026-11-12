@@ -1943,7 +1943,18 @@
             }, duration);
         }
 
+        let activeAutoAdvanceTimer = null;
+
+        function cancelAutoAdvance() {
+            if (activeAutoAdvanceTimer) {
+                clearTimeout(activeAutoAdvanceTimer);
+                activeAutoAdvanceTimer = null;
+            }
+        }
+
         function handleGuestStepAdvancement(currentCard, isAttending) {
+            cancelAutoAdvance();
+
             const allCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
             const isCardPending = (c) => {
                 const st = c.getAttribute('data-status') || '';
@@ -1960,13 +1971,11 @@
                 return false;
             };
 
-            const anyPending = allCards.some(isCardPending);
             const successBanner = document.getElementById('rsvpSuccessBanner');
             const paymentSection = document.getElementById('rsvpPaymentSection');
 
             const animationWait = 1000;
             const shockwaveDuration = 1800;
-            const delay = isAttending ? (animationWait + shockwaveDuration) : 320;
 
             if (isAttending) {
                 const asisteBtn = currentCard.querySelector('.btn-asiste');
@@ -1978,20 +1987,50 @@
                 setTimeout(() => {
                     triggerCardShockwave(currentCard);
                 }, animationWait);
+
+                setTimeout(() => {
+                    currentCard.classList.remove('card-confirm-flash');
+                    const btn = currentCard.querySelector('.btn-asiste');
+                    if (btn) btn.classList.remove('confirm-flash');
+                }, animationWait + shockwaveDuration);
             }
 
-            setTimeout(() => {
-                currentCard.classList.remove('card-confirm-flash');
-                const asisteBtn = currentCard.querySelector('.btn-asiste');
-                if (asisteBtn) asisteBtn.classList.remove('confirm-flash');
+            activeAutoAdvanceTimer = setTimeout(() => {
+                activeAutoAdvanceTimer = null;
 
-                if (anyPending) {
+                const currentIdx = allCards.indexOf(currentCard);
+                let nextPending = null;
+                if (currentIdx !== -1) {
+                    nextPending = allCards.slice(currentIdx + 1).find(isCardPending) ||
+                                  allCards.slice(0, currentIdx).find(isCardPending);
+                }
+
+                if (nextPending) {
                     if (successBanner) successBanner.style.display = 'none';
+
+                    currentCard.classList.remove('expanded', 'card-confirm-flash');
+                    const h = currentCard.querySelector('.rsvp-card-header');
+                    if (h) h.setAttribute('aria-expanded', 'false');
+
+                    allCards.forEach(c => {
+                        if (c !== nextPending) {
+                            c.classList.remove('expanded', 'card-confirm-flash');
+                            c.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+
+                    nextPending.classList.add('expanded');
+                    nextPending.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'true');
+                    setTimeout(() => centerElementInForm(nextPending), 80);
                 } else {
                     // All guests have responded!
+                    currentCard.classList.remove('expanded', 'card-confirm-flash');
+                    const h = currentCard.querySelector('.rsvp-card-header');
+                    if (h) h.setAttribute('aria-expanded', 'false');
+
                     const anyAttending = allCards.some(c => c.getAttribute('data-status') === 'si');
                     if (anyAttending) {
-                        if (successBanner && successBanner.style.display !== 'flex') {
+                        if (successBanner) {
                             successBanner.style.display = 'flex';
                             successBanner.classList.remove('banner-flash');
                             void successBanner.offsetWidth; // trigger reflow
@@ -1999,9 +2038,27 @@
                             triggerCardShockwave(successBanner, 1000);
                         }
                         flushAutoSave();
+
+                        const hasUnpaid = paymentSection &&
+                                          paymentSection.style.display !== 'none' &&
+                                          !paymentSection.querySelector('.payment-registered-card');
+
+                        if (hasUnpaid) {
+                            setTimeout(() => {
+                                const payCard = paymentSection.querySelector('.rsvp-payment-card');
+                                if (payCard) {
+                                    payCard.classList.add('focused-highlight');
+                                    centerElementInForm(payCard);
+                                }
+                            }, 600);
+                        } else {
+                            setTimeout(() => {
+                                centerElementInForm(successBanner || currentCard);
+                            }, 120);
+                        }
                     }
                 }
-            }, delay);
+            }, 5000);
         }
 
         const guestCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
@@ -2044,6 +2101,7 @@
                 const toggleCard = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    cancelAutoAdvance();
                     flushAutoSave();
                     const isExpanded = card.classList.contains('expanded');
 
@@ -2130,6 +2188,7 @@
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    cancelAutoAdvance();
 
                     const val = btn.getAttribute('data-val') || '';
 
@@ -2250,6 +2309,7 @@
                 mBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    cancelAutoAdvance();
                     menuButtons.forEach(b => {
                         b.classList.remove('selected', 'menu-btn-error', 'menu-pulse-error');
                     });
@@ -2267,6 +2327,7 @@
             // Sin Gluten Checkbox
             if (celiacCheck) {
                 celiacCheck.addEventListener('change', () => {
+                    cancelAutoAdvance();
                     const cLabel = card.querySelector('.rsvp-celiac-label');
                     if (cLabel) cLabel.classList.remove('celiac-pulse-highlight');
                     if (card._celiacHighlightTimeout) {
@@ -2301,6 +2362,7 @@
 
             if (inputNombre) {
                 inputNombre.addEventListener('input', () => {
+                    cancelAutoAdvance();
                     if (inputNombre.value.trim().length > 0) {
                         inputNombre.classList.remove('input-field-error', 'input-flash-error', 'input-pulse-error');
                     }
@@ -2323,6 +2385,7 @@
             }
             if (inputApellido) {
                 inputApellido.addEventListener('input', () => {
+                    cancelAutoAdvance();
                     if (inputApellido.value.trim().length > 0) {
                         inputApellido.classList.remove('input-field-error', 'input-flash-error', 'input-pulse-error');
                     }
