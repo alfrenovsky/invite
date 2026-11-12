@@ -1925,7 +1925,9 @@
             const successBanner = document.getElementById('rsvpSuccessBanner');
             const paymentSection = document.getElementById('rsvpPaymentSection');
 
-            const delay = isAttending ? 1000 : 320;
+            const animationWait = 400;
+            const shockwaveDuration = 1000;
+            const delay = isAttending ? (animationWait + shockwaveDuration) : 320;
 
             if (isAttending) {
                 const asisteBtn = currentCard.querySelector('.btn-asiste');
@@ -1934,7 +1936,9 @@
                     void asisteBtn.offsetWidth;
                     asisteBtn.classList.add('confirm-flash');
                 }
-                triggerCardShockwave(currentCard);
+                setTimeout(() => {
+                    triggerCardShockwave(currentCard);
+                }, animationWait);
             }
 
             if (nextPending) {
