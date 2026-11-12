@@ -817,7 +817,7 @@
             box-sizing: border-box !important;
             pointer-events: none !important;
             z-index: 999999 !important;
-            animation: floatingCardShockwave 1s cubic-bezier(0.1, 0.85, 0.25, 1) forwards;
+            animation: floatingCardShockwave 1.8s cubic-bezier(0.1, 0.85, 0.25, 1) forwards;
         }
 
         @keyframes floatingCardShockwave {

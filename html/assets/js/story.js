@@ -1895,7 +1895,7 @@
 
             setTimeout(() => {
                 shockwave.remove();
-            }, 1000);
+            }, 1800);
         }
 
         function handleGuestStepAdvancement(currentCard, isAttending) {
@@ -1925,8 +1925,8 @@
             const successBanner = document.getElementById('rsvpSuccessBanner');
             const paymentSection = document.getElementById('rsvpPaymentSection');
 
-            const animationWait = 400;
-            const shockwaveDuration = 1000;
+            const animationWait = 1000;
+            const shockwaveDuration = 1800;
             const delay = isAttending ? (animationWait + shockwaveDuration) : 320;
 
             if (isAttending) {
