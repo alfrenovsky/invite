@@ -1939,13 +1939,7 @@
                 return false;
             };
 
-            const currentIdx = allCards.indexOf(currentCard);
-            let nextPending = null;
-            if (currentIdx !== -1) {
-                nextPending = allCards.slice(currentIdx + 1).find(isCardPending) ||
-                              allCards.slice(0, currentIdx).find(isCardPending);
-            }
-
+            const anyPending = allCards.some(isCardPending);
             const successBanner = document.getElementById('rsvpSuccessBanner');
             const paymentSection = document.getElementById('rsvpPaymentSection');
 
@@ -1965,41 +1959,18 @@
                 }, animationWait);
             }
 
-            if (nextPending) {
-                if (successBanner) successBanner.style.display = 'none';
-                setTimeout(() => {
-                    currentCard.classList.remove('card-confirm-flash');
-                    const asisteBtn = currentCard.querySelector('.btn-asiste');
-                    if (asisteBtn) asisteBtn.classList.remove('confirm-flash');
+            setTimeout(() => {
+                currentCard.classList.remove('card-confirm-flash');
+                const asisteBtn = currentCard.querySelector('.btn-asiste');
+                if (asisteBtn) asisteBtn.classList.remove('confirm-flash');
 
-                    currentCard.classList.remove('expanded');
-                    const h = currentCard.querySelector('.rsvp-card-header');
-                    if (h) h.setAttribute('aria-expanded', 'false');
-
-                    allCards.forEach(c => {
-                        if (c !== nextPending) {
-                            c.classList.remove('expanded', 'card-confirm-flash');
-                            c.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'false');
-                        }
-                    });
-                    nextPending.classList.add('expanded');
-                    nextPending.querySelector('.rsvp-card-header')?.setAttribute('aria-expanded', 'true');
-                    setTimeout(() => centerElementInForm(nextPending), 80);
-                }, delay);
-            } else {
-                // All guests have responded!
-                setTimeout(() => {
-                    currentCard.classList.remove('card-confirm-flash');
-                    const asisteBtn = currentCard.querySelector('.btn-asiste');
-                    if (asisteBtn) asisteBtn.classList.remove('confirm-flash');
-
-                    currentCard.classList.remove('expanded');
-                    const h = currentCard.querySelector('.rsvp-card-header');
-                    if (h) h.setAttribute('aria-expanded', 'false');
-
+                if (anyPending) {
+                    if (successBanner) successBanner.style.display = 'none';
+                } else {
+                    // All guests have responded!
                     const anyAttending = allCards.some(c => c.getAttribute('data-status') === 'si');
                     if (anyAttending) {
-                        if (successBanner) {
+                        if (successBanner && successBanner.style.display !== 'flex') {
                             successBanner.style.display = 'flex';
                             successBanner.classList.remove('banner-flash');
                             void successBanner.offsetWidth; // trigger reflow
@@ -2007,27 +1978,9 @@
                             triggerCardShockwave(successBanner, 1000);
                         }
                         flushAutoSave();
-
-                        const hasUnpaid = paymentSection &&
-                                          paymentSection.style.display !== 'none' &&
-                                          !paymentSection.querySelector('.payment-registered-card');
-
-                        if (hasUnpaid) {
-                            setTimeout(() => {
-                                const payCard = paymentSection.querySelector('.rsvp-payment-card');
-                                if (payCard) {
-                                    payCard.classList.add('focused-highlight');
-                                    centerElementInForm(payCard);
-                                }
-                            }, 600);
-                        } else {
-                            setTimeout(() => {
-                                centerElementInForm(successBanner || currentCard);
-                            }, 120);
-                        }
                     }
-                }, delay);
-            }
+                }
+            }, delay);
         }
 
         const guestCards = Array.from(document.querySelectorAll('.rsvp-guest-card[data-guest-id]'));
