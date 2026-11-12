@@ -1873,7 +1873,7 @@
             'vegano': '🌱'
         };
 
-        function triggerCardShockwave(card) {
+        function triggerCardShockwave(card, duration = 1800) {
             if (!card) return;
             const storyContainer = document.getElementById('storyContainer') || document.body;
             const cRect = card.getBoundingClientRect();
@@ -1881,6 +1881,7 @@
 
             const shockwave = document.createElement('div');
             shockwave.className = 'rsvp-card-shockwave-layer';
+            const animSec = (duration / 1000).toFixed(2);
             shockwave.style.cssText = `
                 position: absolute;
                 top: ${cRect.top - sRect.top}px;
@@ -1890,12 +1891,13 @@
                 border-radius: 14px;
                 pointer-events: none;
                 z-index: 999999 !important;
+                animation: floatingCardShockwave ${animSec}s cubic-bezier(0.1, 0.85, 0.25, 1) forwards !important;
             `;
             storyContainer.appendChild(shockwave);
 
             setTimeout(() => {
                 shockwave.remove();
-            }, 1800);
+            }, duration);
         }
 
         function handleGuestStepAdvancement(currentCard, isAttending) {
@@ -1980,6 +1982,7 @@
                             successBanner.classList.remove('banner-flash');
                             void successBanner.offsetWidth; // trigger reflow
                             successBanner.classList.add('banner-flash');
+                            triggerCardShockwave(successBanner, 1000);
                         }
                         flushAutoSave();
 
