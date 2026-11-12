@@ -1131,10 +1131,26 @@
             margin-bottom: 2px;
         }
 
-        .rsvp-celiac-custom-box.celiac-pulse-highlight {
+        .rsvp-celiac-label.celiac-pulse-highlight .rsvp-celiac-custom-box {
             border-color: #ef4444 !important;
             box-shadow: 0 0 10px rgba(239, 68, 68, 0.7) !important;
             animation: pulseErrorFlash 1s ease-in-out infinite !important;
+        }
+
+        .rsvp-celiac-label.celiac-pulse-highlight .rsvp-celiac-text {
+            color: #fca5a5 !important;
+            animation: pulseTextErrorFlash 1s ease-in-out infinite !important;
+        }
+
+        @keyframes pulseTextErrorFlash {
+            0%, 100% {
+                color: #f87171;
+                text-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                color: #ef4444;
+                text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+            }
         }
 
         .rsvp-celiac-text {

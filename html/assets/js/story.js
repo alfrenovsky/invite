@@ -360,18 +360,21 @@
 
     function flashCeliacBox(card) {
         if (!card) return;
-        const celiacBox = card.querySelector('.rsvp-celiac-custom-box');
-        if (!celiacBox) return;
+        const celiacCheck = card.querySelector('.rsvp-celiac-checkbox');
+        if (celiacCheck && celiacCheck.checked) return; // Salvo que esté elegido
+
+        const celiacLabel = card.querySelector('.rsvp-celiac-label');
+        if (!celiacLabel) return;
 
         if (card._celiacHighlightTimeout) {
             clearTimeout(card._celiacHighlightTimeout);
         }
-        celiacBox.classList.remove('celiac-pulse-highlight');
-        void celiacBox.offsetWidth; // Force reflow
-        celiacBox.classList.add('celiac-pulse-highlight');
+        celiacLabel.classList.remove('celiac-pulse-highlight');
+        void celiacLabel.offsetWidth; // Force reflow
+        celiacLabel.classList.add('celiac-pulse-highlight');
 
         card._celiacHighlightTimeout = setTimeout(() => {
-            celiacBox.classList.remove('celiac-pulse-highlight');
+            celiacLabel.classList.remove('celiac-pulse-highlight');
             card._celiacHighlightTimeout = null;
         }, 2000);
     }
@@ -2108,8 +2111,8 @@
                 mBtns.forEach(b => b.classList.remove('menu-pulse-error', 'menu-btn-error'));
                 const menuBox = card.querySelector('.rsvp-menu-buttons');
                 if (menuBox) menuBox.classList.remove('menu-flash-error');
-                const cBox = card.querySelector('.rsvp-celiac-custom-box');
-                if (cBox) cBox.classList.remove('celiac-pulse-highlight');
+                const cLabel = card.querySelector('.rsvp-celiac-label');
+                if (cLabel) cLabel.classList.remove('celiac-pulse-highlight');
                 if (card._celiacHighlightTimeout) {
                     clearTimeout(card._celiacHighlightTimeout);
                     card._celiacHighlightTimeout = null;
@@ -2278,8 +2281,8 @@
             // Sin Gluten Checkbox
             if (celiacCheck) {
                 celiacCheck.addEventListener('change', () => {
-                    const cBox = card.querySelector('.rsvp-celiac-custom-box');
-                    if (cBox) cBox.classList.remove('celiac-pulse-highlight');
+                    const cLabel = card.querySelector('.rsvp-celiac-label');
+                    if (cLabel) cLabel.classList.remove('celiac-pulse-highlight');
                     if (card._celiacHighlightTimeout) {
                         clearTimeout(card._celiacHighlightTimeout);
                         card._celiacHighlightTimeout = null;
