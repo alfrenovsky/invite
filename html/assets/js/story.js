@@ -909,13 +909,13 @@
             if (inputApellido !== null) {
                 payload.apellido = inputApellido.value.trim();
             }
-            payload.pa = (conf === 'si') ? selectedMenu : '';
-            payload.ap = (conf === 'si') ? selectedMenu : '';
-            payload.pa_general = (conf === 'si' && selectedMenu === 'general') ? 'si' : '';
-            payload.pa_vegetariano = (conf === 'si' && selectedMenu === 'vegetariano') ? 'si' : '';
-            payload.pa_vegano = (conf === 'si' && selectedMenu === 'vegano') ? 'si' : '';
-            payload.celiaco = (conf === 'si' && isCeliac) ? 'si' : '';
-            payload.pa_celiaco = (conf === 'si' && isCeliac) ? 'si' : '';
+            payload.pa = selectedMenu;
+            payload.ap = selectedMenu;
+            payload.pa_general = (selectedMenu === 'general') ? 'si' : '';
+            payload.pa_vegetariano = (selectedMenu === 'vegetariano') ? 'si' : '';
+            payload.pa_vegano = (selectedMenu === 'vegano') ? 'si' : '';
+            payload.celiaco = isCeliac ? 'si' : '';
+            payload.pa_celiaco = isCeliac ? 'si' : '';
 
             return payload;
         }
@@ -931,13 +931,13 @@
             nombre: inputNombre ? inputNombre.value.trim() : '',
             apellido: inputApellido ? inputApellido.value.trim() : '',
             confirmacion: asistencia,
-            pa: (asistencia === 'si') ? selectedMenu : '',
-            ap: (asistencia === 'si') ? selectedMenu : '',
-            celiaco: (asistencia === 'si' && isCeliac) ? 'si' : '',
-            pa_general: (asistencia === 'si' && selectedMenu === 'general') ? 'si' : '',
-            pa_vegetariano: (asistencia === 'si' && selectedMenu === 'vegetariano') ? 'si' : '',
-            pa_vegano: (asistencia === 'si' && selectedMenu === 'vegano') ? 'si' : '',
-            pa_celiaco: (asistencia === 'si' && isCeliac) ? 'si' : ''
+            pa: selectedMenu,
+            ap: selectedMenu,
+            celiaco: isCeliac ? 'si' : '',
+            pa_general: (selectedMenu === 'general') ? 'si' : '',
+            pa_vegetariano: (selectedMenu === 'vegetariano') ? 'si' : '',
+            pa_vegano: (selectedMenu === 'vegano') ? 'si' : '',
+            pa_celiaco: isCeliac ? 'si' : ''
         };
     }
 

@@ -199,6 +199,27 @@ class TestGoogleSheetsTable(unittest.TestCase):
         self.assertTrue(res[0]["url"].startswith(f"{BASE_URL}/amigos_"))
         self.assertTrue(res[0]["whatsapp"].startswith("https://wa.me/5491112345678?text="))
 
+    def test_dietary_preferences_preserved_when_pending_or_no(self):
+        sample_data = [
+            {"id": "rec_pend", "apellido": "Gomez", "nombre": "Ana", "confirmacion": "", "url": "http://test/i/1", "whatsapp": ""}
+        ]
+        self.mock_ws.get_all_records.return_value = sample_data
+        self.table.get_all()
+
+        # Update dietary preferences while confirmacion is still pending ("")
+        updated = self.table.update_record("rec_pend", {"pa": "vegano", "celiaco": "si"})
+        self.assertIsNotNone(updated)
+        self.assertEqual(updated["pa"], "vegano")
+        self.assertEqual(updated["celiaco"], "si")
+        self.assertEqual(updated["pa_vegano"], "si")
+
+        # Update confirmacion to "no" - dietary preferences must be retained!
+        updated_no = self.table.update_record("rec_pend", {"confirmacion": "no"})
+        self.assertIsNotNone(updated_no)
+        self.assertEqual(updated_no["confirmacion"], "no")
+        self.assertEqual(updated_no["pa"], "vegano")
+        self.assertEqual(updated_no["celiaco"], "si")
+
     def test_update_record_and_batch_flush(self):
         sample_data = [
             {"id": "abc12345", "apellido": "Perez", "nombre": "Juan", "confirmacion": "si", "url": "http://test/i/1", "whatsapp": ""}
