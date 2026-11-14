@@ -1311,7 +1311,7 @@ def delete_comprobante(token):
 
     guests = table.get_by_invitacion(validated_slug)
     for g in guests:
-        table.update_record(g["id"], {"comprobante": ""})
+        table.update_record(g["id"], {"comprobante": "", "montocomprobante": ""})
 
     return jsonify({"ok": True, "message": "Comprobante desvinculado con éxito"})
 

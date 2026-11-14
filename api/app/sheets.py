@@ -30,6 +30,7 @@ FIELDNAMES = [
     "abierto",
     "pagado",
     "comprobante",
+    "montocomprobante",
 ]
 
 
@@ -406,6 +407,7 @@ class GoogleSheetsTable:
         item["enviado"] = "si" if enviado_val in ("si", "sí", "true", "1") else ""
 
         item["comprobante"] = str(rec.get("comprobante", "") or "")
+        item["montocomprobante"] = str(rec.get("montocomprobante", "") or "")
         item["pagado"] = str(rec.get("pagado", "") or "").strip()
         abierto_val = rec.get("abierto", "")
         if isinstance(abierto_val, int) and abierto_val > 0:

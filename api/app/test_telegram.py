@@ -774,6 +774,83 @@ class TestTelegramBot(unittest.TestCase):
             self.assertEqual(records[1]["pagado"], "no")
             self.assertIn("desmarcado", mock_send.call_args[0][1])
 
+    def test_comprobante_monto_confirmation_in_sheets(self):
+        records = [
+            {
+                "id": "m1",
+                "invitacion": "gaby_luna",
+                "nombre": "Diana",
+                "apellido": "Kessler",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "no",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/comp1.pdf\nhttps://test/comprobantes/comp2.jpg",
+                "montocomprobante": "",
+            },
+            {
+                "id": "m2",
+                "invitacion": "gaby_luna",
+                "nombre": "Gaby",
+                "apellido": "Luna",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "no",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/comp1.pdf\nhttps://test/comprobantes/comp2.jpg",
+                "montocomprobante": "",
+            },
+        ]
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = records
+
+        def fake_update(rec_id, fields):
+            for r in records:
+                if r["id"] == rec_id:
+                    r.update(fields)
+            return True
+
+        mock_table.update_record.side_effect = fake_update
+
+        with patch("telegram_bot.is_subscribed", return_value=True), \
+             patch("telegram_bot.call_telegram_api"), \
+             patch("telegram_bot.send_message") as mock_send:
+            # 1. Confirm monto for comp2 (index 1) first via quick-select button
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_cm1", "data": "pagos_comp_m:gaby_luna:1", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            prompt_markup = mock_send.call_args[1].get("reply_markup") or {}
+            prompt_buttons = [b for row in prompt_markup.get("inline_keyboard", []) for b in row]
+            self.assertTrue(any(b["callback_data"] == "pagos_comp_set:gaby_luna:1:105000" for b in prompt_buttons))
+            self.assertTrue(any(b["callback_data"] == "pagos_comp_set:gaby_luna:1:210000" for b in prompt_buttons))
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_cm2", "data": "pagos_comp_set:gaby_luna:1:105000", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertEqual(records[0]["montocomprobante"], "comp2.jpg: 105000")
+            self.assertEqual(records[1]["montocomprobante"], "comp2.jpg: 105000")
+
+            # 2. Confirm monto for comp1 (index 0) via manual text input
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_cm3", "data": "pagos_comp_m:gaby_luna:0", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            telegram_bot._handle_update({
+                "message": {"chat": {"id": 88888}, "from": {"first_name": "Admin"}, "text": "$ 50.000"}
+            }, table=mock_table)
+            self.assertEqual(records[0]["montocomprobante"], "comp1.pdf: 50000\ncomp2.jpg: 105000")
+
+            # 3. Verify por_confirmar displays both amounts and total confirmed
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_cm4", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            text = mock_send.call_args[0][1]
+            self.assertIn("💰 $50.000", text)
+            self.assertIn("💰 $105.000", text)
+            self.assertIn("$155.000</b> / $210.000", text)
+
 
 if __name__ == "__main__":
     unittest.main()

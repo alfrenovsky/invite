@@ -1236,7 +1236,7 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 res = client.delete(f"/i/{token}/comprobante")
                 self.assertEqual(res.status_code, 200)
                 self.assertTrue(res.get_json()["ok"])
-                mock_update.assert_called_once_with("g1", {"comprobante": ""})
+                mock_update.assert_called_once_with("g1", {"comprobante": "", "montocomprobante": ""})
 
     def test_flush_invitacion_cache_endpoint(self):
         from app import app

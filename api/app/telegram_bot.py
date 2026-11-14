@@ -453,7 +453,12 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
     )
     _log(f"[NOTIFY:COMPROBANTE] invitacion={clean_id} file={filename}")
     markup = {
-        "inline_keyboard": [[{"text": "👁️ Ver comprobante", "callback_data": f"pagos_ver:{clean_id[:46]}:-1"}]]
+        "inline_keyboard": [
+            [
+                {"text": "👁️ Ver comprobante", "callback_data": f"pagos_ver:{clean_id[:46]}:-1"},
+                {"text": "💵 Confirmar monto", "callback_data": f"pagos_comp_m:{clean_id[:46]}:-1"},
+            ]
+        ]
     }
     broadcast_message(msg, reply_markup=markup)
 
@@ -1084,6 +1089,101 @@ def _get_group_comprobante_urls(recs: list) -> list:
     return urls
 
 
+def _comprobante_key_from_url(comp_url: str) -> str:
+    parsed = urllib.parse.urlparse(str(comp_url or "").strip())
+    base = os.path.basename(urllib.parse.unquote(parsed.path or ""))
+    return base or str(comp_url or "").strip()
+
+
+def _parse_montocomprobante_map(recs: list) -> dict:
+    """Parses 'archivo: monto' lines (or plain single number fallback) from montocomprobante."""
+    result = {}
+    for r in recs or []:
+        raw = str(r.get("montocomprobante", "") or "").strip()
+        if not raw:
+            continue
+        for line in re.split(r"[\r\n]+", raw):
+            part = line.strip()
+            if not part:
+                continue
+            if ":" in part:
+                key_part, val_part = part.rsplit(":", 1)
+                key = _comprobante_key_from_url(key_part.strip())
+                monto = _parse_monto_int(val_part)
+                if key and monto > 0:
+                    result[key] = monto
+            else:
+                monto = _parse_monto_int(part)
+                if monto > 0:
+                    result["__single__"] = monto
+    return result
+
+
+def _get_comprobante_monto(comp_url: str, comp_urls: list, monto_map: dict) -> int:
+    key = _comprobante_key_from_url(comp_url)
+    if key in monto_map:
+        return monto_map[key]
+    if comp_url in monto_map:
+        return monto_map[comp_url]
+    if len(comp_urls) == 1 and "__single__" in monto_map:
+        return monto_map["__single__"]
+    return 0
+
+
+def _serialize_montocomprobante_map(comp_urls: list, monto_map: dict) -> str:
+    lines = []
+    for u in comp_urls or []:
+        key = _comprobante_key_from_url(u)
+        monto = _get_comprobante_monto(u, comp_urls, monto_map)
+        if key and monto > 0:
+            lines.append(f"{key}: {monto}")
+    return "\n".join(lines)
+
+
+def _append_comprobante_lines_and_buttons(
+    lines: list,
+    kb_rows: list,
+    inv_id: str,
+    recs: list,
+    comp_urls: list,
+    include_links: bool = True,
+):
+    if not comp_urls:
+        return
+    monto_map = _parse_montocomprobante_map(recs)
+    confirmed_sum = 0
+    for c_idx, u in enumerate(comp_urls, start=1):
+        m = _get_comprobante_monto(u, comp_urls, monto_map)
+        if m > 0:
+            confirmed_sum += m
+            status_txt = f"💰 {_format_monto_ar(m)}"
+        else:
+            status_txt = "⏳ Monto sin confirmar"
+        if include_links:
+            lines.append(f'🔗 <a href="{html.escape(u)}">Ver comprobante {c_idx}</a> — {status_txt}')
+        else:
+            lines.append(f"📎 Comprobante {c_idx} — {status_txt}")
+
+    if confirmed_sum > 0:
+        expected_total = sum(_parse_monto_int(r.get("montotarjeta")) for r in recs if _is_paying_guest(r) or _is_paid_record(r))
+        if expected_total > 0:
+            lines.append(f"🧾 Comprobantes confirmados: <b>{_format_monto_ar(confirmed_sum)}</b> / {_format_monto_ar(expected_total)}")
+        else:
+            lines.append(f"🧾 Comprobantes confirmados: <b>{_format_monto_ar(confirmed_sum)}</b>")
+
+    for c_idx, u in enumerate(comp_urls, start=1):
+        m = _get_comprobante_monto(u, comp_urls, monto_map)
+        view_label = f"👁️ Ver comprobante {c_idx}" if len(comp_urls) > 1 else "👁️ Ver comprobante"
+        if m > 0:
+            monto_label = f"✏️ Monto {c_idx} ({_format_monto_ar(m)})" if len(comp_urls) > 1 else f"✏️ Monto ({_format_monto_ar(m)})"
+        else:
+            monto_label = f"💵 Confirmar monto {c_idx}" if len(comp_urls) > 1 else "💵 Confirmar monto"
+        kb_rows.append([
+            {"text": view_label, "callback_data": f"pagos_ver:{inv_id[:46]}:{c_idx - 1}"},
+            {"text": monto_label, "callback_data": f"pagos_comp_m:{inv_id[:46]}:{c_idx - 1}"},
+        ])
+
+
 def _group_records_by_invitacion(records: list) -> dict:
     groups = {}
     for r in records or []:
@@ -1246,9 +1346,7 @@ def _handle_pagos_search(chat_id: int | str, query: str, table):
             total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
             kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
 
-        for c_idx, _ in enumerate(comp_urls, start=1):
-            label = f"👁️ Ver comprobante {c_idx}" if len(comp_urls) > 1 else "👁️ Ver comprobante"
-            kb_rows.append([{"text": label, "callback_data": f"pagos_ver:{inv_id[:46]}:{c_idx - 1}"}])
+        _append_comprobante_lines_and_buttons(lines, kb_rows, inv_id, recs, comp_urls, include_links=False)
 
         kb_rows.append([{"text": f"📎 Subir comprobante ({group_title[:22]})", "callback_data": f"pagos_up:{inv_id[:52]}"}])
 
@@ -1308,13 +1406,8 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
         for r in recs:
             lines.append(_format_guest_monto_line(r))
 
-        for c_idx, u in enumerate(comp_urls, start=1):
-            lines.append(f'🔗 <a href="{html.escape(u)}">Ver comprobante {c_idx}</a>')
-
         kb_rows = []
-        for c_idx, _ in enumerate(comp_urls, start=1):
-            label = f"👁️ Ver comprobante {c_idx}" if len(comp_urls) > 1 else "👁️ Ver comprobante"
-            kb_rows.append([{"text": label, "callback_data": f"pagos_ver:{inv_id[:46]}:{c_idx - 1}"}])
+        _append_comprobante_lines_and_buttons(lines, kb_rows, inv_id, recs, comp_urls, include_links=True)
 
         for r in unpaid_paying:
             gid = str(r.get("id", "") or "").strip()
@@ -1449,15 +1542,136 @@ def _handle_ver_comprobante(chat_id: int | str, inv_prefix: str, idx_str: str, t
         idx = -1
 
     if idx < 0 or idx >= len(comp_urls):
-        comp_url = comp_urls[-1]
-        label_idx = len(comp_urls)
+        resolved_idx = len(comp_urls) - 1
     else:
-        comp_url = comp_urls[idx]
-        label_idx = idx + 1
+        resolved_idx = idx
+    comp_url = comp_urls[resolved_idx]
+    label_idx = resolved_idx + 1
 
+    monto_map = _parse_montocomprobante_map(groups[inv_id])
+    curr_monto = _get_comprobante_monto(comp_url, comp_urls, monto_map)
     group_title = inv_id.replace("_", " ").title()
     caption = f"🧾 {group_title} — Comprobante {label_idx}/{len(comp_urls)}"
-    _send_comprobante_preview(chat_id, comp_url, caption=caption)
+    if curr_monto > 0:
+        caption += f" (💰 {_format_monto_ar(curr_monto)})"
+        btn_label = f"✏️ Editar monto ({_format_monto_ar(curr_monto)})"
+    else:
+        btn_label = "💵 Confirmar monto"
+
+    markup = {
+        "inline_keyboard": [
+            [{"text": btn_label, "callback_data": f"pagos_comp_m:{inv_id[:46]}:{resolved_idx}"}]
+        ]
+    }
+    _send_comprobante_preview(chat_id, comp_url, caption=caption, reply_markup=markup)
+
+
+def _resolve_comp_target(inv_prefix: str, idx_str: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        return None, None, None, None, "Error: Base de datos no disponible."
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    inv_id = next((k for k in groups if k == inv_prefix or k.startswith(inv_prefix)), None)
+    if not inv_id:
+        return tbl, None, None, None, "❌ No se encontró la invitación."
+    recs = groups[inv_id]
+    comp_urls = _get_group_comprobante_urls(recs)
+    if not comp_urls:
+        return tbl, inv_id, recs, None, "❌ Esta invitación no tiene comprobantes."
+    try:
+        idx = int(idx_str)
+    except (TypeError, ValueError):
+        idx = -1
+    resolved_idx = (len(comp_urls) - 1) if (idx < 0 or idx >= len(comp_urls)) else idx
+    return tbl, inv_id, recs, (comp_urls, resolved_idx), None
+
+
+def _prompt_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, table):
+    tbl, inv_id, recs, comp_info, err = _resolve_comp_target(inv_prefix, idx_str, table)
+    if err:
+        send_message(chat_id, err)
+        return
+
+    comp_urls, resolved_idx = comp_info
+    with _lock:
+        _user_states[str(chat_id)] = f"awaiting_comp_monto:{inv_id}:{resolved_idx}"
+
+    suggested = []
+    seen_amt = set()
+    for r in recs:
+        if _is_paying_guest(r) or _is_paid_record(r):
+            amt = _parse_monto_int(r.get("montotarjeta"))
+            if amt > 0 and amt not in seen_amt:
+                seen_amt.add(amt)
+                suggested.append(amt)
+    paying_recs = [r for r in recs if _is_paying_guest(r) or _is_paid_record(r)]
+    if len(paying_recs) >= 2:
+        total_amt = sum(_parse_monto_int(r.get("montotarjeta")) for r in paying_recs)
+        if total_amt > 0 and total_amt not in seen_amt:
+            seen_amt.add(total_amt)
+            suggested.append(total_amt)
+
+    kb_rows = []
+    if suggested:
+        row = []
+        for amt in suggested[:4]:
+            row.append({
+                "text": f"💰 {_format_monto_ar(amt)}",
+                "callback_data": f"pagos_comp_set:{inv_id[:30]}:{resolved_idx}:{amt}",
+            })
+            if len(row) == 2:
+                kb_rows.append(row)
+                row = []
+        if row:
+            kb_rows.append(row)
+    kb_rows.append([{"text": "❌ Cancelar", "callback_data": "cmd:pagos"}])
+
+    group_title = inv_id.replace("_", " ").title()
+    send_message(
+        chat_id,
+        f"💵 <b>Confirmar monto — Comprobante {resolved_idx + 1}/{len(comp_urls)}</b>\n"
+        f"💌 Tarjeta: <b>{html.escape(group_title)}</b>\n\n"
+        f"Escribí el monto (ej: <code>105000</code>) o elegí una opción:",
+        reply_markup={"inline_keyboard": kb_rows},
+    )
+
+
+def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, amount_val, table):
+    monto = _parse_monto_int(amount_val)
+    if monto <= 0:
+        send_message(chat_id, "⚠️ Ingresá un monto válido mayor a 0 (ej: <code>105000</code>).")
+        return
+
+    tbl, inv_id, recs, comp_info, err = _resolve_comp_target(inv_prefix, idx_str, table)
+    if err:
+        send_message(chat_id, err)
+        return
+
+    comp_urls, resolved_idx = comp_info
+    target_url = comp_urls[resolved_idx]
+    target_key = _comprobante_key_from_url(target_url)
+
+    monto_map = _parse_montocomprobante_map(recs)
+    monto_map[target_key] = monto
+    combined = _serialize_montocomprobante_map(comp_urls, monto_map)
+
+    for g in recs:
+        tbl.update_record(g["id"], {"montocomprobante": combined})
+
+    _log(f"[PAGOS:COMP_MONTO] chat_id={chat_id} invitacion={inv_id} file={target_key} monto={monto}")
+    group_title = inv_id.replace("_", " ").title()
+    send_message(
+        chat_id,
+        f"✅ Monto confirmado para <b>Comprobante {resolved_idx + 1}/{len(comp_urls)}</b> "
+        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>",
+        reply_markup={
+            "inline_keyboard": [
+                [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
+                [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
+            ]
+        },
+    )
 
 
 def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
@@ -1766,6 +1980,19 @@ def _handle_update(update: dict, table=None):
             _handle_ver_comprobante(cq_chat_id, inv_prefix.strip(), idx_str.strip(), table or _table_ref)
             return
 
+        if cq_data.startswith("pagos_comp_m:"):
+            rest = cq_data[len("pagos_comp_m:"):].strip()
+            inv_prefix, idx_str = rest.rsplit(":", 1) if ":" in rest else (rest, "-1")
+            _prompt_comprobante_monto(cq_chat_id, inv_prefix.strip(), idx_str.strip(), table or _table_ref)
+            return
+
+        if cq_data.startswith("pagos_comp_set:"):
+            rest = cq_data[len("pagos_comp_set:"):].strip()
+            parts = rest.rsplit(":", 2)
+            if len(parts) == 3:
+                _apply_comprobante_monto(cq_chat_id, parts[0].strip(), parts[1].strip(), parts[2].strip(), table or _table_ref)
+            return
+
         if cq_data in ("cmd:menu", "cmd:cancel"):
             _send_main_menu(cq_chat_id, cq_user_name)
             return
@@ -1854,13 +2081,20 @@ def _handle_update(update: dict, table=None):
     if not text.startswith("/"):
         with _lock:
             state = _user_states.get(str(chat_id))
-            if state in ("awaiting_search_query", "awaiting_pagos_search"):
+            if state in ("awaiting_search_query", "awaiting_pagos_search") or (
+                isinstance(state, str) and state.startswith("awaiting_comp_monto:")
+            ):
                 _user_states.pop(str(chat_id), None)
         if state == "awaiting_search_query" and text:
             _handle_search_flow(chat_id, text, table or _table_ref)
             return
         if state == "awaiting_pagos_search" and text:
             _handle_pagos_search(chat_id, text, table or _table_ref)
+            return
+        if isinstance(state, str) and state.startswith("awaiting_comp_monto:") and text:
+            rest = state[len("awaiting_comp_monto:"):]
+            inv_id, idx_str = rest.rsplit(":", 1) if ":" in rest else (rest, "-1")
+            _apply_comprobante_monto(chat_id, inv_id, idx_str, text, table or _table_ref)
             return
         if isinstance(state, str) and state.startswith("awaiting_comprobante:"):
             inv_id = state[len("awaiting_comprobante:"):]
