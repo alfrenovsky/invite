@@ -995,6 +995,44 @@ class TestTelegramBot(unittest.TestCase):
             }, table=mock_table)
             self.assertIn("No hay comprobantes pendientes", mock_send.call_args[0][1])
 
+    def test_por_confirmar_excludes_fully_allocated_comprobantes(self):
+        records = [
+            {
+                "id": "f1",
+                "invitacion": "gaby_luna",
+                "nombre": "Diana",
+                "apellido": "Kessler",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/c1.pdf",
+                "montocomprobante": "c1.pdf: 105000",
+            },
+            {
+                "id": "f2",
+                "invitacion": "gaby_luna",
+                "nombre": "Gaby",
+                "apellido": "Luna",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "105000",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/c1.pdf",
+                "montocomprobante": "c1.pdf: 105000",
+            },
+        ]
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = records
+
+        with patch("telegram_bot.is_subscribed", return_value=True), \
+             patch("telegram_bot.call_telegram_api"), \
+             patch("telegram_bot.send_message") as mock_send:
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_fa1", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertIn("No hay comprobantes pendientes", mock_send.call_args[0][1])
+
 
 if __name__ == "__main__":
     unittest.main()

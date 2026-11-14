@@ -1228,7 +1228,8 @@ def _classify_pagos_groups(records: list):
             monto_map = _parse_montocomprobante_map(recs)
             has_unconfirmed_comp = any(_get_comprobante_monto(u, comp_urls, monto_map) <= 0 for u in comp_urls)
             unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
-            if has_unconfirmed_comp or unpaid_paying:
+            _, _, available = _get_group_comprobantes_balance(recs)
+            if has_unconfirmed_comp or (available > 0 and unpaid_paying):
                 with_comp_unconfirmed.append((inv_id, recs, comp_urls, unpaid_paying))
 
     return with_comp_unconfirmed
