@@ -589,7 +589,13 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("Sin pagar", conf_text)
         self.assertIn("💰 Pagado", conf_text)
         self.assertIn("https://test/comp1.pdf", conf_text)
-        self.assertTrue(any(b["callback_data"] == "pagos_ok_p:p3" and "$45.000" in b["text"] for b in conf_buttons))
+        self.assertTrue(any(
+            b["callback_data"] == "pagos_ok_p:p3"
+            and "Confirmar pago:" in b["text"]
+            and "✅" not in b["text"]
+            and "$45.000" in b["text"]
+            for b in conf_buttons
+        ))
         self.assertFalse(any(b["callback_data"] == "pagos_ok_p:p2" for b in conf_buttons))
 
         # 5. Confirm payment for Ana Perez (p3)
@@ -767,17 +773,6 @@ class TestTelegramBot(unittest.TestCase):
             }, table=mock_table)
             self.assertEqual(records[1]["pagado"], "no")
             self.assertIn("desmarcado", mock_send.call_args[0][1])
-
-            # 4. Lista de pagos
-            mock_send.reset_mock()
-            telegram_bot._handle_update({
-                "callback_query": {"id": "cq_l1", "data": "pagos:lista", "message": {"chat": {"id": 88888}}}
-            }, table=mock_table)
-            lista_text = mock_send.call_args[0][1]
-            self.assertIn("Lista de Pagos", lista_text)
-            self.assertIn("Pagados: <b>1</b> ($45.000)", lista_text)
-            self.assertIn("Pendientes: <b>1</b> ($45.000)", lista_text)
-            self.assertIn("Familia Rodriguez", lista_text)
 
 
 if __name__ == "__main__":

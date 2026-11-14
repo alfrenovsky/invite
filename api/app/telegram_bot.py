@@ -1144,7 +1144,6 @@ def _handle_pagos_menu(chat_id: int | str, table):
             [{"text": f"📎 Pagadas sin comprobante ({len(paid_without_comp)})", "callback_data": "pagos:sin_comp"}],
             [{"text": f"⏳ Con comprobante por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
             [{"text": "🔍 Buscar para marcar pago", "callback_data": "pagos:buscar"}],
-            [{"text": "📋 Lista de pagos", "callback_data": "pagos:lista"}],
             [{"text": "🏠 Menú", "callback_data": "cmd:menu"}],
         ]
     }
@@ -1155,55 +1154,6 @@ def _handle_pagos_menu(chat_id: int | str, table):
         f"• Con comprobante por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas",
         reply_markup=reply_markup,
     )
-
-
-def _handle_pagos_lista(chat_id: int | str, table):
-    tbl = table or _table_ref
-    if not tbl:
-        send_message(chat_id, "Error: Base de datos no disponible.")
-        return
-
-    records = tbl.get_all() or []
-    groups = _group_records_by_invitacion(records)
-    paying_groups = [
-        (inv_id, recs)
-        for inv_id, recs in sorted(groups.items())
-        if any(_is_paying_guest(r) or _is_paid_record(r) for r in recs)
-    ]
-
-    back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
-    if not paying_groups:
-        send_message(chat_id, "📋 No hay tarjetas con pagos registrados ni pendientes.", reply_markup=back_markup)
-        return
-
-    paid_count = 0
-    paid_amount = 0
-    pending_count = 0
-    pending_amount = 0
-    items = []
-
-    for inv_id, recs in paying_groups:
-        group_title = inv_id.replace("_", " ").title()
-        comp_urls = _get_group_comprobante_urls(recs)
-        comp_badge = f"📎 {len(comp_urls)} comp." if comp_urls else "Sin comp."
-        lines = [f"<b>{html.escape(group_title)}</b> · {comp_badge}"]
-        for r in recs:
-            lines.append(_format_guest_monto_line(r))
-            monto = _parse_monto_int(r.get("montotarjeta"))
-            if _is_paid_record(r):
-                paid_count += 1
-                paid_amount += monto
-            elif _is_paying_guest(r):
-                pending_count += 1
-                pending_amount += monto
-        items.append("\n".join(lines))
-
-    header = (
-        f"📋 <b>Lista de Pagos</b>\n"
-        f"• 💰 Pagados: <b>{paid_count}</b> ({_format_monto_ar(paid_amount)})\n"
-        f"• Pendientes: <b>{pending_count}</b> ({_format_monto_ar(pending_amount)})"
-    )
-    _send_chunked_messages(chat_id, header, items, reply_markup=back_markup)
 
 
 def _prompt_pagos_search(chat_id: int | str):
@@ -1373,12 +1323,12 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
             nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
             monto = _parse_monto_int(r.get("montotarjeta"))
             monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
-            kb_rows.append([{"text": f"✅ {nombre[:22]} ({monto_str})", "callback_data": f"pagos_ok_p:{gid}"}])
+            kb_rows.append([{"text": f"💰 Confirmar pago: {nombre[:20]} ({monto_str})", "callback_data": f"pagos_ok_p:{gid}"}])
 
         if len(unpaid_paying) >= 2:
             total_unpaid = sum(_parse_monto_int(r.get("montotarjeta")) for r in unpaid_paying)
             total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
-            kb_rows.append([{"text": f"✅ Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
+            kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
 
         if idx == len(with_comp_unconfirmed) - 1:
             kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
@@ -1788,10 +1738,6 @@ def _handle_update(update: dict, table=None):
 
         if cq_data == "pagos:buscar":
             _prompt_pagos_search(cq_chat_id)
-            return
-
-        if cq_data == "pagos:lista":
-            _handle_pagos_lista(cq_chat_id, table or _table_ref)
             return
 
         if cq_data.startswith("pagos_up:"):
