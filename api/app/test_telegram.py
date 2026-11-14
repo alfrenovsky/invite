@@ -972,13 +972,18 @@ class TestTelegramBot(unittest.TestCase):
         with patch("telegram_bot.is_subscribed", return_value=True), \
              patch("telegram_bot.call_telegram_api"), \
              patch("telegram_bot.send_message") as mock_send:
-            # 1. Partial amount (150000 < 210000) -> does NOT auto-distribute
+            # 1. Partial amount (150000 < 210000) -> does NOT auto-distribute, immediately shows assign buttons
             telegram_bot._handle_update({
                 "callback_query": {"id": "cq_ad1", "data": "pagos_comp_set:gaby_luna:0:150000", "message": {"chat": {"id": 88888}}}
             }, table=mock_table)
             self.assertEqual(records[0]["pagado"], "")
             self.assertEqual(records[1]["pagado"], "")
-            self.assertNotIn("automáticamente", mock_send.call_args[0][1])
+            partial_msg = mock_send.call_args[0][1]
+            partial_btns = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertNotIn("automáticamente", partial_msg)
+            self.assertIn("Disponible: <b>$150.000</b>", partial_msg)
+            self.assertTrue(any(b["callback_data"] == "pagos_ok_p:a1" for b in partial_btns))
+            self.assertTrue(any(b["callback_data"] == "pagos_ok_p:a2" for b in partial_btns))
 
             # 2. Full amount (210000 == 210000) -> auto-distributes 105000 to each and clears por_confirmar
             mock_send.reset_mock()

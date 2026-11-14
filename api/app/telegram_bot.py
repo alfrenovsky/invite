@@ -1697,16 +1697,33 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
             )
 
     group_title = inv_id.replace("_", " ").title()
+    header_line = (
+        f"✅ Monto confirmado para <b>Comprobante {resolved_idx + 1}/{len(comp_urls)}</b> "
+        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>{auto_note}"
+    )
+
+    kb_rows = []
+    if not auto_note and unpaid_targets:
+        _, assigned_sum, avail_sum = _get_group_comprobantes_balance(recs)
+        if avail_sum > 0:
+            lines = [header_line, ""]
+            for r in recs:
+                lines.append(_format_guest_monto_line(r))
+            lines.append(
+                f"🧾 Comprobantes: <b>{_format_monto_ar(total_comp)}</b> · "
+                f"Asignado: <b>{_format_monto_ar(assigned_sum)}</b> · "
+                f"Disponible: <b>{_format_monto_ar(avail_sum)}</b>"
+            )
+            _append_payment_action_buttons(kb_rows, inv_id, recs, unpaid_targets, include_unconfirm=False)
+            header_line = "\n".join(lines)
+
+    kb_rows.append([{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}])
+    kb_rows.append([{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}])
+
     send_message(
         chat_id,
-        f"✅ Monto confirmado para <b>Comprobante {resolved_idx + 1}/{len(comp_urls)}</b> "
-        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>{auto_note}",
-        reply_markup={
-            "inline_keyboard": [
-                [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
-                [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
-            ]
-        },
+        header_line,
+        reply_markup={"inline_keyboard": kb_rows},
     )
 
 
