@@ -931,6 +931,70 @@ class TestTelegramBot(unittest.TestCase):
             self.assertEqual(records[1]["pagado"], "105000")
             self.assertIn("Pago confirmado", mock_send.call_args[0][1])
 
+    def test_auto_distribute_when_comprobantes_cover_total(self):
+        records = [
+            {
+                "id": "a1",
+                "invitacion": "gaby_luna",
+                "nombre": "Diana",
+                "apellido": "Kessler",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/c1.pdf",
+                "montocomprobante": "",
+            },
+            {
+                "id": "a2",
+                "invitacion": "gaby_luna",
+                "nombre": "Gaby",
+                "apellido": "Luna",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/c1.pdf",
+                "montocomprobante": "",
+            },
+        ]
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = records
+
+        def fake_update(rec_id, fields):
+            for r in records:
+                if r["id"] == rec_id:
+                    r.update(fields)
+            return True
+
+        mock_table.update_record.side_effect = fake_update
+
+        with patch("telegram_bot.is_subscribed", return_value=True), \
+             patch("telegram_bot.call_telegram_api"), \
+             patch("telegram_bot.send_message") as mock_send:
+            # 1. Partial amount (150000 < 210000) -> does NOT auto-distribute
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_ad1", "data": "pagos_comp_set:gaby_luna:0:150000", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertEqual(records[0]["pagado"], "")
+            self.assertEqual(records[1]["pagado"], "")
+            self.assertNotIn("automáticamente", mock_send.call_args[0][1])
+
+            # 2. Full amount (210000 == 210000) -> auto-distributes 105000 to each and clears por_confirmar
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_ad2", "data": "pagos_comp_set:gaby_luna:0:210000", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertEqual(records[0]["pagado"], "105000")
+            self.assertEqual(records[1]["pagado"], "105000")
+            self.assertIn("Diana Kessler, Gaby Luna", mock_send.call_args[0][1])
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_ad3", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertIn("No hay comprobantes pendientes", mock_send.call_args[0][1])
+
 
 if __name__ == "__main__":
     unittest.main()

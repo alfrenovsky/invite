@@ -1667,11 +1667,32 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
         tbl.update_record(g["id"], {"montocomprobante": combined})
 
     _log(f"[PAGOS:COMP_MONTO] chat_id={chat_id} invitacion={inv_id} file={target_key} monto={monto}")
+
+    total_comp = sum(_get_comprobante_monto(u, comp_urls, monto_map) for u in comp_urls)
+    paying_targets = [r for r in recs if _is_paying_guest(r)]
+    expected_total = sum(_parse_monto_int(r.get("montotarjeta")) for r in paying_targets)
+    unpaid_targets = [r for r in paying_targets if not _is_paid_record(r)]
+
+    auto_note = ""
+    if expected_total > 0 and total_comp >= expected_total and unpaid_targets:
+        auto_paid_names = []
+        for r in unpaid_targets:
+            m_tarjeta = _parse_monto_int(r.get("montotarjeta"))
+            if m_tarjeta > 0:
+                tbl.update_record(r["id"], {"pagado": str(m_tarjeta)})
+                auto_paid_names.append(f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado")
+        if auto_paid_names:
+            _log(f"[PAGOS:AUTO_DISTRIBUTE] chat_id={chat_id} invitacion={inv_id} total={total_comp} guests={auto_paid_names}")
+            auto_note = (
+                f"\n\n🎉 ¡Los comprobantes cubren el total (<b>{_format_monto_ar(expected_total)}</b>)! "
+                f"Se marcó automáticamente como pagado a: <b>{html.escape(', '.join(auto_paid_names))}</b>."
+            )
+
     group_title = inv_id.replace("_", " ").title()
     send_message(
         chat_id,
         f"✅ Monto confirmado para <b>Comprobante {resolved_idx + 1}/{len(comp_urls)}</b> "
-        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>",
+        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>{auto_note}",
         reply_markup={
             "inline_keyboard": [
                 [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
