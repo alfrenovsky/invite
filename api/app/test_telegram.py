@@ -537,24 +537,17 @@ class TestTelegramBot(unittest.TestCase):
 
         mock_table.update_record.side_effect = fake_update
 
-        # 1. /pagos summary
+        # 1. /pagos summary (only Comprobantes por confirmar and Buscar)
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/pagos"}}, table=mock_table)
         menu_text = mock_send.call_args[0][1]
-        self.assertIn("Pagadas sin comprobante: <b>1</b>", menu_text)
-        self.assertIn("Con comprobante por confirmar: <b>1</b>", menu_text)
+        menu_markup = mock_send.call_args[1].get("reply_markup") or {}
+        menu_cbs = [b["callback_data"] for row in menu_markup.get("inline_keyboard", []) for b in row]
+        self.assertIn("Comprobantes por confirmar: <b>1</b>", menu_text)
+        self.assertIn("pagos:por_confirmar", menu_cbs)
+        self.assertIn("pagos:buscar", menu_cbs)
+        self.assertNotIn("pagos:sin_comp", menu_cbs)
 
-        # 2. List paid without comprobante -> shows Carlos Lopez and $50.000
-        mock_send.reset_mock()
-        with patch("telegram_bot.call_telegram_api"):
-            telegram_bot._handle_update({
-                "callback_query": {"id": "cq_p1", "data": "pagos:sin_comp", "message": {"chat": {"id": 88888}}}
-            }, table=mock_table)
-        sin_comp_text = mock_send.call_args[0][1]
-        self.assertIn("Carlos Lopez", sin_comp_text)
-        self.assertIn("$50.000", sin_comp_text)
-        self.assertIn("💰 Pagado", sin_comp_text)
-
-        # 3. Tap pagos_up:fam_pagada -> prompts for photo/PDF, then send photo
+        # 2. Tap pagos_up:fam_pagada -> prompts for photo/PDF, then send photo
         mock_send.reset_mock()
         with patch("telegram_bot.call_telegram_api"):
             telegram_bot._handle_update({
@@ -575,14 +568,17 @@ class TestTelegramBot(unittest.TestCase):
         self.assertTrue(records[0]["comprobante"].endswith(".jpg"))
         self.assertNotIn("88888", telegram_bot._user_states)
 
-        # 4. List with comprobante awaiting confirmation -> shows Ana Perez ($45.000) button, not Juan
+        # 4. List with comprobante awaiting confirmation -> shows both fam_comp (unpaid Ana) and fam_pagada (unconfirmed monto)
         mock_send.reset_mock()
         with patch("telegram_bot.call_telegram_api"):
             telegram_bot._handle_update({
                 "callback_query": {"id": "cq_p3", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
             }, table=mock_table)
-        conf_text = mock_send.call_args[0][1]
-        conf_markup = mock_send.call_args[1].get("reply_markup") or {}
+        self.assertEqual(len(mock_send.call_args_list), 2)
+        conf_text = mock_send.call_args_list[0][0][1]
+        conf_markup = mock_send.call_args_list[0][1].get("reply_markup") or {}
+        pagada_text = mock_send.call_args_list[1][0][1]
+        self.assertIn("Monto sin confirmar", pagada_text)
         conf_buttons = [b for row in conf_markup.get("inline_keyboard", []) for b in row]
         self.assertIn("Ana Perez", conf_text)
         self.assertIn("$45.000", conf_text)

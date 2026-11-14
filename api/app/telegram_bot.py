@@ -1220,22 +1220,18 @@ def _group_records_by_invitacion(records: list) -> dict:
 
 def _classify_pagos_groups(records: list):
     groups = _group_records_by_invitacion(records)
-    paid_without_comp = []
     with_comp_unconfirmed = []
 
     for inv_id, recs in sorted(groups.items()):
         comp_urls = _get_group_comprobante_urls(recs)
-        any_paid = any(_get_paid_amount(r) > 0 for r in recs)
-
-        if any_paid and not comp_urls:
-            paid_without_comp.append((inv_id, recs))
-
         if comp_urls:
+            monto_map = _parse_montocomprobante_map(recs)
+            has_unconfirmed_comp = any(_get_comprobante_monto(u, comp_urls, monto_map) <= 0 for u in comp_urls)
             unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
-            if unpaid_paying:
+            if has_unconfirmed_comp or unpaid_paying:
                 with_comp_unconfirmed.append((inv_id, recs, comp_urls, unpaid_paying))
 
-    return paid_without_comp, with_comp_unconfirmed
+    return with_comp_unconfirmed
 
 
 def _format_guest_monto_line(r: dict) -> str:
@@ -1265,21 +1261,19 @@ def _handle_pagos_menu(chat_id: int | str, table):
         return
 
     records = tbl.get_all() or []
-    paid_without_comp, with_comp_unconfirmed = _classify_pagos_groups(records)
+    with_comp_unconfirmed = _classify_pagos_groups(records)
 
     reply_markup = {
         "inline_keyboard": [
-            [{"text": f"📎 Pagadas sin comprobante ({len(paid_without_comp)})", "callback_data": "pagos:sin_comp"}],
-            [{"text": f"⏳ Con comprobante por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
-            [{"text": "🔍 Buscar para marcar pago", "callback_data": "pagos:buscar"}],
+            [{"text": f"⏳ Comprobantes por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
+            [{"text": "🔍 Buscar", "callback_data": "pagos:buscar"}],
             [{"text": "🏠 Menú", "callback_data": "cmd:menu"}],
         ]
     }
     send_message(
         chat_id,
         f"💳 <b>Gestión de Pagos</b>\n\n"
-        f"• Pagadas sin comprobante: <b>{len(paid_without_comp)}</b> tarjetas\n"
-        f"• Con comprobante por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas",
+        f"• Comprobantes por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas",
         reply_markup=reply_markup,
     )
 
@@ -1393,33 +1387,6 @@ def _handle_pagos_search(chat_id: int | str, query: str, table):
         send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
 
 
-def _handle_pagos_sin_comprobante(chat_id: int | str, table):
-    tbl = table or _table_ref
-    if not tbl:
-        send_message(chat_id, "Error: Base de datos no disponible.")
-        return
-
-    records = tbl.get_all() or []
-    paid_without_comp, _ = _classify_pagos_groups(records)
-
-    back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
-    if not paid_without_comp:
-        send_message(chat_id, "✅ Todas las tarjetas pagadas ya tienen comprobante cargado.", reply_markup=back_markup)
-        return
-
-    for idx, (inv_id, recs) in enumerate(paid_without_comp):
-        group_title = inv_id.replace("_", " ").title()
-        lines = [f"📎 <b>{html.escape(group_title)}</b> (sin comprobante)"]
-        for r in recs:
-            lines.append(_format_guest_monto_line(r))
-
-        kb_rows = [[{"text": f"📎 Subir comprobante ({group_title[:25]})", "callback_data": f"pagos_up:{inv_id[:52]}"}]]
-        if idx == len(paid_without_comp) - 1:
-            kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
-
-        send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
-
-
 def _handle_pagos_por_confirmar(chat_id: int | str, table):
     tbl = table or _table_ref
     if not tbl:
@@ -1427,7 +1394,7 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
         return
 
     records = tbl.get_all() or []
-    _, with_comp_unconfirmed = _classify_pagos_groups(records)
+    with_comp_unconfirmed = _classify_pagos_groups(records)
 
     back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
     if not with_comp_unconfirmed:
@@ -2058,10 +2025,6 @@ def _handle_update(update: dict, table=None):
 
         if cq_data == "cmd:pagos":
             _handle_pagos_menu(cq_chat_id, table or _table_ref)
-            return
-
-        if cq_data == "pagos:sin_comp":
-            _handle_pagos_sin_comprobante(cq_chat_id, table or _table_ref)
             return
 
         if cq_data == "pagos:por_confirmar":
