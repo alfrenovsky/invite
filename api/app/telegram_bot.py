@@ -1704,18 +1704,7 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
 
     kb_rows = []
     if not auto_note and unpaid_targets:
-        _, assigned_sum, avail_sum = _get_group_comprobantes_balance(recs)
-        if avail_sum > 0:
-            lines = [header_line, ""]
-            for r in recs:
-                lines.append(_format_guest_monto_line(r))
-            lines.append(
-                f"🧾 Comprobantes: <b>{_format_monto_ar(total_comp)}</b> · "
-                f"Asignado: <b>{_format_monto_ar(assigned_sum)}</b> · "
-                f"Disponible: <b>{_format_monto_ar(avail_sum)}</b>"
-            )
-            _append_payment_action_buttons(kb_rows, inv_id, recs, unpaid_targets, include_unconfirm=False)
-            header_line = "\n".join(lines)
+        header_line = _append_remaining_assignment_ui(header_line, kb_rows, inv_id, recs, unpaid_targets)
 
     kb_rows.append([{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}])
     kb_rows.append([{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}])
@@ -1725,6 +1714,29 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
         header_line,
         reply_markup={"inline_keyboard": kb_rows},
     )
+
+
+def _append_remaining_assignment_ui(
+    header_line: str,
+    kb_rows: list,
+    inv_id: str,
+    recs: list,
+    remaining_targets: list,
+) -> str:
+    """If confirmed comprobante balance > 0 and unpaid guests remain, appends status lines and assign buttons."""
+    total_comp, assigned_sum, avail_sum = _get_group_comprobantes_balance(recs)
+    if total_comp > 0 and avail_sum > 0 and remaining_targets:
+        lines = [header_line, ""]
+        for r in recs:
+            lines.append(_format_guest_monto_line(r))
+        lines.append(
+            f"🧾 Comprobantes: <b>{_format_monto_ar(total_comp)}</b> · "
+            f"Asignado: <b>{_format_monto_ar(assigned_sum)}</b> · "
+            f"Disponible: <b>{_format_monto_ar(avail_sum)}</b>"
+        )
+        _append_payment_action_buttons(kb_rows, inv_id, recs, remaining_targets, include_unconfirm=False)
+        return "\n".join(lines)
+    return header_line
 
 
 def _get_group_comprobantes_balance(recs: list) -> tuple[int, int, int]:
@@ -1784,6 +1796,7 @@ def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
 
     new_paid = paid_actual + to_credit if to_credit > 0 else (monto_tarjeta or 1)
     tbl.update_record(target["id"], {"pagado": str(new_paid)})
+    target["pagado"] = str(new_paid)
     _log(f"[PAGOS:CONFIRM_PERSON] chat_id={chat_id} guest_id={guest_id} nombre={nombre!r} monto={_format_monto_ar(new_paid)}")
 
     if monto_tarjeta > 0 and new_paid < monto_tarjeta:
@@ -1794,16 +1807,17 @@ def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
     else:
         msg_txt = f"✅ Pago confirmado para <b>{html.escape(nombre)}</b> (<b>{_format_monto_ar(new_paid)}</b>)."
 
+    kb_rows = []
+    remaining_targets = [r for r in group_recs if _is_paying_guest(r) and not _is_paid_record(r)]
+    msg_txt = _append_remaining_assignment_ui(msg_txt, kb_rows, inv_id, group_recs, remaining_targets)
+    kb_rows.append([{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}])
+    kb_rows.append([{"text": "🔍 Buscar otro", "callback_data": "pagos:buscar"}])
+    kb_rows.append([{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}])
+
     send_message(
         chat_id,
         msg_txt,
-        reply_markup={
-            "inline_keyboard": [
-                [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
-                [{"text": "🔍 Buscar otro", "callback_data": "pagos:buscar"}],
-                [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
-            ]
-        },
+        reply_markup={"inline_keyboard": kb_rows},
     )
 
 

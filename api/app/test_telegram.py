@@ -888,11 +888,18 @@ class TestTelegramBot(unittest.TestCase):
         with patch("telegram_bot.is_subscribed", return_value=True), \
              patch("telegram_bot.call_telegram_api"), \
              patch("telegram_bot.send_message") as mock_send:
-            # 1. Confirm Diana first -> receives full 105000, leaving 45000 available
+            # 1. Confirm Diana first -> receives full 105000, leaving 45000 available & showing assign button for Gaby
             telegram_bot._handle_update({
                 "callback_query": {"id": "cq_pp1", "data": "pagos_ok_p:d1", "message": {"chat": {"id": 88888}}}
             }, table=mock_table)
             self.assertEqual(records[0]["pagado"], "105000")
+            msg1 = mock_send.call_args[0][1]
+            btns1 = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertIn("Disponible: <b>$45.000</b>", msg1)
+            self.assertTrue(any(
+                b["callback_data"] == "pagos_ok_p:d2" and "Pago parcial:" in b["text"] and "+$45.000" in b["text"]
+                for b in btns1
+            ))
 
             # 2. Confirm Gaby second -> receives remaining 45000 (partial)
             mock_send.reset_mock()
