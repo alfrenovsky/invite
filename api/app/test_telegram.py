@@ -401,22 +401,26 @@ class TestTelegramBot(unittest.TestCase):
             {
                 "id": "1", "invitacion_id": "fam_perez", "nombre": "Juan", "apellido": "Pérez",
                 "dequien": "Celia Amigos", "telefono": "1111", "enviado": "si",
-                "confirmacion": "si", "pa": "general", "celiaco": "si", "abierto": "si",
+                "confirmacion": "si", "nivel": "Reserva", "pagado": "si",
+                "pa": "general", "celiaco": "si", "abierto": "si",
             },
             {
                 "id": "2", "invitacion_id": "fam_perez", "nombre": "Ana", "apellido": "Perez",
                 "dequien": "Celia Amigos", "telefono": "2222", "enviado": "si",
-                "confirmacion": "no", "pa": "vegetariano", "celiaco": "", "abierto": "",
+                "confirmacion": "no", "nivel": "Invitado", "pagado": "",
+                "pa": "vegetariano", "celiaco": "", "abierto": "",
             },
             {
                 "id": "3", "invitacion_id": "fam_perez", "nombre": "Lucas", "apellido": "Perez",
                 "dequien": "Celia Amigos", "telefono": "", "enviado": "",
-                "confirmacion": "", "pa": "vegano", "celiaco": "", "abierto": "",
+                "confirmacion": "", "nivel": "Reserva", "pagado": "",
+                "pa": "vegano", "celiaco": "", "abierto": "",
             },
             {
                 "id": "4", "invitacion_id": "otro_grupo", "nombre": "Carlos", "apellido": "Gomez",
                 "dequien": "Alfredo Amigos", "telefono": "4444", "enviado": "",
-                "confirmacion": "si", "pa": "general", "celiaco": "", "abierto": "",
+                "confirmacion": "si", "nivel": "Invitado", "pagado": "",
+                "pa": "general", "celiaco": "", "abierto": "",
             },
         ]
 
@@ -462,6 +466,8 @@ class TestTelegramBot(unittest.TestCase):
         lucas_line = next(l for l in lines if "Lucas Perez" in l)
 
         self.assertIn("🟢", juan_line)
+        self.assertIn("🎫", juan_line)
+        self.assertIn("💳", juan_line)
         self.assertIn("🍽️", juan_line)
         self.assertIn("🌾", juan_line)
         self.assertIn("👀", juan_line)
@@ -469,10 +475,14 @@ class TestTelegramBot(unittest.TestCase):
         self.assertNotIn("Sin gluten", juan_line)
 
         self.assertIn("🔴", ana_line)
+        self.assertIn("💌", ana_line)
+        self.assertNotIn("💳", ana_line)
         self.assertIn("🥬", ana_line)
         self.assertIn("👀", ana_line)  # group fam_perez is opened
 
         self.assertIn("⏳", lucas_line)
+        self.assertIn("🎫", lucas_line)
+        self.assertNotIn("💳", lucas_line)
         self.assertIn("🌱", lucas_line)
         self.assertIn("👀", lucas_line)
 

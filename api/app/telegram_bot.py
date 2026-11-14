@@ -587,6 +587,16 @@ def _format_guest_icons(r: dict, opened_invitations: set) -> str:
     else:
         icons.append("⏳")
 
+    nivel = str(r.get("nivel", "") or "").strip().lower()
+    if nivel == "reserva":
+        icons.append("🎫")
+    elif nivel in ("invitado", "invitados", "invitacion"):
+        icons.append("💌")
+
+    pagado = str(r.get("pagado", "") or "").strip().lower() in ("si", "sí", "pagado", "1", "true")
+    if pagado:
+        icons.append("💳")
+
     menu_val = str(r.get("pa") or r.get("ap") or r.get("menu") or "").strip().lower()
     if not menu_val:
         if str(r.get("pa_vegano", "") or "").strip().lower() in ("si", "sí", "true", "1"):
