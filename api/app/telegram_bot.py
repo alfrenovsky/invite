@@ -1061,15 +1061,15 @@ def _format_guest_monto_line(r: dict) -> str:
     monto = _parse_monto_int(r.get("montotarjeta"))
     monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
     conf = str(r.get("confirmacion", "") or "").strip().lower()
-    if conf in ("no", "rechazado"):
-        status = "🔴"
-    elif _is_paid_record(r):
-        status = "✅"
+    if _is_paid_record(r):
+        status = "💰 Pagado"
+    elif conf in ("no", "rechazado"):
+        status = "🔴 No asiste"
     elif monto > 0 or str(r.get("nivel", "") or "").strip().lower() == "reserva":
-        status = "⏳"
+        status = "Sin pagar"
     else:
-        status = "💌"
-    return f"• {html.escape(nombre)} — <b>{monto_str}</b> {status}"
+        status = "💌 Invitado"
+    return f"• {html.escape(nombre)} — <b>{monto_str}</b> · {status}"
 
 
 def _handle_pagos_menu(chat_id: int | str, table):

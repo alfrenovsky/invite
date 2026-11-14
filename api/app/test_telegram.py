@@ -552,6 +552,7 @@ class TestTelegramBot(unittest.TestCase):
         sin_comp_text = mock_send.call_args[0][1]
         self.assertIn("Carlos Lopez", sin_comp_text)
         self.assertIn("$50.000", sin_comp_text)
+        self.assertIn("💰 Pagado", sin_comp_text)
 
         # 3. Tap pagos_up:fam_pagada -> prompts for photo/PDF, then send photo
         mock_send.reset_mock()
@@ -585,6 +586,8 @@ class TestTelegramBot(unittest.TestCase):
         conf_buttons = [b for row in conf_markup.get("inline_keyboard", []) for b in row]
         self.assertIn("Ana Perez", conf_text)
         self.assertIn("$45.000", conf_text)
+        self.assertIn("Sin pagar", conf_text)
+        self.assertIn("💰 Pagado", conf_text)
         self.assertIn("https://test/comp1.pdf", conf_text)
         self.assertTrue(any(b["callback_data"] == "pagos_ok_p:p3" and "$45.000" in b["text"] for b in conf_buttons))
         self.assertFalse(any(b["callback_data"] == "pagos_ok_p:p2" for b in conf_buttons))
