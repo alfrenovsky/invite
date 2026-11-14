@@ -1266,8 +1266,14 @@
             const status = card.getAttribute('data-status') || '';
             const rawMonto = card.getAttribute('data-monto') || '';
             const monto = parseCurrencyAmount(rawMonto);
-            const isPaid = !!(card.getAttribute('data-pagado') || '').trim();
+            const rawPagado = (card.getAttribute('data-pagado') || '').trim();
+            let paidAmount = 0;
+            if (rawPagado && !['no', 'false', '0'].includes(rawPagado.toLowerCase())) {
+                paidAmount = /\d/.test(rawPagado) ? parseCurrencyAmount(rawPagado) : monto;
+            }
             const isInvitado = (monto === 0);
+            const remaining = Math.max(0, monto - paidAmount);
+            const isPaid = !isInvitado && remaining === 0;
 
             const isConfirmedOrPending = (status !== 'no');
             if (isConfirmedOrPending) {
@@ -1282,9 +1288,9 @@
                     : (nameEl ? nameEl.textContent.trim() : 'Acompañante');
                 if (!name || name.toLowerCase() === 'invitado') name = 'Acompañante';
 
-                attendingItems.push({ name, monto, isPaid, isInvitado });
+                attendingItems.push({ name, monto, paidAmount, remaining, isPaid, isInvitado });
                 if (!isPaid && !isInvitado) {
-                    unpaidTotal += monto;
+                    unpaidTotal += remaining;
                 }
             }
         });
@@ -1334,8 +1340,10 @@
                 amountHtml = '<span class="payment-invitado-badge">✨ $0</span>';
             } else if (item.isPaid) {
                 amountHtml = '<span class="payment-paid-badge">✓ Pagado</span>';
+            } else if (item.paidAmount > 0) {
+                amountHtml = `<span>Resta ${formatCurrency(item.remaining)}</span>`;
             } else {
-                amountHtml = `<span>${formatCurrency(item.monto)}</span>`;
+                amountHtml = `<span>${formatCurrency(item.remaining)}</span>`;
             }
             rowsHtml += `
                 <div class="payment-breakdown-row">
