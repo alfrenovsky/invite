@@ -41,6 +41,30 @@
     let elapsedTimeOnSlide = 0;
     let animationFrameId = null;
 
+    // Screen Wake Lock (prevents mobile screen saver while story plays)
+    let wakeLockSentinel = null;
+    async function requestWakeLock() {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+        if (wakeLockSentinel && !wakeLockSentinel.released) return;
+        try {
+            wakeLockSentinel = await navigator.wakeLock.request('screen');
+            wakeLockSentinel.addEventListener('release', () => {
+                wakeLockSentinel = null;
+            });
+        } catch (err) {
+            // Silently ignore (e.g. battery saver, unsupported context, or gesture required)
+        }
+    }
+
+    function releaseWakeLock() {
+        if (wakeLockSentinel) {
+            try {
+                wakeLockSentinel.release().catch(() => {});
+            } catch (err) {}
+            wakeLockSentinel = null;
+        }
+    }
+
     // Auto-Save Configuration
     const AUTOSAVE_CONFIG = {
         CLICK_DEBOUNCE_MS: 400,
@@ -2614,13 +2638,25 @@
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
             handleFormSlideExit();
-        } else if (document.visibilityState === 'visible' && isDesktop) {
-            const desktopVid = document.getElementById('desktopBgVideo');
-            if (desktopVid) {
-                desktopVid.play().catch(() => {});
+            releaseWakeLock();
+        } else if (document.visibilityState === 'visible') {
+            if (!isPaused) {
+                requestWakeLock();
+            }
+            if (isDesktop) {
+                const desktopVid = document.getElementById('desktopBgVideo');
+                if (desktopVid) {
+                    desktopVid.play().catch(() => {});
+                }
             }
         }
     });
+    window.addEventListener('pagehide', releaseWakeLock);
+    document.addEventListener('pointerdown', () => {
+        if (!isPaused && (!wakeLockSentinel || wakeLockSentinel.released)) {
+            requestWakeLock();
+        }
+    }, { passive: true });
 
     // ==============================================================
     // 📥 Critical Media Preloader & Lookahead Buffering
@@ -2653,6 +2689,7 @@
             }
 
             startSlideTimer();
+            requestWakeLock();
             preloadNextSlide(currentIndex + 1);
         }
 
