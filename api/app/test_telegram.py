@@ -602,6 +602,97 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("Ana Perez", mock_send.call_args[0][1])
         self.assertIn("$45.000", mock_send.call_args[0][1])
 
+    def test_ver_comprobante_image_and_pdf_conversion(self):
+        import os
+        import tempfile
+        import types
+
+        with tempfile.TemporaryDirectory() as tmp_comp_dir:
+            jpg_path = os.path.join(tmp_comp_dir, "foto_comp.jpg")
+            pdf_path = os.path.join(tmp_comp_dir, "recibo.pdf")
+            with open(jpg_path, "wb") as f:
+                f.write(b"\xff\xd8\xff\xe0FAKE_JPG")
+            with open(pdf_path, "wb") as f:
+                f.write(b"%PDF-1.4\nFAKE_PDF")
+
+            records = [
+                {
+                    "id": "p1",
+                    "invitacion": "familia_lopez",
+                    "nombre": "Juan",
+                    "apellido": "Lopez",
+                    "asiste": "si",
+                    "pagado": "no",
+                    "montotarjeta": "45000",
+                    "comprobante": "https://test/comprobantes/foto_comp.jpg\nhttps://test/comprobantes/recibo.pdf",
+                },
+            ]
+            mock_table = MagicMock()
+            mock_table.get_all.return_value = records
+
+            with patch.dict(os.environ, {"COMPROBANTES_DIR": tmp_comp_dir}), \
+                 patch("telegram_bot.is_subscribed", return_value=True):
+                # (a) Image (.jpg) sends directly via send_photo_bytes
+                with patch("telegram_bot.call_telegram_api"), \
+                     patch("telegram_bot.send_photo_bytes", return_value=True) as mock_photo, \
+                     patch("telegram_bot.send_document_bytes", return_value=True) as mock_doc:
+                    telegram_bot._handle_update({
+                        "callback_query": {
+                            "id": "cq_v1",
+                            "data": "pagos_ver:familia_lopez:0",
+                            "message": {"chat": {"id": 88888}},
+                        }
+                    }, table=mock_table)
+                    mock_photo.assert_called_once()
+                    self.assertEqual(mock_photo.call_args[0][1], b"\xff\xd8\xff\xe0FAKE_JPG")
+                    self.assertIn("1/2", mock_photo.call_args[1]["caption"])
+                    mock_doc.assert_not_called()
+
+                # (b) PDF converts via PyMuPDF (fitz) to PNG and sends via send_photo_bytes
+                fake_pix = MagicMock()
+                fake_pix.tobytes.return_value = b"\x89PNG\r\n\x1a\nFAKE_PNG"
+                fake_page = MagicMock()
+                fake_page.get_pixmap.return_value = fake_pix
+                fake_doc = MagicMock()
+                fake_doc.__len__.return_value = 1
+                fake_doc.__getitem__.return_value = fake_page
+                fake_fitz = types.SimpleNamespace(open=MagicMock(return_value=fake_doc))
+
+                with patch.dict("sys.modules", {"fitz": fake_fitz}), \
+                     patch("telegram_bot.call_telegram_api"), \
+                     patch("telegram_bot.send_photo_bytes", return_value=True) as mock_photo, \
+                     patch("telegram_bot.send_document_bytes", return_value=True) as mock_doc:
+                    telegram_bot._handle_update({
+                        "callback_query": {
+                            "id": "cq_v2",
+                            "data": "pagos_ver:familia_lopez:1",
+                            "message": {"chat": {"id": 88888}},
+                        }
+                    }, table=mock_table)
+                    mock_photo.assert_called_once()
+                    self.assertEqual(mock_photo.call_args[0][1], b"\x89PNG\r\n\x1a\nFAKE_PNG")
+                    self.assertTrue(mock_photo.call_args[1]["filename"].endswith(".png"))
+                    self.assertIn("2/2", mock_photo.call_args[1]["caption"])
+                    mock_doc.assert_not_called()
+
+                # (c) Fallback to send_document_bytes when fitz is unavailable or fails
+                with patch("telegram_bot._render_pdf_to_png_pages", return_value=[]), \
+                     patch("telegram_bot.call_telegram_api"), \
+                     patch("telegram_bot.send_photo_bytes", return_value=True) as mock_photo, \
+                     patch("telegram_bot.send_document_bytes", return_value=True) as mock_doc:
+                    telegram_bot._handle_update({
+                        "callback_query": {
+                            "id": "cq_v3",
+                            "data": "pagos_ver:familia_lopez:-1",
+                            "message": {"chat": {"id": 88888}},
+                        }
+                    }, table=mock_table)
+                    mock_photo.assert_not_called()
+                    mock_doc.assert_called_once()
+                    self.assertEqual(mock_doc.call_args[0][1], b"%PDF-1.4\nFAKE_PDF")
+                    self.assertEqual(mock_doc.call_args[1]["filename"], "recibo.pdf")
+
+
 
 if __name__ == "__main__":
     unittest.main()

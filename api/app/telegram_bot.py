@@ -206,7 +206,62 @@ def send_message(chat_id: int | str, text: str, parse_mode: str = "HTML", reply_
     return bool(res and res.get("ok"))
 
 
-def broadcast_message(text: str, parse_mode: str = "HTML"):
+def _send_telegram_multipart(method: str, chat_id: int | str, field_name: str, file_bytes: bytes, filename: str, caption: str = "", reply_markup: dict = None) -> bool:
+    if os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing":
+        return True
+    if not TELEGRAM_BOT_TOKEN:
+        return False
+
+    boundary = f"----BodaTgBoundary{uuid.uuid4().hex}"
+    parts = []
+
+    def _add_field(name: str, value: str):
+        parts.append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n".encode("utf-8"))
+
+    _add_field("chat_id", str(chat_id))
+    if caption:
+        _add_field("caption", caption)
+        _add_field("parse_mode", "HTML")
+    if reply_markup:
+        _add_field("reply_markup", json.dumps(reply_markup))
+
+    safe_name = os.path.basename(filename or "comprobante.bin")
+    parts.append(
+        (
+            f"--{boundary}\r\n"
+            f"Content-Disposition: form-data; name=\"{field_name}\"; filename=\"{safe_name}\"\r\n"
+            f"Content-Type: application/octet-stream\r\n\r\n"
+        ).encode("utf-8")
+        + file_bytes
+        + b"\r\n"
+    )
+    parts.append(f"--{boundary}--\r\n".encode("utf-8"))
+    body = b"".join(parts)
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/{method}"
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=35) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+            return bool(res and res.get("ok"))
+    except Exception as e:
+        _log(f"[MEDIA_ERROR] {method} failed: {e}")
+        return False
+
+
+def send_photo_bytes(chat_id: int | str, image_bytes: bytes, filename: str = "comprobante.png", caption: str = "", reply_markup: dict = None) -> bool:
+    return _send_telegram_multipart("sendPhoto", chat_id, "photo", image_bytes, filename, caption=caption, reply_markup=reply_markup)
+
+
+def send_document_bytes(chat_id: int | str, file_bytes: bytes, filename: str = "comprobante.pdf", caption: str = "", reply_markup: dict = None) -> bool:
+    return _send_telegram_multipart("sendDocument", chat_id, "document", file_bytes, filename, caption=caption, reply_markup=reply_markup)
+
+
+def broadcast_message(text: str, parse_mode: str = "HTML", reply_markup: dict = None):
     """Broadcasts a notification message asynchronously to all authorized subscribers."""
     if os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing":
         return
@@ -221,7 +276,7 @@ def broadcast_message(text: str, parse_mode: str = "HTML"):
             cid = s.get("chat_id")
             if cid:
                 try:
-                    send_message(cid, text, parse_mode=parse_mode)
+                    send_message(cid, text, parse_mode=parse_mode, reply_markup=reply_markup)
                 except Exception as e:
                     logger.warning(f"[TELEGRAM] Error sending message to {cid}: {e}")
 
@@ -397,7 +452,10 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
     )
     _log(f"[NOTIFY:COMPROBANTE] invitacion={clean_id} file={filename}")
-    broadcast_message(msg)
+    markup = {
+        "inline_keyboard": [[{"text": "👁️ Ver comprobante", "callback_data": f"pagos_ver:{clean_id[:46]}:-1"}]]
+    }
+    broadcast_message(msg, reply_markup=markup)
 
 
 # ==============================================================
@@ -1148,6 +1206,10 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
             lines.append(f'🔗 <a href="{html.escape(u)}">Ver comprobante {c_idx}</a>')
 
         kb_rows = []
+        for c_idx, _ in enumerate(comp_urls, start=1):
+            label = f"👁️ Ver comprobante {c_idx}" if len(comp_urls) > 1 else "👁️ Ver comprobante"
+            kb_rows.append([{"text": label, "callback_data": f"pagos_ver:{inv_id[:46]}:{c_idx - 1}"}])
+
         for r in unpaid_paying:
             gid = str(r.get("id", "") or "").strip()
             if not gid:
@@ -1166,6 +1228,130 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
             kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
 
         send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
+
+
+def _resolve_comprobante_bytes(comp_url: str) -> tuple[bytes | None, str]:
+    """Resolves a comprobante URL to raw bytes, checking local COMPROBANTES_DIR first."""
+    parsed = urllib.parse.urlparse(comp_url or "")
+    filename = os.path.basename(urllib.parse.unquote(parsed.path or "")) or "comprobante"
+    comp_dir = os.environ.get("COMPROBANTES_DIR") or TELEGRAM_COMPROBANTES_DIR
+    local_path = os.path.join(comp_dir, filename)
+    if filename and os.path.isfile(local_path):
+        try:
+            with open(local_path, "rb") as f:
+                return f.read(), filename
+        except Exception as e:
+            logger.warning(f"Failed reading local comprobante {local_path}: {e}")
+
+    if comp_url and comp_url.startswith(("http://", "https://")):
+        try:
+            req = urllib.request.Request(comp_url, method="GET")
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return resp.read(), filename
+        except Exception as e:
+            logger.warning(f"Failed downloading comprobante {comp_url}: {e}")
+
+    return None, filename
+
+
+def _render_pdf_to_png_pages(pdf_bytes: bytes, max_pages: int = 5) -> list[bytes]:
+    """Converts up to max_pages of a PDF to PNG bytes using PyMuPDF (fitz)."""
+    try:
+        import fitz
+    except ImportError:
+        logger.warning("PyMuPDF (fitz) is not installed; falling back to sendDocument for PDF.")
+        return []
+
+    pages: list[bytes] = []
+    doc = None
+    try:
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        for i in range(min(len(doc), max_pages)):
+            pix = doc[i].get_pixmap(dpi=150)
+            pages.append(pix.tobytes("png"))
+    except Exception as e:
+        logger.warning(f"Failed rendering PDF to PNG: {e}")
+        return []
+    finally:
+        if doc is not None:
+            try:
+                doc.close()
+            except Exception:
+                pass
+    return pages
+
+
+def _send_comprobante_preview(chat_id: int | str, comp_url: str, caption: str = "", reply_markup: dict = None) -> bool:
+    """Sends a comprobante as image(s) in Telegram, converting PDFs to PNG with document fallback."""
+    raw_bytes, filename = _resolve_comprobante_bytes(comp_url)
+    if not raw_bytes:
+        send_message(chat_id, f"❌ No se pudo obtener el comprobante: {html.escape(comp_url or '')}", reply_markup=reply_markup)
+        return False
+
+    ext = os.path.splitext(filename)[1].lower()
+    is_pdf = ext == ".pdf" or raw_bytes.startswith(b"%PDF")
+    if is_pdf:
+        pages = _render_pdf_to_png_pages(raw_bytes)
+        if pages:
+            base_name = os.path.splitext(filename)[0] or "comprobante"
+            ok_all = True
+            for p_idx, png_bytes in enumerate(pages, start=1):
+                if len(pages) > 1:
+                    page_cap = f"{caption} (pág. {p_idx}/{len(pages)})" if caption else f"Pág. {p_idx}/{len(pages)}"
+                else:
+                    page_cap = caption
+                is_last = p_idx == len(pages)
+                ok = send_photo_bytes(
+                    chat_id,
+                    png_bytes,
+                    filename=f"{base_name}_p{p_idx}.png",
+                    caption=page_cap,
+                    reply_markup=reply_markup if is_last else None,
+                )
+                ok_all = ok_all and ok
+            return ok_all
+        doc_name = filename if ext == ".pdf" else f"{filename}.pdf"
+        return send_document_bytes(chat_id, raw_bytes, filename=doc_name, caption=caption, reply_markup=reply_markup)
+
+    if ext in (".jpg", ".jpeg", ".png", ".webp", ".gif") or not ext:
+        return send_photo_bytes(chat_id, raw_bytes, filename=filename, caption=caption, reply_markup=reply_markup)
+
+    return send_document_bytes(chat_id, raw_bytes, filename=filename, caption=caption, reply_markup=reply_markup)
+
+
+def _handle_ver_comprobante(chat_id: int | str, inv_prefix: str, idx_str: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    inv_id = next((k for k in groups if k == inv_prefix or k.startswith(inv_prefix)), None)
+    if not inv_id:
+        send_message(chat_id, "❌ No se encontró la invitación.")
+        return
+
+    comp_urls = _get_group_comprobante_urls(groups[inv_id])
+    if not comp_urls:
+        send_message(chat_id, "❌ Esta invitación no tiene comprobantes.")
+        return
+
+    try:
+        idx = int(idx_str)
+    except (TypeError, ValueError):
+        idx = -1
+
+    if idx < 0 or idx >= len(comp_urls):
+        comp_url = comp_urls[-1]
+        label_idx = len(comp_urls)
+    else:
+        comp_url = comp_urls[idx]
+        label_idx = idx + 1
+
+    group_title = inv_id.replace("_", " ").title()
+    caption = f"🧾 {group_title} — Comprobante {label_idx}/{len(comp_urls)}"
+    _send_comprobante_preview(chat_id, comp_url, caption=caption)
 
 
 def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
@@ -1428,6 +1614,12 @@ def _handle_update(update: dict, table=None):
         if cq_data.startswith("pagos_ok_g:"):
             inv_prefix = cq_data[len("pagos_ok_g:"):].strip()
             _handle_confirmar_pago_grupo(cq_chat_id, inv_prefix, table or _table_ref)
+            return
+
+        if cq_data.startswith("pagos_ver:"):
+            rest = cq_data[len("pagos_ver:"):].strip()
+            inv_prefix, idx_str = rest.rsplit(":", 1) if ":" in rest else (rest, "-1")
+            _handle_ver_comprobante(cq_chat_id, inv_prefix.strip(), idx_str.strip(), table or _table_ref)
             return
 
         if cq_data in ("cmd:menu", "cmd:cancel"):
