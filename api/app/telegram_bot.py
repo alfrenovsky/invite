@@ -1143,6 +1143,8 @@ def _handle_pagos_menu(chat_id: int | str, table):
         "inline_keyboard": [
             [{"text": f"📎 Pagadas sin comprobante ({len(paid_without_comp)})", "callback_data": "pagos:sin_comp"}],
             [{"text": f"⏳ Con comprobante por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
+            [{"text": "🔍 Buscar para marcar pago", "callback_data": "pagos:buscar"}],
+            [{"text": "📋 Lista de pagos", "callback_data": "pagos:lista"}],
             [{"text": "🏠 Menú", "callback_data": "cmd:menu"}],
         ]
     }
@@ -1153,6 +1155,160 @@ def _handle_pagos_menu(chat_id: int | str, table):
         f"• Con comprobante por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas",
         reply_markup=reply_markup,
     )
+
+
+def _handle_pagos_lista(chat_id: int | str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    paying_groups = [
+        (inv_id, recs)
+        for inv_id, recs in sorted(groups.items())
+        if any(_is_paying_guest(r) or _is_paid_record(r) for r in recs)
+    ]
+
+    back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
+    if not paying_groups:
+        send_message(chat_id, "📋 No hay tarjetas con pagos registrados ni pendientes.", reply_markup=back_markup)
+        return
+
+    paid_count = 0
+    paid_amount = 0
+    pending_count = 0
+    pending_amount = 0
+    items = []
+
+    for inv_id, recs in paying_groups:
+        group_title = inv_id.replace("_", " ").title()
+        comp_urls = _get_group_comprobante_urls(recs)
+        comp_badge = f"📎 {len(comp_urls)} comp." if comp_urls else "Sin comp."
+        lines = [f"<b>{html.escape(group_title)}</b> · {comp_badge}"]
+        for r in recs:
+            lines.append(_format_guest_monto_line(r))
+            monto = _parse_monto_int(r.get("montotarjeta"))
+            if _is_paid_record(r):
+                paid_count += 1
+                paid_amount += monto
+            elif _is_paying_guest(r):
+                pending_count += 1
+                pending_amount += monto
+        items.append("\n".join(lines))
+
+    header = (
+        f"📋 <b>Lista de Pagos</b>\n"
+        f"• 💰 Pagados: <b>{paid_count}</b> ({_format_monto_ar(paid_amount)})\n"
+        f"• Pendientes: <b>{pending_count}</b> ({_format_monto_ar(pending_amount)})"
+    )
+    _send_chunked_messages(chat_id, header, items, reply_markup=back_markup)
+
+
+def _prompt_pagos_search(chat_id: int | str):
+    with _lock:
+        _user_states[str(chat_id)] = "awaiting_pagos_search"
+    send_message(
+        chat_id,
+        "🔍 <b>Buscar para gestionar pago</b>\n\nEscribí un nombre, apellido o tarjeta para buscar:",
+        reply_markup={"inline_keyboard": [[{"text": "❌ Cancelar", "callback_data": "cmd:pagos"}]]},
+    )
+
+
+def _handle_pagos_search(chat_id: int | str, query: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    norm_q = _normalize_search_text(query)
+    if not norm_q:
+        _prompt_pagos_search(chat_id)
+        return
+
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    matched_groups = []
+    for inv_id, recs in sorted(groups.items()):
+        group_match = norm_q in _normalize_search_text(inv_id) or norm_q in _normalize_search_text(inv_id.replace("_", " "))
+        guest_match = False
+        if not group_match:
+            for r in recs:
+                full_name = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()
+                fields = (
+                    full_name,
+                    r.get("nombre", ""),
+                    r.get("apellido", ""),
+                    r.get("invitacion", ""),
+                    r.get("de_quien", ""),
+                )
+                if any(norm_q in _normalize_search_text(f) for f in fields):
+                    guest_match = True
+                    break
+        if group_match or guest_match:
+            matched_groups.append((inv_id, recs))
+
+    if not matched_groups:
+        send_message(
+            chat_id,
+            f"🔍 No se encontraron invitados o tarjetas para <b>{html.escape(query)}</b>.",
+            reply_markup={
+                "inline_keyboard": [
+                    [{"text": "🔍 Buscar otro", "callback_data": "pagos:buscar"}],
+                    [{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}],
+                ]
+            },
+        )
+        return
+
+    shown = matched_groups[:10]
+    if len(matched_groups) > 10:
+        send_message(
+            chat_id,
+            f"🔍 Mostrando 10 de <b>{len(matched_groups)}</b> tarjetas coincidentes con <b>{html.escape(query)}</b>:",
+        )
+
+    for idx, (inv_id, recs) in enumerate(shown):
+        group_title = inv_id.replace("_", " ").title()
+        comp_urls = _get_group_comprobante_urls(recs)
+        comp_info = f" · 📎 {len(comp_urls)} comp." if comp_urls else " · Sin comp."
+        lines = [f"💳 <b>{html.escape(group_title)}</b>{comp_info}"]
+        for r in recs:
+            lines.append(_format_guest_monto_line(r))
+
+        kb_rows = []
+        for r in recs:
+            gid = str(r.get("id", "") or "").strip()
+            if not gid:
+                continue
+            nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+            monto = _parse_monto_int(r.get("montotarjeta"))
+            monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
+            if _is_paid_record(r):
+                kb_rows.append([{"text": f"↩️ Desmarcar pago: {nombre[:22]}", "callback_data": f"pagos_unok_p:{gid}"}])
+            elif str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado"):
+                kb_rows.append([{"text": f"💰 Confirmar pago: {nombre[:20]} ({monto_str})", "callback_data": f"pagos_ok_p:{gid}"}])
+
+        unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
+        if len(unpaid_paying) >= 2:
+            total_unpaid = sum(_parse_monto_int(r.get("montotarjeta")) for r in unpaid_paying)
+            total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
+            kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
+
+        for c_idx, _ in enumerate(comp_urls, start=1):
+            label = f"👁️ Ver comprobante {c_idx}" if len(comp_urls) > 1 else "👁️ Ver comprobante"
+            kb_rows.append([{"text": label, "callback_data": f"pagos_ver:{inv_id[:46]}:{c_idx - 1}"}])
+
+        kb_rows.append([{"text": f"📎 Subir comprobante ({group_title[:22]})", "callback_data": f"pagos_up:{inv_id[:52]}"}])
+
+        if idx == len(shown) - 1:
+            kb_rows.append([
+                {"text": "🔍 Buscar otro", "callback_data": "pagos:buscar"},
+                {"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"},
+            ])
+
+        send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
 
 
 def _handle_pagos_sin_comprobante(chat_id: int | str, table):
@@ -1378,6 +1534,35 @@ def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
         reply_markup={
             "inline_keyboard": [
                 [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
+                [{"text": "🔍 Buscar otro", "callback_data": "pagos:buscar"}],
+                [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
+            ]
+        },
+    )
+
+
+def _handle_desmarcar_pago_persona(chat_id: int | str, guest_id: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    target = next((r for r in records if str(r.get("id", "") or "").strip() == str(guest_id).strip()), None)
+    if not target:
+        send_message(chat_id, "⚠️ No se encontró el invitado indicado.")
+        return
+
+    tbl.update_record(target["id"], {"pagado": "no"})
+    nombre = f"{target.get('nombre', '')} {target.get('apellido', '')}".strip() or "Invitado"
+    _log(f"[PAGOS:UNCONFIRM_PERSON] chat_id={chat_id} guest_id={guest_id} nombre={nombre!r}")
+
+    send_message(
+        chat_id,
+        f"↩️ Pago desmarcado para <b>{html.escape(nombre)}</b>.",
+        reply_markup={
+            "inline_keyboard": [
+                [{"text": "🔍 Buscar otro", "callback_data": "pagos:buscar"}],
                 [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
             ]
         },
@@ -1601,6 +1786,14 @@ def _handle_update(update: dict, table=None):
             _handle_pagos_por_confirmar(cq_chat_id, table or _table_ref)
             return
 
+        if cq_data == "pagos:buscar":
+            _prompt_pagos_search(cq_chat_id)
+            return
+
+        if cq_data == "pagos:lista":
+            _handle_pagos_lista(cq_chat_id, table or _table_ref)
+            return
+
         if cq_data.startswith("pagos_up:"):
             inv_prefix = cq_data[len("pagos_up:"):].strip()
             _prompt_comprobante_upload(cq_chat_id, inv_prefix, table or _table_ref)
@@ -1609,6 +1802,11 @@ def _handle_update(update: dict, table=None):
         if cq_data.startswith("pagos_ok_p:"):
             gid = cq_data[len("pagos_ok_p:"):].strip()
             _handle_confirmar_pago_persona(cq_chat_id, gid, table or _table_ref)
+            return
+
+        if cq_data.startswith("pagos_unok_p:"):
+            gid = cq_data[len("pagos_unok_p:"):].strip()
+            _handle_desmarcar_pago_persona(cq_chat_id, gid, table or _table_ref)
             return
 
         if cq_data.startswith("pagos_ok_g:"):
@@ -1710,10 +1908,13 @@ def _handle_update(update: dict, table=None):
     if not text.startswith("/"):
         with _lock:
             state = _user_states.get(str(chat_id))
-            if state == "awaiting_search_query":
+            if state in ("awaiting_search_query", "awaiting_pagos_search"):
                 _user_states.pop(str(chat_id), None)
         if state == "awaiting_search_query" and text:
             _handle_search_flow(chat_id, text, table or _table_ref)
+            return
+        if state == "awaiting_pagos_search" and text:
+            _handle_pagos_search(chat_id, text, table or _table_ref)
             return
         if isinstance(state, str) and state.startswith("awaiting_comprobante:"):
             inv_id = state[len("awaiting_comprobante:"):]

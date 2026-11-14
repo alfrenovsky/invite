@@ -692,6 +692,92 @@ class TestTelegramBot(unittest.TestCase):
                     self.assertEqual(mock_doc.call_args[0][1], b"%PDF-1.4\nFAKE_PDF")
                     self.assertEqual(mock_doc.call_args[1]["filename"], "recibo.pdf")
 
+    def test_pagos_search_and_lista(self):
+        records = [
+            {
+                "id": "g1",
+                "invitacion": "familia_rodriguez",
+                "nombre": "María",
+                "apellido": "Rodríguez",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "no",
+                "montotarjeta": "45000",
+                "comprobante": "",
+            },
+            {
+                "id": "g2",
+                "invitacion": "familia_rodriguez",
+                "nombre": "Carlos",
+                "apellido": "Rodríguez",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "si",
+                "montotarjeta": "45000",
+                "comprobante": "https://test/comp.jpg",
+            },
+        ]
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = records
+
+        def fake_update(rec_id, fields):
+            for r in records:
+                if r["id"] == rec_id:
+                    r.update(fields)
+            return True
+
+        mock_table.update_record.side_effect = fake_update
+
+        with patch("telegram_bot.is_subscribed", return_value=True), \
+             patch("telegram_bot.call_telegram_api"), \
+             patch("telegram_bot.send_message") as mock_send:
+            # 1. Click "Buscar para marcar pago"
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_s1", "data": "pagos:buscar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertIn("Buscar para gestionar pago", mock_send.call_args[0][1])
+
+            # 2. Send search text (accent-insensitive)
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "message": {"chat": {"id": 88888}, "from": {"first_name": "Admin"}, "text": "rodriguez"}
+            }, table=mock_table)
+            res_text = mock_send.call_args[0][1]
+            res_markup = mock_send.call_args[1].get("reply_markup") or {}
+            res_buttons = [b for row in res_markup.get("inline_keyboard", []) for b in row]
+            self.assertIn("Familia Rodriguez", res_text)
+            self.assertTrue(any(
+                b["callback_data"] == "pagos_ok_p:g1"
+                and "Confirmar pago:" in b["text"]
+                and "✅" not in b["text"]
+                for b in res_buttons
+            ))
+            self.assertTrue(any(b["callback_data"] == "pagos_unok_p:g2" for b in res_buttons))
+
+            # 3. Confirm g1, then unconfirm g2
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_s2", "data": "pagos_ok_p:g1", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertEqual(records[0]["pagado"], "si")
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_s3", "data": "pagos_unok_p:g2", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            self.assertEqual(records[1]["pagado"], "no")
+            self.assertIn("desmarcado", mock_send.call_args[0][1])
+
+            # 4. Lista de pagos
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_l1", "data": "pagos:lista", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            lista_text = mock_send.call_args[0][1]
+            self.assertIn("Lista de Pagos", lista_text)
+            self.assertIn("Pagados: <b>1</b> ($45.000)", lista_text)
+            self.assertIn("Pendientes: <b>1</b> ($45.000)", lista_text)
+            self.assertIn("Familia Rodriguez", lista_text)
 
 
 if __name__ == "__main__":
