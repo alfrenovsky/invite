@@ -497,7 +497,7 @@ def _get_wedding_stats(table) -> str:
         confirmados = sum(1 for r in records if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado"))
         rechazados = sum(1 for r in records if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
         pendientes = total_records - confirmados - rechazados
-        pagados = sum(1 for r in records if str(r.get("pagado", "")).strip())
+        pagados = sum(1 for r in records if _get_paid_amount(r) > 0)
         tarjetas_pagadas = pagados
 
         # Group records by tarjeta / invitation
@@ -546,10 +546,11 @@ def _get_wedding_stats(table) -> str:
                 target = [r for r in g if str(r.get("confirmacion", "")).strip().lower() not in ("no", "rechazado")]
 
             if target:
-                paid_in_group = sum(1 for r in target if str(r.get("pagado", "")).strip())
+                paid_in_group = sum(1 for r in target if _is_paid_record(r))
+                partial_in_group = any(_get_paid_amount(r) > 0 for r in target)
                 if paid_in_group == len(target) and paid_in_group > 0:
                     inv_pagadas_completas += 1
-                elif paid_in_group > 0:
+                elif paid_in_group > 0 or partial_in_group:
                     inv_pagadas_parciales += 1
 
         # Group records by first word in dequien (origin)
@@ -565,7 +566,7 @@ def _get_wedding_stats(table) -> str:
             g_si = sum(1 for r in g_recs if str(r.get("confirmacion", "")).strip().lower() in ("si", "sí", "confirmado"))
             g_no = sum(1 for r in g_recs if str(r.get("confirmacion", "")).strip().lower() in ("no", "rechazado"))
             g_pend = g_tot - g_si - g_no
-            g_pag = sum(1 for r in g_recs if str(r.get("pagado", "")).strip().lower() in ("si", "sí", "pagado", "1", "true"))
+            g_pag = sum(1 for r in g_recs if _get_paid_amount(r) > 0)
             dequien_lines.append(f"• <b>{fw}:</b> <b>{g_tot}</b> (✅ {g_si} · ❌ {g_no} · ⏳ {g_pend} · 💳 {g_pag})")
 
         dequien_section = ""
@@ -680,8 +681,7 @@ def _format_guest_icons(r: dict, opened_invitations: set) -> str:
     elif nivel in ("invitado", "invitados", "invitacion"):
         icons.append("💌")
 
-    pagado = str(r.get("pagado", "") or "").strip().lower() in ("si", "sí", "pagado", "1", "true")
-    if pagado:
+    if _get_paid_amount(r) > 0:
         icons.append("💳")
 
     menu_val = str(r.get("pa") or r.get("ap") or r.get("menu") or "").strip().lower()
@@ -1054,8 +1054,30 @@ def _format_monto_ar(amount: int) -> str:
     return f"${amount:,}".replace(",", ".")
 
 
+def _get_paid_amount(rec: dict) -> int:
+    raw = str(rec.get("pagado", "") or "").strip().lower()
+    if raw in ("", "no", "false", "0"):
+        return 0
+    if raw in ("si", "sí", "pagado", "true"):
+        monto = _parse_monto_int(rec.get("montotarjeta"))
+        return monto if monto > 0 else 1
+    return _parse_monto_int(raw)
+
+
+def _get_remaining_amount(rec: dict) -> int:
+    monto = _parse_monto_int(rec.get("montotarjeta"))
+    paid = _get_paid_amount(rec)
+    if monto > 0:
+        return max(0, monto - paid)
+    return 0 if paid > 0 else 0
+
+
 def _is_paid_record(rec: dict) -> bool:
-    return str(rec.get("pagado", "") or "").strip().lower() in ("si", "sí", "pagado", "1", "true")
+    paid = _get_paid_amount(rec)
+    monto = _parse_monto_int(rec.get("montotarjeta"))
+    if monto > 0:
+        return paid >= monto
+    return paid > 0
 
 
 def _is_paying_guest(rec: dict) -> bool:
@@ -1165,11 +1187,13 @@ def _append_comprobante_lines_and_buttons(
             lines.append(f"📎 Comprobante {c_idx} — {status_txt}")
 
     if confirmed_sum > 0:
-        expected_total = sum(_parse_monto_int(r.get("montotarjeta")) for r in recs if _is_paying_guest(r) or _is_paid_record(r))
-        if expected_total > 0:
-            lines.append(f"🧾 Comprobantes confirmados: <b>{_format_monto_ar(confirmed_sum)}</b> / {_format_monto_ar(expected_total)}")
-        else:
-            lines.append(f"🧾 Comprobantes confirmados: <b>{_format_monto_ar(confirmed_sum)}</b>")
+        assigned_sum = sum(_get_paid_amount(r) for r in recs)
+        avail_sum = max(0, confirmed_sum - assigned_sum)
+        lines.append(
+            f"🧾 Comprobantes: <b>{_format_monto_ar(confirmed_sum)}</b> · "
+            f"Asignado: <b>{_format_monto_ar(assigned_sum)}</b> · "
+            f"Disponible: <b>{_format_monto_ar(avail_sum)}</b>"
+        )
 
     for c_idx, u in enumerate(comp_urls, start=1):
         m = _get_comprobante_monto(u, comp_urls, monto_map)
@@ -1201,7 +1225,7 @@ def _classify_pagos_groups(records: list):
 
     for inv_id, recs in sorted(groups.items()):
         comp_urls = _get_group_comprobante_urls(recs)
-        any_paid = any(_is_paid_record(r) for r in recs)
+        any_paid = any(_get_paid_amount(r) > 0 for r in recs)
 
         if any_paid and not comp_urls:
             paid_without_comp.append((inv_id, recs))
@@ -1218,9 +1242,13 @@ def _format_guest_monto_line(r: dict) -> str:
     nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
     monto = _parse_monto_int(r.get("montotarjeta"))
     monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
+    paid = _get_paid_amount(r)
     conf = str(r.get("confirmacion", "") or "").strip().lower()
     if _is_paid_record(r):
         status = "💰 Pagado"
+    elif paid > 0 and monto > 0:
+        faltan = max(0, monto - paid)
+        status = f"🌓 Parcial ({_format_monto_ar(paid)} / faltan {_format_monto_ar(faltan)})"
     elif conf in ("no", "rechazado"):
         status = "🔴 No asiste"
     elif monto > 0 or str(r.get("nivel", "") or "").strip().lower() == "reserva":
@@ -1334,15 +1362,21 @@ def _handle_pagos_search(chat_id: int | str, query: str, table):
                 continue
             nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
             monto = _parse_monto_int(r.get("montotarjeta"))
+            paid = _get_paid_amount(r)
+            faltan = _get_remaining_amount(r)
             monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
-            if _is_paid_record(r):
+            if not _is_paid_record(r) and str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado"):
+                if paid > 0 and faltan > 0:
+                    btn_txt = f"💰 Confirmar pago: {nombre[:16]} (faltan {_format_monto_ar(faltan)})"
+                else:
+                    btn_txt = f"💰 Confirmar pago: {nombre[:20]} ({monto_str})"
+                kb_rows.append([{"text": btn_txt, "callback_data": f"pagos_ok_p:{gid}"}])
+            if paid > 0:
                 kb_rows.append([{"text": f"↩️ Desmarcar pago: {nombre[:22]}", "callback_data": f"pagos_unok_p:{gid}"}])
-            elif str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado"):
-                kb_rows.append([{"text": f"💰 Confirmar pago: {nombre[:20]} ({monto_str})", "callback_data": f"pagos_ok_p:{gid}"}])
 
         unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
         if len(unpaid_paying) >= 2:
-            total_unpaid = sum(_parse_monto_int(r.get("montotarjeta")) for r in unpaid_paying)
+            total_unpaid = sum(_get_remaining_amount(r) for r in unpaid_paying)
             total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
             kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
 
@@ -1415,11 +1449,17 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
                 continue
             nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
             monto = _parse_monto_int(r.get("montotarjeta"))
+            paid = _get_paid_amount(r)
+            faltan = _get_remaining_amount(r)
             monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
-            kb_rows.append([{"text": f"💰 Confirmar pago: {nombre[:20]} ({monto_str})", "callback_data": f"pagos_ok_p:{gid}"}])
+            if paid > 0 and faltan > 0:
+                btn_txt = f"💰 Confirmar pago: {nombre[:16]} (faltan {_format_monto_ar(faltan)})"
+            else:
+                btn_txt = f"💰 Confirmar pago: {nombre[:20]} ({monto_str})"
+            kb_rows.append([{"text": btn_txt, "callback_data": f"pagos_ok_p:{gid}"}])
 
         if len(unpaid_paying) >= 2:
-            total_unpaid = sum(_parse_monto_int(r.get("montotarjeta")) for r in unpaid_paying)
+            total_unpaid = sum(_get_remaining_amount(r) for r in unpaid_paying)
             total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
             kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
 
@@ -1674,6 +1714,16 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
     )
 
 
+def _get_group_comprobantes_balance(recs: list) -> tuple[int, int, int]:
+    """Returns (total_comprobantes_confirmados, total_asignado_a_invitados, saldo_disponible)."""
+    comp_urls = _get_group_comprobante_urls(recs)
+    monto_map = _parse_montocomprobante_map(recs)
+    total_comp = sum(_get_comprobante_monto(u, comp_urls, monto_map) for u in comp_urls)
+    total_assigned = sum(_get_paid_amount(r) for r in recs)
+    available = max(0, total_comp - total_assigned)
+    return total_comp, total_assigned, available
+
+
 def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
     tbl = table or _table_ref
     if not tbl:
@@ -1686,15 +1736,54 @@ def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
         send_message(chat_id, "⚠️ No se encontró el invitado indicado.")
         return
 
-    tbl.update_record(target["id"], {"pagado": "si"})
+    inv_id = _normalize_slug(target.get("invitacion_id") or target.get("invitacion") or target.get("id") or "")
+    groups = _group_records_by_invitacion(records)
+    group_recs = groups.get(inv_id) or [target]
+
     nombre = f"{target.get('nombre', '')} {target.get('apellido', '')}".strip() or "Invitado"
-    monto = _parse_monto_int(target.get("montotarjeta"))
-    monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
-    _log(f"[PAGOS:CONFIRM_PERSON] chat_id={chat_id} guest_id={guest_id} nombre={nombre!r} monto={monto_str}")
+    monto_tarjeta = _parse_monto_int(target.get("montotarjeta"))
+    paid_actual = _get_paid_amount(target)
+    faltan = _get_remaining_amount(target)
+
+    if _is_paid_record(target):
+        send_message(chat_id, f"✅ <b>{html.escape(nombre)}</b> ya figura pagado completo.")
+        return
+
+    total_comp, total_assigned, available = _get_group_comprobantes_balance(group_recs)
+    if total_comp > 0:
+        if available <= 0:
+            send_message(
+                chat_id,
+                f"⚠️ Ya se asignó todo el saldo de los comprobantes confirmados "
+                f"(<b>{_format_monto_ar(total_assigned)}</b> / <b>{_format_monto_ar(total_comp)}</b>).\n"
+                f"Confirmá otro monto de comprobante o desmarcá a otro invitado primero.",
+                reply_markup={
+                    "inline_keyboard": [
+                        [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
+                        [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
+                    ]
+                },
+            )
+            return
+        to_credit = min(faltan, available) if faltan > 0 else available
+    else:
+        to_credit = faltan if faltan > 0 else monto_tarjeta
+
+    new_paid = paid_actual + to_credit if to_credit > 0 else (monto_tarjeta or 1)
+    tbl.update_record(target["id"], {"pagado": str(new_paid)})
+    _log(f"[PAGOS:CONFIRM_PERSON] chat_id={chat_id} guest_id={guest_id} nombre={nombre!r} monto={_format_monto_ar(new_paid)}")
+
+    if monto_tarjeta > 0 and new_paid < monto_tarjeta:
+        msg_txt = (
+            f"🌓 Pago parcial registrado para <b>{html.escape(nombre)}</b>: "
+            f"+<b>{_format_monto_ar(to_credit)}</b> (total <b>{_format_monto_ar(new_paid)}</b> / {_format_monto_ar(monto_tarjeta)})."
+        )
+    else:
+        msg_txt = f"✅ Pago confirmado para <b>{html.escape(nombre)}</b> (<b>{_format_monto_ar(new_paid)}</b>)."
 
     send_message(
         chat_id,
-        f"✅ Pago confirmado para <b>{html.escape(nombre)}</b> (<b>{monto_str}</b>).",
+        msg_txt,
         reply_markup={
             "inline_keyboard": [
                 [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
@@ -1717,7 +1806,7 @@ def _handle_desmarcar_pago_persona(chat_id: int | str, guest_id: str, table):
         send_message(chat_id, "⚠️ No se encontró el invitado indicado.")
         return
 
-    tbl.update_record(target["id"], {"pagado": "no"})
+    tbl.update_record(target["id"], {"pagado": ""})
     nombre = f"{target.get('nombre', '')} {target.get('apellido', '')}".strip() or "Invitado"
     _log(f"[PAGOS:UNCONFIRM_PERSON] chat_id={chat_id} guest_id={guest_id} nombre={nombre!r}")
 
@@ -1751,16 +1840,45 @@ def _handle_confirmar_pago_grupo(chat_id: int | str, inv_id_prefix: str, table):
     if not targets:
         targets = [r for r in recs if str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado") and not _is_paid_record(r)]
 
-    confirmed_names = []
-    total = 0
-    for r in targets:
-        tbl.update_record(r["id"], {"pagado": "si"})
-        nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
-        monto = _parse_monto_int(r.get("montotarjeta"))
-        total += monto
-        confirmed_names.append(f"{nombre} ({_format_monto_ar(monto)})" if monto > 0 else nombre)
+    total_comp, _, available = _get_group_comprobantes_balance(recs)
+    if total_comp > 0 and available <= 0:
+        send_message(
+            chat_id,
+            f"⚠️ Ya se asignó todo el saldo de los comprobantes confirmados (<b>{_format_monto_ar(total_comp)}</b>).",
+            reply_markup={
+                "inline_keyboard": [
+                    [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
+                    [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
+                ]
+            },
+        )
+        return
 
-    _log(f"[PAGOS:CONFIRM_GROUP] chat_id={chat_id} invitacion={matched_inv} count={len(targets)} total={total}")
+    confirmed_names = []
+    total_credited = 0
+    remaining_avail = available
+    for r in targets:
+        monto_tarjeta = _parse_monto_int(r.get("montotarjeta"))
+        paid_actual = _get_paid_amount(r)
+        faltan = _get_remaining_amount(r)
+        if total_comp > 0:
+            if remaining_avail <= 0:
+                break
+            to_credit = min(faltan, remaining_avail) if faltan > 0 else remaining_avail
+            remaining_avail -= to_credit
+        else:
+            to_credit = faltan if faltan > 0 else monto_tarjeta
+
+        new_paid = paid_actual + to_credit if to_credit > 0 else (monto_tarjeta or 1)
+        tbl.update_record(r["id"], {"pagado": str(new_paid)})
+        nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+        total_credited += to_credit
+        if monto_tarjeta > 0 and new_paid < monto_tarjeta:
+            confirmed_names.append(f"{nombre} (parcial {_format_monto_ar(new_paid)}/{_format_monto_ar(monto_tarjeta)})")
+        else:
+            confirmed_names.append(f"{nombre} ({_format_monto_ar(new_paid)})" if new_paid > 0 else nombre)
+
+    _log(f"[PAGOS:CONFIRM_GROUP] chat_id={chat_id} invitacion={matched_inv} count={len(confirmed_names)} total={total_credited}")
     group_title = matched_inv.replace("_", " ").title()
     summary = ", ".join(confirmed_names) if confirmed_names else "sin pendientes"
     send_message(
