@@ -9,6 +9,7 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from sheets import (
@@ -27,6 +28,7 @@ TELEGRAM_BOT_NAME = os.environ.get("TELEGRAM_BOT_NAME", "celiayalfredo_bot").str
 TELEGRAM_AUTH_SECRET = os.environ.get("TELEGRAM_AUTH_SECRET", "boda_cya_admin_telegram_2027").strip()
 SUBSCRIBERS_FILE = os.environ.get("TELEGRAM_SUBSCRIBERS_FILE", "/data/telegram_subscribers.json")
 TELEGRAM_LOG_FILE = os.environ.get("TELEGRAM_LOG_FILE", "/data/telegram.log")
+TELEGRAM_COMPROBANTES_DIR = os.environ.get("COMPROBANTES_DIR") or "/data/comprobantes"
 
 
 def _log(msg: str):
@@ -574,6 +576,9 @@ def _get_main_menu_markup() -> dict:
                 {"text": "🔍 Buscar y Reenviar", "callback_data": "send:search"},
                 {"text": "📵 Sin Teléfono", "callback_data": "cmd:sintelefono"},
             ],
+            [
+                {"text": "💳 Pagos", "callback_data": "cmd:pagos"},
+            ],
         ]
     }
 
@@ -970,6 +975,394 @@ def _handle_sintelefono_command(chat_id: int | str, arg: str, table):
     _send_chunked_messages(chat_id, header, items)
 
 
+# ==============================================================
+# 💳 Payment Management (/pagos)
+# ==============================================================
+
+ALLOWED_TELEGRAM_COMP_EXTS = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
+
+
+def _parse_monto_int(raw_val) -> int:
+    digits = re.sub(r"[^\d]", "", str(raw_val or ""))
+    return int(digits) if digits else 0
+
+
+def _format_monto_ar(amount: int) -> str:
+    return f"${amount:,}".replace(",", ".")
+
+
+def _is_paid_record(rec: dict) -> bool:
+    return str(rec.get("pagado", "") or "").strip().lower() in ("si", "sí", "pagado", "1", "true")
+
+
+def _is_paying_guest(rec: dict) -> bool:
+    monto = _parse_monto_int(rec.get("montotarjeta"))
+    nivel = str(rec.get("nivel", "") or "").strip().lower()
+    conf = str(rec.get("confirmacion", "") or "").strip().lower()
+    return (monto > 0 or nivel == "reserva") and conf not in ("no", "rechazado")
+
+
+def _parse_comprobante_urls(raw_val) -> list:
+    if not raw_val:
+        return []
+    urls = []
+    seen = set()
+    for part in re.split(r"[\r\n,]+", str(raw_val)):
+        u = part.strip()
+        if u and u not in seen:
+            seen.add(u)
+            urls.append(u)
+    return urls
+
+
+def _get_group_comprobante_urls(recs: list) -> list:
+    urls = []
+    seen = set()
+    for r in recs or []:
+        for u in _parse_comprobante_urls(r.get("comprobante", "")):
+            if u not in seen:
+                seen.add(u)
+                urls.append(u)
+    return urls
+
+
+def _group_records_by_invitacion(records: list) -> dict:
+    groups = {}
+    for r in records or []:
+        inv_id = _normalize_slug(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "")
+        if not inv_id:
+            inv_id = f"guest_{r.get('id', '')}"
+        groups.setdefault(inv_id, []).append(r)
+    return groups
+
+
+def _classify_pagos_groups(records: list):
+    groups = _group_records_by_invitacion(records)
+    paid_without_comp = []
+    with_comp_unconfirmed = []
+
+    for inv_id, recs in sorted(groups.items()):
+        comp_urls = _get_group_comprobante_urls(recs)
+        any_paid = any(_is_paid_record(r) for r in recs)
+
+        if any_paid and not comp_urls:
+            paid_without_comp.append((inv_id, recs))
+
+        if comp_urls:
+            unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
+            if unpaid_paying:
+                with_comp_unconfirmed.append((inv_id, recs, comp_urls, unpaid_paying))
+
+    return paid_without_comp, with_comp_unconfirmed
+
+
+def _format_guest_monto_line(r: dict) -> str:
+    nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+    monto = _parse_monto_int(r.get("montotarjeta"))
+    monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
+    conf = str(r.get("confirmacion", "") or "").strip().lower()
+    if conf in ("no", "rechazado"):
+        status = "🔴"
+    elif _is_paid_record(r):
+        status = "✅"
+    elif monto > 0 or str(r.get("nivel", "") or "").strip().lower() == "reserva":
+        status = "⏳"
+    else:
+        status = "💌"
+    return f"• {html.escape(nombre)} — <b>{monto_str}</b> {status}"
+
+
+def _handle_pagos_menu(chat_id: int | str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    paid_without_comp, with_comp_unconfirmed = _classify_pagos_groups(records)
+
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": f"📎 Pagadas sin comprobante ({len(paid_without_comp)})", "callback_data": "pagos:sin_comp"}],
+            [{"text": f"⏳ Con comprobante por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
+            [{"text": "🏠 Menú", "callback_data": "cmd:menu"}],
+        ]
+    }
+    send_message(
+        chat_id,
+        f"💳 <b>Gestión de Pagos</b>\n\n"
+        f"• Pagadas sin comprobante: <b>{len(paid_without_comp)}</b> tarjetas\n"
+        f"• Con comprobante por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas",
+        reply_markup=reply_markup,
+    )
+
+
+def _handle_pagos_sin_comprobante(chat_id: int | str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    paid_without_comp, _ = _classify_pagos_groups(records)
+
+    back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
+    if not paid_without_comp:
+        send_message(chat_id, "✅ Todas las tarjetas pagadas ya tienen comprobante cargado.", reply_markup=back_markup)
+        return
+
+    for idx, (inv_id, recs) in enumerate(paid_without_comp):
+        group_title = inv_id.replace("_", " ").title()
+        lines = [f"📎 <b>{html.escape(group_title)}</b> (sin comprobante)"]
+        for r in recs:
+            lines.append(_format_guest_monto_line(r))
+
+        kb_rows = [[{"text": f"📎 Subir comprobante ({group_title[:25]})", "callback_data": f"pagos_up:{inv_id[:52]}"}]]
+        if idx == len(paid_without_comp) - 1:
+            kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
+
+        send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
+
+
+def _handle_pagos_por_confirmar(chat_id: int | str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    _, with_comp_unconfirmed = _classify_pagos_groups(records)
+
+    back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
+    if not with_comp_unconfirmed:
+        send_message(chat_id, "✅ No hay comprobantes pendientes de confirmación.", reply_markup=back_markup)
+        return
+
+    for idx, (inv_id, recs, comp_urls, unpaid_paying) in enumerate(with_comp_unconfirmed):
+        group_title = inv_id.replace("_", " ").title()
+        lines = [f"⏳ <b>{html.escape(group_title)}</b>"]
+        for r in recs:
+            lines.append(_format_guest_monto_line(r))
+
+        for c_idx, u in enumerate(comp_urls, start=1):
+            lines.append(f'🔗 <a href="{html.escape(u)}">Ver comprobante {c_idx}</a>')
+
+        kb_rows = []
+        for r in unpaid_paying:
+            gid = str(r.get("id", "") or "").strip()
+            if not gid:
+                continue
+            nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+            monto = _parse_monto_int(r.get("montotarjeta"))
+            monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
+            kb_rows.append([{"text": f"✅ {nombre[:22]} ({monto_str})", "callback_data": f"pagos_ok_p:{gid}"}])
+
+        if len(unpaid_paying) >= 2:
+            total_unpaid = sum(_parse_monto_int(r.get("montotarjeta")) for r in unpaid_paying)
+            total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
+            kb_rows.append([{"text": f"✅ Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
+
+        if idx == len(with_comp_unconfirmed) - 1:
+            kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
+
+        send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
+
+
+def _handle_confirmar_pago_persona(chat_id: int | str, guest_id: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    target = next((r for r in records if str(r.get("id", "") or "").strip() == str(guest_id).strip()), None)
+    if not target:
+        send_message(chat_id, "⚠️ No se encontró el invitado indicado.")
+        return
+
+    tbl.update_record(target["id"], {"pagado": "si"})
+    nombre = f"{target.get('nombre', '')} {target.get('apellido', '')}".strip() or "Invitado"
+    monto = _parse_monto_int(target.get("montotarjeta"))
+    monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
+    _log(f"[PAGOS:CONFIRM_PERSON] chat_id={chat_id} guest_id={guest_id} nombre={nombre!r} monto={monto_str}")
+
+    send_message(
+        chat_id,
+        f"✅ Pago confirmado para <b>{html.escape(nombre)}</b> (<b>{monto_str}</b>).",
+        reply_markup={
+            "inline_keyboard": [
+                [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
+                [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
+            ]
+        },
+    )
+
+
+def _handle_confirmar_pago_grupo(chat_id: int | str, inv_id_prefix: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    matched_inv = next((k for k in groups if k == inv_id_prefix or k.startswith(inv_id_prefix)), None)
+    if not matched_inv:
+        send_message(chat_id, "⚠️ No se encontró la tarjeta indicada.")
+        return
+
+    recs = groups[matched_inv]
+    targets = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
+    if not targets:
+        targets = [r for r in recs if str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado") and not _is_paid_record(r)]
+
+    confirmed_names = []
+    total = 0
+    for r in targets:
+        tbl.update_record(r["id"], {"pagado": "si"})
+        nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+        monto = _parse_monto_int(r.get("montotarjeta"))
+        total += monto
+        confirmed_names.append(f"{nombre} ({_format_monto_ar(monto)})" if monto > 0 else nombre)
+
+    _log(f"[PAGOS:CONFIRM_GROUP] chat_id={chat_id} invitacion={matched_inv} count={len(targets)} total={total}")
+    group_title = matched_inv.replace("_", " ").title()
+    summary = ", ".join(confirmed_names) if confirmed_names else "sin pendientes"
+    send_message(
+        chat_id,
+        f"✅ Pago confirmado para <b>{html.escape(group_title)}</b>:\n{html.escape(summary)}",
+        reply_markup={
+            "inline_keyboard": [
+                [{"text": "⏳ Ver pendientes por confirmar", "callback_data": "pagos:por_confirmar"}],
+                [{"text": "💳 Menú Pagos", "callback_data": "cmd:pagos"}],
+            ]
+        },
+    )
+
+
+def _prompt_comprobante_upload(chat_id: int | str, inv_id_prefix: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    matched_inv = next((k for k in groups if k == inv_id_prefix or k.startswith(inv_id_prefix)), None)
+    if not matched_inv:
+        send_message(chat_id, "⚠️ No se encontró la tarjeta indicada.")
+        return
+
+    with _lock:
+        _user_states[str(chat_id)] = f"awaiting_comprobante:{matched_inv}"
+
+    group_title = matched_inv.replace("_", " ").title()
+    lines = [f"📎 Enviá la <b>foto o archivo PDF</b> del comprobante para <b>{html.escape(group_title)}</b>:"]
+    for r in groups[matched_inv]:
+        lines.append(_format_guest_monto_line(r))
+
+    send_message(
+        chat_id,
+        "\n".join(lines),
+        reply_markup={"inline_keyboard": [[{"text": "❌ Cancelar", "callback_data": "cmd:cancel"}]]},
+    )
+
+
+def _download_telegram_file(file_id: str, safe_slug: str, orig_filename: str = "") -> tuple | None:
+    res = call_telegram_api("getFile", {"file_id": file_id})
+    if not res or not res.get("ok"):
+        return None
+    file_path = (res.get("result") or {}).get("file_path") or ""
+    if not file_path:
+        return None
+
+    ext = os.path.splitext(orig_filename or file_path)[1].lower()
+    if not ext:
+        ext = ".jpg"
+    if ext not in ALLOWED_TELEGRAM_COMP_EXTS:
+        raise ValueError("Formato no permitido. Enviá PDF o imagen (JPG, PNG, WEBP).")
+
+    url = f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{file_path}"
+    with urllib.request.urlopen(url, timeout=35) as resp:
+        file_bytes = resp.read()
+
+    comp_dir = os.environ.get("COMPROBANTES_DIR") or TELEGRAM_COMPROBANTES_DIR
+    os.makedirs(comp_dir, exist_ok=True)
+    filename = f"comprobante_{safe_slug}_{int(time.time())}_{uuid.uuid4().hex[:6]}{ext}"
+    dest = os.path.join(comp_dir, filename)
+    with open(dest, "wb") as f:
+        f.write(file_bytes)
+
+    base_site = (BASE_URL or "https://nos.vamos.acas.ar").rstrip("/")
+    return filename, f"{base_site}/comprobantes/{filename}"
+
+
+def _handle_telegram_comprobante_upload(chat_id: int | str, inv_id: str, msg: dict, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    file_id = ""
+    orig_filename = ""
+    if msg.get("photo"):
+        photos = msg["photo"]
+        if isinstance(photos, list) and photos:
+            file_id = photos[-1].get("file_id", "")
+            orig_filename = "comprobante.jpg"
+    elif msg.get("document"):
+        doc = msg["document"]
+        file_id = doc.get("file_id", "")
+        orig_filename = doc.get("file_name", "") or "comprobante.pdf"
+
+    if not file_id:
+        send_message(
+            chat_id,
+            "⚠️ Por favor enviá una <b>foto</b> o un archivo <b>PDF/imagen</b> del comprobante.",
+            reply_markup={"inline_keyboard": [[{"text": "❌ Cancelar", "callback_data": "cmd:cancel"}]]},
+        )
+        return
+
+    safe_slug = re.sub(r"[^a-zA-Z0-9_-]", "_", inv_id)
+    try:
+        downloaded = _download_telegram_file(file_id, safe_slug, orig_filename)
+    except ValueError as ve:
+        send_message(chat_id, f"⚠️ {html.escape(str(ve))}")
+        return
+    except Exception as e:
+        _log(f"[PAGOS:UPLOAD_ERROR] invitacion={inv_id} err={e}")
+        send_message(chat_id, "❌ Error descargando el comprobante desde Telegram.")
+        return
+
+    if not downloaded:
+        send_message(chat_id, "❌ No se pudo obtener el archivo desde Telegram.")
+        return
+
+    filename, comp_url = downloaded
+    records = tbl.get_all() or []
+    groups = _group_records_by_invitacion(records)
+    guests = groups.get(inv_id) or []
+
+    existing_urls = _get_group_comprobante_urls(guests)
+    updated_urls = existing_urls + [comp_url]
+    combined = "\n".join(updated_urls)
+
+    for g in guests:
+        tbl.update_record(g["id"], {"comprobante": combined})
+
+    with _lock:
+        _user_states.pop(str(chat_id), None)
+
+    _log(f"[PAGOS:UPLOAD] chat_id={chat_id} invitacion={inv_id} file={filename}")
+    group_title = inv_id.replace("_", " ").title()
+    send_message(
+        chat_id,
+        f"✅ Comprobante guardado para <b>{html.escape(group_title)}</b>\n"
+        f'🔗 <a href="{html.escape(comp_url)}">Ver archivo</a>',
+        reply_markup={"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]},
+    )
+
+
 def _handle_update(update: dict, table=None):
     # 0. Handle callback_query from inline keyboards
     if "callback_query" in update:
@@ -1010,6 +1403,33 @@ def _handle_update(update: dict, table=None):
             _handle_sintelefono_command(cq_chat_id, "", table or _table_ref)
             return
 
+        if cq_data == "cmd:pagos":
+            _handle_pagos_menu(cq_chat_id, table or _table_ref)
+            return
+
+        if cq_data == "pagos:sin_comp":
+            _handle_pagos_sin_comprobante(cq_chat_id, table or _table_ref)
+            return
+
+        if cq_data == "pagos:por_confirmar":
+            _handle_pagos_por_confirmar(cq_chat_id, table or _table_ref)
+            return
+
+        if cq_data.startswith("pagos_up:"):
+            inv_prefix = cq_data[len("pagos_up:"):].strip()
+            _prompt_comprobante_upload(cq_chat_id, inv_prefix, table or _table_ref)
+            return
+
+        if cq_data.startswith("pagos_ok_p:"):
+            gid = cq_data[len("pagos_ok_p:"):].strip()
+            _handle_confirmar_pago_persona(cq_chat_id, gid, table or _table_ref)
+            return
+
+        if cq_data.startswith("pagos_ok_g:"):
+            inv_prefix = cq_data[len("pagos_ok_g:"):].strip()
+            _handle_confirmar_pago_grupo(cq_chat_id, inv_prefix, table or _table_ref)
+            return
+
         if cq_data in ("cmd:menu", "cmd:cancel"):
             _send_main_menu(cq_chat_id, cq_user_name)
             return
@@ -1032,14 +1452,15 @@ def _handle_update(update: dict, table=None):
     chat = msg.get("chat") or {}
     chat_id = chat.get("id")
     text = (msg.get("text") or "").strip()
+    has_media = bool(msg.get("photo") or msg.get("document"))
     from_user = msg.get("from") or {}
     user_name = from_user.get("first_name") or from_user.get("username") or "Admin"
 
-    if not chat_id or not text:
+    if not chat_id or (not text and not has_media):
         return
 
     parts = text.split(maxsplit=1)
-    raw_cmd = parts[0].lower().split("@")[0]
+    raw_cmd = parts[0].lower().split("@")[0] if parts else ""
     arg = parts[1].strip() if len(parts) > 1 else ""
 
     # 1. /start command
@@ -1093,15 +1514,22 @@ def _handle_update(update: dict, table=None):
 
     _log(f"[MSG] chat_id={chat_id} user={user_name} text={text!r}")
 
-    # 2b. Check active conversational state for non-command text
+    # 2b. Check active conversational state for non-command text or media upload
     if not text.startswith("/"):
         with _lock:
             state = _user_states.get(str(chat_id))
             if state == "awaiting_search_query":
                 _user_states.pop(str(chat_id), None)
-        if state == "awaiting_search_query":
+        if state == "awaiting_search_query" and text:
             _handle_search_flow(chat_id, text, table or _table_ref)
             return
+        if isinstance(state, str) and state.startswith("awaiting_comprobante:"):
+            inv_id = state[len("awaiting_comprobante:"):]
+            _handle_telegram_comprobante_upload(chat_id, inv_id, msg, table or _table_ref)
+            return
+
+    if not text:
+        return
 
     # Clear any pending state when a command is issued
     if text.startswith("/"):
@@ -1132,6 +1560,11 @@ def _handle_update(update: dict, table=None):
     # 5. /sintelefono command
     if raw_cmd in ("/sintelefono", "/nophone", "/sin_telefono"):
         _handle_sintelefono_command(chat_id, arg, table or _table_ref)
+        return
+
+    # 5b. /pagos command
+    if raw_cmd == "/pagos":
+        _handle_pagos_menu(chat_id, table or _table_ref)
         return
 
     # 6. /stop command

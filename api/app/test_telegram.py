@@ -387,6 +387,7 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("cmd:send", callbacks)
         self.assertIn("send:search", callbacks)
         self.assertIn("cmd:sintelefono", callbacks)
+        self.assertIn("cmd:pagos", callbacks)
 
         # Clicking cmd:status triggers stats
         mock_send.reset_mock()
@@ -514,6 +515,89 @@ class TestTelegramBot(unittest.TestCase):
             content = f.read()
         self.assertIn("[TELEGRAM] [SUBSCRIBER:ADD] chat_id=88888", content)
         self.assertIn("[TELEGRAM] [MSG] chat_id=88888", content)
+
+    @patch("telegram_bot.send_message")
+    def test_pagos_menu_upload_and_confirm_per_person(self, mock_send):
+        telegram_bot.add_subscriber(88888)
+        records = [
+            # Card 1: paid without comprobante
+            {"id": "p1", "invitacion_id": "fam_pagada", "nombre": "Carlos", "apellido": "Lopez", "nivel": "Reserva", "montotarjeta": "50000", "pagado": "si", "comprobante": ""},
+            # Card 2: with comprobante, 1 paid + 1 unpaid
+            {"id": "p2", "invitacion_id": "fam_comp", "nombre": "Juan", "apellido": "Perez", "nivel": "Reserva", "montotarjeta": "50000", "pagado": "si", "comprobante": "https://test/comp1.pdf"},
+            {"id": "p3", "invitacion_id": "fam_comp", "nombre": "Ana", "apellido": "Perez", "nivel": "Reserva", "montotarjeta": "45000", "pagado": "", "comprobante": "https://test/comp1.pdf"},
+        ]
+
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = records
+
+        def fake_update(gid, payload):
+            for r in records:
+                if r["id"] == gid:
+                    r.update(payload)
+
+        mock_table.update_record.side_effect = fake_update
+
+        # 1. /pagos summary
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/pagos"}}, table=mock_table)
+        menu_text = mock_send.call_args[0][1]
+        self.assertIn("Pagadas sin comprobante: <b>1</b>", menu_text)
+        self.assertIn("Con comprobante por confirmar: <b>1</b>", menu_text)
+
+        # 2. List paid without comprobante -> shows Carlos Lopez and $50.000
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_p1", "data": "pagos:sin_comp", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+        sin_comp_text = mock_send.call_args[0][1]
+        self.assertIn("Carlos Lopez", sin_comp_text)
+        self.assertIn("$50.000", sin_comp_text)
+
+        # 3. Tap pagos_up:fam_pagada -> prompts for photo/PDF, then send photo
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_p2", "data": "pagos_up:fam_pagada", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+        self.assertEqual(telegram_bot._user_states.get("88888"), "awaiting_comprobante:fam_pagada")
+
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = b"fake-jpeg-bytes"
+        mock_resp.__enter__.return_value = mock_resp
+        with patch("telegram_bot.call_telegram_api", return_value={"ok": True, "result": {"file_path": "photos/file_1.jpg"}}), \
+             patch("urllib.request.urlopen", return_value=mock_resp), \
+             patch.dict(os.environ, {"COMPROBANTES_DIR": self.temp_dir.name}):
+            telegram_bot._handle_update({
+                "message": {"chat": {"id": 88888}, "photo": [{"file_id": "small"}, {"file_id": "large_id"}]}
+            }, table=mock_table)
+
+        self.assertTrue(records[0]["comprobante"].endswith(".jpg"))
+        self.assertNotIn("88888", telegram_bot._user_states)
+
+        # 4. List with comprobante awaiting confirmation -> shows Ana Perez ($45.000) button, not Juan
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_p3", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+        conf_text = mock_send.call_args[0][1]
+        conf_markup = mock_send.call_args[1].get("reply_markup") or {}
+        conf_buttons = [b for row in conf_markup.get("inline_keyboard", []) for b in row]
+        self.assertIn("Ana Perez", conf_text)
+        self.assertIn("$45.000", conf_text)
+        self.assertIn("https://test/comp1.pdf", conf_text)
+        self.assertTrue(any(b["callback_data"] == "pagos_ok_p:p3" and "$45.000" in b["text"] for b in conf_buttons))
+        self.assertFalse(any(b["callback_data"] == "pagos_ok_p:p2" for b in conf_buttons))
+
+        # 5. Confirm payment for Ana Perez (p3)
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_p4", "data": "pagos_ok_p:p3", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+        self.assertEqual(records[2]["pagado"], "si")
+        self.assertIn("Ana Perez", mock_send.call_args[0][1])
+        self.assertIn("$45.000", mock_send.call_args[0][1])
 
 
 if __name__ == "__main__":
