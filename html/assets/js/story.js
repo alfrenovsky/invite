@@ -1280,7 +1280,7 @@
                 if (item.isInvitado) {
                     badgeHtml = '<span class="payment-invitado-badge">✨ $0</span>';
                 } else {
-                    badgeHtml = '<span class="payment-paid-badge">✓ Pago registrado</span>';
+                    badgeHtml = '<span class="payment-paid-badge">✓ Pagado</span>';
                 }
                 rowsHtml += `
                     <div class="payment-breakdown-row">
@@ -1309,7 +1309,7 @@
             if (item.isInvitado) {
                 amountHtml = '<span class="payment-invitado-badge">✨ $0</span>';
             } else if (item.isPaid) {
-                amountHtml = '<span class="payment-paid-badge">✓ Pago registrado</span>';
+                amountHtml = '<span class="payment-paid-badge">✓ Pagado</span>';
             } else {
                 amountHtml = `<span>${formatCurrency(item.monto)}</span>`;
             }
