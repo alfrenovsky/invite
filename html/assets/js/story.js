@@ -1354,6 +1354,7 @@
         if (aliasBadge) aliasBadge.style.display = '';
         if (uploadWrapper) uploadWrapper.style.display = '';
         paymentSection.style.display = 'block';
+        requestAnimationFrame(updateRsvpScrollHint);
     }
 
     function initComprobanteUploader() {
@@ -1515,6 +1516,46 @@
                 fileInput.value = '';
             }
         });
+    }
+
+    function updateRsvpScrollHint() {
+        const formContainer = document.querySelector('.rsvp-form-container');
+        const hintWrap = document.getElementById('rsvpScrollHintWrap');
+        if (!formContainer || !hintWrap) return;
+
+        const remaining = formContainer.scrollHeight - formContainer.scrollTop - formContainer.clientHeight;
+        if (formContainer.clientHeight > 0 && remaining > 14) {
+            hintWrap.classList.add('visible');
+        } else {
+            hintWrap.classList.remove('visible');
+        }
+    }
+
+    function initRsvpScrollHint() {
+        const formContainer = document.querySelector('.rsvp-form-container');
+        const hintWrap = document.getElementById('rsvpScrollHintWrap');
+        const hintBtn = document.getElementById('rsvpScrollHint');
+        const rsvpForm = document.getElementById('storyRsvpForm');
+        if (!formContainer || !hintWrap || !hintBtn) return;
+
+        formContainer.addEventListener('scroll', updateRsvpScrollHint, { passive: true });
+        window.addEventListener('resize', updateRsvpScrollHint, { passive: true });
+
+        if (typeof ResizeObserver !== 'undefined' && rsvpForm) {
+            const ro = new ResizeObserver(() => {
+                updateRsvpScrollHint();
+            });
+            ro.observe(rsvpForm);
+            ro.observe(formContainer);
+        }
+
+        hintBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            formContainer.scrollBy({ top: 180, behavior: 'smooth' });
+        });
+
+        requestAnimationFrame(updateRsvpScrollHint);
     }
 
     function bindInteractiveEvents() {
@@ -2601,6 +2642,7 @@
         }
 
         updatePaymentSection();
+        initRsvpScrollHint();
         isRsvpInitialized = true;
     }
 
