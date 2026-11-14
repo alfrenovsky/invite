@@ -41,6 +41,7 @@ _subscribers_cache = None
 _last_opened = {}  # {clean_id: timestamp}
 _dirty_rsvp_sessions = {}  # {clean_id: {"time": timestamp, "table": table}}
 _rsvp_debounce_timers = {}  # {clean_id: Timer}
+_user_states = {}  # {str(chat_id): state_str}
 _polling_thread = None
 _is_polling = False
 _table_ref = None
@@ -513,13 +514,13 @@ def _get_wedding_stats(table) -> str:
         return "Error al obtener estadísticas de Google Sheets."
 
 
-def _send_chunked_messages(chat_id: int | str, header: str, items: list[str], max_len: int = 3500):
+def _send_chunked_messages(chat_id: int | str, header: str, items: list[str], max_len: int = 3500, reply_markup: dict = None):
     """
     Sends a list of formatted item strings in chunks that fit within Telegram's 4096-character limit.
     """
     if not items:
         if header:
-            send_message(chat_id, header)
+            send_message(chat_id, header, reply_markup=reply_markup)
         return
 
     current_chunk = [header] if header else []
@@ -536,7 +537,149 @@ def _send_chunked_messages(chat_id: int | str, header: str, items: list[str], ma
             current_len += item_len
 
     if current_chunk:
-        send_message(chat_id, "\n\n".join(current_chunk))
+        send_message(chat_id, "\n\n".join(current_chunk), reply_markup=reply_markup)
+
+
+def _normalize_search_text(text: str) -> str:
+    return unicodedata.normalize("NFKD", str(text or "")).encode("ASCII", "ignore").decode("ASCII").lower().strip()
+
+
+def _get_main_menu_markup() -> dict:
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "📊 Estado / Resumen", "callback_data": "cmd:status"},
+                {"text": "📤 Enviar Invitaciones", "callback_data": "cmd:send"},
+            ],
+            [
+                {"text": "🔍 Buscar y Reenviar", "callback_data": "send:search"},
+                {"text": "📵 Sin Teléfono", "callback_data": "cmd:sintelefono"},
+            ],
+        ]
+    }
+
+
+def _send_main_menu(chat_id: int | str, user_name: str = "Admin"):
+    send_message(
+        chat_id,
+        f"👋 Hola <b>{html.escape(user_name or 'Admin')}</b>. ¿Qué querés hacer?",
+        reply_markup=_get_main_menu_markup(),
+    )
+
+
+def _prompt_search_query(chat_id: int | str):
+    with _lock:
+        _user_states[str(chat_id)] = "awaiting_search_query"
+    send_message(
+        chat_id,
+        "🔍 <b>Buscar invitado</b>\n\nEscribí un nombre, apellido, tarjeta o palabra para buscar:",
+        reply_markup={"inline_keyboard": [[{"text": "❌ Cancelar", "callback_data": "cmd:cancel"}]]},
+    )
+
+
+def _format_guest_icons(r: dict, opened_invitations: set) -> str:
+    icons = []
+    conf = str(r.get("confirmacion", "") or "").strip().lower()
+    if conf in ("si", "sí", "confirmado"):
+        icons.append("🟢")
+    elif conf in ("no", "rechazado"):
+        icons.append("🔴")
+    else:
+        icons.append("⏳")
+
+    menu_val = str(r.get("pa") or r.get("ap") or r.get("menu") or "").strip().lower()
+    if not menu_val:
+        if str(r.get("pa_vegano", "") or "").strip().lower() in ("si", "sí", "true", "1"):
+            menu_val = "vegano"
+        elif str(r.get("pa_vegetariano", "") or "").strip().lower() in ("si", "sí", "true", "1"):
+            menu_val = "vegetariano"
+        elif str(r.get("pa_general", "") or "").strip().lower() in ("si", "sí", "true", "1"):
+            menu_val = "general"
+
+    if menu_val == "vegano":
+        icons.append("🌱")
+    elif menu_val == "vegetariano":
+        icons.append("🥬")
+    elif menu_val == "general":
+        icons.append("🍽️")
+
+    celiaco = str(r.get("celiaco") or r.get("pa_celiaco") or "").strip().lower() in ("si", "sí", "true", "1")
+    if celiaco:
+        icons.append("🌾")
+
+    inv_slug = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+    if _is_record_opened(r) or (inv_slug and inv_slug in opened_invitations):
+        icons.append("👀")
+
+    return " ".join(icons)
+
+
+def _handle_search_flow(chat_id: int | str, query: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    norm_query = _normalize_search_text(query)
+    if not norm_query:
+        _prompt_search_query(chat_id)
+        return
+
+    records = tbl.get_all() or []
+    opened_invitations = {
+        str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+        for rec in records
+        if _is_record_opened(rec)
+    }
+
+    matches = []
+    for r in records:
+        full_name = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()
+        inv_id = str(r.get("invitacion_id") or r.get("invitacion") or "").strip()
+        dequien = str(r.get("dequien", "") or "").strip()
+        searchable = " ".join([
+            _normalize_search_text(full_name),
+            _normalize_search_text(inv_id),
+            _normalize_search_text(dequien),
+        ])
+        if norm_query in searchable:
+            matches.append(r)
+
+    nav_markup = {
+        "inline_keyboard": [
+            [
+                {"text": "🔍 Buscar otro", "callback_data": "send:search"},
+                {"text": "🏠 Menú", "callback_data": "cmd:menu"},
+            ]
+        ]
+    }
+
+    if not matches:
+        send_message(
+            chat_id,
+            f'🔍 No se encontraron invitados para "<b>{html.escape(query)}</b>".',
+            reply_markup=nav_markup,
+        )
+        return
+
+    matches.sort(key=lambda r: _normalize_search_text(f"{r.get('nombre', '')} {r.get('apellido', '')}") or "zzz")
+
+    base_site = (BASE_URL or "https://nos.vamos.acas.ar").rstrip("/")
+    header = f'🔍 <b>Resultados para "{html.escape(query)}" ({len(matches)}):</b>'
+    items = []
+    for r in matches:
+        nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+        clean_p = clean_phone_number(r.get("telefono", ""))
+        gid = str(r.get("id", "") or "").strip()
+        icons_str = _format_guest_icons(r, opened_invitations)
+        if clean_p:
+            send_url = f"{base_site}/send/{clean_p}?id={gid}" if gid else f"{base_site}/send/{clean_p}"
+            name_part = f'👉 <a href="{send_url}"><b>{html.escape(nombre)}</b></a>'
+        else:
+            name_part = f"👤 <b>{html.escape(nombre)}</b>"
+        items.append(f"{name_part} {icons_str}".strip())
+
+    _send_chunked_messages(chat_id, header, items, reply_markup=nav_markup)
 
 
 def _handle_send_command(chat_id: int | str, arg: str, table):
@@ -571,6 +714,10 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
 
     arg = (arg or "").strip()
 
+    if arg.lower() in ("search", "buscar"):
+        _prompt_search_query(chat_id)
+        return
+
     if not arg:
         # Build interactive inline buttons (2 per row)
         inline_keyboard = []
@@ -584,6 +731,8 @@ def _handle_send_command(chat_id: int | str, arg: str, table):
                 row = []
         if row:
             inline_keyboard.append(row)
+
+        inline_keyboard.append([{"text": "🔍 Buscar para Reenviar", "callback_data": "send:search"}])
 
         cmd_list = "\n".join(f"• <code>/send {dq}</code> ({pending_by_dequien[dq]} pendientes)" for dq in sorted_dequien)
         send_message(
@@ -817,6 +966,29 @@ def _handle_update(update: dict, table=None):
             send_message(cq_chat_id, "🔒 <b>Acceso no autorizado</b>")
             return
 
+        cq_user = cq.get("from") or {}
+        cq_user_name = cq_user.get("first_name") or cq_user.get("username") or "Admin"
+
+        with _lock:
+            _user_states.pop(str(cq_chat_id), None)
+
+        if cq_data == "cmd:status":
+            stats_text = _get_wedding_stats(table or _table_ref)
+            send_message(cq_chat_id, stats_text)
+            return
+
+        if cq_data == "cmd:send":
+            _handle_send_command(cq_chat_id, "", table or _table_ref)
+            return
+
+        if cq_data == "cmd:sintelefono":
+            _handle_sintelefono_command(cq_chat_id, "", table or _table_ref)
+            return
+
+        if cq_data in ("cmd:menu", "cmd:cancel"):
+            _send_main_menu(cq_chat_id, cq_user_name)
+            return
+
         if cq_data.startswith("send:"):
             target_dq = cq_data[len("send:"):].strip()
             _handle_send_command(cq_chat_id, target_dq, table or _table_ref)
@@ -893,6 +1065,21 @@ def _handle_update(update: dict, table=None):
         )
         return
 
+    # 2b. Check active conversational state for non-command text
+    if not text.startswith("/"):
+        with _lock:
+            state = _user_states.get(str(chat_id))
+            if state == "awaiting_search_query":
+                _user_states.pop(str(chat_id), None)
+        if state == "awaiting_search_query":
+            _handle_search_flow(chat_id, text, table or _table_ref)
+            return
+
+    # Clear any pending state when a command is issued
+    if text.startswith("/"):
+        with _lock:
+            _user_states.pop(str(chat_id), None)
+
     # 3. /status command
     if raw_cmd == "/status":
         stats_text = _get_wedding_stats(table or _table_ref)
@@ -906,6 +1093,14 @@ def _handle_update(update: dict, table=None):
         _handle_send_command(chat_id, arg, table or _table_ref)
         return
 
+    # 4b. /buscar or /search shortcut
+    if raw_cmd in ("/buscar", "/search"):
+        if arg:
+            _handle_search_flow(chat_id, arg, table or _table_ref)
+        else:
+            _prompt_search_query(chat_id)
+        return
+
     # 5. /sintelefono command
     if raw_cmd in ("/sintelefono", "/nophone", "/sin_telefono"):
         _handle_sintelefono_command(chat_id, arg, table or _table_ref)
@@ -917,16 +1112,13 @@ def _handle_update(update: dict, table=None):
         send_message(chat_id, "🔕 <b>Notificaciones desactivadas.</b> Para volver a activarlas, usá tu enlace de autorización.")
         return
 
-    # 7. Fallback help for authorized user
-    send_message(
-        chat_id,
-        f"👋 Hola <b>{user_name}</b>.\n\n"
-        f"Comandos disponibles:\n"
-        f"• /status - Ver resumen de confirmaciones y pagos\n"
-        f"• /send &lt;origen&gt; - Links de WhatsApp para enviar (ej. /send Celia)\n"
-        f"• /sintelefono - Ver tarjetas sin teléfono registrado\n"
-        f"• /stop - Desactivar notificaciones"
-    )
+    # 6b. /cancelar or /cancel
+    if raw_cmd in ("/cancel", "/cancelar"):
+        _send_main_menu(chat_id, user_name)
+        return
+
+    # 7. Fallback clickable menu for any other text or /menu /help
+    _send_main_menu(chat_id, user_name)
 
 
 def handle_webhook_update(update: dict, table=None) -> bool:

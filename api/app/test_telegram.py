@@ -20,6 +20,7 @@ class TestTelegramBot(unittest.TestCase):
         telegram_bot._subscribers_cache = None
         telegram_bot._last_opened.clear()
         telegram_bot._dirty_rsvp_sessions.clear()
+        telegram_bot._user_states.clear()
 
         # Mock token and secret
         telegram_bot.TELEGRAM_BOT_TOKEN = "test_bot_token_123"
@@ -358,6 +359,122 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("amigos_rock", cb_text)
         self.assertIn("Diego Torres", cb_text)
         self.assertNotIn("fam_garcia", cb_text)
+
+    @patch("telegram_bot.send_message")
+    def test_any_text_shows_clickable_menu(self, mock_send):
+        telegram_bot.add_subscriber(88888)
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = []
+
+        # Any arbitrary text shows clickable inline menu
+        telegram_bot._handle_update(
+            {"message": {"chat": {"id": 88888}, "from": {"first_name": "Alfredo"}, "text": "hola"}},
+            table=mock_table,
+        )
+        mock_send.assert_called_once()
+        reply_markup = mock_send.call_args[1].get("reply_markup") or {}
+        buttons = [btn for row in reply_markup.get("inline_keyboard", []) for btn in row]
+        callbacks = {b["callback_data"] for b in buttons}
+        self.assertIn("cmd:status", callbacks)
+        self.assertIn("cmd:send", callbacks)
+        self.assertIn("send:search", callbacks)
+        self.assertIn("cmd:sintelefono", callbacks)
+
+        # Clicking cmd:status triggers stats
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {
+                    "id": "cq_menu_1",
+                    "data": "cmd:status",
+                    "from": {"first_name": "Alfredo"},
+                    "message": {"chat": {"id": 88888}},
+                }
+            }, table=mock_table)
+        self.assertIn("Estado de la boda", mock_send.call_args[0][1])
+
+    @patch("telegram_bot.send_message")
+    def test_send_search_flow_and_icons(self, mock_send):
+        telegram_bot.add_subscriber(88888)
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = [
+            {
+                "id": "1", "invitacion_id": "fam_perez", "nombre": "Juan", "apellido": "Pérez",
+                "dequien": "Celia Amigos", "telefono": "1111", "enviado": "si",
+                "confirmacion": "si", "pa": "general", "celiaco": "si", "abierto": "si",
+            },
+            {
+                "id": "2", "invitacion_id": "fam_perez", "nombre": "Ana", "apellido": "Perez",
+                "dequien": "Celia Amigos", "telefono": "2222", "enviado": "si",
+                "confirmacion": "no", "pa": "vegetariano", "celiaco": "", "abierto": "",
+            },
+            {
+                "id": "3", "invitacion_id": "fam_perez", "nombre": "Lucas", "apellido": "Perez",
+                "dequien": "Celia Amigos", "telefono": "", "enviado": "",
+                "confirmacion": "", "pa": "vegano", "celiaco": "", "abierto": "",
+            },
+            {
+                "id": "4", "invitacion_id": "otro_grupo", "nombre": "Carlos", "apellido": "Gomez",
+                "dequien": "Alfredo Amigos", "telefono": "4444", "enviado": "",
+                "confirmacion": "si", "pa": "general", "celiaco": "", "abierto": "",
+            },
+        ]
+
+        # 1. /send includes search button
+        telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/send"}}, table=mock_table)
+        reply_markup = mock_send.call_args[1].get("reply_markup") or {}
+        buttons = [btn for row in reply_markup.get("inline_keyboard", []) for btn in row]
+        self.assertTrue(any(b["callback_data"] == "send:search" for b in buttons))
+
+        # 2. Clicking send:search sets state and asks for word
+        mock_send.reset_mock()
+        with patch("telegram_bot.call_telegram_api"):
+            telegram_bot._handle_update({
+                "callback_query": {
+                    "id": "cq_search_1",
+                    "data": "send:search",
+                    "from": {"first_name": "Alfredo"},
+                    "message": {"chat": {"id": 88888}},
+                }
+            }, table=mock_table)
+        self.assertEqual(telegram_bot._user_states.get("88888"), "awaiting_search_query")
+        self.assertIn("Buscar invitado", mock_send.call_args[0][1])
+
+        # 3. Typing "perez" (accent-insensitive) returns all 3 Perez guests (including sent & no-phone) with only icons
+        mock_send.reset_mock()
+        telegram_bot._handle_update(
+            {"message": {"chat": {"id": 88888}, "from": {"first_name": "Alfredo"}, "text": "perez"}},
+            table=mock_table,
+        )
+        self.assertNotIn("88888", telegram_bot._user_states)
+        res_text = mock_send.call_args[0][1]
+        self.assertIn("Juan Pérez", res_text)
+        self.assertIn("/send/1111?id=1", res_text)
+        self.assertIn("Ana Perez", res_text)
+        self.assertIn("/send/2222?id=2", res_text)
+        self.assertIn("Lucas Perez", res_text)
+        self.assertNotIn("Carlos Gomez", res_text)
+
+        # Verify icons per guest line and no extra words
+        lines = res_text.splitlines()
+        juan_line = next(l for l in lines if "Juan Pérez" in l)
+        ana_line = next(l for l in lines if "Ana Perez" in l)
+        lucas_line = next(l for l in lines if "Lucas Perez" in l)
+
+        self.assertIn("🟢", juan_line)
+        self.assertIn("🍽️", juan_line)
+        self.assertIn("🌾", juan_line)
+        self.assertIn("👀", juan_line)
+        self.assertNotIn("Asiste", juan_line)
+        self.assertNotIn("Sin gluten", juan_line)
+
+        self.assertIn("🔴", ana_line)
+        self.assertIn("🥬", ana_line)
+        self.assertIn("👀", ana_line)  # group fam_perez is opened
+
+        self.assertIn("⏳", lucas_line)
+        self.assertIn("🌱", lucas_line)
+        self.assertIn("👀", lucas_line)
 
 
 if __name__ == "__main__":
