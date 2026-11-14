@@ -1175,9 +1175,9 @@ class TestTelegramBot(unittest.TestCase):
 
     def test_pagos_menu_shows_total_pagado(self):
         records = [
-            {"id": "1", "invitacion": "inv_a", "montotarjeta": "105000", "pagado": "105000", "comprobante": ""},
-            {"id": "2", "invitacion": "inv_b", "montotarjeta": "105000", "pagado": "45000", "comprobante": ""},
-            {"id": "3", "invitacion": "inv_c", "montotarjeta": "105000", "pagado": "", "comprobante": "https://cdn/c1.jpg"},
+            {"id": "1", "invitacion": "inv_a", "tipo": "Cena", "montotarjeta": "105000", "pagado": "105000", "comprobante": ""},
+            {"id": "2", "invitacion": "inv_b", "tipo": "Baile", "montotarjeta": "105000", "pagado": "45000", "comprobante": ""},
+            {"id": "3", "invitacion": "inv_c", "tipo": "Cena", "montotarjeta": "105000", "pagado": "", "comprobante": "https://cdn/c1.jpg"},
         ]
         tbl = MagicMock()
         tbl.get_all.return_value = records
@@ -1187,6 +1187,8 @@ class TestTelegramBot(unittest.TestCase):
             msg = mock_send.call_args[0][1]
             self.assertIn("Comprobantes por confirmar: <b>1</b> tarjetas", msg)
             self.assertIn("Total pagado: <b>$150.000</b> (2 tarjetas · 1 invitados)", msg)
+            self.assertIn("🍽️ Cena: <b>$105.000</b> (1 tarjetas · 1 invitados)", msg)
+            self.assertIn("🎉 Baile: <b>$45.000</b> (1 tarjetas · 0 invitados)", msg)
 
 
 if __name__ == "__main__":

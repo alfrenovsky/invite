@@ -1299,6 +1299,32 @@ def _handle_pagos_menu(chat_id: int | str, table):
     paid_cards = sum(1 for recs in groups.values() if any(_get_paid_amount(r) > 0 for r in recs))
     paid_guests = sum(1 for r in records if _is_paid_record(r))
 
+    cena_total = sum(
+        _get_paid_amount(r) for r in records
+        if str(r.get("tipo", "") or "").strip().lower() != "baile"
+    )
+    cena_cards = sum(
+        1 for recs in groups.values()
+        if any(_get_paid_amount(r) > 0 and str(r.get("tipo", "") or "").strip().lower() != "baile" for r in recs)
+    )
+    cena_guests = sum(
+        1 for r in records
+        if _is_paid_record(r) and str(r.get("tipo", "") or "").strip().lower() != "baile"
+    )
+
+    baile_total = sum(
+        _get_paid_amount(r) for r in records
+        if str(r.get("tipo", "") or "").strip().lower() == "baile"
+    )
+    baile_cards = sum(
+        1 for recs in groups.values()
+        if any(_get_paid_amount(r) > 0 and str(r.get("tipo", "") or "").strip().lower() == "baile" for r in recs)
+    )
+    baile_guests = sum(
+        1 for r in records
+        if _is_paid_record(r) and str(r.get("tipo", "") or "").strip().lower() == "baile"
+    )
+
     reply_markup = {
         "inline_keyboard": [
             [{"text": f"⏳ Comprobantes por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
@@ -1310,7 +1336,9 @@ def _handle_pagos_menu(chat_id: int | str, table):
         chat_id,
         f"💳 <b>Gestión de Pagos</b>\n\n"
         f"• Comprobantes por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas\n"
-        f"• Total pagado: <b>{_format_monto_ar(total_pagado)}</b> ({paid_cards} tarjetas · {paid_guests} invitados)",
+        f"• Total pagado: <b>{_format_monto_ar(total_pagado)}</b> ({paid_cards} tarjetas · {paid_guests} invitados)\n"
+        f"  🍽️ Cena: <b>{_format_monto_ar(cena_total)}</b> ({cena_cards} tarjetas · {cena_guests} invitados)\n"
+        f"  🎉 Baile: <b>{_format_monto_ar(baile_total)}</b> ({baile_cards} tarjetas · {baile_guests} invitados)",
         reply_markup=reply_markup,
     )
 
