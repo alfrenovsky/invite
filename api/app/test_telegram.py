@@ -1194,6 +1194,41 @@ class TestTelegramBot(unittest.TestCase):
             self.assertIn("🍽️ Cena: <b>$105.000</b> (1 tarjetas · 1 invitados)", msg)
             self.assertIn("🎉 Baile: <b>$45.000</b> (1 tarjetas · 0 invitados)", msg)
 
+    def test_pagos_menu_conf_cross_filters(self):
+        telegram_bot.add_subscriber(88888)
+        records = [
+            # Paid, not confirmed -> pago_sin_conf
+            {"id": "1", "invitacion": "inv_psc", "nombre": "Ana", "apellido": "Perez", "confirmacion": "", "nivel": "Reserva", "montotarjeta": "105000", "pagado": "105000", "comprobante": ""},
+            # Confirmed, not paid -> conf_sin_pago
+            {"id": "2", "invitacion": "inv_csp", "nombre": "Luis", "apellido": "Gomez", "confirmacion": "si", "nivel": "Reserva", "montotarjeta": "105000", "pagado": "", "comprobante": ""},
+            # Confirmed AND paid -> neither
+            {"id": "3", "invitacion": "inv_ok", "nombre": "Sol", "apellido": "Diaz", "confirmacion": "si", "nivel": "Reserva", "montotarjeta": "105000", "pagado": "105000", "comprobante": ""},
+        ]
+        tbl = MagicMock()
+        tbl.get_all.return_value = records
+
+        with patch("telegram_bot.call_telegram_api"), patch("telegram_bot.send_message") as mock_send:
+            telegram_bot._handle_pagos_menu(88888, tbl)
+            btns = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertTrue(any(b["callback_data"] == "pagos:pago_sin_conf" and "(1)" in b["text"] for b in btns))
+            self.assertTrue(any(b["callback_data"] == "pagos:conf_sin_pago" and "(1)" in b["text"] for b in btns))
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_m1", "data": "pagos:pago_sin_conf", "message": {"chat": {"id": 88888}}}
+            }, table=tbl)
+            self.assertEqual(mock_send.call_count, 1)
+            self.assertIn("Inv Psc", mock_send.call_args[0][1])
+            self.assertIn("Ana Perez", mock_send.call_args[0][1])
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_m2", "data": "pagos:conf_sin_pago", "message": {"chat": {"id": 88888}}}
+            }, table=tbl)
+            self.assertEqual(mock_send.call_count, 1)
+            self.assertIn("Inv Csp", mock_send.call_args[0][1])
+            self.assertIn("Luis Gomez", mock_send.call_args[0][1])
+
 
 if __name__ == "__main__":
     unittest.main()

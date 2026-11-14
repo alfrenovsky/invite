@@ -1286,6 +1286,31 @@ def _format_guest_monto_line(r: dict) -> str:
     return f"• {html.escape(nombre)} — <b>{monto_str}</b> · {status}"
 
 
+def _classify_pagos_conf_mismatches(records: list) -> tuple[list, list]:
+    """Returns (pago_sin_conf_groups, conf_sin_pago_groups) as sorted lists of (inv_id, recs)."""
+    groups = _group_records_by_invitacion(records)
+    pago_sin_conf = []
+    conf_sin_pago = []
+    confirmed_vals = ("si", "sí", "confirmado")
+    for inv_id, recs in sorted(groups.items()):
+        has_pago_sin_conf = any(
+            _get_paid_amount(r) > 0
+            and str(r.get("confirmacion", "") or "").strip().lower() not in confirmed_vals
+            for r in recs
+        )
+        has_conf_sin_pago = any(
+            _is_paying_guest(r)
+            and str(r.get("confirmacion", "") or "").strip().lower() in confirmed_vals
+            and not _is_paid_record(r)
+            for r in recs
+        )
+        if has_pago_sin_conf:
+            pago_sin_conf.append((inv_id, recs))
+        if has_conf_sin_pago:
+            conf_sin_pago.append((inv_id, recs))
+    return pago_sin_conf, conf_sin_pago
+
+
 def _handle_pagos_menu(chat_id: int | str, table):
     tbl = table or _table_ref
     if not tbl:
@@ -1294,6 +1319,7 @@ def _handle_pagos_menu(chat_id: int | str, table):
 
     records = tbl.get_all() or []
     with_comp_unconfirmed = _classify_pagos_groups(records)
+    pago_sin_conf, conf_sin_pago = _classify_pagos_conf_mismatches(records)
     groups = _group_records_by_invitacion(records)
     total_pagado = sum(_get_paid_amount(r) for r in records)
     paid_cards = sum(1 for recs in groups.values() if any(_get_paid_amount(r) > 0 for r in recs))
@@ -1328,6 +1354,8 @@ def _handle_pagos_menu(chat_id: int | str, table):
     reply_markup = {
         "inline_keyboard": [
             [{"text": f"⏳ Comprobantes por confirmar ({len(with_comp_unconfirmed)})", "callback_data": "pagos:por_confirmar"}],
+            [{"text": f"💳 Pago sin confirmación ({len(pago_sin_conf)})", "callback_data": "pagos:pago_sin_conf"}],
+            [{"text": f"⏳ Confirmación sin pago ({len(conf_sin_pago)})", "callback_data": "pagos:conf_sin_pago"}],
             [{"text": "🔍 Buscar", "callback_data": "pagos:buscar"}],
             [{"text": "🏠 Menú", "callback_data": "cmd:menu"}],
         ]
@@ -1503,6 +1531,48 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
         _append_payment_action_buttons(kb_rows, inv_id, recs, unpaid_paying, include_unconfirm=False)
 
         if idx == len(with_comp_unconfirmed) - 1:
+            kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
+
+        send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
+
+
+def _handle_pagos_mismatch_list(chat_id: int | str, table, mode: str):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    pago_sin_conf, conf_sin_pago = _classify_pagos_conf_mismatches(records)
+    is_pago_sin_conf = (mode == "pago_sin_conf")
+    matched = pago_sin_conf if is_pago_sin_conf else conf_sin_pago
+
+    back_markup = {"inline_keyboard": [[{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}]]}
+    if not matched:
+        empty_msg = (
+            "✅ No hay pagos sin confirmación."
+            if is_pago_sin_conf
+            else "✅ No hay confirmaciones sin pago."
+        )
+        send_message(chat_id, empty_msg, reply_markup=back_markup)
+        return
+
+    header_emoji = "💳" if is_pago_sin_conf else "⏳"
+    for idx, (inv_id, recs) in enumerate(matched):
+        group_title = inv_id.replace("_", " ").title()
+        lines = [f"{header_emoji} <b>{html.escape(group_title)}</b>"]
+        for r in recs:
+            conf = str(r.get("confirmacion", "") or "").strip().lower()
+            conf_icon = "🟢" if conf in ("si", "sí", "confirmado") else ("🔴" if conf in ("no", "rechazado") else "⏳")
+            lines.append(f"{conf_icon} {_format_guest_monto_line(r)}")
+
+        kb_rows = []
+        comp_urls = _get_group_comprobante_urls(recs)
+        if comp_urls:
+            _append_comprobante_lines_and_buttons(lines, kb_rows, inv_id, recs, comp_urls, include_links=False)
+        if not is_pago_sin_conf:
+            kb_rows.append([{"text": f"📎 Subir comprobante ({group_title[:22]})", "callback_data": f"pagos_up:{inv_id[:52]}"}])
+        if idx == len(matched) - 1:
             kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
 
         send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
@@ -2181,6 +2251,14 @@ def _handle_update(update: dict, table=None):
 
         if cq_data == "pagos:por_confirmar":
             _handle_pagos_por_confirmar(cq_chat_id, table or _table_ref)
+            return
+
+        if cq_data == "pagos:pago_sin_conf":
+            _handle_pagos_mismatch_list(cq_chat_id, table or _table_ref, "pago_sin_conf")
+            return
+
+        if cq_data == "pagos:conf_sin_pago":
+            _handle_pagos_mismatch_list(cq_chat_id, table or _table_ref, "conf_sin_pago")
             return
 
         if cq_data == "pagos:buscar":
