@@ -22,15 +22,29 @@ from sheets import (
 logger = logging.getLogger("telegram_bot")
 
 
-def _log(msg: str):
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{ts}] [TELEGRAM] {msg}", flush=True)
-
-
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_BOT_NAME = os.environ.get("TELEGRAM_BOT_NAME", "celiayalfredo_bot").strip()
 TELEGRAM_AUTH_SECRET = os.environ.get("TELEGRAM_AUTH_SECRET", "boda_cya_admin_telegram_2027").strip()
 SUBSCRIBERS_FILE = os.environ.get("TELEGRAM_SUBSCRIBERS_FILE", "/data/telegram_subscribers.json")
+TELEGRAM_LOG_FILE = os.environ.get("TELEGRAM_LOG_FILE", "/data/telegram.log")
+
+
+def _log(msg: str):
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = f"[{ts}] [TELEGRAM] {msg}"
+    print(line, flush=True)
+    log_path = TELEGRAM_LOG_FILE
+    if not log_path:
+        return
+    try:
+        with _lock:
+            log_dir = os.path.dirname(os.path.abspath(log_path))
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+    except Exception:
+        pass
 
 # Cooldown for open notifications (default: 60s / 1 min)
 OPEN_COOLDOWN_SECONDS = int(os.environ.get("OPEN_COOLDOWN_SECONDS", "60"))
@@ -127,6 +141,7 @@ def add_subscriber(chat_id: int | str, user_info: dict = None) -> bool:
         }
         subs.append(record)
         _save_subscribers(subs)
+        _log(f"[SUBSCRIBER:ADD] chat_id={chat_id} user={record.get('username') or record.get('first_name') or '-'}")
         logger.info(f"[TELEGRAM] Added new subscriber: {record}")
         return True
 
@@ -138,6 +153,7 @@ def remove_subscriber(chat_id: int | str) -> bool:
         new_subs = [s for s in subs if str(s.get("chat_id")) != cid]
         if len(new_subs) != len(subs):
             _save_subscribers(new_subs)
+            _log(f"[SUBSCRIBER:REMOVE] chat_id={chat_id}")
             logger.info(f"[TELEGRAM] Removed subscriber: {chat_id}")
             return True
         return False
@@ -249,6 +265,7 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list, open_count
         f"👤 <b>Invitados:</b> {names_str}\n"
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
     )
+    _log(f"[NOTIFY:OPEN] invitacion={clean_id} count={open_count}")
     broadcast_message(msg)
 
 
@@ -353,6 +370,7 @@ def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
             lines.append(f"• <b>{nombre}</b>: {status_text}")
 
     lines.append(f"\n🕒 <b>Hora:</b> {_get_tz_now_str()}")
+    _log(f"[NOTIFY:RSVP] invitacion={clean_id} guests={len(guest_records or [])}")
     broadcast_message("\n".join(lines))
 
 
@@ -376,6 +394,7 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
         f"🔗 <a href=\"{file_url}\">Ver comprobante en el navegador</a>\n"
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
     )
+    _log(f"[NOTIFY:COMPROBANTE] invitacion={clean_id} file={filename}")
     broadcast_message(msg)
 
 
@@ -661,6 +680,8 @@ def _handle_search_flow(chat_id: int | str, query: str, table):
             ]
         ]
     }
+
+    _log(f"[SEARCH] chat_id={chat_id} query={query!r} matches={len(matches)}")
 
     if not matches:
         send_message(
@@ -971,6 +992,7 @@ def _handle_update(update: dict, table=None):
 
         cq_user = cq.get("from") or {}
         cq_user_name = cq_user.get("first_name") or cq_user.get("username") or "Admin"
+        _log(f"[CALLBACK] chat_id={cq_chat_id} user={cq_user_name} data={cq_data}")
 
         with _lock:
             _user_states.pop(str(cq_chat_id), None)
@@ -1061,12 +1083,15 @@ def _handle_update(update: dict, table=None):
 
     # 2. Check if subscribed for remaining commands
     if not is_subscribed(chat_id):
+        _log(f"[AUTH:DENIED] chat_id={chat_id} user={user_name} text={text!r}")
         send_message(
             chat_id,
             "🔒 <b>Acceso no autorizado</b>\n\n"
             "Por favor ingresá usando el enlace de autorización."
         )
         return
+
+    _log(f"[MSG] chat_id={chat_id} user={user_name} text={text!r}")
 
     # 2b. Check active conversational state for non-command text
     if not text.startswith("/"):

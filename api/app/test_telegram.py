@@ -7,6 +7,7 @@ os.environ["CACHE_FILE_PATH"] = "/tmp/boda_test_data/sheet_cache.json"
 os.environ["LOG_FILE_PATH"] = "/tmp/boda_test_data/api.log"
 os.environ["COMPROBANTES_DIR"] = "/tmp/boda_test_data/comprobantes"
 os.environ["TELEGRAM_SUBSCRIBERS_FILE"] = "/tmp/boda_test_data/telegram_subscribers.json"
+os.environ["TELEGRAM_LOG_FILE"] = "/tmp/boda_test_data/telegram.log"
 os.makedirs("/tmp/boda_test_data", exist_ok=True)
 import tempfile
 import time
@@ -22,7 +23,9 @@ class TestTelegramBot(unittest.TestCase):
         # Create a temporary file for subscribers
         self.temp_dir = tempfile.TemporaryDirectory()
         self.subscribers_path = os.path.join(self.temp_dir.name, "subscribers.json")
+        self.log_path = os.path.join(self.temp_dir.name, "telegram.log")
         telegram_bot.SUBSCRIBERS_FILE = self.subscribers_path
+        telegram_bot.TELEGRAM_LOG_FILE = self.log_path
         telegram_bot._subscribers_cache = None
         telegram_bot._last_opened.clear()
         telegram_bot._dirty_rsvp_sessions.clear()
@@ -498,6 +501,19 @@ class TestTelegramBot(unittest.TestCase):
             table=mock_table,
         )
         self.assertIn("No se encontraron invitados", mock_send.call_args[0][1])
+
+    @patch("telegram_bot.send_message")
+    def test_telegram_log_file(self, mock_send):
+        telegram_bot.add_subscriber(88888, {"first_name": "Alfredo"})
+        telegram_bot._handle_update(
+            {"message": {"chat": {"id": 88888}, "from": {"first_name": "Alfredo"}, "text": "hola"}},
+            table=MagicMock(get_all=MagicMock(return_value=[])),
+        )
+        self.assertTrue(os.path.exists(self.log_path))
+        with open(self.log_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("[TELEGRAM] [SUBSCRIBER:ADD] chat_id=88888", content)
+        self.assertIn("[TELEGRAM] [MSG] chat_id=88888", content)
 
 
 if __name__ == "__main__":
