@@ -1171,6 +1171,21 @@ class TestTelegramBot(unittest.TestCase):
                 for b in btns
             ))
 
+    def test_pagos_menu_shows_total_pagado(self):
+        records = [
+            {"id": "1", "invitacion": "inv_a", "montotarjeta": "105000", "pagado": "105000", "comprobante": ""},
+            {"id": "2", "invitacion": "inv_b", "montotarjeta": "105000", "pagado": "45000", "comprobante": ""},
+            {"id": "3", "invitacion": "inv_c", "montotarjeta": "105000", "pagado": "", "comprobante": "https://cdn/c1.jpg"},
+        ]
+        tbl = MagicMock()
+        tbl.get_all.return_value = records
+
+        with patch("telegram_bot.send_message") as mock_send:
+            telegram_bot._handle_pagos_menu(12345, tbl)
+            msg = mock_send.call_args[0][1]
+            self.assertIn("Comprobantes por confirmar: <b>1</b> tarjetas", msg)
+            self.assertIn("Total pagado: <b>$150.000</b>", msg)
+
 
 if __name__ == "__main__":
     unittest.main()
