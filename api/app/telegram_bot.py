@@ -1673,12 +1673,33 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
 
     for g in recs:
         tbl.update_record(g["id"], {"montocomprobante": combined})
+        g["montocomprobante"] = combined
 
     _log(f"[PAGOS:COMP_MONTO] chat_id={chat_id} invitacion={inv_id} file={target_key} monto={monto}")
 
     total_comp = sum(_get_comprobante_monto(u, comp_urls, monto_map) for u in comp_urls)
+    total_assigned = sum(_get_paid_amount(r) for r in recs)
     paying_targets = [r for r in recs if _is_paying_guest(r)]
     expected_total = sum(_parse_monto_int(r.get("montotarjeta")) for r in paying_targets)
+
+    reset_note = ""
+    if total_assigned > 0 and total_comp < total_assigned:
+        reset_names = []
+        for r in recs:
+            if _get_paid_amount(r) > 0:
+                tbl.update_record(r["id"], {"pagado": ""})
+                r["pagado"] = ""
+                reset_names.append(f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado")
+        _log(
+            f"[PAGOS:RESET_ASSIGNMENTS] chat_id={chat_id} invitacion={inv_id} "
+            f"prev_assigned={total_assigned} new_total={total_comp} guests={reset_names}"
+        )
+        reset_note = (
+            f"\n\n⚠️ El nuevo monto total (<b>{_format_monto_ar(total_comp)}</b>) es menor a lo ya asignado "
+            f"(<b>{_format_monto_ar(total_assigned)}</b>). Se reiniciaron las asignaciones previas "
+            f"de: <b>{html.escape(', '.join(reset_names))}</b>. Elegí cómo asignar de nuevo:"
+        )
+
     unpaid_targets = [r for r in paying_targets if not _is_paid_record(r)]
 
     auto_note = ""
@@ -1688,18 +1709,25 @@ def _apply_comprobante_monto(chat_id: int | str, inv_prefix: str, idx_str: str, 
             m_tarjeta = _parse_monto_int(r.get("montotarjeta"))
             if m_tarjeta > 0:
                 tbl.update_record(r["id"], {"pagado": str(m_tarjeta)})
+                r["pagado"] = str(m_tarjeta)
                 auto_paid_names.append(f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado")
         if auto_paid_names:
             _log(f"[PAGOS:AUTO_DISTRIBUTE] chat_id={chat_id} invitacion={inv_id} total={total_comp} guests={auto_paid_names}")
+            surplus = total_comp - expected_total
+            surplus_text = (
+                f" (sobran <b>{_format_monto_ar(surplus)}</b> de excedente)"
+                if surplus > 0
+                else ""
+            )
             auto_note = (
-                f"\n\n🎉 ¡Los comprobantes cubren el total (<b>{_format_monto_ar(expected_total)}</b>)! "
+                f"\n\n🎉 ¡Los comprobantes cubren el total (<b>{_format_monto_ar(expected_total)}</b>){surplus_text}! "
                 f"Se marcó automáticamente como pagado a: <b>{html.escape(', '.join(auto_paid_names))}</b>."
             )
 
     group_title = inv_id.replace("_", " ").title()
     header_line = (
         f"✅ Monto confirmado para <b>Comprobante {resolved_idx + 1}/{len(comp_urls)}</b> "
-        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>{auto_note}"
+        f"de <b>{html.escape(group_title)}</b>: <b>{_format_monto_ar(monto)}</b>{reset_note}{auto_note}"
     )
 
     kb_rows = []

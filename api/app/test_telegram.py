@@ -1100,6 +1100,77 @@ class TestTelegramBot(unittest.TestCase):
                 for b in btns2
             ))
 
+    def test_edit_comprobante_monto_falta_resets_and_sobra_keeps_assignments(self):
+        # Case 1 (Falta): $210.000 already assigned -> edited down to $150.000 -> reset & re-prompt
+        records_falta = [
+            {
+                "id": "f1", "invitacion": "inv_falta", "nombre": "Ana", "apellido": "Perez",
+                "asistencia": "Sí", "montotarjeta": "105000", "pagado": "105000",
+                "comprobante": "https://cdn/comp1.jpg", "montocomprobante": "comp1.jpg=210000",
+            },
+            {
+                "id": "f2", "invitacion": "inv_falta", "nombre": "Luis", "apellido": "Perez",
+                "asistencia": "Sí", "montotarjeta": "105000", "pagado": "105000",
+                "comprobante": "https://cdn/comp1.jpg", "montocomprobante": "comp1.jpg=210000",
+            },
+        ]
+        tbl_falta = MagicMock()
+        tbl_falta.get_all.return_value = records_falta
+
+        def fake_update_falta(rec_id, fields):
+            for r in records_falta:
+                if r["id"] == rec_id:
+                    r.update(fields)
+
+        tbl_falta.update_record.side_effect = fake_update_falta
+
+        with patch("telegram_bot.send_message") as mock_send:
+            telegram_bot._apply_comprobante_monto(12345, "inv_falta", "0", "150000", tbl_falta)
+            self.assertEqual(records_falta[0]["pagado"], "")
+            self.assertEqual(records_falta[1]["pagado"], "")
+            msg = mock_send.call_args[0][1]
+            self.assertIn("Se reiniciaron las asignaciones previas", msg)
+            self.assertIn("Disponible: <b>$150.000</b>", msg)
+            btns = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertTrue(any(b["callback_data"] == "pagos_ok_p:f1" for b in btns))
+            self.assertTrue(any(b["callback_data"] == "pagos_ok_p:f2" for b in btns))
+
+        # Case 2 (Sobra): $105.000 already assigned to f1 -> edited up to $150.000 -> keep f1, prompt for $45.000
+        records_sobra = [
+            {
+                "id": "s1", "invitacion": "inv_sobra", "nombre": "Gaby", "apellido": "Luna",
+                "asistencia": "Sí", "montotarjeta": "105000", "pagado": "105000",
+                "comprobante": "https://cdn/comp2.jpg", "montocomprobante": "comp2.jpg=105000",
+            },
+            {
+                "id": "s2", "invitacion": "inv_sobra", "nombre": "Diana", "apellido": "Kessler",
+                "asistencia": "Sí", "montotarjeta": "105000", "pagado": "",
+                "comprobante": "https://cdn/comp2.jpg", "montocomprobante": "comp2.jpg=105000",
+            },
+        ]
+        tbl_sobra = MagicMock()
+        tbl_sobra.get_all.return_value = records_sobra
+
+        def fake_update_sobra(rec_id, fields):
+            for r in records_sobra:
+                if r["id"] == rec_id:
+                    r.update(fields)
+
+        tbl_sobra.update_record.side_effect = fake_update_sobra
+
+        with patch("telegram_bot.send_message") as mock_send:
+            telegram_bot._apply_comprobante_monto(12345, "inv_sobra", "0", "150000", tbl_sobra)
+            self.assertEqual(records_sobra[0]["pagado"], "105000")
+            self.assertEqual(records_sobra[1]["pagado"], "")
+            msg = mock_send.call_args[0][1]
+            self.assertNotIn("Se reiniciaron", msg)
+            self.assertIn("Disponible: <b>$45.000</b>", msg)
+            btns = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertTrue(any(
+                b["callback_data"] == "pagos_ok_p:s2" and "Pago parcial:" in b["text"] and "+$45.000" in b["text"]
+                for b in btns
+            ))
+
 
 if __name__ == "__main__":
     unittest.main()
