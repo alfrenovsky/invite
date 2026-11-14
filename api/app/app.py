@@ -45,7 +45,19 @@ def add_cache_headers(response):
     return response
 
 
+def _is_testing_env():
+    return os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing"
+
+
 def get_data_dir():
+    env_dir = os.environ.get("DATA_DIR", "").strip()
+    if env_dir:
+        os.makedirs(env_dir, exist_ok=True)
+        return env_dir
+    if _is_testing_env():
+        test_dir = "/tmp/boda_test_data"
+        os.makedirs(test_dir, exist_ok=True)
+        return test_dir
     candidates = [
         "/data",
         os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data")),
@@ -70,6 +82,10 @@ DESIGNS_DIR = os.path.join(DATA_DIR, "designs")
 
 
 def get_designs_dir():
+    if os.environ.get("DATA_DIR", "").strip() or _is_testing_env():
+        target = os.path.join(get_data_dir(), "designs")
+        os.makedirs(target, exist_ok=True)
+        return target
     candidates = [
         os.path.join(get_data_dir(), "designs"),
         "/data/designs",
@@ -422,6 +438,10 @@ def is_font_in_use(family, styles=None, slides=None, include_designs=True):
 
 
 def get_backgrounds_dir():
+    if os.environ.get("DATA_DIR", "").strip() or _is_testing_env():
+        target = os.path.join(get_data_dir(), "backgrounds")
+        os.makedirs(target, exist_ok=True)
+        return target
     candidates = [
         os.path.join(get_data_dir(), "backgrounds"),
         "/data/backgrounds",
@@ -468,6 +488,10 @@ VALID_FONT_EXTS = {".ttf", ".otf", ".woff", ".woff2"}
 
 
 def get_fonts_dir():
+    if os.environ.get("DATA_DIR", "").strip() or _is_testing_env():
+        target = os.path.join(get_data_dir(), "fonts")
+        os.makedirs(target, exist_ok=True)
+        return target
     candidates = [
         os.path.join(get_data_dir(), "fonts"),
         "/data/fonts",
@@ -1176,7 +1200,7 @@ def get_single_slide(token, slide_id):
     return render_template(slide["template"], slide=slide, **context)
 
 
-COMPROBANTES_DIR = os.environ.get("COMPROBANTES_DIR", "/data/comprobantes")
+COMPROBANTES_DIR = os.environ.get("COMPROBANTES_DIR") or os.path.join(DATA_DIR, "comprobantes")
 os.makedirs(COMPROBANTES_DIR, exist_ok=True)
 ALLOWED_COMPROBANTE_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
 

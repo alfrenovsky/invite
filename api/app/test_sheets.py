@@ -1,6 +1,12 @@
 import os
 os.environ["TESTING"] = "1"
 os.environ["FLASK_ENV"] = "testing"
+os.environ["DATA_DIR"] = "/tmp/boda_test_data"
+os.environ["CACHE_FILE_PATH"] = "/tmp/boda_test_data/sheet_cache.json"
+os.environ["LOG_FILE_PATH"] = "/tmp/boda_test_data/api.log"
+os.environ["COMPROBANTES_DIR"] = "/tmp/boda_test_data/comprobantes"
+os.environ["TELEGRAM_SUBSCRIBERS_FILE"] = "/tmp/boda_test_data/telegram_subscribers.json"
+os.makedirs("/tmp/boda_test_data", exist_ok=True)
 import time
 import unittest
 from unittest.mock import MagicMock, patch
