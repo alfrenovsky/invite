@@ -636,11 +636,9 @@ def _handle_search_flow(chat_id: int | str, query: str, table):
     for r in records:
         full_name = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip()
         inv_id = str(r.get("invitacion_id") or r.get("invitacion") or "").strip()
-        dequien = str(r.get("dequien", "") or "").strip()
         searchable = " ".join([
             _normalize_search_text(full_name),
             _normalize_search_text(inv_id),
-            _normalize_search_text(dequien),
         ])
         if norm_query in searchable:
             matches.append(r)

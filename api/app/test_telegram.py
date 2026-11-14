@@ -476,6 +476,14 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("🌱", lucas_line)
         self.assertIn("👀", lucas_line)
 
+        # 4. Searching a term that only exists in dequien ("Amigos") should NOT match
+        mock_send.reset_mock()
+        telegram_bot._handle_update(
+            {"message": {"chat": {"id": 88888}, "from": {"first_name": "Alfredo"}, "text": "/buscar Amigos"}},
+            table=mock_table,
+        )
+        self.assertIn("No se encontraron invitados", mock_send.call_args[0][1])
+
 
 if __name__ == "__main__":
     unittest.main()
