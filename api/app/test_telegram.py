@@ -1184,7 +1184,7 @@ class TestTelegramBot(unittest.TestCase):
             telegram_bot._handle_pagos_menu(12345, tbl)
             msg = mock_send.call_args[0][1]
             self.assertIn("Comprobantes por confirmar: <b>1</b> tarjetas", msg)
-            self.assertIn("Total pagado: <b>$150.000</b>", msg)
+            self.assertIn("Total pagado: <b>$150.000</b> (2 tarjetas · 1 invitados)", msg)
 
 
 if __name__ == "__main__":

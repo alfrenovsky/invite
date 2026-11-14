@@ -1263,7 +1263,10 @@ def _handle_pagos_menu(chat_id: int | str, table):
 
     records = tbl.get_all() or []
     with_comp_unconfirmed = _classify_pagos_groups(records)
+    groups = _group_records_by_invitacion(records)
     total_pagado = sum(_get_paid_amount(r) for r in records)
+    paid_cards = sum(1 for recs in groups.values() if any(_get_paid_amount(r) > 0 for r in recs))
+    paid_guests = sum(1 for r in records if _is_paid_record(r))
 
     reply_markup = {
         "inline_keyboard": [
@@ -1276,7 +1279,7 @@ def _handle_pagos_menu(chat_id: int | str, table):
         chat_id,
         f"💳 <b>Gestión de Pagos</b>\n\n"
         f"• Comprobantes por confirmar: <b>{len(with_comp_unconfirmed)}</b> tarjetas\n"
-        f"• Total pagado: <b>{_format_monto_ar(total_pagado)}</b>",
+        f"• Total pagado: <b>{_format_monto_ar(total_pagado)}</b> ({paid_cards} tarjetas · {paid_guests} invitados)",
         reply_markup=reply_markup,
     )
 
