@@ -1033,6 +1033,61 @@ class TestTelegramBot(unittest.TestCase):
             }, table=mock_table)
             self.assertIn("No hay comprobantes pendientes", mock_send.call_args[0][1])
 
+    def test_confirm_buttons_hide_confirmar_todos_and_indicate_partial(self):
+        records = [
+            {
+                "id": "b1",
+                "invitacion": "gaby_luna",
+                "nombre": "Diana",
+                "apellido": "Kessler",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/c1.pdf",
+                "montocomprobante": "c1.pdf: 105000",
+            },
+            {
+                "id": "b2",
+                "invitacion": "gaby_luna",
+                "nombre": "Gaby",
+                "apellido": "Luna",
+                "confirmacion": "si",
+                "nivel": "reserva",
+                "pagado": "",
+                "montotarjeta": "105000",
+                "comprobante": "https://test/comprobantes/c1.pdf",
+                "montocomprobante": "c1.pdf: 105000",
+            },
+        ]
+        mock_table = MagicMock()
+        mock_table.get_all.return_value = records
+
+        with patch("telegram_bot.is_subscribed", return_value=True), \
+             patch("telegram_bot.call_telegram_api"), \
+             patch("telegram_bot.send_message") as mock_send:
+            # 1. Available 105000 < total unpaid 210000 -> Confirmar todos NOT shown, individual shows full 105000
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_b1", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            btns1 = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertFalse(any(b["callback_data"].startswith("pagos_ok_g:") for b in btns1))
+            self.assertTrue(any(b["callback_data"] == "pagos_ok_p:b1" and "Confirmar pago:" in b["text"] for b in btns1))
+
+            # 2. Available 45000 < individual 105000 -> button indicates "Pago parcial" (+$45.000)
+            for r in records:
+                r["montocomprobante"] = "c1.pdf: 45000"
+            mock_send.reset_mock()
+            telegram_bot._handle_update({
+                "callback_query": {"id": "cq_b2", "data": "pagos:por_confirmar", "message": {"chat": {"id": 88888}}}
+            }, table=mock_table)
+            btns2 = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertFalse(any(b["callback_data"].startswith("pagos_ok_g:") for b in btns2))
+            self.assertTrue(any(
+                b["callback_data"] == "pagos_ok_p:b1" and "Pago parcial:" in b["text"] and "+$45.000" in b["text"]
+                for b in btns2
+            ))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1289,6 +1289,50 @@ def _prompt_pagos_search(chat_id: int | str):
     )
 
 
+def _append_payment_action_buttons(
+    kb_rows: list,
+    inv_id: str,
+    recs: list,
+    confirm_candidates: list,
+    include_unconfirm: bool = False,
+):
+    total_comp, _, available = _get_group_comprobantes_balance(recs)
+    can_confirm = (total_comp == 0) or (available > 0)
+
+    if can_confirm:
+        for r in confirm_candidates:
+            gid = str(r.get("id", "") or "").strip()
+            if not gid:
+                continue
+            nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+            monto = _parse_monto_int(r.get("montotarjeta"))
+            paid = _get_paid_amount(r)
+            faltan = _get_remaining_amount(r)
+            monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
+            if total_comp > 0 and faltan > 0 and available < faltan:
+                btn_txt = f"🌓 Pago parcial: {nombre[:16]} (+{_format_monto_ar(available)})"
+            elif paid > 0 and faltan > 0:
+                btn_txt = f"💰 Confirmar pago: {nombre[:16]} (faltan {_format_monto_ar(faltan)})"
+            else:
+                btn_txt = f"💰 Confirmar pago: {nombre[:20]} ({monto_str})"
+            kb_rows.append([{"text": btn_txt, "callback_data": f"pagos_ok_p:{gid}"}])
+
+        unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
+        total_unpaid = sum(_get_remaining_amount(r) for r in unpaid_paying)
+        if len(unpaid_paying) >= 2 and (total_comp == 0 or (total_unpaid > 0 and available >= total_unpaid)):
+            total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
+            kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
+
+    if include_unconfirm:
+        for r in recs:
+            if _get_paid_amount(r) > 0:
+                gid = str(r.get("id", "") or "").strip()
+                if not gid:
+                    continue
+                nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+                kb_rows.append([{"text": f"↩️ Desmarcar pago: {nombre[:22]}", "callback_data": f"pagos_unok_p:{gid}"}])
+
+
 def _handle_pagos_search(chat_id: int | str, query: str, table):
     tbl = table or _table_ref
     if not tbl:
@@ -1351,29 +1395,11 @@ def _handle_pagos_search(chat_id: int | str, query: str, table):
             lines.append(_format_guest_monto_line(r))
 
         kb_rows = []
-        for r in recs:
-            gid = str(r.get("id", "") or "").strip()
-            if not gid:
-                continue
-            nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
-            monto = _parse_monto_int(r.get("montotarjeta"))
-            paid = _get_paid_amount(r)
-            faltan = _get_remaining_amount(r)
-            monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
-            if not _is_paid_record(r) and str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado"):
-                if paid > 0 and faltan > 0:
-                    btn_txt = f"💰 Confirmar pago: {nombre[:16]} (faltan {_format_monto_ar(faltan)})"
-                else:
-                    btn_txt = f"💰 Confirmar pago: {nombre[:20]} ({monto_str})"
-                kb_rows.append([{"text": btn_txt, "callback_data": f"pagos_ok_p:{gid}"}])
-            if paid > 0:
-                kb_rows.append([{"text": f"↩️ Desmarcar pago: {nombre[:22]}", "callback_data": f"pagos_unok_p:{gid}"}])
-
-        unpaid_paying = [r for r in recs if _is_paying_guest(r) and not _is_paid_record(r)]
-        if len(unpaid_paying) >= 2:
-            total_unpaid = sum(_get_remaining_amount(r) for r in unpaid_paying)
-            total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
-            kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
+        search_candidates = [
+            r for r in recs
+            if not _is_paid_record(r) and str(r.get("confirmacion", "") or "").strip().lower() not in ("no", "rechazado")
+        ]
+        _append_payment_action_buttons(kb_rows, inv_id, recs, search_candidates, include_unconfirm=True)
 
         _append_comprobante_lines_and_buttons(lines, kb_rows, inv_id, recs, comp_urls, include_links=False)
 
@@ -1410,26 +1436,7 @@ def _handle_pagos_por_confirmar(chat_id: int | str, table):
 
         kb_rows = []
         _append_comprobante_lines_and_buttons(lines, kb_rows, inv_id, recs, comp_urls, include_links=True)
-
-        for r in unpaid_paying:
-            gid = str(r.get("id", "") or "").strip()
-            if not gid:
-                continue
-            nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
-            monto = _parse_monto_int(r.get("montotarjeta"))
-            paid = _get_paid_amount(r)
-            faltan = _get_remaining_amount(r)
-            monto_str = _format_monto_ar(monto) if monto > 0 else "$0"
-            if paid > 0 and faltan > 0:
-                btn_txt = f"💰 Confirmar pago: {nombre[:16]} (faltan {_format_monto_ar(faltan)})"
-            else:
-                btn_txt = f"💰 Confirmar pago: {nombre[:20]} ({monto_str})"
-            kb_rows.append([{"text": btn_txt, "callback_data": f"pagos_ok_p:{gid}"}])
-
-        if len(unpaid_paying) >= 2:
-            total_unpaid = sum(_get_remaining_amount(r) for r in unpaid_paying)
-            total_str = _format_monto_ar(total_unpaid) if total_unpaid > 0 else "$0"
-            kb_rows.append([{"text": f"💰 Confirmar todos ({total_str})", "callback_data": f"pagos_ok_g:{inv_id[:50]}"}])
+        _append_payment_action_buttons(kb_rows, inv_id, recs, unpaid_paying, include_unconfirm=False)
 
         if idx == len(with_comp_unconfirmed) - 1:
             kb_rows.append([{"text": "💳 Volver a Pagos", "callback_data": "cmd:pagos"}])
