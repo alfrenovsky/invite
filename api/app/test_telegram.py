@@ -203,15 +203,17 @@ class TestTelegramBot(unittest.TestCase):
         telegram_bot.notify_rsvp_on_flush("celia_y_alfredo", guests)
         self.assertEqual(mock_broadcast.call_count, 1)
 
-    @patch("telegram_bot.broadcast_message")
-    def test_notify_comprobante_uploaded(self, mock_broadcast):
+    @patch("telegram_bot.broadcast_comprobante_preview")
+    def test_notify_comprobante_uploaded(self, mock_broadcast_preview):
         guests = [{"nombre": "Celia", "apellido": "Muzaber"}]
         telegram_bot.notify_comprobante_uploaded("celia_y_alfredo", "comprobante_123.pdf", "https://example.com/comprobante_123.pdf", guests)
-        self.assertEqual(mock_broadcast.call_count, 1)
-        msg = mock_broadcast.call_args[0][0]
-        self.assertIn("Comprobante de pago recibido", msg)
-        self.assertIn("comprobante_123.pdf", msg)
-        self.assertIn("https://example.com/comprobante_123.pdf", msg)
+        self.assertEqual(mock_broadcast_preview.call_count, 1)
+        self.assertEqual(mock_broadcast_preview.call_args[0][0], "https://example.com/comprobante_123.pdf")
+        caption = mock_broadcast_preview.call_args[1]["caption"]
+        self.assertIn("Comprobante de pago recibido", caption)
+        self.assertNotIn("https://example.com/comprobante_123.pdf", caption)
+        btns = [b for row in mock_broadcast_preview.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+        self.assertTrue(any(b["callback_data"] == "pagos_comp_m:celia_y_alfredo:-1" for b in btns))
 
     @patch("telegram_bot.send_message")
     def test_handle_webhook_update(self, mock_send):

@@ -284,6 +284,36 @@ def broadcast_message(text: str, parse_mode: str = "HTML", reply_markup: dict = 
     t.start()
 
 
+def broadcast_comprobante_preview(file_url: str, caption: str, reply_markup: dict = None, exclude_chat_id=None):
+    """Broadcasts a comprobante preview image/document asynchronously to all authorized subscribers."""
+    if os.environ.get("TESTING") == "1" or os.environ.get("FLASK_ENV") == "testing":
+        return
+
+    def _do_broadcast():
+        subs = _load_subscribers()
+        if not subs:
+            logger.debug("[TELEGRAM] No subscribers to broadcast comprobante.")
+            return
+
+        raw_bytes, _ = _resolve_comprobante_bytes(file_url)
+        for s in subs:
+            cid = s.get("chat_id")
+            if not cid:
+                continue
+            if exclude_chat_id is not None and str(cid) == str(exclude_chat_id):
+                continue
+            try:
+                if raw_bytes:
+                    _send_comprobante_preview(cid, file_url, caption=caption, reply_markup=reply_markup)
+                else:
+                    send_message(cid, caption, reply_markup=reply_markup)
+            except Exception as e:
+                logger.warning(f"[TELEGRAM] Error sending comprobante preview to {cid}: {e}")
+
+    t = threading.Thread(target=_do_broadcast, daemon=True)
+    t.start()
+
+
 # ==============================================================
 # 🎯 Notification Event Handlers
 # ==============================================================
@@ -431,9 +461,15 @@ def notify_rsvp_on_flush(invitacion_id: str, guest_records: list = None):
     broadcast_message("\n".join(lines))
 
 
-def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str, guest_records: list):
+def notify_comprobante_uploaded(
+    invitacion_id: str,
+    filename: str,
+    file_url: str,
+    guest_records: list,
+    exclude_chat_id=None,
+):
     """
-    Notifies when a payment receipt is uploaded.
+    Notifies when a payment receipt is uploaded by sending its image/preview directly.
     """
     if not TELEGRAM_BOT_TOKEN:
         return
@@ -443,24 +479,19 @@ def notify_comprobante_uploaded(invitacion_id: str, filename: str, file_url: str
     names = [f"{g.get('nombre', '')} {g.get('apellido', '')}".strip() or "Acompañante" for g in (guest_records or [])]
     names_str = ", ".join(names) if names else group_title
 
-    msg = (
+    caption = (
         f"💳 <b>Comprobante de pago recibido</b>\n"
-        f"💌 <b>Grupo:</b> {group_title}\n"
-        f"👤 <b>Invitados:</b> {names_str}\n"
-        f"📎 <b>Archivo:</b> {filename}\n"
-        f"🔗 <a href=\"{file_url}\">Ver comprobante en el navegador</a>\n"
+        f"💌 <b>Grupo:</b> {html.escape(group_title)}\n"
+        f"👤 <b>Invitados:</b> {html.escape(names_str)}\n"
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
     )
     _log(f"[NOTIFY:COMPROBANTE] invitacion={clean_id} file={filename}")
     markup = {
         "inline_keyboard": [
-            [
-                {"text": "👁️ Ver comprobante", "callback_data": f"pagos_ver:{clean_id[:46]}:-1"},
-                {"text": "💵 Confirmar monto", "callback_data": f"pagos_comp_m:{clean_id[:46]}:-1"},
-            ]
+            [{"text": "💵 Confirmar monto", "callback_data": f"pagos_comp_m:{clean_id[:46]}:-1"}]
         ]
     }
-    broadcast_message(msg, reply_markup=markup)
+    broadcast_comprobante_preview(file_url, caption=caption, reply_markup=markup, exclude_chat_id=exclude_chat_id)
 
 
 # ==============================================================
