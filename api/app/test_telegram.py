@@ -158,14 +158,18 @@ class TestTelegramBot(unittest.TestCase):
 
     @patch("telegram_bot.broadcast_message")
     def test_notify_invitation_opened_and_cooldown(self, mock_broadcast):
-        guests = [{"nombre": "Celia", "apellido": "Muzaber"}]
+        guests = [
+            {"nombre": "Celia", "apellido": "Muzaber", "confirmacion": "si", "nivel": "Invitado", "pa": "vegano"},
+            {"nombre": "Alfredo", "apellido": "Rezinovsky", "confirmacion": "", "nivel": "Reserva", "pa": "general"},
+        ]
         
         # 1st open: triggers notification
-        telegram_bot.notify_invitation_opened("celia_y_alfredo", guests)
+        telegram_bot.notify_invitation_opened("celia_y_alfredo", guests, open_count=2)
         self.assertEqual(mock_broadcast.call_count, 1)
         msg = mock_broadcast.call_args[0][0]
-        self.assertIn("Invitación abierta", msg)
-        self.assertIn("Celia Muzaber", msg)
+        self.assertIn("Invitación abierta (Visita #2)", msg)
+        self.assertIn("• Celia Muzaber — 🟢 💌 🌱\n• Alfredo Rezinovsky — ⏳ 🎫 🍽️", msg)
+        self.assertNotIn("Invitados:", msg)
 
         # 2nd open immediately after: suppressed by cooldown!
         telegram_bot.notify_invitation_opened("celia_y_alfredo", guests)

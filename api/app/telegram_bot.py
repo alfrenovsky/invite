@@ -335,21 +335,20 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list, open_count
             return
         _last_opened[clean_id] = now
 
-    names = []
+    guest_lines = []
     for g in guest_records or []:
-        n = f"{g.get('nombre', '')} {g.get('apellido', '')}".strip()
-        if not n:
-            n = "Acompañante"
-        names.append(n)
+        n = f"{g.get('nombre', '')} {g.get('apellido', '')}".strip() or "Acompañante"
+        icons = _format_guest_icons(g, set(), include_opened=False)
+        guest_lines.append(f"• {html.escape(n)} — {icons}" if icons else f"• {html.escape(n)}")
 
-    names_str = ", ".join(names) if names else clean_id.replace("_", " ").title()
     group_title = clean_id.replace("_", " ").title()
+    guests_block = "\n".join(guest_lines) if guest_lines else f"• {html.escape(group_title)}"
     count_suffix = f" (Visita #{open_count})" if (isinstance(open_count, (int, float)) and open_count > 1) else ""
 
     msg = (
         f"💌 <b>Invitación abierta{count_suffix}</b>\n"
-        f"👥 <b>Grupo:</b> {group_title}\n"
-        f"👤 <b>Invitados:</b> {names_str}\n"
+        f"👥 <b>Grupo:</b> {html.escape(group_title)}\n"
+        f"{guests_block}\n"
         f"🕒 <b>Hora:</b> {_get_tz_now_str()}"
     )
     _log(f"[NOTIFY:OPEN] invitacion={clean_id} count={open_count}")
@@ -696,7 +695,7 @@ def _prompt_search_query(chat_id: int | str):
     )
 
 
-def _format_guest_icons(r: dict, opened_invitations: set) -> str:
+def _format_guest_icons(r: dict, opened_invitations: set, include_opened: bool = True) -> str:
     icons = []
     conf = str(r.get("confirmacion", "") or "").strip().lower()
     if conf in ("si", "sí", "confirmado"):
@@ -735,9 +734,10 @@ def _format_guest_icons(r: dict, opened_invitations: set) -> str:
     if celiaco:
         icons.append("🌾")
 
-    inv_slug = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
-    if _is_record_opened(r) or (inv_slug and inv_slug in opened_invitations):
-        icons.append("👀")
+    if include_opened:
+        inv_slug = str(r.get("invitacion_id") or r.get("invitacion") or r.get("id") or "").strip().lower().replace(" ", "_").replace("-", "_")
+        if _is_record_opened(r) or (inv_slug and inv_slug in opened_invitations):
+            icons.append("👀")
 
     return " ".join(icons)
 
