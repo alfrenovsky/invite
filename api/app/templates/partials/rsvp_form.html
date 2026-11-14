@@ -1,5 +1,8 @@
 <div class="interactive-content rsvp-form-container">
-    <form id="storyRsvpForm" data-existing-comprobante="{{ existing_comprobante or '' }}">
+    <form id="storyRsvpForm"
+        data-existing-comprobante="{{ existing_comprobante or '' }}"
+        data-existing-comprobantes='{{ (existing_comprobantes or []) | tojson }}'
+        data-max-comprobantes="{{ max_comprobantes or 1 }}">
         <input type="hidden" id="form_invitacion_id" value="{{ invitacion_id }}">
 
         <div id="rsvpCardsContainer" class="rsvp-guest-list">
@@ -151,6 +154,8 @@
                     <input type="file" id="comprobanteFileInput" accept=".pdf,image/jpeg,image/png,image/webp"
                         style="display: none;">
 
+                    <div id="uploadedComprobantesList" class="uploaded-comprobantes-list" style="display: none;"></div>
+
                     <div id="uploadPrompt" class="upload-dropzone" role="button" tabindex="0"
                         title="Seleccionar comprobante de pago">
                         <div class="upload-dropzone-content">
@@ -160,7 +165,7 @@
                                 <polyline points="17 8 12 3 7 8" />
                                 <line x1="12" y1="3" x2="12" y2="15" />
                             </svg>
-                            <span class="upload-btn-label">Subir comprobante de pago</span>
+                            <span class="upload-btn-label" id="uploadPromptPrimaryLabel">Subir comprobante de pago</span>
                             <span class="upload-btn-label">o mandarlo por WhatsApp</span>
                         </div>
                     </div>
@@ -168,19 +173,6 @@
                     <div id="uploadProgress" class="upload-progress-state" style="display: none;">
                         <div class="upload-spinner"></div>
                         <span>Subiendo comprobante...</span>
-                    </div>
-
-                    <div id="uploadSuccess" class="upload-success-state" style="display: none;">
-                        <div class="upload-success-left">
-                            <span class="upload-success-badge">✓</span>
-                            <span class="upload-success-label" id="uploadedFilename">Comprobante recibido</span>
-                        </div>
-                        <div class="upload-success-actions">
-                            <a id="btnViewComprobante" href="#" target="_blank" rel="noopener noreferrer"
-                                class="btn-comprobante-link">Ver archivo ↗</a>
-                            <button type="button" id="btnChangeComprobante"
-                                class="btn-comprobante-change">Cambiar</button>
-                        </div>
                     </div>
                 </div>
             </div>

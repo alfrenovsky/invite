@@ -998,7 +998,9 @@ def get_guest_context(validated_slug):
 
     active_slides = [resolve_invitation_slide(s) for s in filtered_slides]
 
-    existing_comprobante = next((g.get("comprobante") for g in guests if g.get("comprobante")), "")
+    existing_comprobantes = _get_group_comprobantes(guests)
+    existing_comprobante = existing_comprobantes[0] if existing_comprobantes else ""
+    max_comprobantes = _get_max_comprobantes(guests)
 
     alias_cbu = ""
     for s in active_slides:
@@ -1035,6 +1037,8 @@ def get_guest_context(validated_slug):
         "styles": load_styles(),
         "config_version": int(time.time()),
         "existing_comprobante": existing_comprobante,
+        "existing_comprobantes": existing_comprobantes,
+        "max_comprobantes": max_comprobantes,
         "alias_cbu": alias_cbu,
         "is_baile": is_baile,
         "event_type": event_type,
@@ -1177,6 +1181,42 @@ os.makedirs(COMPROBANTES_DIR, exist_ok=True)
 ALLOWED_COMPROBANTE_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
 
 
+def _parse_comprobantes(raw_val) -> list:
+    """Splits a single or newline/comma-separated comprobante string into a deduplicated list of URLs."""
+    if not raw_val:
+        return []
+    urls = []
+    seen = set()
+    for part in re.split(r"[\r\n,]+", str(raw_val)):
+        u = part.strip()
+        if u and u not in seen:
+            seen.add(u)
+            urls.append(u)
+    return urls
+
+
+def _get_group_comprobantes(guests: list) -> list:
+    """Returns all unique comprobante URLs across a group of guests, preserving order."""
+    urls = []
+    seen = set()
+    for g in guests or []:
+        for u in _parse_comprobantes(g.get("comprobante", "")):
+            if u not in seen:
+                seen.add(u)
+                urls.append(u)
+    return urls
+
+
+def _get_max_comprobantes(guests: list) -> int:
+    """Returns max allowed comprobantes for the group: 1 per paying guest (montotarjeta > 0), min 1."""
+    paying_count = 0
+    for g in guests or []:
+        raw_monto = re.sub(r"[^\d]", "", str(g.get("montotarjeta", "") or ""))
+        if raw_monto and int(raw_monto) > 0:
+            paying_count += 1
+    return max(1, paying_count)
+
+
 @app.post("/<token>/comprobante")
 @app.post("/i/<token>/comprobante")
 @app.post("/invitacion/<token>/comprobante")
@@ -1196,6 +1236,15 @@ def upload_comprobante(token):
     if ext not in ALLOWED_COMPROBANTE_EXTENSIONS:
         return jsonify({"ok": False, "error": "Formato no permitido. Por favor subí un archivo PDF o una imagen (JPG, PNG, WEBP)."}), 400
 
+    guests = table.get_by_invitacion(validated_slug)
+    existing_urls = _get_group_comprobantes(guests)
+    max_allowed = _get_max_comprobantes(guests)
+    if len(existing_urls) >= max_allowed:
+        return jsonify({
+            "ok": False,
+            "error": f"Ya se alcanzó el máximo de {max_allowed} comprobante(s) para esta invitación."
+        }), 400
+
     os.makedirs(COMPROBANTES_DIR, exist_ok=True)
 
     safe_slug = re.sub(r"[^a-zA-Z0-9_-]", "_", validated_slug)
@@ -1208,9 +1257,11 @@ def upload_comprobante(token):
     base_domain = BASE_URL.rstrip("/")
     comprobante_url = f"{base_domain}/comprobantes/{filename}"
 
-    guests = table.get_by_invitacion(validated_slug)
+    updated_urls = existing_urls + [comprobante_url]
+    combined_comprobante = "\n".join(updated_urls)
+
     for g in guests:
-        table.update_record(g["id"], {"comprobante": comprobante_url})
+        table.update_record(g["id"], {"comprobante": combined_comprobante})
 
     try:
         telegram_bot.notify_comprobante_uploaded(validated_slug, filename, comprobante_url, guests)
@@ -1220,7 +1271,9 @@ def upload_comprobante(token):
     return jsonify({
         "ok": True,
         "url": comprobante_url,
-        "filename": filename
+        "filename": filename,
+        "urls": updated_urls,
+        "max_comprobantes": max_allowed,
     })
 
 

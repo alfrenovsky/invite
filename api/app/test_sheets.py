@@ -2305,6 +2305,72 @@ class TestGoogleSheetsTable(unittest.TestCase):
             self.assertNotIn("s_baile", active_ids)
             self.assertNotIn("s_res_baile", active_ids)
 
+    def test_multiple_comprobantes_upload_and_limit(self):
+        import io
+        import tempfile
+        import app as app_module
+        from sheets import compute_check_code
+
+        guests = [
+            {"id": "g1", "invitacion_id": "pareja_comp", "nombre": "Juan", "apellido": "Perez", "montotarjeta": "50000", "comprobante": ""},
+            {"id": "g2", "invitacion_id": "pareja_comp", "nombre": "Ana", "apellido": "Gomez", "montotarjeta": "50000", "comprobante": ""},
+        ]
+        token = f"pareja_comp_{compute_check_code('pareja_comp')}"
+        client = app_module.app.test_client()
+
+        def fake_update(gid, payload):
+            for g in guests:
+                if g["id"] == gid and "comprobante" in payload:
+                    g["comprobante"] = payload["comprobante"]
+
+        with tempfile.TemporaryDirectory() as tmp_comp_dir, \
+             patch.object(app_module, "COMPROBANTES_DIR", tmp_comp_dir), \
+             patch("app.table.get_by_invitacion", side_effect=lambda slug: guests if slug == "pareja_comp" else []), \
+             patch("app.table.update_record", side_effect=fake_update), \
+             patch("telegram_bot.notify_comprobante_uploaded"):
+
+            # 1st upload -> 200 OK
+            res1 = client.post(
+                f"/{token}/comprobante",
+                data={"file": (io.BytesIO(b"pdf1"), "pago1.pdf")},
+                content_type="multipart/form-data",
+            )
+            self.assertEqual(res1.status_code, 200)
+            d1 = res1.get_json()
+            self.assertTrue(d1["ok"])
+            self.assertEqual(len(d1["urls"]), 1)
+            self.assertEqual(d1["max_comprobantes"], 2)
+
+            # 2nd upload -> 200 OK, both URLs preserved with newline
+            res2 = client.post(
+                f"/{token}/comprobante",
+                data={"file": (io.BytesIO(b"img2"), "pago2.jpg")},
+                content_type="multipart/form-data",
+            )
+            self.assertEqual(res2.status_code, 200)
+            d2 = res2.get_json()
+            self.assertTrue(d2["ok"])
+            self.assertEqual(len(d2["urls"]), 2)
+            self.assertEqual(guests[0]["comprobante"], "\n".join(d2["urls"]))
+            self.assertEqual(guests[1]["comprobante"], "\n".join(d2["urls"]))
+
+            # 3rd upload -> 400 limit reached
+            res3 = client.post(
+                f"/{token}/comprobante",
+                data={"file": (io.BytesIO(b"img3"), "pago3.png")},
+                content_type="multipart/form-data",
+            )
+            self.assertEqual(res3.status_code, 400)
+            d3 = res3.get_json()
+            self.assertFalse(d3["ok"])
+            self.assertIn("máximo", d3["error"].lower())
+
+            # SSR context exposes existing_comprobantes list and max_comprobantes
+            with patch("app.load_slides", return_value=[]):
+                ctx = app_module.get_guest_context("pareja_comp")
+                self.assertEqual(ctx["existing_comprobantes"], d2["urls"])
+                self.assertEqual(ctx["max_comprobantes"], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

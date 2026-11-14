@@ -1335,47 +1335,92 @@
     function initComprobanteUploader() {
         const fileInput = document.getElementById('comprobanteFileInput');
         const uploadPrompt = document.getElementById('uploadPrompt');
+        const uploadPromptLabel = document.getElementById('uploadPromptPrimaryLabel');
         const uploadProgress = document.getElementById('uploadProgress');
-        const uploadSuccess = document.getElementById('uploadSuccess');
-        const uploadedFilename = document.getElementById('uploadedFilename');
-        const btnViewComprobante = document.getElementById('btnViewComprobante');
-        const btnChangeComprobante = document.getElementById('btnChangeComprobante');
+        const uploadedList = document.getElementById('uploadedComprobantesList');
         const rsvpForm = document.getElementById('storyRsvpForm');
 
         if (!fileInput || !uploadPrompt || !rsvpForm) return;
 
-        function setComprobanteState(url, filename) {
-            if (url) {
-                rsvpForm.setAttribute('data-existing-comprobante', url);
-                document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
-                    c.setAttribute('data-comprobante', url);
-                });
-                if (btnViewComprobante) {
-                    btnViewComprobante.href = url;
+        let uploadedUrls = [];
+        try {
+            const rawJson = rsvpForm.getAttribute('data-existing-comprobantes');
+            if (rawJson) {
+                const parsed = JSON.parse(rawJson);
+                if (Array.isArray(parsed)) {
+                    uploadedUrls = parsed.filter(Boolean);
                 }
-                if (uploadedFilename) {
-                    uploadedFilename.textContent = filename || 'Comprobante recibido';
-                    uploadedFilename.title = filename || 'Comprobante recibido';
-                }
-                uploadPrompt.style.display = 'none';
-                uploadProgress.style.display = 'none';
-                uploadSuccess.style.display = 'flex';
-            } else {
-                rsvpForm.removeAttribute('data-existing-comprobante');
-                uploadPrompt.style.display = 'block';
-                uploadProgress.style.display = 'none';
-                uploadSuccess.style.display = 'none';
+            }
+        } catch (e) {
+            uploadedUrls = [];
+        }
+        if (uploadedUrls.length === 0) {
+            const single = rsvpForm.getAttribute('data-existing-comprobante') || '';
+            if (single) {
+                uploadedUrls = single.split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
             }
         }
 
-        // Initialize state from existing comprobante
-        const existingUrl = rsvpForm.getAttribute('data-existing-comprobante') || '';
-        if (existingUrl) {
-            const rawName = existingUrl.split('/').pop() || 'Comprobante';
-            setComprobanteState(existingUrl, rawName);
-        } else {
-            setComprobanteState('', '');
+        const maxComprobantes = Math.max(1, parseInt(rsvpForm.getAttribute('data-max-comprobantes') || '1', 10) || 1);
+
+        function renderComprobantesState(urls) {
+            uploadedUrls = Array.isArray(urls) ? urls.filter(Boolean) : [];
+            const joined = uploadedUrls.join('\n');
+            rsvpForm.setAttribute('data-existing-comprobante', joined);
+            rsvpForm.setAttribute('data-existing-comprobantes', JSON.stringify(uploadedUrls));
+            document.querySelectorAll('.rsvp-guest-card[data-guest-id], .rsvp-card[data-guest-id]').forEach(c => {
+                c.setAttribute('data-comprobante', joined);
+            });
+
+            if (uploadedList) {
+                uploadedList.innerHTML = '';
+                if (uploadedUrls.length > 0) {
+                    uploadedUrls.forEach((url, idx) => {
+                        const rawName = (url.split('/').pop() || '').trim();
+                        const labelText = rawName || `Comprobante ${idx + 1} recibido`;
+
+                        const row = document.createElement('div');
+                        row.className = 'upload-success-state';
+
+                        const left = document.createElement('div');
+                        left.className = 'upload-success-left';
+
+                        const badge = document.createElement('span');
+                        badge.className = 'upload-success-badge';
+                        badge.textContent = '✓';
+
+                        const label = document.createElement('span');
+                        label.className = 'upload-success-label';
+                        label.textContent = labelText;
+                        label.title = labelText;
+
+                        left.appendChild(badge);
+                        left.appendChild(label);
+                        row.appendChild(left);
+                        uploadedList.appendChild(row);
+                    });
+                    uploadedList.style.display = 'flex';
+                } else {
+                    uploadedList.style.display = 'none';
+                }
+            }
+
+            if (uploadProgress) uploadProgress.style.display = 'none';
+
+            if (uploadedUrls.length < maxComprobantes) {
+                if (uploadPromptLabel) {
+                    uploadPromptLabel.textContent = uploadedUrls.length > 0
+                        ? 'Subir otro comprobante'
+                        : 'Subir comprobante de pago';
+                }
+                uploadPrompt.style.display = 'block';
+            } else {
+                uploadPrompt.style.display = 'none';
+            }
         }
+
+        // Initialize state from existing comprobantes
+        renderComprobantesState(uploadedUrls);
 
         // Click on dropzone opens file picker
         uploadPrompt.addEventListener('click', (e) => {
@@ -1389,15 +1434,6 @@
                 fileInput.click();
             }
         });
-
-        // Click on "Cambiar" opens file picker to replace file
-        if (btnChangeComprobante) {
-            btnChangeComprobante.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                fileInput.click();
-            });
-        }
 
         // Handle file change
         fileInput.addEventListener('change', async () => {
@@ -1427,8 +1463,7 @@
             }
 
             uploadPrompt.style.display = 'none';
-            uploadSuccess.style.display = 'none';
-            uploadProgress.style.display = 'flex';
+            if (uploadProgress) uploadProgress.style.display = 'flex';
 
             const formData = new FormData();
             formData.append('file', file);
@@ -1441,18 +1476,17 @@
                 const data = await res.json();
 
                 if (res.ok && data.ok) {
-                    setComprobanteState(data.url, file.name);
+                    const nextUrls = Array.isArray(data.urls) ? data.urls : [...uploadedUrls, data.url];
+                    renderComprobantesState(nextUrls);
                     showToast('¡Comprobante subido con éxito!');
                 } else {
                     showToast(data.error || 'Error al subir comprobante');
-                    const curUrl = rsvpForm.getAttribute('data-existing-comprobante');
-                    setComprobanteState(curUrl, curUrl ? curUrl.split('/').pop() : '');
+                    renderComprobantesState(uploadedUrls);
                 }
             } catch (err) {
                 console.error('Error uploading comprobante:', err);
                 showToast('Error de conexión al subir comprobante');
-                const curUrl = rsvpForm.getAttribute('data-existing-comprobante');
-                setComprobanteState(curUrl, curUrl ? curUrl.split('/').pop() : '');
+                renderComprobantesState(uploadedUrls);
             } finally {
                 fileInput.value = '';
             }

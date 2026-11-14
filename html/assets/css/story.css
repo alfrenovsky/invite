@@ -2213,6 +2213,13 @@
             animation: spin 0.7s linear infinite;
         }
 
+        .uploaded-comprobantes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
         .upload-success-state {
             display: flex;
             align-items: center;
