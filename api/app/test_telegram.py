@@ -307,13 +307,12 @@ class TestTelegramBot(unittest.TestCase):
             {"id": "5", "invitacion_id": "amigos_rock", "nombre": "Diego", "apellido": "Torres", "dequien": "Amigos Banda", "telefono": "", "url": "http://test/i/amigos_rock_333"},
         ]
 
-        # 1. /sintelefono (interactive menu with inline keyboard)
+        # 1. /sintelefono (interactive menu with inline keyboard, without /sintelefono text list)
         telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/sintelefono"}}, table=mock_table)
         summary_text = mock_send.call_args[0][1]
         reply_markup = mock_send.call_args[1].get("reply_markup") or {}
         self.assertIn("tarjetas sin teléfono", summary_text.lower())
-        self.assertIn("Celia Familia", summary_text)
-        self.assertIn("Amigos Banda", summary_text)
+        self.assertNotIn("/sintelefono", summary_text)
         self.assertIn("inline_keyboard", reply_markup)
         # Check buttons contain Celia Familia and callback_data sintelefono:Celia Familia
         buttons = [btn for row in reply_markup["inline_keyboard"] for btn in row]

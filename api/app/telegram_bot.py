@@ -892,15 +892,10 @@ def _handle_sintelefono_command(chat_id: int | str, arg: str, table):
         if total_no_phone > 0:
             inline_keyboard.append([{"text": f"📋 Todas ({total_no_phone})", "callback_data": "sintelefono:todos"}])
 
-        lines = [f"• <code>/sintelefono {orig}</code> ({len(no_phone_groups[orig])} tarjetas)" for orig in sorted_origins]
-        cmd_list = "\n".join(lines) if lines else "Ninguna"
-
         send_message(
             chat_id,
             f"📱 <b>¿De quién querés ver tarjetas sin teléfono? ({total_no_phone} en total)</b>\n\n"
-            f"Elegí una opción o usá los comandos:\n\n"
-            f"{cmd_list}\n"
-            f"• <code>/sintelefono todos</code>",
+            f"Elegí una opción:",
             reply_markup={"inline_keyboard": inline_keyboard} if inline_keyboard else None
         )
         return
