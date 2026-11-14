@@ -1,4 +1,9 @@
 <div class="interactive-content rsvp-form-container">
+    <div id="rsvpScrollTopHintWrap" class="rsvp-scroll-hint-wrap rsvp-scroll-hint-wrap--top">
+        <button type="button" id="rsvpScrollTopHint" class="rsvp-scroll-hint rsvp-scroll-hint--top" aria-label="Deslizar hacia arriba">
+            <span class="rsvp-scroll-hint-arrow rsvp-scroll-hint-arrow--up">⌃</span>
+        </button>
+    </div>
     <form id="storyRsvpForm"
         data-existing-comprobante="{{ existing_comprobante or '' }}"
         data-existing-comprobantes='{{ (existing_comprobantes or []) | tojson }}'

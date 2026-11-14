@@ -1699,6 +1699,34 @@
             50% { transform: translateY(3px); }
         }
 
+        .rsvp-scroll-hint-wrap--top {
+            top: 0;
+            bottom: auto;
+            align-items: flex-start;
+        }
+
+        .rsvp-scroll-hint-wrap--top::before {
+            top: -8px;
+            bottom: auto;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
+        }
+
+        .rsvp-scroll-hint--top {
+            margin-top: 6px;
+            margin-bottom: 0;
+            padding: 6px 12px;
+            transform: translateY(-8px);
+        }
+
+        .rsvp-scroll-hint-arrow--up {
+            animation: rsvpScrollBounceUp 1.4s ease-in-out infinite;
+        }
+
+        @keyframes rsvpScrollBounceUp {
+            0%, 100% { transform: translateY(2px); }
+            50% { transform: translateY(-2px); }
+        }
+
         #rsvpCardsContainer {
             flex: 1;
         }

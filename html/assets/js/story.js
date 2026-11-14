@@ -1521,13 +1521,24 @@
     function updateRsvpScrollHint() {
         const formContainer = document.querySelector('.rsvp-form-container');
         const hintWrap = document.getElementById('rsvpScrollHintWrap');
-        if (!formContainer || !hintWrap) return;
+        const topHintWrap = document.getElementById('rsvpScrollTopHintWrap');
+        if (!formContainer) return;
 
-        const remaining = formContainer.scrollHeight - formContainer.scrollTop - formContainer.clientHeight;
-        if (formContainer.clientHeight > 0 && remaining > 14) {
-            hintWrap.classList.add('visible');
-        } else {
-            hintWrap.classList.remove('visible');
+        if (hintWrap) {
+            const remaining = formContainer.scrollHeight - formContainer.scrollTop - formContainer.clientHeight;
+            if (formContainer.clientHeight > 0 && remaining > 14) {
+                hintWrap.classList.add('visible');
+            } else {
+                hintWrap.classList.remove('visible');
+            }
+        }
+
+        if (topHintWrap) {
+            if (formContainer.clientHeight > 0 && formContainer.scrollTop > 14) {
+                topHintWrap.classList.add('visible');
+            } else {
+                topHintWrap.classList.remove('visible');
+            }
         }
     }
 
@@ -1535,6 +1546,7 @@
         const formContainer = document.querySelector('.rsvp-form-container');
         const hintWrap = document.getElementById('rsvpScrollHintWrap');
         const hintBtn = document.getElementById('rsvpScrollHint');
+        const topHintBtn = document.getElementById('rsvpScrollTopHint');
         const rsvpForm = document.getElementById('storyRsvpForm');
         if (!formContainer || !hintWrap || !hintBtn) return;
 
@@ -1554,6 +1566,14 @@
             e.stopPropagation();
             formContainer.scrollBy({ top: 180, behavior: 'smooth' });
         });
+
+        if (topHintBtn) {
+            topHintBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                formContainer.scrollBy({ top: -180, behavior: 'smooth' });
+            });
+        }
 
         requestAnimationFrame(updateRsvpScrollHint);
     }
