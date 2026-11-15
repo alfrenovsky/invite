@@ -1137,7 +1137,7 @@ def index_page(token=None):
         app.logger.warning(f"Error marking invitation as opened: {e}")
 
     try:
-        telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []), open_count=open_count)
+        telegram_bot.notify_invitation_opened(validated_slug, context.get("guests", []), open_count=open_count, table=table)
     except Exception as e:
         app.logger.warning(f"Error notifying invitation opened via Telegram: {e}")
 

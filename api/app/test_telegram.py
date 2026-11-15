@@ -1229,6 +1229,43 @@ class TestTelegramBot(unittest.TestCase):
             self.assertIn("Inv Csp", mock_send.call_args[0][1])
             self.assertIn("Luis Gomez", mock_send.call_args[0][1])
 
+    @patch("telegram_bot.broadcast_message")
+    def test_notify_invitation_opened_top1_celebrations(self, mock_broadcast):
+        tbl = MagicMock()
+        tbl.get_all.return_value = [
+            {"invitacion": "marcos_y_mariangeles", "abierto": "17"},
+            {"invitacion": "familia_gomez", "abierto": "16"},
+        ]
+        guests = [{"nombre": "Juan", "apellido": "Gomez", "confirmacion": "si", "nivel": "Reserva", "pa": "general"}]
+
+        # 1. Not #1 (16 < 17)
+        telegram_bot._last_opened.clear()
+        telegram_bot.notify_invitation_opened("familia_gomez", guests, open_count=16, table=tbl)
+        msg_not_top = mock_broadcast.call_args[0][0]
+        self.assertNotIn("VISITAS", msg_not_top)
+        self.assertNotIn("Sigue #1", msg_not_top)
+
+        # 2. Tie for #1 (17 == 17)
+        telegram_bot._last_opened.clear()
+        telegram_bot.notify_invitation_opened("familia_gomez", guests, open_count=17, table=tbl)
+        msg_tie = mock_broadcast.call_args[0][0]
+        self.assertIn("EMPATE EN EL #1 DE VISITAS", msg_tie)
+        self.assertIn("Alcanzó a <b>Marcos Y Mariangeles</b> (17 visitas)", msg_tie)
+
+        # 3. Just passed to #1 (18 > 17, prev 17 <= 17)
+        telegram_bot._last_opened.clear()
+        telegram_bot.notify_invitation_opened("familia_gomez", guests, open_count=18, table=tbl)
+        msg_new = mock_broadcast.call_args[0][0]
+        self.assertIn("¡NUEVO #1 EN VISITAS!", msg_new)
+        self.assertIn("Superó a <b>Marcos Y Mariangeles</b> (17 visitas)", msg_new)
+
+        # 4. Still #1 (19 > 17, prev 18 > 17)
+        telegram_bot._last_opened.clear()
+        telegram_bot.notify_invitation_opened("familia_gomez", guests, open_count=19, table=tbl)
+        msg_still = mock_broadcast.call_args[0][0]
+        self.assertIn("¡Sigue #1 en visitas!", msg_still)
+        self.assertIn("2.º: <b>Marcos Y Mariangeles</b> · 17", msg_still)
+
 
 if __name__ == "__main__":
     unittest.main()

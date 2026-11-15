@@ -318,7 +318,29 @@ def broadcast_comprobante_preview(file_url: str, caption: str, reply_markup: dic
 # 🎯 Notification Event Handlers
 # ==============================================================
 
-def notify_invitation_opened(invitacion_id: str, guest_records: list, open_count: int = None):
+def _get_open_count_int(rec: dict) -> int:
+    val = str(rec.get("abierto", "") or "").strip().lower()
+    if val in ("si", "sí", "true"):
+        return 1
+    digits = re.sub(r"[^\d]", "", val)
+    return int(digits) if digits else 0
+
+
+def _get_top_other_opened(records: list, exclude_inv_id: str) -> tuple[str | None, int]:
+    groups = _group_records_by_invitacion(records or [])
+    top_id = None
+    top_count = 0
+    for inv_id, recs in groups.items():
+        if inv_id == exclude_inv_id:
+            continue
+        cnt = max((_get_open_count_int(r) for r in recs), default=0)
+        if cnt > top_count:
+            top_count = cnt
+            top_id = inv_id
+    return top_id, top_count
+
+
+def notify_invitation_opened(invitacion_id: str, guest_records: list, open_count: int = None, table=None):
     """
     Notifies when a guest opens the invitation.
     Respects a 1-minute cooldown per invitation_id to prevent spam.
@@ -345,7 +367,34 @@ def notify_invitation_opened(invitacion_id: str, guest_records: list, open_count
     guests_block = "\n".join(guest_lines) if guest_lines else f"• {html.escape(group_title)}"
     count_suffix = f" (Visita #{open_count})" if (isinstance(open_count, (int, float)) and open_count > 1) else ""
 
+    top_banner = ""
+    tbl = table or _table_ref
+    if tbl and isinstance(open_count, (int, float)) and open_count > 1:
+        try:
+            all_recs = tbl.get_all() or []
+            other_top_id, other_max = _get_top_other_opened(all_recs, clean_id)
+            if other_max > 0 and other_top_id:
+                other_top_title = other_top_id.replace("_", " ").title()
+                if open_count == other_max:
+                    top_banner = (
+                        f"🤝👑 <b>¡EMPATE EN EL #1 DE VISITAS!</b>\n"
+                        f"⚡ Alcanzó a <b>{html.escape(other_top_title)}</b> ({other_max} visitas)\n\n"
+                    )
+                elif open_count > other_max:
+                    if open_count - 1 <= other_max:
+                        top_banner = (
+                            f"🏆👑 <b>¡NUEVO #1 EN VISITAS!</b>\n"
+                            f"🔥 Superó a <b>{html.escape(other_top_title)}</b> ({other_max} visitas)\n\n"
+                        )
+                    else:
+                        top_banner = (
+                            f"👑 <b>¡Sigue #1 en visitas!</b> (2.º: <b>{html.escape(other_top_title)}</b> · {other_max})\n\n"
+                        )
+        except Exception as e:
+            logger.warning(f"Error computing top opened invitation: {e}")
+
     msg = (
+        f"{top_banner}"
         f"💌 <b>Invitación abierta{count_suffix}</b>\n"
         f"👥 <b>Grupo:</b> {html.escape(group_title)}\n"
         f"{guests_block}\n"
