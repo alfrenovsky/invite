@@ -1266,6 +1266,52 @@ class TestTelegramBot(unittest.TestCase):
         self.assertIn("¡Sigue #1 en visitas!", msg_still)
         self.assertIn("2.º: <b>Marcos Y Mariangeles</b> · 17", msg_still)
 
+    def test_recordatorios_wizard_segments_slide_and_custom_msg(self):
+        telegram_bot.add_subscriber(88888)
+        records = [
+            # no_abrio: enviado=si, abierto='', conf='' -> also sin_confirmar
+            {"id": "r1", "invitacion": "inv_1", "nombre": "Ana", "apellido": "Perez", "telefono": "5491111111111", "dequien": "Celia", "enviado": "si", "abierto": "", "confirmacion": "", "url": "https://boda.test/inv_1_abc123", "recordatorios": ""},
+            # already sent sin_confirmar -> excluded from sin_confirmar
+            {"id": "r2", "invitacion": "inv_2", "nombre": "Luis", "apellido": "Gomez", "telefono": "5492222222222", "dequien": "Celia", "enviado": "si", "abierto": "2", "confirmacion": "", "url": "https://boda.test/inv_2_def456", "recordatorios": "sin_confirmar"},
+            # fecha + pago
+            {"id": "r3", "invitacion": "inv_3", "nombre": "Sol", "apellido": "Diaz", "telefono": "5493333333333", "dequien": "Alfredo", "enviado": "si", "abierto": "1", "confirmacion": "si", "nivel": "Reserva", "montotarjeta": "105000", "pagado": "", "url": "https://boda.test/inv_3_ghi789", "recordatorios": ""},
+        ]
+        tbl = MagicMock()
+        tbl.get_all.return_value = records
+        rec_file = os.path.join(self.temp_dir.name, "recordatorios.json")
+
+        with patch.dict(os.environ, {"RECORDATORIOS_FILE": rec_file}), \
+             patch("telegram_bot.call_telegram_api"), \
+             patch("telegram_bot.send_message") as mock_send:
+            # 1. /recordatorios menu
+            telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "/recordatorios"}}, table=tbl)
+            btns = [b for row in mock_send.call_args[1]["reply_markup"]["inline_keyboard"] for b in row]
+            self.assertTrue(any(b["callback_data"] == "rec_seg:no_abrio" and "(1)" in b["text"] for b in btns))
+            self.assertTrue(any(b["callback_data"] == "rec_seg:sin_confirmar" and "(1)" in b["text"] for b in btns))
+            self.assertTrue(any(b["callback_data"] == "rec_seg:fecha" and "(1)" in b["text"] for b in btns))
+            self.assertTrue(any(b["callback_data"] == "rec_seg:pago" and "(1)" in b["text"] for b in btns))
+
+            # 2. Pick sin_confirmar -> dequien -> Celia -> slide rsvp -> edit custom message -> preview -> generate
+            telegram_bot._handle_update({"callback_query": {"id": "c1", "data": "rec_seg:sin_confirmar", "message": {"chat": {"id": 88888}}}}, table=tbl)
+            telegram_bot._handle_update({"callback_query": {"id": "c2", "data": "rec_dq:Celia", "message": {"chat": {"id": 88888}}}}, table=tbl)
+            telegram_bot._handle_update({"callback_query": {"id": "c3", "data": "rec_sl:rsvp", "message": {"chat": {"id": 88888}}}}, table=tbl)
+            telegram_bot._handle_update({"callback_query": {"id": "c4", "data": "rec_edit", "message": {"chat": {"id": 88888}}}}, table=tbl)
+            self.assertEqual(telegram_bot._user_states.get("88888"), "awaiting_rec_msg")
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({"message": {"chat": {"id": 88888}, "text": "Hola {nombre}, confirmá en {link}"}}, table=tbl)
+            preview_msg = mock_send.call_args[0][1]
+            self.assertIn("Hola Ana, confirmá en https://boda.test/inv_1_abc123#rsvp", preview_msg)
+
+            mock_send.reset_mock()
+            telegram_bot._handle_update({"callback_query": {"id": "c5", "data": "rec_go_custom", "message": {"chat": {"id": 88888}}}}, table=tbl)
+            links_msg = mock_send.call_args[0][1]
+            self.assertIn("/r/sin_confirmar/r1", links_msg)
+            self.assertIn("Ana Perez", links_msg)
+            saved = telegram_bot._load_recordatorios()
+            self.assertEqual(saved["sin_confirmar"]["slide"], "rsvp")
+            self.assertEqual(saved["sin_confirmar"]["message"], "Hola {nombre}, confirmá en {link}")
+
 
 if __name__ == "__main__":
     unittest.main()

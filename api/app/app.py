@@ -3259,6 +3259,42 @@ def send_redirect_to_whatsapp(phone):
     return redirect(wa_url, code=302)
 
 
+@app.route("/r/<tag>/<gid>", methods=["GET"])
+def send_recordatorio_redirect(tag, gid):
+    user_agent = request.headers.get("User-Agent", "").lower()
+    is_crawler = any(c in user_agent for c in [
+        "whatsapp", "facebookexternalhit", "facebot", "twitterbot", "telegrambot",
+        "googlebot", "bingbot", "yandex", "baiduspider", "linkedinbot", "slackbot"
+    ])
+
+    clean_tag = re.sub(r"[^a-z0-9_-]", "", str(tag or "").strip().lower())
+    if not clean_tag:
+        return redirect(BASE_URL or "/", code=302)
+
+    records = table.get_all() or []
+    target_guest = next((r for r in records if str(r.get("id", "")) == str(gid)), None)
+    if not target_guest:
+        return redirect(BASE_URL or "/", code=302)
+
+    clean_phone = clean_phone_number(target_guest.get("telefono", ""))
+    if not clean_phone:
+        return redirect(target_guest.get("url") or BASE_URL or "/", code=302)
+
+    if not is_crawler and not telegram_bot.has_recordatorio_tag(target_guest, clean_tag):
+        updated_tags = telegram_bot.append_recordatorio_tag(target_guest.get("recordatorios", ""), clean_tag)
+        table.update_record(target_guest["id"], {"recordatorios": updated_tags})
+
+    campaigns = telegram_bot._load_recordatorios()
+    camp = campaigns.get(clean_tag) or {}
+    template = camp.get("message") or telegram_bot.RECORDATORIO_TEMPLATES.get(
+        clean_tag, telegram_bot.RECORDATORIO_TEMPLATES["sin_confirmar"]
+    )
+    slide = camp.get("slide", "")
+    rendered_msg = telegram_bot.render_recordatorio_message(template, target_guest, slide=slide)
+    wa_url = f"https://wa.me/{clean_phone}?text={urllib.parse.quote_plus(rendered_msg)}"
+    return redirect(wa_url, code=302)
+
+
 @app.get("/telegram/auth-link")
 @require_api_key
 def get_telegram_auth_link():

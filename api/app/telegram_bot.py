@@ -29,6 +29,8 @@ TELEGRAM_AUTH_SECRET = os.environ.get("TELEGRAM_AUTH_SECRET", "boda_cya_admin_te
 SUBSCRIBERS_FILE = os.environ.get("TELEGRAM_SUBSCRIBERS_FILE", "/data/telegram_subscribers.json")
 TELEGRAM_LOG_FILE = os.environ.get("TELEGRAM_LOG_FILE", "/data/telegram.log")
 TELEGRAM_COMPROBANTES_DIR = os.environ.get("COMPROBANTES_DIR") or "/data/comprobantes"
+RECORDATORIOS_FILE = os.environ.get("RECORDATORIOS_FILE", "/data/recordatorios.json")
+SLIDES_JSON_FILE = os.environ.get("SLIDES_JSON_FILE", "/data/slides.json")
 
 
 def _log(msg: str):
@@ -58,6 +60,7 @@ _last_opened = {}  # {clean_id: timestamp}
 _dirty_rsvp_sessions = {}  # {clean_id: {"time": timestamp, "table": table}}
 _rsvp_debounce_timers = {}  # {clean_id: Timer}
 _user_states = {}  # {str(chat_id): state_str}
+_rec_wizard = {}  # {str(chat_id): {"tag": ..., "dq": ..., "slide": ..., "message": ...}}
 _polling_thread = None
 _is_polling = False
 _table_ref = None
@@ -721,6 +724,7 @@ def _get_main_menu_markup() -> dict:
             ],
             [
                 {"text": "💳 Pagos", "callback_data": "cmd:pagos"},
+                {"text": "📣 Recordatorios", "callback_data": "cmd:recordatorios"},
             ],
         ]
     }
@@ -1116,6 +1120,357 @@ def _handle_sintelefono_command(chat_id: int | str, arg: str, table):
         items.append(f"💌 <b>{inv_id}</b>{orig_label}\n👥 {names_str}\n🔗 {url}")
 
     _send_chunked_messages(chat_id, header, items)
+
+
+# ==============================================================
+# 📣 Reminders (/recordatorios)
+# ==============================================================
+
+RECORDATORIO_SEGMENTS = [
+    ("no_abrio", "👀 No abrieron"),
+    ("sin_confirmar", "⏳ Sin confirmar"),
+    ("fecha", "📅 Recordar fecha"),
+    ("pago", "💳 Pago pendiente"),
+]
+
+RECORDATORIO_TEMPLATES = {
+    "no_abrio": "¡Hola {nombre}! Te reenviamos la invitación a nuestro casamiento para que puedas ver todos los detalles y confirmar tu asistencia acá: {link}",
+    "sin_confirmar": "¡Hola {nombre}! Te recordamos confirmar tu asistencia a nuestro casamiento ingresando acá: {link}",
+    "fecha": "¡Hola {nombre}! Ya falta muy poco para nuestro casamiento. Te esperamos para festejar juntos. Podés revisar los detalles acá: {link}",
+    "pago": "¡Hola {nombre}! Te recordamos que podés abonar la tarjeta y subir el comprobante desde tu invitación: {link}",
+}
+
+
+def _load_recordatorios() -> dict:
+    path = os.environ.get("RECORDATORIOS_FILE", RECORDATORIOS_FILE)
+    if not path or not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_recordatorio_campaign(tag: str, message: str, slide: str = ""):
+    path = os.environ.get("RECORDATORIOS_FILE", RECORDATORIOS_FILE)
+    if not path:
+        return
+    with _lock:
+        data = _load_recordatorios()
+        data[tag] = {
+            "message": message,
+            "slide": (slide or "").strip().lstrip("#"),
+            "updated_at": _get_tz_now_str(),
+        }
+        try:
+            d = os.path.dirname(os.path.abspath(path))
+            if d:
+                os.makedirs(d, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed saving recordatorios file: {e}")
+
+
+def parse_recordatorio_tags(raw_val) -> list[str]:
+    if not raw_val:
+        return []
+    return [t.strip().lower() for t in str(raw_val).split(",") if t.strip()]
+
+
+def has_recordatorio_tag(rec: dict, tag: str) -> bool:
+    return (tag or "").strip().lower() in parse_recordatorio_tags(rec.get("recordatorios", ""))
+
+
+def append_recordatorio_tag(raw_val, tag: str) -> str:
+    clean_tag = (tag or "").strip().lower()
+    if not clean_tag:
+        return str(raw_val or "")
+    tags = parse_recordatorio_tags(raw_val)
+    if clean_tag not in tags:
+        tags.append(clean_tag)
+    return ", ".join(tags)
+
+
+def render_recordatorio_message(template: str, rec: dict, slide: str = "") -> str:
+    first_name = str(rec.get("nombre", "") or "").strip()
+    full_name = f"{first_name} {str(rec.get('apellido', '') or '').strip()}".strip()
+    nombre = first_name or full_name or "Invitado"
+    inv_id = str(rec.get("invitacion_id") or rec.get("invitacion") or rec.get("id") or "").strip()
+    grupo = _normalize_slug(inv_id).replace("_", " ").title() if inv_id else "Invitados"
+    link = str(rec.get("url") or "").strip()
+    if not link and inv_id:
+        link = generate_invitation_url(inv_id)
+    clean_slide = (slide or "").strip().lstrip("#")
+    if link and clean_slide:
+        link = f"{link.split('#')[0]}#{clean_slide}"
+    return (
+        str(template or "")
+        .replace("{nombre}", nombre)
+        .replace("{grupo}", grupo)
+        .replace("{link}", link)
+    )
+
+
+def _filter_recordatorio_recipients(records: list, tag: str, dq_filter: str = "all") -> list[dict]:
+    dq_norm = (dq_filter or "all").strip().lower()
+    out = []
+    for r in records or []:
+        if not clean_phone_number(r.get("telefono", "")):
+            continue
+        if has_recordatorio_tag(r, tag):
+            continue
+        if dq_norm != "all":
+            r_dq = str(r.get("dequien", "") or "").strip().lower()
+            if r_dq != dq_norm:
+                continue
+        conf = str(r.get("confirmacion", "") or "").strip().lower()
+        enviado = str(r.get("enviado", "") or "").strip().lower() in ("si", "sí", "true", "1")
+        if tag == "no_abrio":
+            if enviado and _get_open_count_int(r) == 0:
+                out.append(r)
+        elif tag == "sin_confirmar":
+            if conf not in ("si", "sí", "confirmado", "no", "rechazado"):
+                out.append(r)
+        elif tag == "fecha":
+            if conf in ("si", "sí", "confirmado"):
+                out.append(r)
+        elif tag == "pago":
+            if _is_paying_guest(r) and conf in ("si", "sí", "confirmado") and not _is_paid_record(r):
+                out.append(r)
+    return out
+
+
+def _get_available_slide_ids() -> list[str]:
+    path = os.environ.get("SLIDES_JSON_FILE", SLIDES_JSON_FILE)
+    if path and os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                slides = json.load(f)
+            if isinstance(slides, list):
+                ids = []
+                for s in slides:
+                    if isinstance(s, dict) and s.get("visible", True):
+                        sid = str(s.get("id") or "").strip()
+                        if sid and sid not in ids:
+                            ids.append(sid)
+                if ids:
+                    return ids
+        except Exception:
+            pass
+    return ["rsvp", "lugar"]
+
+
+def _handle_recordatorios_menu(chat_id: int | str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    kb_rows = []
+    lines = ["📣 <b>Recordatorios por WhatsApp</b>\n\nElegí a quiénes querés enviar un recordatorio:"]
+    for tag, label in RECORDATORIO_SEGMENTS:
+        cnt = len(_filter_recordatorio_recipients(records, tag, "all"))
+        kb_rows.append([{"text": f"{label} ({cnt})", "callback_data": f"rec_seg:{tag}"}])
+        lines.append(f"• {label}: <b>{cnt}</b> pendientes")
+    kb_rows.append([{"text": "🏠 Menú", "callback_data": "cmd:menu"}])
+
+    send_message(chat_id, "\n".join(lines), reply_markup={"inline_keyboard": kb_rows})
+
+
+def _handle_recordatorio_dequien(chat_id: int | str, tag: str, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    records = tbl.get_all() or []
+    all_recs = _filter_recordatorio_recipients(records, tag, "all")
+    with _lock:
+        _rec_wizard[str(chat_id)] = {"tag": tag, "dq": "all", "slide": "", "message": ""}
+
+    label = dict(RECORDATORIO_SEGMENTS).get(tag, tag)
+    if not all_recs:
+        send_message(
+            chat_id,
+            f"✅ No hay destinatarios pendientes con teléfono para <b>{html.escape(label)}</b>.",
+            reply_markup={"inline_keyboard": [[{"text": "◀️ Volver", "callback_data": "cmd:recordatorios"}]]},
+        )
+        return
+
+    by_dq = {}
+    for r in all_recs:
+        dq = str(r.get("dequien", "") or "").strip() or "Sin asignar"
+        by_dq[dq] = by_dq.get(dq, 0) + 1
+
+    kb_rows = [[{"text": f"👥 Todos ({len(all_recs)})", "callback_data": "rec_dq:all"}]]
+    row = []
+    for dq in sorted(by_dq.keys()):
+        row.append({"text": f"{dq[:18]} ({by_dq[dq]})", "callback_data": f"rec_dq:{dq[:40]}"})
+        if len(row) == 2:
+            kb_rows.append(row)
+            row = []
+    if row:
+        kb_rows.append(row)
+    kb_rows.append([{"text": "◀️ Volver", "callback_data": "cmd:recordatorios"}])
+
+    send_message(
+        chat_id,
+        f"📣 <b>{html.escape(label)}</b>\n\n¿De quién querés filtrar? ({len(all_recs)} pendientes):",
+        reply_markup={"inline_keyboard": kb_rows},
+    )
+
+
+def _handle_recordatorio_slide(chat_id: int | str, dq: str, table):
+    with _lock:
+        wiz = _rec_wizard.setdefault(str(chat_id), {"tag": "sin_confirmar", "dq": "all", "slide": "", "message": ""})
+        wiz["dq"] = dq
+        tag = wiz.get("tag", "sin_confirmar")
+
+    label = dict(RECORDATORIO_SEGMENTS).get(tag, tag)
+    slide_ids = _get_available_slide_ids()
+    kb_rows = [[{"text": "🏠 Inicio (sin slide)", "callback_data": "rec_sl:"}]]
+    row = []
+    for sid in slide_ids[:10]:
+        emoji = "📝 " if sid == "rsvp" else ("📍 " if sid == "lugar" else "")
+        row.append({"text": f"{emoji}#{sid}", "callback_data": f"rec_sl:{sid[:40]}"})
+        if len(row) == 2:
+            kb_rows.append(row)
+            row = []
+    if row:
+        kb_rows.append(row)
+    kb_rows.append([{"text": "◀️ Volver", "callback_data": f"rec_seg:{tag}"}])
+
+    send_message(
+        chat_id,
+        f"📣 <b>{html.escape(label)}</b>\n\n¿Querés que <code>{{link}}</code> abra en algún slide específico?",
+        reply_markup={"inline_keyboard": kb_rows},
+    )
+
+
+def _handle_recordatorio_msg_prompt(chat_id: int | str, slide: str):
+    with _lock:
+        wiz = _rec_wizard.setdefault(str(chat_id), {"tag": "sin_confirmar", "dq": "all", "slide": "", "message": ""})
+        wiz["slide"] = slide
+        tag = wiz.get("tag", "sin_confirmar")
+
+    tpl = RECORDATORIO_TEMPLATES.get(tag, RECORDATORIO_TEMPLATES["sin_confirmar"])
+    slide_info = f"<code>#{html.escape(slide)}</code>" if slide else "Inicio"
+    kb_rows = [
+        [{"text": "✅ Usar esta plantilla", "callback_data": "rec_go"}],
+        [{"text": "✏️ Escribir mensaje propio", "callback_data": "rec_edit"}],
+        [{"text": "◀️ Volver", "callback_data": f"rec_dq:{wiz.get('dq', 'all')[:40]}"}],
+    ]
+    send_message(
+        chat_id,
+        f"✉️ <b>Mensaje del recordatorio</b> (Link: {slide_info})\n\n"
+        f"<b>Plantilla sugerida:</b>\n<code>{html.escape(tpl)}</code>\n\n"
+        f"Podés usar <code>{{nombre}}</code>, <code>{{grupo}}</code> y <code>{{link}}</code>.",
+        reply_markup={"inline_keyboard": kb_rows},
+    )
+
+
+def _prompt_recordatorio_custom_msg(chat_id: int | str):
+    with _lock:
+        _user_states[str(chat_id)] = "awaiting_rec_msg"
+    send_message(
+        chat_id,
+        "✏️ <b>Escribí tu mensaje personalizado</b>\n\n"
+        "Variables disponibles:\n"
+        "• <code>{nombre}</code> — Nombre del invitado\n"
+        "• <code>{grupo}</code> — Nombre de la tarjeta\n"
+        "• <code>{link}</code> — Link personal (con el slide elegido)",
+        reply_markup={"inline_keyboard": [[{"text": "❌ Cancelar", "callback_data": "cmd:recordatorios"}]]},
+    )
+
+
+def _handle_recordatorio_custom_preview(chat_id: int | str, custom_text: str, table):
+    tbl = table or _table_ref
+    with _lock:
+        wiz = _rec_wizard.setdefault(str(chat_id), {"tag": "sin_confirmar", "dq": "all", "slide": "", "message": ""})
+        wiz["message"] = custom_text
+        tag = wiz.get("tag", "sin_confirmar")
+        dq = wiz.get("dq", "all")
+        slide = wiz.get("slide", "")
+
+    recs = _filter_recordatorio_recipients((tbl.get_all() or []) if tbl else [], tag, dq)
+    sample = recs[0] if recs else {"nombre": "Juan", "apellido": "Pérez", "invitacion": "familia_perez"}
+    preview = render_recordatorio_message(custom_text, sample, slide=slide)
+    kb_rows = [
+        [{"text": f"✅ Generar links ({len(recs)})", "callback_data": "rec_go_custom"}],
+        [{"text": "✏️ Cambiar texto", "callback_data": "rec_edit"}],
+        [{"text": "❌ Cancelar", "callback_data": "cmd:recordatorios"}],
+    ]
+    send_message(
+        chat_id,
+        f"👀 <b>Vista previa</b> ({len(recs)} destinatarios):\n\n{html.escape(preview)}",
+        reply_markup={"inline_keyboard": kb_rows},
+    )
+
+
+def _send_recordatorio_links(chat_id: int | str, use_custom: bool, table):
+    tbl = table or _table_ref
+    if not tbl:
+        send_message(chat_id, "Error: Base de datos no disponible.")
+        return
+
+    with _lock:
+        wiz = _rec_wizard.get(str(chat_id), {})
+        tag = wiz.get("tag", "sin_confirmar")
+        dq = wiz.get("dq", "all")
+        slide = wiz.get("slide", "")
+        message = (wiz.get("message") or "") if use_custom else RECORDATORIO_TEMPLATES.get(tag, RECORDATORIO_TEMPLATES["sin_confirmar"])
+
+    if not message:
+        message = RECORDATORIO_TEMPLATES.get(tag, RECORDATORIO_TEMPLATES["sin_confirmar"])
+
+    _save_recordatorio_campaign(tag, message, slide)
+    records = tbl.get_all() or []
+    matching = _filter_recordatorio_recipients(records, tag, dq)
+
+    if not matching:
+        send_message(
+            chat_id,
+            "✅ No quedan destinatarios pendientes para este recordatorio.",
+            reply_markup={"inline_keyboard": [[{"text": "📣 Volver a Recordatorios", "callback_data": "cmd:recordatorios"}]]},
+        )
+        return
+
+    # Deduplicate by (inv_slug, clean_phone) so couples sharing a phone don't get duplicate links
+    seen_pairs = set()
+    unique_targets = []
+    for r in matching:
+        clean_p = clean_phone_number(r.get("telefono", ""))
+        inv_slug = _normalize_slug(r.get("invitacion_id") or r.get("invitacion") or r.get("id"))
+        key = (inv_slug, clean_p)
+        if key in seen_pairs:
+            continue
+        seen_pairs.add(key)
+        unique_targets.append(r)
+
+    unique_targets.sort(key=lambda r: _normalize_search_text(f"{r.get('nombre', '')} {r.get('apellido', '')}"))
+    base_site = (BASE_URL or "https://nos.vamos.acas.ar").rstrip("/")
+    label = dict(RECORDATORIO_SEGMENTS).get(tag, tag)
+    header = f"📣 <b>Recordatorio: {html.escape(label)} ({len(unique_targets)} pendientes)</b>\n<i>Al tocar cada link se abre WhatsApp y queda marcado en la planilla:</i>"
+    items = []
+    for r in unique_targets:
+        nombre = f"{r.get('nombre', '')} {r.get('apellido', '')}".strip() or "Invitado"
+        gid = str(r.get("id", "") or "").strip()
+        tel = str(r.get("telefono", "") or "").strip()
+        tel_suffix = f" ({html.escape(tel)})" if tel else ""
+        rec_url = f"{base_site}/r/{tag}/{gid}"
+        items.append(f'<a href="{html.escape(rec_url)}">📱 {html.escape(nombre)}{tel_suffix}</a>')
+
+    _log(f"[RECORDATORIOS:GEN] chat_id={chat_id} tag={tag} dq={dq} slide={slide!r} count={len(unique_targets)}")
+    _send_chunked_messages(
+        chat_id,
+        header,
+        items,
+        reply_markup={"inline_keyboard": [[{"text": "📣 Volver a Recordatorios", "callback_data": "cmd:recordatorios"}]]},
+    )
 
 
 # ==============================================================
@@ -2298,6 +2653,37 @@ def _handle_update(update: dict, table=None):
             _handle_pagos_menu(cq_chat_id, table or _table_ref)
             return
 
+        if cq_data == "cmd:recordatorios":
+            _handle_recordatorios_menu(cq_chat_id, table or _table_ref)
+            return
+
+        if cq_data.startswith("rec_seg:"):
+            tag = cq_data[len("rec_seg:"):].strip()
+            _handle_recordatorio_dequien(cq_chat_id, tag, table or _table_ref)
+            return
+
+        if cq_data.startswith("rec_dq:"):
+            dq = cq_data[len("rec_dq:"):].strip()
+            _handle_recordatorio_slide(cq_chat_id, dq, table or _table_ref)
+            return
+
+        if cq_data.startswith("rec_sl:"):
+            slide = cq_data[len("rec_sl:"):].strip()
+            _handle_recordatorio_msg_prompt(cq_chat_id, slide)
+            return
+
+        if cq_data == "rec_edit":
+            _prompt_recordatorio_custom_msg(cq_chat_id)
+            return
+
+        if cq_data == "rec_go":
+            _send_recordatorio_links(cq_chat_id, False, table or _table_ref)
+            return
+
+        if cq_data == "rec_go_custom":
+            _send_recordatorio_links(cq_chat_id, True, table or _table_ref)
+            return
+
         if cq_data == "pagos:por_confirmar":
             _handle_pagos_por_confirmar(cq_chat_id, table or _table_ref)
             return
@@ -2441,7 +2827,7 @@ def _handle_update(update: dict, table=None):
     if not text.startswith("/"):
         with _lock:
             state = _user_states.get(str(chat_id))
-            if state in ("awaiting_search_query", "awaiting_pagos_search") or (
+            if state in ("awaiting_search_query", "awaiting_pagos_search", "awaiting_rec_msg") or (
                 isinstance(state, str) and state.startswith("awaiting_comp_monto:")
             ):
                 _user_states.pop(str(chat_id), None)
@@ -2450,6 +2836,9 @@ def _handle_update(update: dict, table=None):
             return
         if state == "awaiting_pagos_search" and text:
             _handle_pagos_search(chat_id, text, table or _table_ref)
+            return
+        if state == "awaiting_rec_msg" and text:
+            _handle_recordatorio_custom_preview(chat_id, text, table or _table_ref)
             return
         if isinstance(state, str) and state.startswith("awaiting_comp_monto:") and text:
             rest = state[len("awaiting_comp_monto:"):]
@@ -2498,6 +2887,11 @@ def _handle_update(update: dict, table=None):
     # 5b. /pagos command
     if raw_cmd == "/pagos":
         _handle_pagos_menu(chat_id, table or _table_ref)
+        return
+
+    # 5c. /recordatorios command
+    if raw_cmd in ("/recordatorios", "/recordatorio"):
+        _handle_recordatorios_menu(chat_id, table or _table_ref)
         return
 
     # 6. /stop command

@@ -2378,6 +2378,48 @@ class TestGoogleSheetsTable(unittest.TestCase):
                 self.assertEqual(ctx["existing_comprobantes"], d2["urls"])
                 self.assertEqual(ctx["max_comprobantes"], 2)
 
+    def test_recordatorio_redirect_marks_column_and_ignores_crawler(self):
+        import json
+        import tempfile
+        import app as app_module
+        guest = {
+            "id": "rec_g1",
+            "invitacion_id": "fam_test",
+            "nombre": "Ana",
+            "apellido": "Perez",
+            "telefono": "+54 9 11 1234-5678",
+            "url": "https://boda.test/fam_test_123456",
+            "recordatorios": "",
+        }
+        updated_calls = []
+
+        def fake_update(gid, fields):
+            updated_calls.append((gid, fields))
+            guest.update(fields)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rec_file = os.path.join(tmpdir, "recordatorios.json")
+            with open(rec_file, "w", encoding="utf-8") as f:
+                json.dump({"sin_confirmar": {"message": "Hola {nombre}: {link}", "slide": "rsvp"}}, f)
+
+            client = app_module.app.test_client()
+            with patch.dict(os.environ, {"RECORDATORIOS_FILE": rec_file}), \
+                 patch.object(app_module.table, "get_all", return_value=[guest]), \
+                 patch.object(app_module.table, "update_record", side_effect=fake_update):
+                # Crawler preview should NOT mark recordatorios
+                res_bot = client.get("/r/sin_confirmar/rec_g1", headers={"User-Agent": "WhatsApp/2.23"})
+                self.assertEqual(res_bot.status_code, 302)
+                self.assertEqual(updated_calls, [])
+
+                # Real user click marks recordatorios and redirects with rendered message + #rsvp
+                res_user = client.get("/r/sin_confirmar/rec_g1", headers={"User-Agent": "Mozilla/5.0"})
+                self.assertEqual(res_user.status_code, 302)
+                self.assertEqual(guest["recordatorios"], "sin_confirmar")
+                loc = res_user.headers.get("Location", "")
+                self.assertTrue(loc.startswith("https://wa.me/5491112345678?text="))
+                self.assertIn("Hola+Ana", loc)
+                self.assertIn("%23rsvp", loc)
+
 
 if __name__ == "__main__":
     unittest.main()
