@@ -1804,6 +1804,14 @@ def compute_stats2_data(clean_records):
         else:
             card_status = "⏳ Pendiente"
 
+        res_recs = [r for r in recs if r.get("nivel") == "Reserva"]
+        if not res_recs:
+            card_pago = "💌 Invitación"
+        elif all(r.get("pagado") for r in res_recs):
+            card_pago = "💰 Reserva Pagada"
+        else:
+            card_pago = "💳 Reserva No Pagada"
+
         # Determine card tier based on guest composition
         tiers = [r.get("tier") for r in recs]
         if any("Baile" in (t or "") for t in tiers):
@@ -1834,6 +1842,7 @@ def compute_stats2_data(clean_records):
             "rechazados": no_c,
             "pendientes": pend_c,
             "card_status": card_status,
+            "card_pago": card_pago,
             "invitation_url": generate_invitation_url(inv),
         })
 
@@ -1877,6 +1886,7 @@ def compute_stats2_data(clean_records):
         f23 = Counter()
         f34 = Counter()
         f45 = Counter()
+        f56 = Counter()
         for item in items:
             orig = item.get(origin_key) or "Sin definir"
             orig_node = f"👤 {orig}" if origin_key == "origin" else f"📁 {orig}"
@@ -1891,6 +1901,7 @@ def compute_stats2_data(clean_records):
 
             if is_card:
                 conf_node = item.get("card_status", "⏳ Pendiente")
+                pago_node = item.get("card_pago", "💌 Invitación")
             else:
                 c = item.get("confirmacion", "")
                 if c == "si":
@@ -1900,10 +1911,18 @@ def compute_stats2_data(clean_records):
                 else:
                     conf_node = "⏳ Pendiente"
 
+                if item.get("nivel") != "Reserva":
+                    pago_node = "💌 Invitación"
+                elif item.get("pagado"):
+                    pago_node = "💰 Reserva Pagada"
+                else:
+                    pago_node = "💳 Reserva No Pagada"
+
             f12[(orig_node, tier_node)] += 1
             f23[(tier_node, env_node)] += 1
             f34[(env_node, open_node)] += 1
             f45[(open_node, conf_node)] += 1
+            f56[(conf_node, pago_node)] += 1
 
         TIER_ORDER = {
             "🍽️ Invitación Cena": 1,
@@ -1914,11 +1933,13 @@ def compute_stats2_data(clean_records):
         ENV_ORDER = {"📤 Enviada": 1, "⏳ Sin enviar": 2}
         OPEN_ORDER = {"📖 Abierta": 1, "🔒 Sin abrir": 2}
         CONF_ORDER = {"✅ Asiste": 1, "❌ No asiste": 2, "⏳ Pendiente": 3}
+        PAGO_ORDER = {"💌 Invitación": 1, "💰 Reserva Pagada": 2, "💳 Reserva No Pagada": 3}
 
         f12_sorted = sorted(f12.items(), key=lambda x: (TIER_ORDER.get(x[0][1], 9), -x[1], x[0][0]))
         f23_sorted = sorted(f23.items(), key=lambda x: (ENV_ORDER.get(x[0][1], 9), TIER_ORDER.get(x[0][0], 9)))
         f34_sorted = sorted(f34.items(), key=lambda x: (OPEN_ORDER.get(x[0][1], 9), ENV_ORDER.get(x[0][0], 9)))
         f45_sorted = sorted(f45.items(), key=lambda x: (CONF_ORDER.get(x[0][1], 9), OPEN_ORDER.get(x[0][0], 9)))
+        f56_sorted = sorted(f56.items(), key=lambda x: (PAGO_ORDER.get(x[0][1], 9), CONF_ORDER.get(x[0][0], 9)))
 
         rows = []
         for (s, d), w in f12_sorted:
@@ -1928,6 +1949,8 @@ def compute_stats2_data(clean_records):
         for (s, d), w in f34_sorted:
             if w > 0: rows.append([s, d, w])
         for (s, d), w in f45_sorted:
+            if w > 0: rows.append([s, d, w])
+        for (s, d), w in f56_sorted:
             if w > 0: rows.append([s, d, w])
         return rows
 

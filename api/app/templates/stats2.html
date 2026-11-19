@@ -931,7 +931,8 @@
             tier: null,
             enviado: null,
             abierto: null,
-            confirmacion: null
+            confirmacion: null,
+            pago: null
         };
         let currentSankeyFilter = null;
 
@@ -940,7 +941,8 @@
                    activeSankeyFilters.tier !== null ||
                    activeSankeyFilters.enviado !== null ||
                    activeSankeyFilters.abierto !== null ||
-                   activeSankeyFilters.confirmacion !== null;
+                   activeSankeyFilters.confirmacion !== null ||
+                   activeSankeyFilters.pago !== null;
         }
 
         function getNodeDimension(nodeStr) {
@@ -961,6 +963,9 @@
             if (str.includes("Reserva Cena") || (str.includes("Reserva") && str.includes("Cena"))) {
                 return { dim: "tier", value: "🎫 Reserva Cena", label: "🎫 Reserva Cena" };
             }
+            if (str.includes("Reserva Pagada")) return { dim: "pago", value: "pagada", label: "💰 Reserva Pagada" };
+            if (str.includes("Reserva No Pagada")) return { dim: "pago", value: "no_pagada", label: "💳 Reserva No Pagada" };
+            if (str.includes("Invitación")) return { dim: "pago", value: "invitacion", label: "💌 Invitación" };
             if (str.includes("Enviada")) return { dim: "enviado", value: true, label: "📤 Enviada" };
             if (str.includes("Sin enviar")) return { dim: "enviado", value: false, label: "⏳ Sin enviar" };
             if (str.includes("Abierta")) return { dim: "abierto", value: true, label: "📖 Abierta" };
@@ -969,6 +974,22 @@
             if (str.includes("No asiste")) return { dim: "confirmacion", value: "no", label: "❌ No asiste" };
             if (str.includes("Pendiente")) return { dim: "confirmacion", value: "pend", label: "⏳ Pendiente" };
             return null;
+        }
+
+        function getItemPagoKey(item, isCard) {
+            if (isCard) {
+                if (item.card_pago === '💰 Reserva Pagada') return 'pagada';
+                if (item.card_pago === '💳 Reserva No Pagada') return 'no_pagada';
+                return 'invitacion';
+            }
+            if (item.nivel !== 'Reserva') return 'invitacion';
+            return item.pagado ? 'pagada' : 'no_pagada';
+        }
+
+        function getItemPagoNode(item, isCard) {
+            if (isCard) return item.card_pago || '💌 Invitación';
+            if (item.nivel !== 'Reserva') return '💌 Invitación';
+            return item.pagado ? '💰 Reserva Pagada' : '💳 Reserva No Pagada';
         }
 
         function itemMatchesFilters(item, filters, isCard) {
@@ -1005,6 +1026,10 @@
                 }
             }
 
+            if (filters.pago !== null) {
+                if (getItemPagoKey(item, isCard) !== filters.pago) return false;
+            }
+
             return true;
         }
 
@@ -1015,6 +1040,7 @@
             const f23 = {};
             const f34 = {};
             const f45 = {};
+            const f56 = {};
 
             items.forEach(item => {
                 const origVal = (originLevel === 'origin' ? item.origin : item.dequien) || 'Sin definir';
@@ -1034,6 +1060,7 @@
                     else if (c === 'no') confNode = '❌ No asiste';
                     else confNode = '⏳ Pendiente';
                 }
+                const pagoNode = getItemPagoNode(item, isCard);
 
                 const k12 = `${origNode}:::${tierNode}`;
                 f12[k12] = (f12[k12] || 0) + 1;
@@ -1046,6 +1073,9 @@
 
                 const k45 = `${openNode}:::${confNode}`;
                 f45[k45] = (f45[k45] || 0) + 1;
+
+                const k56 = `${confNode}:::${pagoNode}`;
+                f56[k56] = (f56[k56] || 0) + 1;
             });
 
             const TIER_ORDER = {
@@ -1057,6 +1087,7 @@
             const ENV_ORDER = { '📤 Enviada': 1, '⏳ Sin enviar': 2 };
             const OPEN_ORDER = { '📖 Abierta': 1, '🔒 Sin abrir': 2 };
             const CONF_ORDER = { '✅ Asiste': 1, '❌ No asiste': 2, '⏳ Pendiente': 3 };
+            const PAGO_ORDER = { '💌 Invitación': 1, '💰 Reserva Pagada': 2, '💳 Reserva No Pagada': 3 };
 
             function sortAndCollect(freqMap, getDOrder, getSOrder) {
                 const entries = Object.keys(freqMap).map(k => {
@@ -1077,7 +1108,8 @@
                 ...sortAndCollect(f12, TIER_ORDER, {}),
                 ...sortAndCollect(f23, ENV_ORDER, TIER_ORDER),
                 ...sortAndCollect(f34, OPEN_ORDER, ENV_ORDER),
-                ...sortAndCollect(f45, CONF_ORDER, OPEN_ORDER)
+                ...sortAndCollect(f45, CONF_ORDER, OPEN_ORDER),
+                ...sortAndCollect(f56, PAGO_ORDER, CONF_ORDER)
             ];
         }
 
@@ -1101,6 +1133,11 @@
         }
 
         const SANKEY_NODE_COLORS = {
+            // Pago
+            '💌 Invitación': '#d4af37',      // Gold
+            '💰 Reserva Pagada': '#10b981',  // Emerald
+            '💳 Reserva No Pagada': '#f97316', // Orange
+
             // Confirmacion
             '✅ Asiste': '#22c55e',          // Emerald Green
             '❌ No asiste': '#ef4444',        // Red
@@ -1467,7 +1504,8 @@
                 tier: null,
                 enviado: null,
                 abierto: null,
-                confirmacion: null
+                confirmacion: null,
+                pago: null
             };
             applySankeyFilters();
         }
@@ -1485,6 +1523,10 @@
             if (activeSankeyFilters.confirmacion !== null) {
                 const cMap = { 'si': 'Asiste', 'no': 'No asiste', 'pend': 'Pendiente' };
                 parts.push(cMap[activeSankeyFilters.confirmacion]);
+            }
+            if (activeSankeyFilters.pago !== null) {
+                const pMap = { 'invitacion': 'Invitación', 'pagada': 'Reserva Pagada', 'no_pagada': 'Reserva No Pagada' };
+                parts.push(pMap[activeSankeyFilters.pago]);
             }
             return parts.join(' ➔ ') || 'Selección';
         }
@@ -1520,6 +1562,10 @@
             if (activeSankeyFilters.confirmacion !== null) {
                 const cMap = { 'si': '✅ Asiste', 'no': '❌ No asiste', 'pend': '⏳ Pendiente' };
                 pills.push({ dim: 'confirmacion', label: cMap[activeSankeyFilters.confirmacion] || activeSankeyFilters.confirmacion });
+            }
+            if (activeSankeyFilters.pago !== null) {
+                const pMap = { 'invitacion': '💌 Invitación', 'pagada': '💰 Reserva Pagada', 'no_pagada': '💳 Reserva No Pagada' };
+                pills.push({ dim: 'pago', label: pMap[activeSankeyFilters.pago] || activeSankeyFilters.pago });
             }
 
             pillsContainer.innerHTML = pills.map(p => `
